@@ -1,16 +1,12 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { z } from "zod";
 import { db } from "@/lib/db/client";
 import { verifyPassword } from "@/lib/auth/password";
 import { authConfig } from "@/lib/auth/config";
 import { audit } from "@/lib/audit/log";
 import { rateLimit } from "@/lib/auth/rate-limit";
-
-const LoginSchema = z.object({
-  identifier: z.string().min(3).max(254),
-  password: z.string().min(1).max(200),
-});
+import { getRequestMeta } from "@/lib/utils/request";
+import { LoginSchema } from "@/lib/validation/schemas";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -25,7 +21,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!parsed.success) return null;
         const { identifier, password } = parsed.data;
 
-        // Rate limit per identifier+IP (IP added in API; here just identifier)
+        const meta = await getRequestMeta();
+
+        // Rate limit per identifier (separate IP-based limit could be added)
         const limit = await rateLimit({
           key: `login:${identifier.toLowerCase()}`,
           max: 5,
@@ -38,6 +36,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             targetType: "User",
             targetId: identifier,
             reason: `Locked until ${limit.lockedUntil?.toISOString()}`,
+            ipAddress: meta.ipAddress ?? undefined,
+            userAgent: meta.userAgent ?? undefined,
           });
           return null;
         }
@@ -62,6 +62,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             targetType: "User",
             targetId: identifier,
             reason: "not_found_or_inactive",
+            ipAddress: meta.ipAddress ?? undefined,
+            userAgent: meta.userAgent ?? undefined,
           });
           return null;
         }
@@ -75,6 +77,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             targetType: "User",
             targetId: user.id,
             reason: "wrong_password",
+            ipAddress: meta.ipAddress ?? undefined,
+            userAgent: meta.userAgent ?? undefined,
           });
           return null;
         }
@@ -85,6 +89,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           action: "LOGIN_SUCCESS",
           targetType: "User",
           targetId: user.id,
+          ipAddress: meta.ipAddress ?? undefined,
+          userAgent: meta.userAgent ?? undefined,
         });
 
         return {
@@ -92,7 +98,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           role: user.role,
           identifier: user.identifier,
           mustResetPwd: user.mustResetPwd,
-          // Required by Auth.js User type
           name: user.identifier,
           email: null,
           image: null,
