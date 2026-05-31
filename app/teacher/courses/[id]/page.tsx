@@ -1,0 +1,103 @@
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+import { ChevronLeft, Users } from "lucide-react";
+import { requireRole } from "@/lib/auth/guards";
+import { getCourseOfferingForTeacher } from "@/lib/course/queries";
+import { ClassCodeCard } from "@/components/class-code-card";
+
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function CourseDetailPage({ params }: PageProps) {
+  let session;
+  try {
+    session = await requireRole(["TEACHER"]);
+  } catch {
+    redirect("/dashboard");
+  }
+
+  const { id } = await params;
+  const course = await getCourseOfferingForTeacher(id, session.user.id);
+  if (!course) notFound();
+
+  const fullDateFmt = new Intl.DateTimeFormat("th-TH", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  return (
+    <div className="mesh-bg min-h-screen">
+      <header className="border-b border-slate-200 bg-white/80 backdrop-blur">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
+          <Link href="/teacher/courses" className="btn-ghost btn-sm">
+            <ChevronLeft className="h-4 w-4" />
+            กลับ
+          </Link>
+          <span className="text-xs text-ink-soft">{course.term.name}</span>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-5xl px-6 py-10 animate-fade-in space-y-6">
+        <div>
+          <div className="badge-teacher mb-2">รายวิชาที่สอน</div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {course.subject.name}
+          </h1>
+          <p className="mt-1 text-sm text-ink-soft">
+            ห้อง {course.class.name} · {course.subject.creditHours} หน่วยกิต ·
+            สอนโดย {course.teacher.firstName} {course.teacher.lastName}
+          </p>
+        </div>
+
+        {/* QR + invite */}
+        <ClassCodeCard
+          classCode={course.classCode}
+          subjectName={course.subject.name}
+          className={course.class.name}
+        />
+
+        {/* Members */}
+        <div className="card p-5">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="inline-flex items-center gap-2 font-semibold tracking-tight">
+              <Users className="h-4 w-4 text-ink-soft" />
+              สมาชิก ({course.enrollments.length} คน)
+            </h2>
+          </div>
+
+          {course.enrollments.length === 0 ? (
+            <p className="rounded-lg bg-slate-50 p-4 text-center text-sm text-ink-soft">
+              ยังไม่มีนักเรียนเข้าร่วม — แชร์รหัสด้านบนให้นักเรียนได้เลย
+            </p>
+          ) : (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>เลขประจำตัว</th>
+                  <th>ชื่อ-นามสกุล</th>
+                  <th>เข้าร่วมเมื่อ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {course.enrollments.map((e) => (
+                  <tr key={e.id}>
+                    <td className="font-mono text-sm">{e.student.studentId}</td>
+                    <td>
+                      {e.student.firstName} {e.student.lastName}
+                    </td>
+                    <td className="text-xs text-ink-soft">
+                      {fullDateFmt.format(e.enrolledAt)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </main>
+    </div>
+  );
+}

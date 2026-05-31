@@ -1,6 +1,7 @@
 // Studennnn — Prisma Schema
 // Phase 1: Identity + Auth + Audit
-// See: Architecture.md § 3 Data Model · Security.md
+// Phase 2: Academic structure + Course Offerings + Enrollments
+// See: Architecture.md § 3 Data Model · Security.md · CONTEXT.md
 
 generator client {
   provider = "prisma-client-js"
@@ -52,12 +53,15 @@ model Admin {
 }
 
 model Teacher {
-  userId    String @id
-  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  firstName String
-  lastName  String
-  email     String @unique
-  // homeroomOfId: added in Phase 2 when Class model exists
+  userId       String  @id
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName    String
+  lastName     String
+  email        String  @unique
+  homeroomOfId String? @unique // FK to Class (1:1)
+  homeroomOf   Class?  @relation("HomeroomOf", fields: [homeroomOfId], references: [id])
+
+  courses CourseOffering[]
 }
 
 model Student {
@@ -67,7 +71,10 @@ model Student {
   firstName  String
   lastName   String
   anonymized Boolean @default(false)
-  // classId: added in Phase 2 when Class model exists
+  classId    String?
+  class      Class?  @relation(fields: [classId], references: [id], onDelete: SetNull)
+
+  enrollments Enrollment[]
 }
 
 model UserSession {
@@ -108,6 +115,94 @@ model AuditLog {
   @@index([actorId, timestamp])
   @@index([action, timestamp])
   @@index([targetType, targetId])
+}
+
+// ═══════════════════════════════════════════════════════════
+// Academic Structure (Phase 2)
+// ═══════════════════════════════════════════════════════════
+
+model AcademicYear {
+  id       String  @id @default(cuid())
+  name     String  @unique // "2568" (พ.ศ.)
+  isActive Boolean @default(false) // current academic year
+  terms    Term[]
+  classes  Class[]
+}
+
+model Term {
+  id             String       @id @default(cuid())
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  name           String // "เทอม 1/2568"
+  number         Int // 1 or 2
+  startDate      DateTime
+  endDate        DateTime
+  isActive       Boolean      @default(false)
+
+  courses CourseOffering[]
+
+  @@unique([academicYearId, number])
+}
+
+model Subject {
+  id          String @id @default(cuid())
+  code        String @unique // "MATH-M4"
+  name        String // "คณิตศาสตร์ ม.4"
+  gradeLevel  String // "ม.4"
+  creditHours Float // หน่วยกิต e.g. 1.5
+
+  courses CourseOffering[]
+
+  @@index([gradeLevel])
+}
+
+model Class {
+  id             String       @id @default(cuid())
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  name           String // "ม.4/2"
+  gradeLevel     String // "ม.4"
+  homeroomTeacher Teacher? @relation("HomeroomOf")
+
+  students Student[]
+  courses  CourseOffering[]
+
+  @@unique([academicYearId, name])
+  @@index([gradeLevel])
+}
+
+model CourseOffering {
+  id             String    @id @default(cuid())
+  teacherId      String
+  teacher        Teacher   @relation(fields: [teacherId], references: [userId], onDelete: Restrict)
+  subjectId      String
+  subject        Subject   @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  classId        String
+  class          Class     @relation(fields: [classId], references: [id], onDelete: Restrict)
+  termId         String
+  term           Term      @relation(fields: [termId], references: [id], onDelete: Restrict)
+  classCode      String    @unique
+  codeActive     Boolean   @default(true)
+  codeExpiresAt  DateTime?
+  gradeRulesJson Json? // override default grade thresholds
+  createdAt      DateTime  @default(now())
+
+  enrollments Enrollment[]
+
+  @@unique([teacherId, subjectId, classId, termId])
+  @@index([classCode])
+}
+
+model Enrollment {
+  id               String         @id @default(cuid())
+  studentId        String
+  student          Student        @relation(fields: [studentId], references: [userId], onDelete: Cascade)
+  courseOfferingId String
+  course           CourseOffering @relation(fields: [courseOfferingId], references: [id], onDelete: Cascade)
+  enrolledAt       DateTime       @default(now())
+
+  @@unique([studentId, courseOfferingId])
+  @@index([courseOfferingId])
 }
 
 // ═══════════════════════════════════════════════════════════

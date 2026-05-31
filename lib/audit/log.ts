@@ -23,6 +23,7 @@ export type AuditEvent =
   | "CONSENT_WITHDRAWN"
   // CSV Import (Phase 2)
   | "CSV_IMPORT"
+  | "COURSE_OFFERING_CREATED"
   // Class Code (Phase 2)
   | "CLASS_CODE_REGENERATE"
   | "STUDENT_JOINED_COURSE"

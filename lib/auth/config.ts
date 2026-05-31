@@ -28,6 +28,16 @@ export const authConfig = {
         path.startsWith("/api/auth") ||
         path.startsWith("/api/signup");
 
+      // /join requires auth — redirect to login with returnTo
+      if (path === "/join" && !isLoggedIn) {
+        const url = new URL("/login", nextUrl);
+        url.searchParams.set(
+          "returnTo",
+          `/join${nextUrl.search ? nextUrl.search : ""}`
+        );
+        return Response.redirect(url);
+      }
+
       // ── Force reset interception ──
       // If logged in AND mustResetPwd, redirect everywhere except force-reset itself
       // and the signout endpoint (so user can escape if needed)

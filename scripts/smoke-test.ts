@@ -383,6 +383,153 @@ async function testForceResetRedirect() {
   });
 }
 
+async function testPhase2Join() {
+  console.log("\n📚 Phase 2: Join course via class code");
+
+  // Setup: ensure the demo course exists with a fresh student NOT yet enrolled
+  const demoCode = "MATH4A-DEMO1";
+  const course = await db.courseOffering.findUnique({
+    where: { classCode: demoCode },
+    select: { id: true },
+  });
+  if (!course) {
+    fail(
+      "Phase 2 setup",
+      `Demo course code "${demoCode}" not in DB — run pnpm db:seed`
+    );
+    return;
+  }
+
+  // Use a unique signup student so we don't conflict
+  const newId = `7${Math.floor(Math.random() * 100000)
+    .toString()
+    .padStart(5, "0")}`;
+  const signupRes = await fetch(`${BASE}/api/signup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      studentId: newId,
+      firstName: "Join",
+      lastName: "Test",
+      password: "joinpass1234",
+      confirmPassword: "joinpass1234",
+      consent: true,
+      turnstileToken: "dummy-dev-token",
+    }),
+  });
+  await expect(
+    `Create test student ${newId}`,
+    signupRes.status === 201,
+    `signup got ${signupRes.status}`
+  );
+
+  const cookie = await signin(newId, "joinpass1234");
+  await expect("Login as test student", !!cookie, "no cookie");
+  if (!cookie) return;
+
+  // Join with valid code
+  const joinRes = await fetch(`${BASE}/api/join`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Cookie: cookie },
+    body: JSON.stringify({ code: demoCode }),
+  });
+  const joinData = (await joinRes.json()) as {
+    success?: boolean;
+    subjectName?: string;
+    error?: { code: string };
+  };
+  await expect(
+    "POST /api/join with valid code → 200",
+    joinRes.status === 200,
+    `got ${joinRes.status}: ${JSON.stringify(joinData)}`
+  );
+  await expect(
+    "Response contains subjectName",
+    joinData.subjectName === "คณิตศาสตร์ ม.4",
+    `got: ${joinData.subjectName}`
+  );
+
+  // Verify enrollment row exists
+  const user = await db.user.findUnique({
+    where: { identifier: newId },
+    select: { id: true },
+  });
+  if (user) {
+    const enrolled = await db.enrollment.findFirst({
+      where: { studentId: user.id, courseOfferingId: course.id },
+    });
+    await expect(
+      "Enrollment row created in DB",
+      !!enrolled,
+      "no enrollment found"
+    );
+  }
+
+  // Duplicate join → 409
+  const dup = await fetch(`${BASE}/api/join`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Cookie: cookie },
+    body: JSON.stringify({ code: demoCode }),
+  });
+  await expect("Duplicate join → 409", dup.status === 409, `got ${dup.status}`);
+
+  // Invalid code → 404
+  const bad = await fetch(`${BASE}/api/join`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Cookie: cookie },
+    body: JSON.stringify({ code: "FAKE99-XXXX99" }),
+  });
+  await expect("Invalid code → 404", bad.status === 404, `got ${bad.status}`);
+
+  // Malformed code → 400
+  const malformed = await fetch(`${BASE}/api/join`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Cookie: cookie },
+    body: JSON.stringify({ code: "no hyphen" }),
+  });
+  await expect(
+    "Malformed code → 400",
+    malformed.status === 400,
+    `got ${malformed.status}`
+  );
+
+  // GET /teacher/courses as student → forbidden (redirect)
+  const tcRes = await getWithCookie("/teacher/courses", cookie);
+  await expect(
+    "Student GET /teacher/courses → redirect (not allowed)",
+    tcRes.status === 307 || tcRes.status === 302,
+    `got ${tcRes.status}`
+  );
+
+  // Teacher login + create course flow
+  const teacherCookie = await signin("teacher@studennnn.local", "Teacher1234!");
+  if (!teacherCookie) {
+    fail("Teacher login for course creation", "no cookie");
+    return;
+  }
+
+  const tcOk = await getWithCookie("/teacher/courses", teacherCookie);
+  await expect(
+    "Teacher GET /teacher/courses → 200",
+    tcOk.status === 200,
+    `got ${tcOk.status}`
+  );
+  const tcBody = await tcOk.text();
+  await expect(
+    "Teacher courses page shows demo course",
+    tcBody.includes("คณิตศาสตร์") || tcBody.includes("MATH4A-DEMO1"),
+    "demo course not listed"
+  );
+
+  // Cleanup test student
+  if (user) {
+    await db.auditLog.deleteMany({ where: { actorId: user.id } });
+    await db.enrollment.deleteMany({ where: { studentId: user.id } });
+    await db.student.delete({ where: { userId: user.id } });
+    await db.user.delete({ where: { id: user.id } });
+  }
+}
+
 async function testAuditLog() {
   console.log("\n📝 Audit log verification");
 
@@ -448,6 +595,7 @@ async function main() {
   await testSignupValidation();
   await testRateLimitLockout();
   await testForceResetRedirect();
+  await testPhase2Join();
   await testAuditLog();
 
   console.log(`\n╭───────────────────────────────────╮`);
