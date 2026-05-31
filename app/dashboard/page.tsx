@@ -211,11 +211,15 @@ export default async function DashboardPage() {
 
         {/* ADMIN */}
         {user.role === "ADMIN" && (
-          <section className="mt-10 card p-6">
-            <h2 className="font-semibold tracking-tight">เครื่องมือผู้ดูแล</h2>
-            <p className="mt-2 text-sm text-ink-soft">
-              หน้า Admin (รายชื่อครู/นักเรียน, audit log, CSV import)
-              จะเสร็จในขั้นถัดไปของ Phase 2
+          <section className="mt-10">
+            <h2 className="text-xl font-semibold tracking-tight mb-4">
+              เครื่องมือผู้ดูแล
+            </h2>
+            <Link href="/admin/dashboard" className="btn-primary">
+              เปิด Admin Panel →
+            </Link>
+            <p className="mt-3 text-sm text-ink-soft">
+              จัดการครู / นักเรียน · นำเข้า CSV · ตรวจ Audit Log
             </p>
           </section>
         )}
