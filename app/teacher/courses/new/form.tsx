@@ -1,16 +1,24 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { ClassPicker, type ClassOption } from "@/components/class-picker";
 import { createCourseAction, type CreateCourseState } from "./actions";
 
 interface FormProps {
-  classes: { id: string; name: string; gradeLevel: string }[];
+  classes: ClassOption[];
   terms: { id: string; name: string; number: number; isActive: boolean }[];
+  recentClassIds: string[];
+  homeroomClassId: string | null;
 }
 
 const initial: CreateCourseState = {};
 
-export function CreateCourseForm({ classes, terms }: FormProps) {
+export function CreateCourseForm({
+  classes,
+  terms,
+  recentClassIds,
+  homeroomClassId,
+}: FormProps) {
   const [state, action, pending] = useActionState(createCourseAction, initial);
   const defaultTerm = terms.find((t) => t.isActive)?.id ?? terms[0]?.id ?? "";
   const [classId, setClassId] = useState("");
@@ -48,23 +56,14 @@ export function CreateCourseForm({ classes, terms }: FormProps) {
           <label htmlFor="classId" className="mb-1.5 block text-sm font-medium">
             ห้องเรียน
           </label>
-          <select
-            id="classId"
-            name="classId"
-            required
+          <ClassPicker
+            classes={classes}
+            recentClassIds={recentClassIds}
+            homeroomClassId={homeroomClassId}
             value={classId}
-            onChange={(e) => setClassId(e.target.value)}
-            className="input"
-          >
-            <option value="" disabled>
-              -- เลือกห้อง --
-            </option>
-            {classes.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+            onChange={setClassId}
+            inputName="classId"
+          />
           {state.fieldErrors?.classId && (
             <p className="mt-1 text-xs text-rose-600">
               {state.fieldErrors.classId}

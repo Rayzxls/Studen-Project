@@ -108,30 +108,48 @@ async function main() {
   });
   console.log("✓ Academic Year 2568 + 2 terms");
 
-  // Classes (school-defined homerooms)
-  await db.class.upsert({
-    where: {
-      academicYearId_name: { academicYearId: year2568.id, name: "ม.4/1" },
-    },
-    update: {},
-    create: {
-      academicYearId: year2568.id,
-      name: "ม.4/1",
-      gradeLevel: "ม.4",
-    },
-  });
-  const class402 = await db.class.upsert({
+  // Classes (school-defined homerooms) — varied across ป.1 – ม.6 to demonstrate ClassPicker
+  const classDefs: { name: string; gradeLevel: string }[] = [
+    // ประถม
+    { name: "ป.1/1", gradeLevel: "ป.1" },
+    { name: "ป.1/2", gradeLevel: "ป.1" },
+    { name: "ป.2/1", gradeLevel: "ป.2" },
+    { name: "ป.3/1", gradeLevel: "ป.3" },
+    { name: "ป.4/1", gradeLevel: "ป.4" },
+    { name: "ป.5/1", gradeLevel: "ป.5" },
+    { name: "ป.6/1", gradeLevel: "ป.6" },
+    { name: "ป.6/2", gradeLevel: "ป.6" },
+    // ม.ต้น
+    { name: "ม.1/1", gradeLevel: "ม.1" },
+    { name: "ม.1/2", gradeLevel: "ม.1" },
+    { name: "ม.2/1", gradeLevel: "ม.2" },
+    { name: "ม.2/2", gradeLevel: "ม.2" },
+    { name: "ม.3/1", gradeLevel: "ม.3" },
+    { name: "ม.3/2", gradeLevel: "ม.3" },
+    // ม.ปลาย
+    { name: "ม.4/1", gradeLevel: "ม.4" },
+    { name: "ม.4/2", gradeLevel: "ม.4" },
+    { name: "ม.4/3", gradeLevel: "ม.4" },
+    { name: "ม.5/1", gradeLevel: "ม.5" },
+    { name: "ม.5/2", gradeLevel: "ม.5" },
+    { name: "ม.6/1", gradeLevel: "ม.6" },
+    { name: "ม.6/2", gradeLevel: "ม.6" },
+  ];
+  for (const c of classDefs) {
+    await db.class.upsert({
+      where: {
+        academicYearId_name: { academicYearId: year2568.id, name: c.name },
+      },
+      update: {},
+      create: { academicYearId: year2568.id, ...c },
+    });
+  }
+  const class402 = await db.class.findUniqueOrThrow({
     where: {
       academicYearId_name: { academicYearId: year2568.id, name: "ม.4/2" },
     },
-    update: {},
-    create: {
-      academicYearId: year2568.id,
-      name: "ม.4/2",
-      gradeLevel: "ม.4",
-    },
   });
-  console.log("✓ Classes: ม.4/1, ม.4/2");
+  console.log(`✓ ${classDefs.length} classes (ป.1 – ม.6)`);
 
   await db.student.update({
     where: { userId: studentUser.id },

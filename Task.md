@@ -1,4 +1,4 @@
-# Task.md — Implementation Roadmap
+pnpm dev# Task.md — Implementation Roadmap
 
 แบ่งเป็น 9 phase เรียงตาม dependency — แต่ละ phase = shippable
 

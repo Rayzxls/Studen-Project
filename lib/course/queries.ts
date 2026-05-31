@@ -37,6 +37,41 @@ export async function getTermsByYear(academicYearId: string) {
   });
 }
 
+/**
+ * Teacher's most-used class IDs (top 5, by recency of CourseOffering creation).
+ * Used to suggest "frequently used" classes in ClassPicker.
+ */
+export async function getTeacherRecentClassIds(
+  teacherUserId: string,
+  limit = 5
+): Promise<string[]> {
+  const courses = await db.courseOffering.findMany({
+    where: { teacherId: teacherUserId },
+    orderBy: { createdAt: "desc" },
+    select: { classId: true },
+    take: 30,
+  });
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const c of courses) {
+    if (seen.has(c.classId)) continue;
+    seen.add(c.classId);
+    result.push(c.classId);
+    if (result.length >= limit) break;
+  }
+  return result;
+}
+
+export async function getTeacherHomeroomClassId(
+  teacherUserId: string
+): Promise<string | null> {
+  const t = await db.teacher.findUnique({
+    where: { userId: teacherUserId },
+    select: { homeroomOfId: true },
+  });
+  return t?.homeroomOfId ?? null;
+}
+
 export async function getCourseOfferingForTeacher(
   courseOfferingId: string,
   teacherUserId: string

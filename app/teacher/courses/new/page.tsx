@@ -6,12 +6,15 @@ import {
   getActiveAcademicYear,
   getClassesByYear,
   getTermsByYear,
+  getTeacherRecentClassIds,
+  getTeacherHomeroomClassId,
 } from "@/lib/course/queries";
 import { CreateCourseForm } from "./form";
 
 export default async function NewCoursePage() {
+  let session;
   try {
-    await requireRole(["TEACHER"]);
+    session = await requireRole(["TEACHER"]);
   } catch {
     redirect("/dashboard");
   }
@@ -32,9 +35,11 @@ export default async function NewCoursePage() {
     );
   }
 
-  const [classes, terms] = await Promise.all([
+  const [classes, terms, recentClassIds, homeroomClassId] = await Promise.all([
     getClassesByYear(year.id),
     getTermsByYear(year.id),
+    getTeacherRecentClassIds(session.user.id),
+    getTeacherHomeroomClassId(session.user.id),
   ]);
 
   return (
@@ -56,7 +61,12 @@ export default async function NewCoursePage() {
         </p>
 
         <div className="mt-8">
-          <CreateCourseForm classes={classes} terms={terms} />
+          <CreateCourseForm
+            classes={classes}
+            terms={terms}
+            recentClassIds={recentClassIds}
+            homeroomClassId={homeroomClassId}
+          />
         </div>
       </main>
     </div>

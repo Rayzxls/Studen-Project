@@ -408,6 +408,43 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
+   cmdk Command Menu (ClassPicker, etc.)
+   ═══════════════════════════════════════════════════════════ */
+
+[cmdk-group-heading] {
+  @apply px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-ink-soft;
+}
+
+[cmdk-item] {
+  @apply flex cursor-pointer items-center justify-between gap-2 rounded-md px-3 py-2 text-sm;
+  @apply transition-colors;
+}
+
+[cmdk-item][data-selected="true"] {
+  @apply bg-slate-100 text-ink;
+}
+
+[cmdk-item]:hover {
+  @apply bg-slate-50;
+}
+
+[cmdk-item][data-disabled="true"] {
+  @apply cursor-not-allowed opacity-40;
+}
+
+[cmdk-empty] {
+  @apply px-3 py-6 text-center text-sm text-ink-soft;
+}
+
+[cmdk-group]:not(:last-child) {
+  @apply border-b border-slate-100 pb-1;
+}
+
+[cmdk-group] + [cmdk-group] {
+  @apply pt-1;
+}
+
+/* ═══════════════════════════════════════════════════════════
    Print (A4 transcript)
    ═══════════════════════════════════════════════════════════ */
 
