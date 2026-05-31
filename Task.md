@@ -1,12 +1,14 @@
-pnpm dev# Task.md — Implementation Roadmap
+# Task.md — Implementation Roadmap
 
 แบ่งเป็น 9 phase เรียงตาม dependency — แต่ละ phase = shippable
 
 > Time estimate: solo dev ทำงาน focus ~4 ชม/วัน
+>
+> **สถานะปัจจุบัน:** Phase 0-2 ✅ DONE · Phase 3 = next · ดู `HANDOFF.md` สำหรับสรุป
 
 ---
 
-## Phase 0 — Scaffolding (2-3 วัน)
+## ✅ Phase 0 — Scaffolding (2-3 วัน) — DONE
 
 - [ ] `pnpm create next-app` (App Router + TS + Tailwind)
 - [ ] shadcn/ui CLI init
@@ -33,7 +35,7 @@ pnpm dev# Task.md — Implementation Roadmap
 
 ---
 
-## Phase 1 — Auth & RBAC (4-6 วัน)
+## ✅ Phase 1 — Auth & RBAC (4-6 วัน) — DONE
 
 ระบบ login + signup + role guards
 
@@ -61,7 +63,8 @@ pnpm dev# Task.md — Implementation Roadmap
 
 ---
 
-## Phase 2 — Academic Data & CSV Import (3-4 วัน)
+## ✅ Phase 2 — Academic Data & CSV Import (3-4 วัน) — DONE
+> Note: Workspace model adopted (ADR-0012) — no Subject template. CourseOffering owns name/credit/grade directly.
 
 - [ ] Prisma: `AcademicYear`, `Term`, `Subject` (+ `creditHours`), `Class`, `CourseOffering`, `Enrollment`
 - [ ] Admin list pages: teachers, students (table + filter + search)
@@ -82,7 +85,7 @@ pnpm dev# Task.md — Implementation Roadmap
 
 ---
 
-## Phase 3 — Members + Course Skeleton (2-3 วัน)
+## 🔜 Phase 3 — Members + Course Skeleton (2-3 วัน) — NEXT
 
 - [ ] Course page shell: tabs (Feed / Attendance / Scores / Assignments / Members / Settings)
 - [ ] Members tab — list students ใน CourseOffering (ชื่อเท่านั้น, no scores)
