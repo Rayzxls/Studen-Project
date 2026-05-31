@@ -1,10 +1,14 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { GraduationCap, ShieldCheck, Sparkles } from "lucide-react";
+import { auth } from "@/lib/auth";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const session = await auth();
+  if (session?.user) redirect("/dashboard");
+
   return (
     <main className="mesh-bg relative min-h-screen overflow-hidden">
-      {/* Floating blobs */}
       <div
         aria-hidden
         className="blob animate-float-slow bg-amber-300"

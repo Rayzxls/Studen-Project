@@ -1,0 +1,126 @@
+// Studennnn — Prisma Schema
+// Phase 1: Identity + Auth + Audit
+// See: Architecture.md § 3 Data Model · Security.md
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ═══════════════════════════════════════════════════════════
+// Identity & Auth
+// ═══════════════════════════════════════════════════════════
+
+enum Role {
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+model User {
+  id             String    @id @default(cuid())
+  role           Role
+  identifier     String    @unique // email (admin/teacher) | studentId (student)
+  passwordHash   String
+  mustResetPwd   Boolean   @default(false)
+  isActive       Boolean   @default(true)
+  consentedAt    DateTime?
+  consentVersion String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime? // soft delete
+
+  admin            Admin?
+  teacher          Teacher?
+  student          Student?
+  sessions         UserSession[]
+  auditLogsAsActor AuditLog[]    @relation("ActorLogs")
+
+  @@index([role])
+  @@index([deletedAt])
+}
+
+model Admin {
+  userId    String @id
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName String
+  lastName  String
+}
+
+model Teacher {
+  userId    String @id
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName String
+  lastName  String
+  email     String @unique
+  // homeroomOfId: added in Phase 2 when Class model exists
+}
+
+model Student {
+  userId     String  @id
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  studentId  String  @unique
+  firstName  String
+  lastName   String
+  anonymized Boolean @default(false)
+  // classId: added in Phase 2 when Class model exists
+}
+
+model UserSession {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime  @default(now())
+  lastSeenAt DateTime  @default(now())
+  expiresAt  DateTime
+  revokedAt  DateTime?
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ═══════════════════════════════════════════════════════════
+// Audit
+// ═══════════════════════════════════════════════════════════
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  timestamp  DateTime @default(now())
+  actorId    String?
+  actor      User?    @relation("ActorLogs", fields: [actorId], references: [id], onDelete: SetNull)
+  actorRole  Role?
+  action     String // SCORE_EDIT_AFTER_PUBLISH | LOGIN_SUCCESS | LOGIN_FAILED | ...
+  targetType String?
+  targetId   String?
+  before     Json?
+  after      Json?
+  reason     String?
+  ipAddress  String?
+  userAgent  String?
+
+  @@index([actorId, timestamp])
+  @@index([action, timestamp])
+  @@index([targetType, targetId])
+}
+
+// ═══════════════════════════════════════════════════════════
+// Rate Limit (in-DB, fallback when Redis not available)
+// Phase 1 simple version — Phase 9 migrate to Upstash Redis
+// ═══════════════════════════════════════════════════════════
+
+model RateLimitBucket {
+  id        String   @id // "<action>:<identifier>" e.g. "login:admin@example.com"
+  count     Int      @default(0)
+  resetAt   DateTime
+  lockedAt  DateTime?
+  updatedAt DateTime @updatedAt
+
+  @@index([resetAt])
+}
