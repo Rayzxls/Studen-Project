@@ -5,14 +5,14 @@ import { CopyButton } from "./copy-button";
 
 interface ClassCodeCardProps {
   classCode: string;
-  subjectName: string;
+  courseName: string;
   className: string;
   appUrl?: string;
 }
 
 export function ClassCodeCard({
   classCode,
-  subjectName,
+  courseName,
   className,
   appUrl = typeof window !== "undefined" ? window.location.origin : "",
 }: ClassCodeCardProps) {
@@ -68,7 +68,7 @@ export function ClassCodeCard({
           </div>
 
           <div className="rounded-lg bg-accent-soft p-3 text-xs">
-            <div className="font-semibold text-amber-800">{subjectName}</div>
+            <div className="font-semibold text-amber-800">{courseName}</div>
             <div className="text-amber-700">ห้อง {className}</div>
           </div>
         </div>

@@ -435,7 +435,7 @@ async function testPhase2Join() {
   });
   const joinData = (await joinRes.json()) as {
     success?: boolean;
-    subjectName?: string;
+    courseName?: string;
     error?: { code: string };
   };
   await expect(
@@ -444,9 +444,9 @@ async function testPhase2Join() {
     `got ${joinRes.status}: ${JSON.stringify(joinData)}`
   );
   await expect(
-    "Response contains subjectName",
-    joinData.subjectName === "คณิตศาสตร์ ม.4",
-    `got: ${joinData.subjectName}`
+    "Response contains courseName",
+    joinData.courseName === "คณิตศาสตร์ ม.4/2 ครูสมชาย",
+    `got: ${joinData.courseName}`
   );
 
   // Verify enrollment row exists
@@ -517,7 +517,7 @@ async function testPhase2Join() {
   const tcBody = await tcOk.text();
   await expect(
     "Teacher courses page shows demo course",
-    tcBody.includes("คณิตศาสตร์") || tcBody.includes("MATH4A-DEMO1"),
+    tcBody.includes("คณิตศาสตร์ ม.4/2") || tcBody.includes("MATH4A-DEMO1"),
     "demo course not listed"
   );
 

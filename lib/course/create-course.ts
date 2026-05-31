@@ -5,23 +5,23 @@ import { Conflict, NotFound } from "@/lib/errors";
 import { generateUniqueClassCode } from "./class-code";
 
 /**
- * Create a CourseOffering owned by a teacher.
+ * Create a CourseOffering (workspace) owned by a teacher.
  * Auto-generates a class code.
+ *
+ * ADR-0012: no Subject FK — fields are owned by the CourseOffering.
  */
 export async function createCourseOffering(params: {
   teacherUserId: string;
-  subjectId: string;
+  name: string;
+  subjectCode?: string;
+  gradeLevel: string;
+  creditHours: number;
   classId: string;
   termId: string;
   ipAddress?: string;
   userAgent?: string;
 }): Promise<{ id: string; classCode: string }> {
-  // Verify references exist
-  const [subject, klass, term, teacher] = await Promise.all([
-    db.subject.findUnique({
-      where: { id: params.subjectId },
-      select: { id: true, code: true },
-    }),
+  const [klass, term, teacher] = await Promise.all([
     db.class.findUnique({
       where: { id: params.classId },
       select: { id: true, name: true },
@@ -36,14 +36,15 @@ export async function createCourseOffering(params: {
     }),
   ]);
 
-  if (!subject) throw new NotFound("subject_not_found");
   if (!klass) throw new NotFound("class_not_found");
   if (!term) throw new NotFound("term_not_found");
   if (!teacher) throw new NotFound("teacher_not_found");
 
-  // Generate class code with hint from subject code
-  // e.g., "MATH-M4" + class "ม.4/2" → hint "MATHM42"
-  const hint = `${subject.code.split("-")[0]}${klass.name.replace(/[^0-9]/g, "")}`;
+  // Generate class code hint from subject code (if provided) + class name digits
+  const codeHint = params.subjectCode
+    ? params.subjectCode.split("-")[0]
+    : params.name.replace(/[^A-Za-z0-9]/g, "").slice(0, 4);
+  const hint = `${codeHint}${klass.name.replace(/[^0-9]/g, "")}`;
   const classCode = await generateUniqueClassCode(hint);
 
   try {
@@ -51,9 +52,12 @@ export async function createCourseOffering(params: {
       const course = await tx.courseOffering.create({
         data: {
           teacherId: params.teacherUserId,
-          subjectId: params.subjectId,
           classId: params.classId,
           termId: params.termId,
+          name: params.name,
+          subjectCode: params.subjectCode || null,
+          gradeLevel: params.gradeLevel,
+          creditHours: params.creditHours,
           classCode,
           codeActive: true,
         },
@@ -70,7 +74,10 @@ export async function createCourseOffering(params: {
           ipAddress: params.ipAddress,
           userAgent: params.userAgent,
           after: {
-            subjectId: params.subjectId,
+            name: params.name,
+            subjectCode: params.subjectCode ?? null,
+            gradeLevel: params.gradeLevel,
+            creditHours: params.creditHours,
             classId: params.classId,
             termId: params.termId,
             classCode,

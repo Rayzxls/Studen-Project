@@ -6,6 +6,7 @@ import { isValidClassCodeFormat, normalizeClassCode } from "./class-code";
 
 /**
  * Enroll a student in a CourseOffering using a class code.
+ * Workspace model (ADR-0012): course details come from CourseOffering directly.
  */
 export async function enrollByClassCode(params: {
   studentUserId: string;
@@ -14,7 +15,7 @@ export async function enrollByClassCode(params: {
   userAgent?: string;
 }): Promise<{
   courseOfferingId: string;
-  subjectName: string;
+  courseName: string;
   className: string;
   teacherName: string;
 }> {
@@ -24,11 +25,13 @@ export async function enrollByClassCode(params: {
     throw new ValidationError({ code: "รหัสห้องเรียนไม่ถูกต้อง" });
   }
 
-  // Find course by code
   const course = await db.courseOffering.findUnique({
     where: { classCode: code },
-    include: {
-      subject: { select: { name: true } },
+    select: {
+      id: true,
+      name: true,
+      codeActive: true,
+      codeExpiresAt: true,
       class: { select: { name: true } },
       teacher: { select: { firstName: true, lastName: true } },
     },
@@ -40,14 +43,12 @@ export async function enrollByClassCode(params: {
     throw new Forbidden("class_code_expired");
   }
 
-  // Verify the student exists
   const student = await db.student.findUnique({
     where: { userId: params.studentUserId },
     select: { userId: true },
   });
   if (!student) throw new Forbidden("not_a_student");
 
-  // Create enrollment in a transaction with audit
   try {
     await db.$transaction(async (tx) => {
       const enrollment = await tx.enrollment.create({
@@ -85,15 +86,13 @@ export async function enrollByClassCode(params: {
 
   return {
     courseOfferingId: course.id,
-    subjectName: course.subject.name,
+    courseName: course.name,
     className: course.class.name,
     teacherName: `${course.teacher.firstName} ${course.teacher.lastName}`,
   };
 }
 
-/**
- * List a student's enrollments (active courses)
- */
+/** List a student's enrollments */
 export async function listStudentCourses(studentUserId: string) {
   return db.enrollment.findMany({
     where: { studentId: studentUserId },
@@ -104,8 +103,11 @@ export async function listStudentCourses(studentUserId: string) {
       course: {
         select: {
           id: true,
+          name: true,
+          subjectCode: true,
+          gradeLevel: true,
+          creditHours: true,
           classCode: true,
-          subject: { select: { name: true, gradeLevel: true } },
           class: { select: { name: true } },
           term: { select: { name: true } },
           teacher: { select: { firstName: true, lastName: true } },
@@ -115,19 +117,20 @@ export async function listStudentCourses(studentUserId: string) {
   });
 }
 
-/**
- * List a teacher's CourseOfferings
- */
+/** List a teacher's CourseOfferings */
 export async function listTeacherCourses(teacherUserId: string) {
   return db.courseOffering.findMany({
     where: { teacherId: teacherUserId },
     orderBy: { createdAt: "desc" },
     select: {
       id: true,
+      name: true,
+      subjectCode: true,
+      gradeLevel: true,
+      creditHours: true,
       classCode: true,
       codeActive: true,
       createdAt: true,
-      subject: { select: { name: true, gradeLevel: true } },
       class: { select: { name: true } },
       term: { select: { name: true } },
       _count: { select: { enrollments: true } },

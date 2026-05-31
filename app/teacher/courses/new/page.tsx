@@ -4,7 +4,6 @@ import { ChevronLeft } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
 import {
   getActiveAcademicYear,
-  getAllSubjects,
   getClassesByYear,
   getTermsByYear,
 } from "@/lib/course/queries";
@@ -33,8 +32,7 @@ export default async function NewCoursePage() {
     );
   }
 
-  const [subjects, classes, terms] = await Promise.all([
-    getAllSubjects(),
+  const [classes, terms] = await Promise.all([
     getClassesByYear(year.id),
     getTermsByYear(year.id),
   ]);
@@ -54,15 +52,11 @@ export default async function NewCoursePage() {
       <main className="mx-auto max-w-3xl px-6 py-10 animate-fade-in">
         <h1 className="text-3xl font-bold tracking-tight">สร้างวิชาใหม่</h1>
         <p className="mt-1 text-sm text-ink-soft">
-          เลือกวิชา ห้องเรียน และเทอม — ระบบจะสร้างรหัสเข้าห้องให้อัตโนมัติ
+          ตั้งชื่อ + กำหนดหน่วยกิตเอง — ระบบสร้างรหัสห้องให้อัตโนมัติ
         </p>
 
         <div className="mt-8">
-          <CreateCourseForm
-            subjects={subjects}
-            classes={classes}
-            terms={terms}
-          />
+          <CreateCourseForm classes={classes} terms={terms} />
         </div>
       </main>
     </div>

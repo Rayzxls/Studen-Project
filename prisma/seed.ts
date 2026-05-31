@@ -70,16 +70,14 @@ async function main() {
   });
   console.log("✓ Student: 60001 / Student1234");
 
-  // ════════════ Academic structure (Phase 2) ════════════
+  // ════════════ Academic structure (Phase 2 — workspace model) ════════════
 
-  // Academic Year
   const year2568 = await db.academicYear.upsert({
     where: { name: "2568" },
     update: { isActive: true },
     create: { name: "2568", isActive: true },
   });
 
-  // Terms
   const term1 = await db.term.upsert({
     where: {
       academicYearId_number: { academicYearId: year2568.id, number: 1 },
@@ -110,49 +108,7 @@ async function main() {
   });
   console.log("✓ Academic Year 2568 + 2 terms");
 
-  // Subjects (with credit hours)
-  const subjects = [
-    {
-      code: "MATH-M4",
-      name: "คณิตศาสตร์ ม.4",
-      gradeLevel: "ม.4",
-      creditHours: 1.5,
-    },
-    {
-      code: "ENG-M4",
-      name: "ภาษาอังกฤษ ม.4",
-      gradeLevel: "ม.4",
-      creditHours: 1.5,
-    },
-    {
-      code: "SCI-M4",
-      name: "วิทยาศาสตร์ ม.4",
-      gradeLevel: "ม.4",
-      creditHours: 1.5,
-    },
-    {
-      code: "THA-M4",
-      name: "ภาษาไทย ม.4",
-      gradeLevel: "ม.4",
-      creditHours: 1.5,
-    },
-    {
-      code: "SOC-M4",
-      name: "สังคมศึกษา ม.4",
-      gradeLevel: "ม.4",
-      creditHours: 1.0,
-    },
-  ];
-  for (const s of subjects) {
-    await db.subject.upsert({
-      where: { code: s.code },
-      update: { name: s.name, creditHours: s.creditHours },
-      create: s,
-    });
-  }
-  console.log(`✓ ${subjects.length} subjects`);
-
-  // Classes
+  // Classes (school-defined homerooms)
   await db.class.upsert({
     where: {
       academicYearId_name: { academicYearId: year2568.id, name: "ม.4/1" },
@@ -177,45 +133,36 @@ async function main() {
   });
   console.log("✓ Classes: ม.4/1, ม.4/2");
 
-  // Link student 60001 → ม.4/2
   await db.student.update({
     where: { userId: studentUser.id },
     data: { classId: class402.id },
   });
-
-  // Make teacher the homeroom of ม.4/2
   await db.teacher.update({
     where: { userId: teacherUser.id },
     data: { homeroomOfId: class402.id },
   });
   console.log("✓ Linked student to ม.4/2, teacher as homeroom");
 
-  // Sample CourseOffering: ครูสมชาย สอนคณิต ม.4/2 เทอม 1
-  const mathSubj = await db.subject.findUnique({ where: { code: "MATH-M4" } });
-  if (mathSubj) {
-    await db.courseOffering.upsert({
-      where: {
-        teacherId_subjectId_classId_termId: {
-          teacherId: teacherUser.id,
-          subjectId: mathSubj.id,
-          classId: class402.id,
-          termId: term1.id,
-        },
-      },
-      update: {},
-      create: {
+  // Sample CourseOffering — teacher-owned workspace (ADR-0012)
+  const existing = await db.courseOffering.findUnique({
+    where: { classCode: "MATH4A-DEMO1" },
+  });
+  if (!existing) {
+    await db.courseOffering.create({
+      data: {
         teacherId: teacherUser.id,
-        subjectId: mathSubj.id,
         classId: class402.id,
         termId: term1.id,
+        name: "คณิตศาสตร์ ม.4/2 ครูสมชาย",
+        subjectCode: "MATH-M4",
+        gradeLevel: "ม.4",
+        creditHours: 1.5,
         classCode: "MATH4A-DEMO1",
         codeActive: true,
       },
     });
-    console.log(
-      "✓ Sample CourseOffering: คณิตศาสตร์ ม.4/2 (code: MATH4A-DEMO1)"
-    );
   }
+  console.log("✓ Sample workspace: คณิตศาสตร์ ม.4/2 (code: MATH4A-DEMO1)");
 
   console.log("\n✨ Done\n");
   console.log("Test accounts:");

@@ -43,23 +43,21 @@ export default async function CourseDetailPage({ params }: PageProps) {
       <main className="mx-auto max-w-5xl px-6 py-10 animate-fade-in space-y-6">
         <div>
           <div className="badge-teacher mb-2">รายวิชาที่สอน</div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            {course.subject.name}
-          </h1>
+          <h1 className="text-3xl font-bold tracking-tight">{course.name}</h1>
           <p className="mt-1 text-sm text-ink-soft">
-            ห้อง {course.class.name} · {course.subject.creditHours} หน่วยกิต ·
-            สอนโดย {course.teacher.firstName} {course.teacher.lastName}
+            ห้อง {course.class.name} · {course.gradeLevel} ·{" "}
+            {course.creditHours} หน่วยกิต
+            {course.subjectCode ? ` · รหัส ${course.subjectCode}` : ""} · สอนโดย{" "}
+            {course.teacher.firstName} {course.teacher.lastName}
           </p>
         </div>
 
-        {/* QR + invite */}
         <ClassCodeCard
           classCode={course.classCode}
-          subjectName={course.subject.name}
+          courseName={course.name}
           className={course.class.name}
         />
 
-        {/* Members */}
         <div className="card p-5">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="inline-flex items-center gap-2 font-semibold tracking-tight">

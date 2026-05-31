@@ -1,6 +1,7 @@
 // Studennnn — Prisma Schema
 // Phase 1: Identity + Auth + Audit
 // Phase 2: Academic structure + Course Offerings + Enrollments
+// Workspace model (ADR-0012): teacher-owned CourseOffering, no school-wide Subject
 // See: Architecture.md § 3 Data Model · Security.md · CONTEXT.md
 
 generator client {
@@ -144,18 +145,6 @@ model Term {
   @@unique([academicYearId, number])
 }
 
-model Subject {
-  id          String @id @default(cuid())
-  code        String @unique // "MATH-M4"
-  name        String // "คณิตศาสตร์ ม.4"
-  gradeLevel  String // "ม.4"
-  creditHours Float // หน่วยกิต e.g. 1.5
-
-  courses CourseOffering[]
-
-  @@index([gradeLevel])
-}
-
 model Class {
   id             String       @id @default(cuid())
   academicYearId String
@@ -172,15 +161,20 @@ model Class {
 }
 
 model CourseOffering {
-  id             String    @id @default(cuid())
-  teacherId      String
-  teacher        Teacher   @relation(fields: [teacherId], references: [userId], onDelete: Restrict)
-  subjectId      String
-  subject        Subject   @relation(fields: [subjectId], references: [id], onDelete: Restrict)
-  classId        String
-  class          Class     @relation(fields: [classId], references: [id], onDelete: Restrict)
-  termId         String
-  term           Term      @relation(fields: [termId], references: [id], onDelete: Restrict)
+  id        String  @id @default(cuid())
+  teacherId String
+  teacher   Teacher @relation(fields: [teacherId], references: [userId], onDelete: Restrict)
+  classId   String
+  class     Class   @relation(fields: [classId], references: [id], onDelete: Restrict)
+  termId    String
+  term      Term    @relation(fields: [termId], references: [id], onDelete: Restrict)
+
+  // Workspace fields (teacher-defined) — replaces former Subject FK
+  name        String // "คณิตศาสตร์ ม.4 ครูสมชาย"
+  subjectCode String? // optional teacher-set code for transcript ("MATH-M4")
+  gradeLevel  String // "ม.4" (defaults to class.gradeLevel on create)
+  creditHours Float // หน่วยกิต e.g. 1.5
+
   classCode      String    @unique
   codeActive     Boolean   @default(true)
   codeExpiresAt  DateTime?
@@ -189,8 +183,9 @@ model CourseOffering {
 
   enrollments Enrollment[]
 
-  @@unique([teacherId, subjectId, classId, termId])
   @@index([classCode])
+  @@index([teacherId])
+  @@index([classId, termId])
 }
 
 model Enrollment {

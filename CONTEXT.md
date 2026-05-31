@@ -50,24 +50,31 @@
 หนึ่งภาคเรียน — เป็นของ Academic Year หนึ่ง
 ตัวอย่าง: "เทอม 1/2568", "เทอม 2/2568"
 
-### Subject (รายวิชา)
-ตัวแม่แบบของวิชา — ไม่ผูกกับครูหรือห้อง
-ตัวอย่าง: "คณิตศาสตร์ ม.4"
-**Properties:** `name`, `gradeLevel`, **`creditHours`** (หน่วยกิต — เช่น 1.5)
-
-### Credit Hours (หน่วยกิต)
-น้ำหนักของวิชาในการคำนวณ Term GPA
-เก็บใน Subject (ไม่ใช่ CourseOffering) — Subject "คณิตศาสตร์ ม.4" ที่ไหนก็เป็น 1.5 เหมือนกัน
-
 ### Class (ห้องเรียน)
-กลุ่มนักเรียนที่อยู่ห้องเดียวกัน 1 ปีการศึกษา
+กลุ่มนักเรียนที่อยู่ห้องเดียวกัน 1 ปีการศึกษา (homeroom)
 ตัวอย่าง: "ม.4/2 ปี 2568"
 มี Homeroom Teacher (optional) 1 คน
+**โรงเรียนกำหนด** — ไม่ใช่ครูสร้างเอง
 
-### CourseOffering (วิชาที่เปิดสอน) ⭐ KEY ENTITY
-"คณิตศาสตร์ ม.4 ที่ครูสมชายสอน ห้อง ม.4/2 เทอม 1/2568"
-= 1 instance ของ Subject + Teacher + Class + Term
+### CourseOffering (Workspace ของครู) ⭐ KEY ENTITY
+ตัวอย่าง: "คณิตศาสตร์ ม.4 ครูสมชาย ห้อง ม.4/2 เทอม 1/2568"
+= วิชาที่ครูสร้างเองสำหรับสอนห้องหนึ่งในเทอมหนึ่ง
+
+**Properties:**
+- `name` (ครูตั้งเอง — เช่น "คณิตศาสตร์ ม.4 ครูสมชาย" หรือ "Math 4/2 Period 3")
+- `subjectCode` (optional — สำหรับ transcript เช่น "MATH-M4", "ค31101")
+- `gradeLevel` (เช่น "ม.4")
+- `creditHours` (หน่วยกิต — ใช้คำนวณ Term GPA)
+- `classCode` (รหัสเข้าห้อง)
+- `teacher`, `class`, `term` (FK)
+
 **ทุกอย่างที่เกิดใน "ห้องเรียนหนึ่ง" (Attendance, Score, Assignment, Announcement, Material, Comment) อยู่ใต้ CourseOffering นี้**
+
+> **ADR-0012 / Workspace model:** ไม่มี Subject template — ครูสร้าง CourseOffering พร้อมตั้งชื่อ + ระบุ creditHours เอง  ครู 2 คนอาจสร้าง "คณิตศาสตร์ ม.4" คนละ object → ระบบไม่ enforce uniqueness; รายงาน cross-class จับคู่ด้วย `subjectCode` (ถ้ามี) หรือ name fuzzy
+
+### Credit Hours (หน่วยกิต)
+น้ำหนักของวิชาในการคำนวณ Term GPA — เก็บใน CourseOffering ตรงๆ (ADR-0012)
+ครูระบุค่าเองตอนสร้างวิชา (ตามมาตรฐานโรงเรียน)
 
 ### Enrollment (การลงทะเบียน)
 ความสัมพันธ์ระหว่าง Student กับ CourseOffering
@@ -336,7 +343,8 @@ User **ต้องเปลี่ยน** ตอน login ครั้งแร
 |----------|--------------|
 | "User" (ลอยๆ) | Admin / Teacher / Student |
 | "Account" | User Account (auth) / Student (domain) |
-| "Course" (ลอยๆ) | Subject (แม่แบบ) / CourseOffering (เปิดสอน) |
+| "Course" (ลอยๆ) | CourseOffering (วิชาที่ครูสร้าง) |
+| "Subject" | ไม่มีในระบบ (ADR-0012 — ใช้ CourseOffering แทน) |
 | "Class" (ลอยๆ — หมายถึงคาบ?) | Session (คาบ) / Class (ห้องนักเรียน) |
 | "Grade" (ลอยๆ — เกรด หรือชั้น?) | Grade (เกรด 0-4) / Grade Level (ม.4, ม.5) |
 | "Score" ลอยๆ | Score Entry / Score Item / Weighted Total |

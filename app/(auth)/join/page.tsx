@@ -11,7 +11,7 @@ function JoinForm() {
   const [code, setCode] = useState(search.get("code") ?? "");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<{
-    subjectName: string;
+    courseName: string;
     className: string;
     teacherName: string;
   } | null>(null);
@@ -49,7 +49,7 @@ function JoinForm() {
       }
 
       setSuccess({
-        subjectName: data.subjectName,
+        courseName: data.courseName,
         className: data.className,
         teacherName: data.teacherName,
       });
@@ -71,7 +71,7 @@ function JoinForm() {
           เข้าห้องเรียนสำเร็จ
         </h1>
         <div className="mt-4 rounded-lg bg-white/60 p-4 text-sm">
-          <div className="font-semibold text-ink">{success.subjectName}</div>
+          <div className="font-semibold text-ink">{success.courseName}</div>
           <div className="text-ink-soft">{success.className}</div>
           <div className="mt-2 text-xs text-ink-soft">
             ครูผู้สอน: {success.teacherName}

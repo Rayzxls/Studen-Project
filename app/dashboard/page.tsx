@@ -135,9 +135,7 @@ export default async function DashboardPage() {
                     href={`/teacher/courses/${c.id}`}
                     className="card sheen p-5 hover:no-underline"
                   >
-                    <h3 className="font-semibold tracking-tight">
-                      {c.subject.name}
-                    </h3>
+                    <h3 className="font-semibold tracking-tight">{c.name}</h3>
                     <p className="mt-0.5 text-sm text-ink-soft">
                       ห้อง {c.class.name} · {c.term.name}
                     </p>
@@ -195,7 +193,7 @@ export default async function DashboardPage() {
                 {studentCourses.map((e) => (
                   <div key={e.id} className="card sheen p-5">
                     <h3 className="font-semibold tracking-tight">
-                      {e.course.subject.name}
+                      {e.course.name}
                     </h3>
                     <p className="mt-0.5 text-sm text-ink-soft">
                       ห้อง {e.course.class.name} · {e.course.term.name}

@@ -1,107 +1,195 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { createCourseAction, type CreateCourseState } from "./actions";
 
 interface FormProps {
-  subjects: {
-    id: string;
-    name: string;
-    gradeLevel: string;
-    creditHours: number;
-  }[];
   classes: { id: string; name: string; gradeLevel: string }[];
   terms: { id: string; name: string; number: number; isActive: boolean }[];
 }
 
 const initial: CreateCourseState = {};
 
-export function CreateCourseForm({ subjects, classes, terms }: FormProps) {
+export function CreateCourseForm({ classes, terms }: FormProps) {
   const [state, action, pending] = useActionState(createCourseAction, initial);
-
-  // Default to active term if any
   const defaultTerm = terms.find((t) => t.isActive)?.id ?? terms[0]?.id ?? "";
+  const [classId, setClassId] = useState("");
+  const selectedClass = classes.find((c) => c.id === classId);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   return (
     <form action={action} className="space-y-5">
+      {/* Workspace name */}
       <div className="card p-5">
-        <label htmlFor="subjectId" className="mb-1.5 block text-sm font-medium">
-          รายวิชา
+        <label htmlFor="name" className="mb-1.5 block text-sm font-medium">
+          ชื่อวิชา (ตั้งเอง)
         </label>
-        <select
-          id="subjectId"
-          name="subjectId"
+        <input
+          id="name"
+          name="name"
+          type="text"
           required
-          defaultValue=""
+          maxLength={200}
           className="input"
-        >
-          <option value="" disabled>
-            -- เลือกวิชา --
-          </option>
-          {subjects.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name} ({s.creditHours} หน่วยกิต)
-            </option>
-          ))}
-        </select>
-        {state.fieldErrors?.subjectId && (
-          <p className="mt-1 text-xs text-rose-600">
-            {state.fieldErrors.subjectId}
-          </p>
+          placeholder="เช่น คณิตศาสตร์ ม.4 ครูสมชาย"
+          defaultValue=""
+        />
+        <p className="mt-1.5 text-xs text-ink-soft">
+          ครู ตั้งชื่อตามที่ต้องการ — นักเรียนจะเห็นชื่อนี้
+        </p>
+        {state.fieldErrors?.name && (
+          <p className="mt-1 text-xs text-rose-600">{state.fieldErrors.name}</p>
         )}
       </div>
 
-      <div className="card p-5">
-        <label htmlFor="classId" className="mb-1.5 block text-sm font-medium">
-          ห้องเรียน
-        </label>
-        <select
-          id="classId"
-          name="classId"
-          required
-          defaultValue=""
-          className="input"
-        >
-          <option value="" disabled>
-            -- เลือกห้อง --
-          </option>
-          {classes.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
+      {/* Class + Term */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="card p-5">
+          <label htmlFor="classId" className="mb-1.5 block text-sm font-medium">
+            ห้องเรียน
+          </label>
+          <select
+            id="classId"
+            name="classId"
+            required
+            value={classId}
+            onChange={(e) => setClassId(e.target.value)}
+            className="input"
+          >
+            <option value="" disabled>
+              -- เลือกห้อง --
             </option>
-          ))}
-        </select>
-        {state.fieldErrors?.classId && (
-          <p className="mt-1 text-xs text-rose-600">
-            {state.fieldErrors.classId}
-          </p>
-        )}
+            {classes.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+          {state.fieldErrors?.classId && (
+            <p className="mt-1 text-xs text-rose-600">
+              {state.fieldErrors.classId}
+            </p>
+          )}
+        </div>
+
+        <div className="card p-5">
+          <label htmlFor="termId" className="mb-1.5 block text-sm font-medium">
+            ภาคเรียน
+          </label>
+          <select
+            id="termId"
+            name="termId"
+            required
+            defaultValue={defaultTerm}
+            className="input"
+          >
+            <option value="" disabled>
+              -- เลือกเทอม --
+            </option>
+            {terms.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name} {t.isActive ? "(ปัจจุบัน)" : ""}
+              </option>
+            ))}
+          </select>
+          {state.fieldErrors?.termId && (
+            <p className="mt-1 text-xs text-rose-600">
+              {state.fieldErrors.termId}
+            </p>
+          )}
+        </div>
       </div>
 
-      <div className="card p-5">
-        <label htmlFor="termId" className="mb-1.5 block text-sm font-medium">
-          ภาคเรียน
-        </label>
-        <select
-          id="termId"
-          name="termId"
-          required
-          defaultValue={defaultTerm}
-          className="input"
-        >
-          <option value="" disabled>
-            -- เลือกเทอม --
-          </option>
-          {terms.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name} {t.isActive ? "(ปัจจุบัน)" : ""}
-            </option>
-          ))}
-        </select>
-        {state.fieldErrors?.termId && (
-          <p className="mt-1 text-xs text-rose-600">
-            {state.fieldErrors.termId}
+      {/* Credit + Grade level (Grade level auto-suggests from class) */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="card p-5">
+          <label
+            htmlFor="creditHours"
+            className="mb-1.5 block text-sm font-medium"
+          >
+            หน่วยกิต
+          </label>
+          <input
+            id="creditHours"
+            name="creditHours"
+            type="number"
+            step="0.5"
+            min="0"
+            max="10"
+            required
+            defaultValue="1.5"
+            className="input"
+          />
+          <p className="mt-1.5 text-xs text-ink-soft">
+            ใช้คำนวณเกรดเฉลี่ยรวมเทอม (ตามมาตรฐานโรงเรียน)
           </p>
+          {state.fieldErrors?.creditHours && (
+            <p className="mt-1 text-xs text-rose-600">
+              {state.fieldErrors.creditHours}
+            </p>
+          )}
+        </div>
+
+        <div className="card p-5">
+          <label
+            htmlFor="gradeLevel"
+            className="mb-1.5 block text-sm font-medium"
+          >
+            ระดับชั้น
+          </label>
+          <input
+            id="gradeLevel"
+            name="gradeLevel"
+            type="text"
+            required
+            maxLength={20}
+            className="input"
+            placeholder="เช่น ม.4"
+            defaultValue={selectedClass?.gradeLevel ?? ""}
+            key={selectedClass?.gradeLevel}
+          />
+          {state.fieldErrors?.gradeLevel && (
+            <p className="mt-1 text-xs text-rose-600">
+              {state.fieldErrors.gradeLevel}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Advanced: subject code */}
+      <div className="card p-5">
+        <button
+          type="button"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="text-sm font-medium text-ink-soft hover:text-ink"
+        >
+          {showAdvanced ? "▾" : "▸"} ตัวเลือกเพิ่มเติม
+        </button>
+        {showAdvanced && (
+          <div className="mt-4">
+            <label
+              htmlFor="subjectCode"
+              className="mb-1.5 block text-sm font-medium"
+            >
+              รหัสวิชา (ไม่บังคับ)
+            </label>
+            <input
+              id="subjectCode"
+              name="subjectCode"
+              type="text"
+              maxLength={20}
+              className="input"
+              placeholder="เช่น MATH-M4 หรือ ค31101"
+            />
+            <p className="mt-1.5 text-xs text-ink-soft">
+              สำหรับ transcript / รายงาน — กรอกถ้ามีรหัสมาตรฐานของโรงเรียน
+            </p>
+            {state.fieldErrors?.subjectCode && (
+              <p className="mt-1 text-xs text-rose-600">
+                {state.fieldErrors.subjectCode}
+              </p>
+            )}
+          </div>
         )}
       </div>
 

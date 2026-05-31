@@ -19,7 +19,10 @@ export async function createCourseAction(
   const session = await requireRole(["TEACHER"]);
 
   const raw = {
-    subjectId: String(formData.get("subjectId") ?? ""),
+    name: String(formData.get("name") ?? ""),
+    subjectCode: String(formData.get("subjectCode") ?? ""),
+    gradeLevel: String(formData.get("gradeLevel") ?? ""),
+    creditHours: Number(formData.get("creditHours") ?? 0),
     classId: String(formData.get("classId") ?? ""),
     termId: String(formData.get("termId") ?? ""),
   };
@@ -40,19 +43,19 @@ export async function createCourseAction(
   try {
     const created = await createCourseOffering({
       teacherUserId: session.user.id,
-      ...parsed.data,
+      name: parsed.data.name,
+      subjectCode: parsed.data.subjectCode || undefined,
+      gradeLevel: parsed.data.gradeLevel,
+      creditHours: parsed.data.creditHours,
+      classId: parsed.data.classId,
+      termId: parsed.data.termId,
       ipAddress: meta.ipAddress ?? undefined,
       userAgent: meta.userAgent ?? undefined,
     });
     courseId = created.id;
   } catch (err) {
     if (err instanceof ValidationError) return { fieldErrors: err.errors };
-    if (err instanceof HttpError) {
-      if (err.code === "course_offering_already_exists") {
-        return { error: "วิชานี้คุณมีอยู่แล้วในห้อง+เทอมนี้" };
-      }
-      return { error: err.message };
-    }
+    if (err instanceof HttpError) return { error: err.message };
     throw err;
   }
 

@@ -62,11 +62,10 @@ export default async function TeacherCoursesPage() {
               >
                 <div className="mb-3 flex items-start justify-between">
                   <div className="min-w-0">
-                    <h3 className="font-semibold tracking-tight">
-                      {c.subject.name}
-                    </h3>
+                    <h3 className="font-semibold tracking-tight">{c.name}</h3>
                     <p className="mt-0.5 text-sm text-ink-soft">
-                      ห้อง {c.class.name} · {c.term.name}
+                      ห้อง {c.class.name} · {c.term.name} · {c.creditHours}{" "}
+                      หน่วยกิต
                     </p>
                   </div>
                   {c.codeActive ? (

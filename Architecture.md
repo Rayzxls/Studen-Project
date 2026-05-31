@@ -177,13 +177,7 @@ model Term {
   courses         CourseOffering[]
 }
 
-model Subject {
-  id           String @id @default(cuid())
-  name         String
-  gradeLevel   String   // "ม.4"
-  creditHours  Float    // หน่วยกิต (e.g. 1.5)
-  courses      CourseOffering[]
-}
+// Subject model removed in ADR-0012 — workspace fields moved to CourseOffering
 
 model Class {
   id              String  @id @default(cuid())
@@ -198,15 +192,19 @@ model Class {
 model CourseOffering {
   id              String  @id @default(cuid())
   teacherId       String
-  subjectId       String
   classId         String
   termId          String
+
+  // Workspace fields (ADR-0012 — teacher-defined, no Subject FK)
+  name            String   // "คณิตศาสตร์ ม.4 ครูสมชาย"
+  subjectCode     String?  // optional teacher-set, for transcript matching
+  gradeLevel      String   // "ม.4"
+  creditHours     Float    // 1.5
   classCode       String  @unique
   codeActive      Boolean @default(true)
   codeExpiresAt   DateTime?
   gradeRulesJson  Json?
   teacher         Teacher @relation(fields: [teacherId], references: [userId])
-  subject         Subject @relation(fields: [subjectId], references: [id])
   class           Class   @relation(fields: [classId], references: [id])
   term            Term    @relation(fields: [termId], references: [id])
 
@@ -913,7 +911,7 @@ function termStatus(courseOfferings: CourseOffering[]): 'IN_PROGRESS' | 'COMPLET
 ### Page composition
 
 1. Permission: student ดูแค่ของตัวเอง; admin ดูได้ทั้งหมด
-2. Query: ทุก Enrollment ของ student ใน termId → JOIN CourseOffering → JOIN Subject (credit) + ScoreItems + ScoreEntries
+2. Query: ทุก Enrollment ของ student ใน termId → JOIN CourseOffering (credit from CourseOffering directly, ADR-0012) + ScoreItems + ScoreEntries
 3. ต่อ CourseOffering: คำนวณ weighted total → grade (ใช้ rules ของ course หรือ default)
 4. รวม: Term GPA + Term Status
 5. ถ้า `IN_PROGRESS` → GPA = `—`, badge "ยังไม่จบเทอม"
