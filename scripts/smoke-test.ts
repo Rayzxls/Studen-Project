@@ -1,0 +1,472 @@
+/**
+ * Phase 1 End-to-End Smoke Test
+ * Runs HTTP requests against a live dev server (http://localhost:3000)
+ *
+ * Usage:
+ *   1. In one terminal: pnpm dev
+ *   2. In another:      pnpm exec dotenv -e .env.local -- tsx scripts/smoke-test.ts
+ */
+
+import { PrismaClient } from "@prisma/client";
+
+const BASE = "http://localhost:3000";
+const db = new PrismaClient();
+
+let passed = 0;
+let failed = 0;
+const failures: string[] = [];
+
+function pass(name: string) {
+  passed++;
+  console.log(`  \x1b[32m✓\x1b[0m ${name}`);
+}
+
+function fail(name: string, msg: string) {
+  failed++;
+  failures.push(`${name}: ${msg}`);
+  console.log(`  \x1b[31m✗\x1b[0m ${name}\n      ${msg}`);
+}
+
+async function expect(name: string, cond: boolean, msg = "assertion failed") {
+  if (cond) pass(name);
+  else fail(name, msg);
+}
+
+// ────── HTTP helpers ──────
+
+/** Parse Set-Cookie list, dedupe by name (last-write-wins), return Cookie header string */
+function cookiesFromSetCookie(setCookies: string[]): string {
+  const map = new Map<string, string>();
+  for (const sc of setCookies) {
+    const nv = sc.split(";")[0];
+    const eq = nv.indexOf("=");
+    if (eq < 0) continue;
+    const name = nv.slice(0, eq).trim();
+    const value = nv.slice(eq + 1).trim();
+    if (value === "") continue; // cookie deletion
+    map.set(name, value);
+  }
+  return [...map.entries()].map(([k, v]) => `${k}=${v}`).join("; ");
+}
+
+async function getCsrf(): Promise<{ token: string; cookie: string }> {
+  const r = await fetch(`${BASE}/api/auth/csrf`);
+  const j = (await r.json()) as { csrfToken: string };
+  const cookie = cookiesFromSetCookie(r.headers.getSetCookie());
+  return { token: j.csrfToken, cookie };
+}
+
+/** Sign in via Credentials. Returns session cookie string or null. */
+async function signin(
+  identifier: string,
+  password: string,
+  debug = false
+): Promise<string | null> {
+  const { token, cookie } = await getCsrf();
+  if (debug) {
+    console.log(`    [debug] csrf token=${token.slice(0, 20)}...`);
+    console.log(`    [debug] sending cookie="${cookie}"`);
+  }
+  const r = await fetch(`${BASE}/api/auth/callback/credentials`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Cookie: cookie,
+    },
+    redirect: "manual",
+    body: new URLSearchParams({
+      csrfToken: token,
+      identifier,
+      password,
+      callbackUrl: "/dashboard",
+      json: "true",
+    }),
+  });
+
+  const setCookies = r.headers.getSetCookie();
+  if (debug) {
+    console.log(`    [debug] signin status=${r.status}`);
+    console.log(`    [debug] location=${r.headers.get("location")}`);
+    console.log(`    [debug] cookies returned: ${setCookies.length}`);
+  }
+  const hasSession = setCookies.some(
+    (c) =>
+      c.includes("session-token") && !c.startsWith("authjs.session-token=;")
+  );
+  if (!hasSession) return null;
+
+  return cookiesFromSetCookie(setCookies);
+}
+
+async function getWithCookie(path: string, cookie?: string) {
+  return fetch(`${BASE}${path}`, {
+    headers: cookie ? { Cookie: cookie } : {},
+    redirect: "manual",
+  });
+}
+
+// ────── Test sections ──────
+
+async function testPublicPages() {
+  console.log("\n📄 Public pages");
+  for (const path of [
+    "/",
+    "/login",
+    "/signup",
+    "/privacy",
+    "/reset-password",
+  ]) {
+    const r = await getWithCookie(path);
+    await expect(
+      `GET ${path}`,
+      r.status === 200,
+      `expected 200, got ${r.status}`
+    );
+  }
+}
+
+async function testProtectedRedirect() {
+  console.log("\n🔒 Protected route redirects to /login");
+  const r = await getWithCookie("/dashboard");
+  await expect(
+    "GET /dashboard (no cookie) → 307",
+    r.status === 307 || r.status === 302,
+    `expected redirect, got ${r.status}`
+  );
+  const loc = r.headers.get("location") ?? "";
+  await expect(
+    "Redirect target is /login",
+    loc.includes("/login") || loc.includes("/api/auth"),
+    `got: ${loc}`
+  );
+}
+
+async function testLoginEachRole() {
+  console.log("\n🔑 Login per role");
+  const cases = [
+    {
+      id: "admin@studennnn.local",
+      pw: "Admin1234!",
+      role: "ADMIN",
+      label: "ผู้ดูแลระบบ",
+    },
+    {
+      id: "teacher@studennnn.local",
+      pw: "Teacher1234!",
+      role: "TEACHER",
+      label: "ครู",
+    },
+    { id: "60001", pw: "Student1234", role: "STUDENT", label: "นักเรียน" },
+  ];
+
+  for (const c of cases) {
+    const cookie = await signin(c.id, c.pw, /*debug=*/ !cases.indexOf(c));
+    await expect(
+      `Login ${c.role} (${c.id})`,
+      !!cookie,
+      "no session cookie returned"
+    );
+    if (!cookie) continue;
+
+    const r = await getWithCookie("/dashboard", cookie);
+    const body = await r.text();
+    await expect(
+      `GET /dashboard as ${c.role} → 200`,
+      r.status === 200,
+      `got ${r.status}`
+    );
+    await expect(
+      `/dashboard contains role label "${c.label}"`,
+      body.includes(c.label),
+      "label not found in body"
+    );
+  }
+}
+
+async function testWrongPasswordRejected() {
+  console.log("\n🚫 Wrong password rejected");
+  const cookie = await signin("admin@studennnn.local", "WrongPassword!");
+  await expect(
+    "Wrong password returns no session cookie",
+    !cookie,
+    "unexpectedly got a session cookie"
+  );
+}
+
+async function testRateLimitLockout() {
+  console.log("\n⏱️  Rate limit lockout (5 fails → locked)");
+
+  // Use a unique identifier so we don't pollute admin's bucket
+  const id = `ratelimit-test-${Date.now()}@example.com`;
+
+  // First, ensure no existing bucket
+  await db.rateLimitBucket
+    .delete({ where: { id: `login:${id}` } })
+    .catch(() => {});
+
+  for (let i = 1; i <= 5; i++) {
+    await signin(id, "wrong");
+  }
+
+  // The 5th attempt should set the bucket to count=5; 6th locks
+  const bucket = await db.rateLimitBucket.findUnique({
+    where: { id: `login:${id}` },
+  });
+
+  await expect("Rate limit bucket created", !!bucket, "no bucket found");
+  if (bucket) {
+    await expect(
+      "Bucket count >= 5 after 5 attempts",
+      bucket.count >= 5,
+      `count=${bucket.count}`
+    );
+  }
+
+  // Cleanup
+  await db.rateLimitBucket
+    .delete({ where: { id: `login:${id}` } })
+    .catch(() => {});
+}
+
+async function testStudentSignup() {
+  console.log("\n🎓 Student self-register");
+
+  const newId = `8${Math.floor(Math.random() * 100000)
+    .toString()
+    .padStart(5, "0")}`;
+
+  const r1 = await fetch(`${BASE}/api/signup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      studentId: newId,
+      firstName: "Smoke",
+      lastName: "Test",
+      password: "smokepass1234",
+      confirmPassword: "smokepass1234",
+      consent: true,
+      turnstileToken: "dummy-dev-token",
+    }),
+  });
+  await expect(
+    `POST /api/signup new student ${newId} → 201`,
+    r1.status === 201,
+    `got ${r1.status}: ${await r1.text()}`
+  );
+
+  // Verify user in DB
+  const user = await db.user.findUnique({
+    where: { identifier: newId },
+    include: { student: true },
+  });
+  await expect(
+    "User created in DB with STUDENT role",
+    user?.role === "STUDENT" && user.student?.studentId === newId,
+    JSON.stringify(user, null, 2)
+  );
+
+  // Duplicate signup → 409
+  const r2 = await fetch(`${BASE}/api/signup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      studentId: newId,
+      firstName: "Smoke",
+      lastName: "Test",
+      password: "smokepass1234",
+      confirmPassword: "smokepass1234",
+      consent: true,
+      turnstileToken: "dummy-dev-token",
+    }),
+  });
+  await expect(
+    "Duplicate studentId → 409",
+    r2.status === 409,
+    `got ${r2.status}`
+  );
+
+  // Now login with the new student
+  const cookie = await signin(newId, "smokepass1234");
+  await expect(
+    `Login as newly-registered student ${newId}`,
+    !!cookie,
+    "could not login after signup"
+  );
+
+  // Cleanup
+  if (user) {
+    await db.auditLog.deleteMany({ where: { actorId: user.id } });
+    await db.student.delete({ where: { userId: user.id } });
+    await db.user.delete({ where: { id: user.id } });
+  }
+}
+
+async function testSignupValidation() {
+  console.log("\n✏️  Signup validation");
+
+  const bad = await fetch(`${BASE}/api/signup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      studentId: "abc",
+      firstName: "",
+      lastName: "X",
+      password: "short",
+      confirmPassword: "different",
+      consent: false,
+      turnstileToken: "",
+    }),
+  });
+  await expect("Invalid signup → 400", bad.status === 400, `got ${bad.status}`);
+
+  const body = (await bad.json()) as {
+    error: { code: string; details: Record<string, string> };
+  };
+  await expect(
+    "Returns validation_error code",
+    body.error.code === "validation_error",
+    body.error.code
+  );
+  await expect(
+    "Reports per-field errors",
+    Object.keys(body.error.details).length > 0,
+    JSON.stringify(body.error.details)
+  );
+}
+
+async function testForceResetRedirect() {
+  console.log("\n🔄 Force reset password flow");
+
+  // Set student 60001 to mustResetPwd=true
+  await db.user.update({
+    where: { identifier: "60001" },
+    data: { mustResetPwd: true },
+  });
+
+  const cookie = await signin("60001", "Student1234");
+  await expect("Login with mustResetPwd=true succeeds", !!cookie, "no cookie");
+  if (!cookie) {
+    // Reset and abort
+    await db.user.update({
+      where: { identifier: "60001" },
+      data: { mustResetPwd: false },
+    });
+    return;
+  }
+
+  // GET /dashboard should redirect to /reset-password/force
+  const r = await getWithCookie("/dashboard", cookie);
+  await expect(
+    "/dashboard redirects (force reset interception)",
+    r.status === 307 || r.status === 302,
+    `got ${r.status}`
+  );
+  const loc = r.headers.get("location") ?? "";
+  await expect(
+    "Redirect target is /reset-password/force",
+    loc.includes("/reset-password/force"),
+    `got: ${loc}`
+  );
+
+  // GET /reset-password/force should be 200
+  const r2 = await getWithCookie("/reset-password/force", cookie);
+  await expect(
+    "/reset-password/force → 200",
+    r2.status === 200,
+    `got ${r2.status}`
+  );
+
+  // Cleanup
+  await db.user.update({
+    where: { identifier: "60001" },
+    data: { mustResetPwd: false },
+  });
+}
+
+async function testAuditLog() {
+  console.log("\n📝 Audit log verification");
+
+  const recent = await db.auditLog.findMany({
+    orderBy: { timestamp: "desc" },
+    take: 20,
+    select: { action: true, ipAddress: true },
+  });
+
+  const actions = recent.map((r) => r.action);
+
+  await expect(
+    "Audit log has LOGIN_SUCCESS entries",
+    actions.includes("LOGIN_SUCCESS"),
+    `recent: ${[...new Set(actions)].join(", ")}`
+  );
+  await expect(
+    "Audit log has LOGIN_FAILED entries",
+    actions.includes("LOGIN_FAILED"),
+    `recent: ${[...new Set(actions)].join(", ")}`
+  );
+  await expect(
+    "Audit log captures IP address",
+    recent.some((r) => r.ipAddress),
+    "no entries have ipAddress"
+  );
+}
+
+// ────── Main ──────
+
+async function main() {
+  console.log("\n╭───────────────────────────────────╮");
+  console.log("│  Studennnn Phase 1 Smoke Test     │");
+  console.log("╰───────────────────────────────────╯");
+
+  // Verify server up
+  try {
+    const r = await fetch(BASE);
+    if (r.status !== 200) throw new Error(`Status ${r.status}`);
+  } catch (e) {
+    console.error(`\n❌ Dev server not reachable at ${BASE}`);
+    console.error("   Run \`pnpm dev\` in another terminal first.");
+    console.error(`   Error: ${e}`);
+    process.exit(1);
+  }
+
+  // Clean state: clear any prior rate-limit buckets from this test/IP
+  await db.rateLimitBucket.deleteMany({
+    where: {
+      OR: [
+        { id: { startsWith: "signup:" } },
+        { id: { startsWith: "login:ratelimit-test-" } },
+      ],
+    },
+  });
+  console.log("\n🧹 Cleared prior rate-limit buckets");
+
+  await testPublicPages();
+  await testProtectedRedirect();
+  await testLoginEachRole();
+  await testWrongPasswordRejected();
+  await testStudentSignup();
+  await testSignupValidation();
+  await testRateLimitLockout();
+  await testForceResetRedirect();
+  await testAuditLog();
+
+  console.log(`\n╭───────────────────────────────────╮`);
+  console.log(
+    `│  Results: ${passed} passed · ${failed} failed`.padEnd(36) + "│"
+  );
+  console.log(`╰───────────────────────────────────╯\n`);
+
+  if (failed > 0) {
+    console.log("Failures:");
+    for (const f of failures) console.log(`  ✗ ${f}`);
+    process.exit(1);
+  }
+}
+
+main()
+  .then(() => db.$disconnect())
+  .catch(async (e) => {
+    console.error(e);
+    await db.$disconnect();
+    process.exit(1);
+  });
