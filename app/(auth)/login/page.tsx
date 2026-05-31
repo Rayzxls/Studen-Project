@@ -1,13 +1,16 @@
 "use client";
 
-import { useActionState } from "react";
+import { Suspense, useActionState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { loginAction, type LoginState } from "./actions";
 
 const initial: LoginState = {};
 
-export default function LoginPage() {
+function LoginForm() {
   const [state, action, pending] = useActionState(loginAction, initial);
+  const search = useSearchParams();
+  const resetSuccess = search.get("reset") === "success";
 
   return (
     <div className="glass animate-slide-up rounded-2xl p-8 shadow-lift">
@@ -17,6 +20,12 @@ export default function LoginPage() {
           เข้าใช้งานระบบจัดการห้องเรียน
         </p>
       </div>
+
+      {resetSuccess && (
+        <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          ✓ เปลี่ยนรหัสผ่านสำเร็จ — กรุณาเข้าสู่ระบบด้วยรหัสใหม่
+        </div>
+      )}
 
       <form action={action} className="space-y-4">
         <div>
@@ -86,5 +95,13 @@ export default function LoginPage() {
         </div>
       </form>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="glass rounded-2xl p-8" />}>
+      <LoginForm />
+    </Suspense>
   );
 }

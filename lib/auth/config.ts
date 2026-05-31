@@ -19,27 +19,45 @@ export const authConfig = {
       const path = nextUrl.pathname;
 
       // Public paths
-      if (
+      const isPublic =
         path === "/" ||
         path === "/login" ||
         path === "/signup" ||
         path === "/reset-password" ||
         path === "/privacy" ||
         path.startsWith("/api/auth") ||
-        path.startsWith("/api/signup")
+        path.startsWith("/api/signup");
+
+      // ── Force reset interception ──
+      // If logged in AND mustResetPwd, redirect everywhere except force-reset itself
+      // and the signout endpoint (so user can escape if needed)
+      if (
+        isLoggedIn &&
+        auth.user.mustResetPwd &&
+        path !== "/reset-password/force" &&
+        !path.startsWith("/api/auth")
       ) {
-        return true;
+        return Response.redirect(new URL("/reset-password/force", nextUrl));
       }
 
-      // Everything else requires auth
+      // ── Force-reset page requires auth ──
+      if (path === "/reset-password/force") {
+        return isLoggedIn;
+      }
+
+      if (isPublic) return true;
       return isLoggedIn;
     },
-    jwt({ token, user }) {
+    jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
         token.identifier = user.identifier;
         token.mustResetPwd = user.mustResetPwd;
+      }
+      // Allow session update to refresh mustResetPwd after password change
+      if (trigger === "update") {
+        token.mustResetPwd = false;
       }
       return token;
     },
