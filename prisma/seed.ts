@@ -153,7 +153,7 @@ async function main() {
   console.log(`✓ ${subjects.length} subjects`);
 
   // Classes
-  const class401 = await db.class.upsert({
+  await db.class.upsert({
     where: {
       academicYearId_name: { academicYearId: year2568.id, name: "ม.4/1" },
     },

@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import {
-  HttpError,
   Forbidden,
   Unauthorized,
   NotFound,
