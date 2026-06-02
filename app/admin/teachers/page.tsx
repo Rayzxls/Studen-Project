@@ -96,7 +96,7 @@ export default async function AdminTeachersPage({ searchParams }: PageProps) {
                   <td className="text-sm">{t.email}</td>
                   <td className="text-sm">
                     {t.homeroomOf ? (
-                      <span className="badge-gold">{t.homeroomOf}</span>
+                      <span className="badge">{t.homeroomOf}</span>
                     ) : (
                       <span className="text-ink-soft">—</span>
                     )}

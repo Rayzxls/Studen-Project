@@ -10,7 +10,7 @@ export default function ForceResetPage() {
 
   return (
     <div className="glass animate-slide-up rounded-2xl p-8 shadow-lift">
-      <div className="badge-gold mb-4 inline-flex">บังคับเปลี่ยนรหัสผ่าน</div>
+      <div className="badge mb-4 inline-flex">บังคับเปลี่ยนรหัสผ่าน</div>
       <h1 className="text-2xl font-bold tracking-tight">ตั้งรหัสผ่านใหม่</h1>
       <p className="mt-1 text-sm text-ink-soft">
         เพื่อความปลอดภัย กรุณาเปลี่ยนรหัสผ่านก่อนใช้งานครั้งแรก
