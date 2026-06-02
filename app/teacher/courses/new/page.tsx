@@ -11,6 +11,9 @@ import {
 } from "@/lib/course/queries";
 import { CreateCourseForm } from "./form";
 
+// Auth-gated DB-fetching page — skip static prerender.
+export const dynamic = "force-dynamic";
+
 export default async function NewCoursePage() {
   let session;
   try {

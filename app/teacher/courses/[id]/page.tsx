@@ -5,6 +5,9 @@ import { requireRole } from "@/lib/auth/guards";
 import { getCourseOfferingForTeacher } from "@/lib/course/queries";
 import { ClassCodeCard } from "@/components/class-code-card";
 
+// Auth-gated DB-fetching page — skip static prerender.
+export const dynamic = "force-dynamic";
+
 interface PageProps {
   params: Promise<{ id: string }>;
 }

@@ -4,6 +4,9 @@ import { Plus, BookOpen, Users } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
 import { listTeacherCourses } from "@/lib/course/enrollment";
 
+// Auth-gated DB-fetching page — skip static prerender.
+export const dynamic = "force-dynamic";
+
 function LogoMark({ className }: { className?: string }) {
   return (
     <svg

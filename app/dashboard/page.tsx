@@ -8,6 +8,9 @@ import {
   listTeacherCourses,
 } from "@/lib/course/enrollment";
 
+// Auth-gated DB-fetching page — skip static prerender.
+export const dynamic = "force-dynamic";
+
 function LogoMark({ className }: { className?: string }) {
   return (
     <svg

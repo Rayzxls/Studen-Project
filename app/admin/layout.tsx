@@ -4,6 +4,10 @@ import { requireRole } from "@/lib/auth/guards";
 import { signOut } from "@/lib/auth";
 import { AdminSidebar } from "@/components/admin-sidebar";
 
+// Auth-gated DB-fetching layout — skip static prerender so CI build does
+// not try to connect to a real Postgres at localhost:5432.
+export const dynamic = "force-dynamic";
+
 function LogoMark({ className }: { className?: string }) {
   return (
     <svg
