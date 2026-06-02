@@ -93,10 +93,30 @@
 - ใช้ `@/` alias สำหรับ root imports
 - ห้าม relative path ยาวกว่า 2 ระดับ (`../../../`)
 
-### Commits
+### Commits — Feature-by-Feature Discipline
 
-- Conventional Commits: `feat(assignment): add submission versioning`
-- 1 PR = 1 concern; อย่าผูก feature กับ refactor
+- **กฎหลัก:** หลังทำงานเสร็จ **ทุกครั้ง**ที่มี diff ในไฟล์ใด ๆ → ต้อง review diff แล้ว commit ตามนั้นทันที **อย่าสะสม** uncommitted changes ข้าม feature
+- Conventional Commits: `feat(scope): subject` · `fix(scope): subject` · `docs(scope): ...` · `chore(scope): ...`
+- **1 commit = 1 concern** — แยก:
+  - design system docs (PRODUCT/DESIGN/ADR) ออกจาก code implementation
+  - tooling / harness config ออกจาก feature code
+  - theme / token rewrite ออกจาก per-page rewrite (แม้จะคู่ implication กัน)
+  - bug fix ออกจาก feature
+- **Pre-commit check** ก่อนทุก commit:
+  - `pnpm typecheck` — 0 errors
+  - `pnpm lint` — 0 errors (warnings ใน vendor / `.github/skills/*` ignore ได้)
+  - ถ้ามี mutation logic → unit/smoke test ที่เกี่ยวข้องผ่าน
+- **Branch protection:** `main` รับ initial baseline push ได้ครั้งเดียวเท่านั้น (เมื่อ remote ว่าง) หลังจากนั้นทุก change เข้า main ผ่าน PR + CI
+- **ห้าม** ใส่ co-author ที่ผู้ใช้ไม่ได้ขอ; ห้ามใส่ "Generated with Claude" footer ใน commit message
+- ใช้ HEREDOC สำหรับ multi-line commit message เพื่อรักษา formatting
+
+### Commit Workflow (ทุก session ทำตามนี้)
+
+1. หลังเสร็จ task ใด ๆ → run `git status --short` ดู scope ของ diff
+2. แยก groups ตามหลัก 1 commit = 1 concern
+3. ก่อน commit แรกของ session — propose breakdown ให้ผู้ใช้ confirm ถ้า groups > 2
+4. Commit groups เรียงตาม dependency (docs ก่อน implementation, token ก่อน per-page)
+5. `git push` หลัง commit ทุก batch (ไม่ปล่อย local เกิน 1 batch)
 
 ## Critical Files (เปลี่ยนต้องระวัง)
 
