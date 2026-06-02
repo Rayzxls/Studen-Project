@@ -196,8 +196,14 @@ model Enrollment {
   course           CourseOffering @relation(fields: [courseOfferingId], references: [id], onDelete: Cascade)
   enrolledAt       DateTime       @default(now())
 
+  // Phase 3 — soft-delete + audit trail (ADR-0013)
+  removedAt     DateTime?
+  removedById   String? // User.id of the teacher who removed (or admin for moderation)
+  removedReason String? // Min 5 chars enforced at API boundary
+
   @@unique([studentId, courseOfferingId])
   @@index([courseOfferingId])
+  @@index([removedAt]) // fast "active members" filtering (where removedAt: null)
 }
 
 // ═══════════════════════════════════════════════════════════
