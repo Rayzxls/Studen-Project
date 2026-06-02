@@ -3,7 +3,70 @@
 > เอกสารนี้ใช้สำหรับเริ่ม **session ใหม่** กับ AI assistant แล้วต่อยอดได้ทันที
 > อ่านไฟล์นี้ + `CLAUDE.md` + `CONTEXT.md` ก่อนเริ่มงาน
 
-อัพเดตล่าสุด: **2026-05-31** · 10 commits · **Phase 0-2 เสร็จสมบูรณ์**
+อัพเดตล่าสุด: **2026-06-02** · 30+ commits · **Phase 0-2 + Calm Ledger pivot + Phase 3 (P3-1) เสร็จ**
+
+---
+
+## ⚠️ Latest Session State (2026-06-02) — read this first
+
+### Theme พิวอตจาก Ink+Gold → Calm Ledger (ADR-0014)
+
+ADR-0011 (Ink + Gold) **superseded** โดย ADR-0014 (Calm Ledger):
+- Off-white `#F5F5F5` body + True Black `#000000` + Aubergine `#2B2644` (surface only, ไม่ใช่ button)
+- Font: **Anuphan** (Cadson Demak, Thai+Latin) replace IBM Plex Sans Thai
+- Drop: `text-gradient-gold`, `mesh-bg`, `tilt-card`, `blob`, `sheen`, `glass`, `text-gradient-ink` (ตอนนี้เป็น compat shims no-op ใน `globals.css` — touch-up หน้าทั้งหมดแล้ว)
+- Button: `rounded-full` pill (black primary, white secondary) แทน rounded-lg gold-gradient
+- Cards: `rounded-2xl` + flat-by-default + lift on hover (subtle shadow)
+- Role badges: neutral grayscale (No-Saturated-Role-Colour Rule) — ไม่มี rose/blue/emerald
+- Hero landing: 3 รูป webp ใน `public/landing/` (hero-bg, info-card-1, use-cases-teacher) — see `image-prompts.md`
+
+อ่าน `PRODUCT.md` (brand personality + anti-references) + `DESIGN.md` (frontmatter + 6 Stitch sections + Named Rules) + `docs/adr/0014-theme-calm-ledger-supersedes-ink-gold.md` ก่อนทำงาน UI ต่อ
+
+### Phase 3 — kicked off, paused mid-flight
+
+| Task | Status |
+|------|--------|
+| P3-1 schema (Enrollment soft-delete: removedAt, removedById, removedReason + index) | ✅ committed `1a73d1e` · applied via `pnpm db:push` |
+| P3-2 lib/course/enrollment removeMember + restoreByRejoin + audit | ⏸️ paused — รอ Prisma client regenerate (dev server lock blocks DLL) |
+| P3-3 lib/auth can.ownsCourse + can.isActiveCourseMember + assert.* | pending |
+| P3-4 components/course/{course-shell, tab-nav} | pending |
+| P3-5 teacher tabs (Overview · Members · Settings) | pending |
+| P3-6 student tabs (Overview · Members) | pending |
+| P3-7 +15 unit tests + integration permission folder | pending |
+| P3-8 +12 smoke checks | pending |
+| P3-9 docs (Task.md DONE flip + HANDOFF update) | pending |
+
+**Phase 3 design decisions ครบ** — ดู ADR-0013 + grilling notes early in session transcript
+
+**Tab active style override** (Q8 จาก grilling ใช้ gold underline แต่ Calm Ledger ไม่มี gold): **bg-black/[0.05] + text-black** (quiet pill style, consistent กับ admin sidebar)
+
+### Resume P3-2 ต้องทำก่อน:
+
+```bash
+# 1. Stop dev server (Ctrl+C ใน terminal ที่ run pnpm dev)
+# 2. Regen Prisma client (จะ pick up removedAt/removedById/removedReason types)
+pnpm db:generate
+# 3. Restart dev
+pnpm dev
+```
+
+หลังจากนั้น Prisma TypeScript types สำหรับ `Enrollment.removedAt` etc. จะ available — `lib/course/enrollment.ts` รุ่นถัดไปจะ typecheck ได้
+
+### CI ตอนนี้ green ✅
+
+หลัง pivot CI fail 4 รอบติด root cause 2 ตัวต่างกัน — แก้แล้วทั้งคู่ commit `54929ce` + `c46b7c4`:
+- **`postinstall: prisma generate`** ใน package.json (Lint/Typecheck + Unit Tests ผ่าน)
+- **`export const dynamic = "force-dynamic"`** ใน 5 auth-gated DB-fetching pages (Build ผ่าน)
+
+ทุก commit ใหม่หลังจากนี้ควรได้ ✅ 3/3 jobs
+
+### Commit discipline rule (CLAUDE.md § Commits) — strict from now
+
+- Every diff → review + commit ตามนั้น (ไม่สะสมข้าม feature)
+- 1 commit = 1 concern
+- Pre-commit: `pnpm typecheck` + `pnpm lint` 0 errors
+- Propose breakdown ก่อนเริ่ม commit แรกของ session ถ้า groups > 2
+- HEREDOC สำหรับ multi-line message, no Co-Authored-By, no "Generated with Claude" footer
 
 ---
 
@@ -17,7 +80,7 @@
 - **Teacher** — สร้างวิชา (workspace) / เช็คชื่อ / ใส่คะแนน / ตรวจการบ้าน
 - **Student** — สมัครเอง / เข้าห้องด้วยรหัส / ดูคะแนน / ส่งงาน
 
-**Design:** Ink + Gold theme (port จาก Father project, ADR-0011)
+**Design:** **Calm Ledger** theme (ADR-0014 supersedes 0011) — Anuphan font (Cadson Demak), off-white + true black + aubergine surface
 **Language:** ไทย 100%
 
 ---
@@ -66,7 +129,8 @@
 | **2a** | Academic schema + Workspace model + Class Code + Join | ✅ DONE |
 | **2b** | Teacher pages (list/create/detail + QR + ClassPicker) | ✅ DONE |
 | **2c** | Admin pages (list/students/teachers + CSV import + audit viewer) | ✅ DONE |
-| **3** | Members tab + Course tabs structure | ⏳ TODO |
+| **2.5** | Calm Ledger theme pivot (ADR-0014) + Anuphan + landing rebuild + touch-up ทุก surface | ✅ DONE |
+| **3** | Course tabs (Overview · Members · Settings) + soft-delete + restoration | 🚧 P3-1 ✅ · P3-2 to 9 pending |
 | **4** | Attendance (timetable, sessions, records) | ⏳ TODO |
 | **5** | Scoring + Term GPA + Print transcript | ⏳ TODO |
 | **6** | Assignment + Submission + Comments + R2 file upload | ⏳ TODO |
