@@ -24,7 +24,7 @@ export default async function AdminTeachersPage({ searchParams }: PageProps) {
     <div className="animate-fade-in p-6 md:p-10 space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">ครู</h1>
+          <h1 className="text-3xl font-medium tracking-tight">ครู</h1>
           <p className="mt-1 text-sm text-ink-soft">
             ทั้งหมด {result.total.toLocaleString("th-TH")} คน
           </p>
@@ -107,7 +107,7 @@ export default async function AdminTeachersPage({ searchParams }: PageProps) {
                   </td>
                   <td>
                     {t.isActive ? (
-                      <span className="badge-student">active</span>
+                      <span className="badge">active</span>
                     ) : (
                       <span className="badge">disabled</span>
                     )}

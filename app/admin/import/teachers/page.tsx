@@ -19,7 +19,9 @@ export default function TeacherImportPage() {
       </Link>
 
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">นำเข้าครูจาก CSV</h1>
+        <h1 className="text-3xl font-medium tracking-tight">
+          นำเข้าครูจาก CSV
+        </h1>
         <p className="mt-1 text-sm text-ink-soft">
           อัพโหลดไฟล์ CSV → ดูตัวอย่าง → ยืนยันนำเข้า —
           ระบบสร้างรหัสผ่านชั่วคราวให้ทุกคน

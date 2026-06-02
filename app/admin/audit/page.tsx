@@ -61,7 +61,7 @@ export default async function AdminAuditPage({ searchParams }: PageProps) {
   return (
     <div className="animate-fade-in p-6 md:p-10 space-y-5">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Audit Log</h1>
+        <h1 className="text-3xl font-medium tracking-tight">Audit Log</h1>
         <p className="mt-1 text-sm text-ink-soft">
           กิจกรรมที่ตรวจสอบได้ทั้งหมด · เก็บ 2 ปีการศึกษา ·{" "}
           {total.toLocaleString("th-TH")} รายการ

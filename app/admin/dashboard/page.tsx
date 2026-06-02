@@ -39,7 +39,7 @@ export default async function AdminDashboardPage() {
   return (
     <div className="animate-fade-in p-6 md:p-10 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">ภาพรวมระบบ</h1>
+        <h1 className="text-3xl font-medium tracking-tight">ภาพรวมระบบ</h1>
         <p className="mt-1 text-sm text-ink-soft">
           สรุปข้อมูลการใช้งานและกิจกรรมล่าสุด
         </p>
@@ -96,13 +96,18 @@ export default async function AdminDashboardPage() {
 
       {/* Recent activity */}
       <section className="card p-5">
-        <h2 className="mb-3 font-semibold tracking-tight">กิจกรรมล่าสุด</h2>
+        <h2
+          className="mb-3 font-medium text-black"
+          style={{ letterSpacing: "-0.02em" }}
+        >
+          กิจกรรมล่าสุด
+        </h2>
         {recentAudits.length === 0 ? (
-          <p className="rounded-lg bg-slate-50 p-4 text-center text-sm text-ink-soft">
+          <p className="rounded-xl bg-black/[0.04] p-4 text-center text-sm text-ink-soft">
             ยังไม่มีกิจกรรม
           </p>
         ) : (
-          <ul className="divide-y divide-slate-100 -mx-2">
+          <ul className="-mx-2 divide-y divide-black/[0.06]">
             {recentAudits.map((a) => (
               <li
                 key={a.id}
@@ -143,7 +148,7 @@ function KpiCard({
   const inner = (
     <div className="stat">
       <div className="flex items-center gap-2">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-ink-soft">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-black/[0.05] text-ink-soft">
           {icon}
         </div>
         <div className="stat-label">{label}</div>

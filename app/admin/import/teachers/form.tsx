@@ -156,7 +156,7 @@ export function TeacherImportForm() {
           </button>
         </div>
 
-        <div className="mt-4 max-h-72 overflow-y-auto rounded-lg border border-slate-200">
+        <div className="mt-4 max-h-72 overflow-y-auto rounded-xl border border-black/[0.06]">
           <table className="table">
             <thead>
               <tr>
@@ -240,7 +240,7 @@ export function TeacherImportForm() {
                     </td>
                     <td>
                       {r.parsed ? (
-                        <span className="badge-student">พร้อม</span>
+                        <span className="badge">พร้อม</span>
                       ) : (
                         <div className="text-xs text-rose-700">
                           <AlertCircle className="inline h-3 w-3 mr-1" />
@@ -288,7 +288,7 @@ export function TeacherImportForm() {
     <form onSubmit={handleUpload} className="card p-6 space-y-4">
       <label
         htmlFor="file"
-        className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-12 cursor-pointer hover:border-ink hover:bg-slate-100 transition-colors"
+        className="flex cursor-pointer flex-col items-center gap-3 rounded-xl border-2 border-dashed border-black/[0.12] bg-black/[0.02] px-6 py-12 transition-colors hover:border-black hover:bg-black/[0.04]"
       >
         <Upload className="h-10 w-10 text-slate-400" />
         <div className="text-center">
@@ -343,11 +343,11 @@ function Stat({
           ? "text-amber-700"
           : "text-ink";
   return (
-    <div className="rounded-lg bg-slate-50 p-3">
+    <div className="rounded-xl bg-black/[0.04] p-3">
       <div className="text-[10px] font-medium uppercase tracking-wider text-ink-soft">
         {label}
       </div>
-      <div className={`mt-1 text-2xl font-bold ${colorClass}`}>{value}</div>
+      <div className={`mt-1 text-2xl font-medium ${colorClass}`}>{value}</div>
     </div>
   );
 }
