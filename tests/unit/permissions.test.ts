@@ -84,6 +84,73 @@ describe("can.toggleUserActive", () => {
   });
 });
 
+describe("can.ownsCourse (ADR-0013, P3-3)", () => {
+  const course = { teacherId: "t1" };
+
+  it("allows the owning TEACHER", () => {
+    expect(can.ownsCourse(mkSession("TEACHER", "t1"), course)).toBe(true);
+  });
+
+  it("rejects a different TEACHER", () => {
+    expect(can.ownsCourse(mkSession("TEACHER", "t2"), course)).toBe(false);
+  });
+
+  it("rejects ADMIN (admin moderation is a separate predicate)", () => {
+    expect(can.ownsCourse(mkSession("ADMIN", "t1"), course)).toBe(false);
+  });
+
+  it("rejects STUDENT even when id collides with teacherId", () => {
+    expect(can.ownsCourse(mkSession("STUDENT", "t1"), course)).toBe(false);
+  });
+});
+
+describe("can.isActiveCourseMember (ADR-0013, P3-3)", () => {
+  it("allows the STUDENT on an active enrollment", () => {
+    expect(
+      can.isActiveCourseMember(mkSession("STUDENT", "alice"), {
+        studentId: "alice",
+        removedAt: null,
+      })
+    ).toBe(true);
+  });
+
+  it("rejects a STUDENT whose Enrollment is soft-deleted", () => {
+    expect(
+      can.isActiveCourseMember(mkSession("STUDENT", "alice"), {
+        studentId: "alice",
+        removedAt: new Date("2026-05-01"),
+      })
+    ).toBe(false);
+  });
+
+  it("rejects a different STUDENT (id mismatch)", () => {
+    expect(
+      can.isActiveCourseMember(mkSession("STUDENT", "bob"), {
+        studentId: "alice",
+        removedAt: null,
+      })
+    ).toBe(false);
+  });
+
+  it("rejects TEACHER even when ids match (wrong role)", () => {
+    expect(
+      can.isActiveCourseMember(mkSession("TEACHER", "alice"), {
+        studentId: "alice",
+        removedAt: null,
+      })
+    ).toBe(false);
+  });
+
+  it("rejects ADMIN", () => {
+    expect(
+      can.isActiveCourseMember(mkSession("ADMIN", "alice"), {
+        studentId: "alice",
+        removedAt: null,
+      })
+    ).toBe(false);
+  });
+});
+
 describe("L1 visibility (Phase 1) — students never see others", () => {
   it("STUDENT cannot view audit logs", () => {
     expect(can.viewAuditLog(mkSession("STUDENT"))).toBe(false);

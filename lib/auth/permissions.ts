@@ -60,4 +60,32 @@ export const can = {
   viewAllAuditLogs(session: Session): boolean {
     return session.user.role === "ADMIN";
   },
+
+  /**
+   * Teacher owns the given CourseOffering.
+   * Pure predicate — caller fetches `course.teacherId` and passes it in.
+   * For DB-backed lookup + throw semantics use `assert.ownsCourse` in
+   * lib/auth/guards.ts. ADMIN does NOT pass this — admin moderation is
+   * a separate predicate when Phase 8 adds it.
+   */
+  ownsCourse(session: Session, course: { teacherId: string }): boolean {
+    if (session.user.role !== "TEACHER") return false;
+    return session.user.id === course.teacherId;
+  },
+
+  /**
+   * Student has an active (non-removed) Enrollment in the given course.
+   * Pure predicate — caller fetches `enrollment.studentId` and
+   * `enrollment.removedAt` and passes them in. ADR-0013 soft-delete:
+   * an Enrollment row may exist with `removedAt !== null`; that's NOT
+   * active membership. For DB-backed lookup use `assert.isActiveCourseMember`.
+   */
+  isActiveCourseMember(
+    session: Session,
+    enrollment: { studentId: string; removedAt: Date | null }
+  ): boolean {
+    if (session.user.role !== "STUDENT") return false;
+    if (enrollment.removedAt !== null) return false;
+    return session.user.id === enrollment.studentId;
+  },
 };
