@@ -22,11 +22,16 @@ export default async function NewCoursePage() {
   const year = await getActiveAcademicYear();
   if (!year) {
     return (
-      <div className="mesh-bg min-h-screen">
+      <div className="min-h-screen bg-bg">
         <main className="mx-auto max-w-3xl px-6 py-12">
           <div className="card p-6">
-            <h1 className="font-semibold">ยังไม่มีปีการศึกษาเปิดใช้งาน</h1>
-            <p className="mt-2 text-sm text-ink-soft">
+            <h1
+              className="font-medium text-black"
+              style={{ letterSpacing: "-0.02em" }}
+            >
+              ยังไม่มีปีการศึกษาเปิดใช้งาน
+            </h1>
+            <p className="mt-2 text-sm text-black/60">
               กรุณาติดต่อ Admin เพื่อตั้งค่าปีการศึกษา
             </p>
           </div>
@@ -43,20 +48,25 @@ export default async function NewCoursePage() {
   ]);
 
   return (
-    <div className="mesh-bg min-h-screen">
-      <header className="border-b border-slate-200 bg-white/80 backdrop-blur">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-3">
+    <div className="min-h-screen bg-bg">
+      <header className="border-b border-black/[0.06] bg-white/80 backdrop-blur">
+        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
           <Link href="/teacher/courses" className="btn-ghost btn-sm">
             <ChevronLeft className="h-4 w-4" />
             กลับ
           </Link>
-          <span className="text-xs text-ink-soft">ปี {year.name}</span>
+          <span className="text-xs text-black/60">ปี {year.name}</span>
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-6 py-10 animate-fade-in">
-        <h1 className="text-3xl font-bold tracking-tight">สร้างวิชาใหม่</h1>
-        <p className="mt-1 text-sm text-ink-soft">
+      <main className="mx-auto max-w-3xl animate-fade-in px-6 py-10">
+        <h1
+          className="text-3xl font-medium text-black md:text-4xl"
+          style={{ letterSpacing: "-0.03em" }}
+        >
+          สร้างวิชาใหม่
+        </h1>
+        <p className="mt-1 text-sm text-black/60">
           ตั้งชื่อ + กำหนดหน่วยกิตเอง — ระบบสร้างรหัสห้องให้อัตโนมัติ
         </p>
 
