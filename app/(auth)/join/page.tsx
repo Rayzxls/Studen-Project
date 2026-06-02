@@ -65,34 +65,39 @@ function JoinForm() {
 
   if (success) {
     return (
-      <div className="glass animate-slide-up rounded-2xl p-8 shadow-lift text-center">
-        <div className="mb-3 text-5xl">🎉</div>
-        <h1 className="text-2xl font-bold tracking-tight">
+      <div className="animate-fade-in rounded-2xl bg-white p-8 text-center shadow-card">
+        <h1
+          className="text-2xl font-medium text-black"
+          style={{ letterSpacing: "-0.02em" }}
+        >
           เข้าห้องเรียนสำเร็จ
         </h1>
-        <div className="mt-4 rounded-lg bg-white/60 p-4 text-sm">
-          <div className="font-semibold text-ink">{success.courseName}</div>
-          <div className="text-ink-soft">{success.className}</div>
-          <div className="mt-2 text-xs text-ink-soft">
+        <div className="mt-5 rounded-xl bg-black/[0.04] p-4 text-sm">
+          <div className="font-medium text-black">{success.courseName}</div>
+          <div className="text-black/60">{success.className}</div>
+          <div className="mt-2 text-xs text-black/60">
             ครูผู้สอน: {success.teacherName}
           </div>
         </div>
-        <p className="mt-4 text-xs text-ink-soft">กำลังพาคุณไปหน้าหลัก...</p>
+        <p className="mt-4 text-xs text-black/60">กำลังพาคุณไปหน้าหลัก...</p>
       </div>
     );
   }
 
   return (
-    <div className="glass animate-slide-up rounded-2xl p-8 shadow-lift">
-      <div className="mb-6 flex items-center gap-2">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-soft">
-          <LogIn className="h-5 w-5 text-accent" />
+    <div className="animate-fade-in rounded-2xl bg-white p-8 shadow-card">
+      <div className="mb-6 flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-black/[0.05] text-black">
+          <LogIn className="h-5 w-5" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1
+            className="text-2xl font-medium text-black"
+            style={{ letterSpacing: "-0.02em" }}
+          >
             เข้าร่วมห้องเรียน
           </h1>
-          <p className="text-sm text-ink-soft">กรอกรหัสที่ครูให้</p>
+          <p className="text-sm text-black/60">กรอกรหัสที่ครูให้</p>
         </div>
       </div>
 
@@ -129,9 +134,9 @@ function JoinForm() {
           {pending ? "กำลังเข้าร่วม..." : "เข้าร่วมห้องเรียน"}
         </button>
 
-        <div className="border-t border-slate-200 pt-4 text-center text-sm text-ink-soft">
+        <div className="border-t border-black/[0.06] pt-4 text-center text-sm text-black/60">
           ยังไม่มีรหัส? ติดต่อครูประจำวิชา ·{" "}
-          <Link href="/dashboard" className="text-ink hover:underline">
+          <Link href="/dashboard" className="text-black hover:underline">
             กลับหน้าหลัก
           </Link>
         </div>
@@ -142,7 +147,7 @@ function JoinForm() {
 
 export default function JoinPage() {
   return (
-    <Suspense fallback={<div className="glass rounded-2xl p-8" />}>
+    <Suspense fallback={<div className="rounded-2xl bg-white p-8" />}>
       <JoinForm />
     </Suspense>
   );

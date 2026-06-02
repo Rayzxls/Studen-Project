@@ -72,9 +72,14 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="glass animate-slide-up rounded-2xl p-8 shadow-lift">
-      <h1 className="text-2xl font-bold tracking-tight">สมัครสมาชิก</h1>
-      <p className="mt-1 text-sm text-ink-soft">สำหรับนักเรียนเท่านั้น</p>
+    <div className="animate-fade-in rounded-2xl bg-white p-8 shadow-card">
+      <h1
+        className="text-2xl font-medium text-black"
+        style={{ letterSpacing: "-0.02em" }}
+      >
+        สมัครสมาชิก
+      </h1>
+      <p className="mt-1 text-sm text-black/60">สำหรับนักเรียนเท่านั้น</p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <div>
@@ -196,12 +201,12 @@ export default function SignupPage() {
             onChange={(e) => setConsent(e.target.checked)}
             className="mt-0.5"
           />
-          <span className="text-ink-soft">
+          <span className="text-black/60">
             ข้าพเจ้ายอมรับ{" "}
             <Link
               href="/privacy"
               target="_blank"
-              className="text-ink underline"
+              className="text-black underline"
             >
               นโยบายความเป็นส่วนตัว (PDPA)
             </Link>
@@ -241,11 +246,11 @@ export default function SignupPage() {
           {!pending && <span aria-hidden>→</span>}
         </button>
 
-        <div className="border-t border-slate-200 pt-4 text-center text-sm text-ink-soft">
+        <div className="border-t border-black/[0.06] pt-4 text-center text-sm text-black/60">
           มีบัญชีแล้ว?{" "}
           <Link
             href="/login"
-            className="font-medium text-ink underline-offset-2 hover:underline"
+            className="font-medium text-black underline-offset-2 hover:underline"
           >
             เข้าสู่ระบบ
           </Link>

@@ -13,17 +13,22 @@ function LoginForm() {
   const resetSuccess = search.get("reset") === "success";
 
   return (
-    <div className="glass animate-slide-up rounded-2xl p-8 shadow-lift">
+    <div className="animate-fade-in rounded-2xl bg-white p-8 shadow-card">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">เข้าสู่ระบบ</h1>
-        <p className="mt-1 text-sm text-ink-soft">
+        <h1
+          className="text-2xl font-medium text-black"
+          style={{ letterSpacing: "-0.02em" }}
+        >
+          เข้าสู่ระบบ
+        </h1>
+        <p className="mt-1 text-sm text-black/60">
           เข้าใช้งานระบบจัดการห้องเรียน
         </p>
       </div>
 
       {resetSuccess && (
-        <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-          ✓ เปลี่ยนรหัสผ่านสำเร็จ — กรุณาเข้าสู่ระบบด้วยรหัสใหม่
+        <div className="mb-4 rounded-xl bg-black/[0.04] px-3 py-2 text-sm text-black">
+          เปลี่ยนรหัสผ่านสำเร็จ — กรุณาเข้าสู่ระบบด้วยรหัสใหม่
         </div>
       )}
 
@@ -53,7 +58,7 @@ function LoginForm() {
             </label>
             <Link
               href="/reset-password"
-              className="text-xs text-ink-soft underline-offset-2 hover:text-ink hover:underline"
+              className="text-xs text-black/60 underline-offset-2 hover:text-black hover:underline"
             >
               ลืมรหัสผ่าน?
             </Link>
@@ -84,11 +89,11 @@ function LoginForm() {
           {!pending && <span aria-hidden>→</span>}
         </button>
 
-        <div className="border-t border-slate-200 pt-4 text-center text-sm text-ink-soft">
+        <div className="border-t border-black/[0.06] pt-4 text-center text-sm text-black/60">
           ยังไม่มีบัญชี (นักเรียน)?{" "}
           <Link
             href="/signup"
-            className="font-medium text-ink underline-offset-2 hover:underline"
+            className="font-medium text-black underline-offset-2 hover:underline"
           >
             สมัครสมาชิก
           </Link>
@@ -100,7 +105,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="glass rounded-2xl p-8" />}>
+    <Suspense fallback={<div className="rounded-2xl bg-white p-8" />}>
       <LoginForm />
     </Suspense>
   );

@@ -9,10 +9,15 @@ export default function ForceResetPage() {
   const [state, action, pending] = useActionState(forceResetAction, initial);
 
   return (
-    <div className="glass animate-slide-up rounded-2xl p-8 shadow-lift">
+    <div className="animate-fade-in rounded-2xl bg-white p-8 shadow-card">
       <div className="badge mb-4 inline-flex">บังคับเปลี่ยนรหัสผ่าน</div>
-      <h1 className="text-2xl font-bold tracking-tight">ตั้งรหัสผ่านใหม่</h1>
-      <p className="mt-1 text-sm text-ink-soft">
+      <h1
+        className="text-2xl font-medium text-black"
+        style={{ letterSpacing: "-0.02em" }}
+      >
+        ตั้งรหัสผ่านใหม่
+      </h1>
+      <p className="mt-1 text-sm text-black/60">
         เพื่อความปลอดภัย กรุณาเปลี่ยนรหัสผ่านก่อนใช้งานครั้งแรก
       </p>
 
