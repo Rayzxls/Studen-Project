@@ -1,33 +1,42 @@
 import Link from "next/link";
 
+/**
+ * Auth layout — Calm Ledger
+ * Stripped of Ink+Gold mesh-bg + blob decorations (ADR-0014 supersession).
+ */
+function LogoMark({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 256 256"
+      className={className}
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M 128.005 191.173 C 128.448 156.208 156.93 128 192 128 L 192 64 L 128 64 C 128 99.346 99.346 128 64 128 L 64 192 L 128 192 Z M 192 256 L 64 256 C 28.654 256 0 227.346 0 192 L 0 64 L 64 64 L 64 0 L 192 0 C 227.346 0 256 28.654 256 64 L 256 192 L 192 192 Z" />
+    </svg>
+  );
+}
+
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="mesh-bg relative min-h-screen overflow-hidden">
-      <div
-        aria-hidden
-        className="blob animate-float-slow bg-amber-300"
-        style={{ width: 480, height: 480, top: -120, right: -100 }}
-      />
-      <div
-        aria-hidden
-        className="blob animate-float bg-slate-300"
-        style={{ width: 360, height: 360, bottom: -120, left: -80 }}
-      />
-
-      <header className="relative z-10 mx-auto max-w-5xl px-6 py-6">
+    <div className="relative min-h-screen bg-bg">
+      <header className="mx-auto max-w-5xl px-6 py-6">
         <Link href="/" className="inline-flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-ink text-sm font-bold text-white">
-            S
-          </div>
-          <span className="font-semibold tracking-tight">Studennnn</span>
+          <LogoMark className="h-7 w-7 text-black" />
+          <span
+            className="text-xl font-medium text-black"
+            style={{ letterSpacing: "-0.02em" }}
+          >
+            Studennnn
+          </span>
         </Link>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-md px-6 py-8 animate-fade-in">
+      <main className="mx-auto max-w-md animate-fade-in px-6 py-8">
         {children}
       </main>
     </div>
