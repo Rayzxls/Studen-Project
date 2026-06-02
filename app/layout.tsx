@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans_Thai } from "next/font/google";
+import { Anuphan } from "next/font/google";
 import "./globals.css";
 
-const plex = IBM_Plex_Sans_Thai({
+// Calm Ledger theme — Anuphan (Cadson Demak, Thai+Latin)
+// supersedes IBM Plex Sans Thai per ADR-0014
+const anuphan = Anuphan({
   subsets: ["thai", "latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-plex",
+  weight: ["400", "500", "600"],
+  variable: "--font-anuphan",
   display: "swap",
 });
 
@@ -21,8 +23,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="th" className={plex.variable}>
-      <body className="min-h-screen font-sans text-ink">{children}</body>
+    <html lang="th" className={anuphan.variable}>
+      <body className="min-h-screen bg-bg font-sans text-ink antialiased">
+        {children}
+      </body>
     </html>
   );
 }

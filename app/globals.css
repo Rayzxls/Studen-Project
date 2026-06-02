@@ -1,37 +1,33 @@
 @import "tailwindcss";
 
 /* ═══════════════════════════════════════════════════════════
-   Design System: "Ink + Gold"
-   Adopted from Father project — ดู docs/adr/0011-theme-ink-gold.md
-   Ported to Tailwind v4 (no @apply class-chain — use multi-selector)
+   Design System: "Calm Ledger"
+   Supersedes Ink + Gold — see docs/adr/0014-theme-calm-ledger-supersedes-ink-gold.md
+   Tailwind v4 (CSS-based @theme)
    ═══════════════════════════════════════════════════════════ */
 
 @theme {
   /* ───── Colors ───── */
-  --color-ink: #0f172a;
-  --color-ink-soft: #475569;
-  --color-accent: #b8860b;
-  --color-accent-soft: #fef3c7;
+  --color-bg: #f5f5f5;
+  --color-surface: #ffffff;
+  --color-ink: #000000;
+  --color-ink-soft: #4d4d4d;
+  --color-ink-mute: #808080;
+  --color-accent: #2b2644;
+  --color-border: #ebebeb;
 
   /* ───── Fonts ───── */
-  --font-sans: var(--font-plex), system-ui, sans-serif;
+  --font-sans: var(--font-anuphan), system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, monospace;
 
   /* ───── Shadows ───── */
-  --shadow-soft:
-    0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
   --shadow-lift:
-    0 4px 12px rgba(15, 23, 42, 0.08), 0 2px 4px rgba(15, 23, 42, 0.05);
+    0 4px 24px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.06);
 
   /* ───── Animations ───── */
   --animate-fade-in: fade-in 200ms ease-out both;
   --animate-slide-up: slide-up 280ms ease-out both;
-  --animate-shimmer: shimmer 1.6s linear infinite;
-  --animate-float: float 7s ease-in-out infinite;
-  --animate-float-slow: float-slow 11s ease-in-out infinite;
-  --animate-gradient-pan: gradient-pan 8s ease infinite;
-  --animate-pulse-ring: pulse-ring 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  --animate-bg-pan: bg-pan 18s ease-in-out infinite;
 
   /* ───── Keyframes ───── */
   @keyframes fade-in {
@@ -54,61 +50,6 @@
       transform: translateY(0);
     }
   }
-  @keyframes shimmer {
-    0% {
-      background-position: -200% 0;
-    }
-    100% {
-      background-position: 200% 0;
-    }
-  }
-  @keyframes float {
-    0%,
-    100% {
-      transform: translateY(0) translateX(0);
-    }
-    50% {
-      transform: translateY(-18px) translateX(8px);
-    }
-  }
-  @keyframes float-slow {
-    0%,
-    100% {
-      transform: translateY(0) translateX(0) scale(1);
-    }
-    50% {
-      transform: translateY(20px) translateX(-12px) scale(1.05);
-    }
-  }
-  @keyframes gradient-pan {
-    0%,
-    100% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-  }
-  @keyframes pulse-ring {
-    0% {
-      transform: scale(0.9);
-      opacity: 0.6;
-    }
-    80%,
-    100% {
-      transform: scale(1.6);
-      opacity: 0;
-    }
-  }
-  @keyframes bg-pan {
-    0%,
-    100% {
-      transform: translate(0, 0);
-    }
-    50% {
-      transform: translate(-20px, 20px);
-    }
-  }
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -116,33 +57,26 @@
    ═══════════════════════════════════════════════════════════ */
 
 @layer base {
-  :root {
-    --bg: #f8fafc;
-    --bg-warm: #fafaf7;
-    --surface: #ffffff;
-    --border-color: #e2e8f0;
-  }
-
   html {
     scroll-behavior: smooth;
   }
 
   body {
-    background: var(--bg);
+    background: var(--color-bg);
     color: var(--color-ink);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
 
-  /* Focus ring สีทอง */
+  /* Black focus ring — replaces gold from Ink+Gold */
   :focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(184, 134, 11, 0.35);
-    border-radius: 8px;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.5);
+    border-radius: 12px;
   }
 
   ::selection {
-    background: rgba(184, 134, 11, 0.25);
+    background: rgba(0, 0, 0, 0.12);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -157,32 +91,43 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
-   Components
+   Components — Calm Ledger
    ═══════════════════════════════════════════════════════════ */
 
 @layer components {
   /* ───── Card ───── */
   .card,
-  .card-flat,
-  .stat {
-    @apply rounded-xl border border-slate-200 bg-white;
+  .card-flat {
+    @apply rounded-2xl bg-white;
   }
-  .card,
-  .stat {
-    @apply shadow-soft transition-shadow duration-200;
+  .card {
+    @apply transition-shadow duration-200 ease-out;
   }
-  .card:hover,
-  .stat:hover {
-    @apply shadow-lift;
+  .card:hover {
+    box-shadow: var(--shadow-lift);
+  }
+  .card-featured {
+    @apply rounded-3xl bg-white;
+    box-shadow: var(--shadow-card);
+  }
+  .card-dark {
+    @apply rounded-2xl p-7 text-white;
+    background: var(--color-accent);
   }
 
   /* ───── Input ───── */
   .input {
-    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm;
-    @apply text-ink placeholder:text-slate-400;
-    @apply transition-colors duration-150;
-    @apply hover:border-slate-400;
-    @apply focus:border-ink focus:outline-none;
+    @apply w-full rounded-xl border-0 bg-white px-4 py-2.5 text-base;
+    @apply text-ink placeholder:text-black/40;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+    @apply transition-shadow duration-150 ease-out;
+  }
+  .input:hover {
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+  }
+  .input:focus {
+    @apply outline-none;
+    box-shadow: inset 0 0 0 2px #000000;
   }
 
   /* ───── Buttons (shared base via multi-selector) ───── */
@@ -190,220 +135,96 @@
   .btn-primary,
   .btn-secondary,
   .btn-ghost,
-  .btn-accent,
   .btn-danger {
     @apply inline-flex items-center justify-center gap-2;
-    @apply rounded-lg px-4 py-2 text-sm font-medium;
-    @apply transition-all duration-200 ease-out;
-    @apply hover:scale-[1.02] active:scale-[0.98];
+    @apply rounded-full px-7 py-2.5 text-base font-medium;
+    @apply transition-colors duration-200 ease-out;
     @apply disabled:cursor-not-allowed disabled:opacity-50;
   }
-  .btn:disabled,
-  .btn-primary:disabled,
-  .btn-secondary:disabled,
-  .btn-ghost:disabled,
-  .btn-accent:disabled,
-  .btn-danger:disabled {
-    @apply hover:scale-100;
-  }
 
-  /* Primary — dark gradient + gold shimmer sweep */
+  /* Primary — true black pill */
   .btn-primary {
-    @apply relative overflow-hidden text-white shadow-soft;
-    @apply hover:shadow-lift;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-    background-size: 200% 100%;
+    @apply bg-black text-white;
   }
-  .btn-primary::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      110deg,
-      transparent 35%,
-      rgba(184, 134, 11, 0.25) 50%,
-      transparent 65%
-    );
-    background-size: 200% 100%;
-    background-position: -200% 0;
-    transition: background-position 700ms ease;
-    pointer-events: none;
-  }
-  .btn-primary:hover::before {
-    background-position: 200% 0;
+  .btn-primary:hover {
+    background: #1f1f1f;
   }
 
+  /* Secondary — white pill with hairline ring */
   .btn-secondary {
-    @apply border border-slate-300 bg-white text-ink shadow-soft;
-    @apply hover:border-ink hover:shadow-lift;
+    @apply bg-white text-black;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+  }
+  .btn-secondary:hover {
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
   }
 
+  /* Ghost — text only */
   .btn-ghost {
-    @apply text-ink-soft;
-    @apply hover:bg-slate-100 hover:text-ink;
+    @apply text-black/70;
+  }
+  .btn-ghost:hover {
+    @apply bg-black/5 text-black;
   }
 
-  .btn-accent {
-    @apply text-white shadow-soft;
-    @apply hover:shadow-lift;
-    background: linear-gradient(135deg, #b8860b 0%, #d4a017 100%);
-  }
-  .btn-accent:hover {
-    filter: brightness(1.08);
-  }
-
+  /* Danger — rose */
   .btn-danger {
-    @apply bg-rose-600 text-white shadow-soft;
-    @apply hover:bg-rose-700 hover:shadow-lift;
+    @apply bg-rose-600 text-white;
+  }
+  .btn-danger:hover {
+    @apply bg-rose-700;
   }
 
   .btn-sm {
-    @apply px-3 py-1.5 text-xs;
+    @apply px-5 py-1.5 text-sm;
   }
 
-  /* ───── Badges (shared base via multi-selector) ───── */
+  /* ───── Badges — neutral grayscale (no saturated role colours per ADR-0014) ───── */
   .badge,
   .badge-admin,
   .badge-teacher,
-  .badge-student,
-  .badge-gold {
-    @apply inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium;
-  }
-  .badge-admin {
-    @apply bg-rose-50 text-rose-700 ring-1 ring-rose-200;
-  }
-  .badge-teacher {
-    @apply bg-blue-50 text-blue-700 ring-1 ring-blue-200;
-  }
   .badge-student {
-    @apply bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200;
-  }
-  .badge-gold {
-    @apply text-amber-800 ring-1 ring-amber-200;
-    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+    @apply text-ink;
+    background: rgba(0, 0, 0, 0.05);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
   }
 
   /* ───── Table ───── */
   .table {
-    @apply w-full overflow-hidden rounded-xl border border-slate-200 bg-white text-sm;
+    @apply w-full overflow-hidden rounded-2xl bg-white text-sm;
   }
   .table thead {
-    @apply bg-slate-50/80 text-left text-xs uppercase tracking-wider text-ink-soft;
+    @apply text-left text-xs font-medium text-black/50;
   }
   .table thead th {
-    @apply px-4 py-3 font-semibold;
+    @apply px-4 py-3;
   }
   .table tbody tr {
-    @apply border-t border-slate-100 transition-colors duration-150;
-    @apply hover:bg-slate-50/60;
+    @apply transition-colors duration-150;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+  }
+  .table tbody tr:hover {
+    background: rgba(0, 0, 0, 0.02);
   }
   .table tbody td {
     @apply px-4 py-3;
   }
 
-  /* ───── Stat ───── */
+  /* ───── Stat / KPI card ───── */
   .stat {
-    @apply animate-slide-up p-5;
+    @apply rounded-2xl bg-white p-6;
+    @apply transition-shadow duration-200 ease-out;
+  }
+  .stat:hover {
+    box-shadow: var(--shadow-lift);
   }
   .stat-label {
-    @apply text-xs font-medium uppercase tracking-wider text-ink-soft;
+    @apply text-xs font-medium text-black/60;
   }
   .stat-value {
-    @apply mt-1 text-3xl font-bold tracking-tight text-ink;
-  }
-  .stat-value-gold {
-    @apply mt-1 text-3xl font-bold tracking-tight;
-    background: linear-gradient(135deg, #b8860b, #d4a017);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════
-   Utilities
-   ═══════════════════════════════════════════════════════════ */
-
-@layer utilities {
-  .perspective-1000 {
-    perspective: 1000px;
-  }
-  .perspective-1500 {
-    perspective: 1500px;
-  }
-  .preserve-3d {
-    transform-style: preserve-3d;
-  }
-
-  .glass {
-    background: rgba(255, 255, 255, 0.72);
-    backdrop-filter: blur(12px) saturate(140%);
-    -webkit-backdrop-filter: blur(12px) saturate(140%);
-    border: 1px solid rgba(255, 255, 255, 0.6);
-  }
-
-  .text-gradient-gold {
-    background: linear-gradient(120deg, #b8860b 0%, #f5c441 50%, #b8860b 100%);
-    background-size: 200% 100%;
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: gradient-pan 6s ease infinite;
-  }
-
-  .text-gradient-ink {
-    background: linear-gradient(135deg, #0f172a 0%, #475569 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-
-  .mesh-bg {
-    background-color: #fafaf7;
-    background-image:
-      radial-gradient(at 12% 18%, rgba(184, 134, 11, 0.1) 0px, transparent 50%),
-      radial-gradient(at 88% 22%, rgba(15, 23, 42, 0.06) 0px, transparent 55%),
-      radial-gradient(at 50% 90%, rgba(212, 160, 23, 0.08) 0px, transparent 50%);
-  }
-
-  .tilt-card {
-    transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateZ(0);
-    transition:
-      transform 250ms cubic-bezier(0.22, 0.61, 0.36, 1),
-      box-shadow 250ms;
-    transform-style: preserve-3d;
-    will-change: transform;
-  }
-
-  .blob {
-    position: absolute;
-    border-radius: 999px;
-    filter: blur(48px);
-    opacity: 0.5;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .sheen {
-    position: relative;
-    overflow: hidden;
-  }
-  .sheen::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      120deg,
-      transparent 30%,
-      rgba(255, 255, 255, 0.5) 50%,
-      transparent 70%
-    );
-    transform: translateX(-100%);
-    transition: transform 800ms ease;
-    pointer-events: none;
-  }
-  .sheen:hover::after {
-    transform: translateX(100%);
+    @apply mt-2 text-4xl font-medium tracking-tight text-black;
+    letter-spacing: -0.02em;
   }
 }
 
@@ -412,20 +233,21 @@
    ═══════════════════════════════════════════════════════════ */
 
 [cmdk-group-heading] {
-  @apply px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-ink-soft;
+  @apply px-3 py-1.5 text-xs font-medium text-black/50;
 }
 
 [cmdk-item] {
-  @apply flex cursor-pointer items-center justify-between gap-2 rounded-md px-3 py-2 text-sm;
+  @apply flex cursor-pointer items-center justify-between gap-2 rounded-xl px-3 py-2 text-sm;
   @apply transition-colors;
 }
 
 [cmdk-item][data-selected="true"] {
-  @apply bg-slate-100 text-ink;
+  background: rgba(0, 0, 0, 0.05);
+  @apply text-ink;
 }
 
 [cmdk-item]:hover {
-  @apply bg-slate-50;
+  background: rgba(0, 0, 0, 0.025);
 }
 
 [cmdk-item][data-disabled="true"] {
@@ -433,11 +255,12 @@
 }
 
 [cmdk-empty] {
-  @apply px-3 py-6 text-center text-sm text-ink-soft;
+  @apply px-3 py-6 text-center text-sm text-black/50;
 }
 
 [cmdk-group]:not(:last-child) {
-  @apply border-b border-slate-100 pb-1;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  @apply pb-1;
 }
 
 [cmdk-group] + [cmdk-group] {
@@ -445,7 +268,53 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
-   Print (A4 transcript)
+   Compat shims — Ink+Gold orphan classes still referenced by
+   dashboard, privacy, teacher/courses, components/class-code-card.
+   These render as safe no-ops in the Calm Ledger theme so pages
+   don't show broken artifacts before per-surface touch-up.
+   Remove when each surface is migrated.
+   ═══════════════════════════════════════════════════════════ */
+
+.mesh-bg {
+  background: var(--color-bg);
+}
+
+.blob {
+  display: none !important;
+}
+
+.sheen {
+  position: relative;
+  overflow: hidden;
+}
+
+.glass {
+  background: var(--color-surface);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.text-gradient-gold,
+.text-gradient-ink {
+  color: var(--color-ink);
+  background: none;
+  -webkit-background-clip: initial;
+  background-clip: initial;
+  -webkit-text-fill-color: currentColor;
+}
+
+.tilt-card {
+  transform: none !important;
+}
+
+.perspective-1000,
+.perspective-1500,
+.preserve-3d {
+  perspective: none;
+  transform-style: flat;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Print (A4 transcript) — kept from Ink+Gold, color recalibrated
    ═══════════════════════════════════════════════════════════ */
 
 @media print {
@@ -457,7 +326,7 @@
   html,
   body {
     background: #ffffff !important;
-    color: #0f172a !important;
+    color: #000000 !important;
   }
 
   .print-hide,
@@ -469,7 +338,6 @@
   .btn-primary,
   .btn-secondary,
   .btn-ghost,
-  .btn-accent,
   .btn-danger {
     display: none !important;
   }
@@ -481,6 +349,7 @@
 
   .card,
   .card-flat,
+  .card-featured,
   .stat,
   table {
     box-shadow: none !important;
