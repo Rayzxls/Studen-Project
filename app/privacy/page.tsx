@@ -1,34 +1,56 @@
 import Link from "next/link";
 
+function LogoMark({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 256 256"
+      className={className}
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M 128.005 191.173 C 128.448 156.208 156.93 128 192 128 L 192 64 L 128 64 C 128 99.346 99.346 128 64 128 L 64 192 L 128 192 Z M 192 256 L 64 256 C 28.654 256 0 227.346 0 192 L 0 64 L 64 64 L 64 0 L 192 0 C 227.346 0 256 28.654 256 64 L 256 192 L 192 192 Z" />
+    </svg>
+  );
+}
+
 export default function PrivacyPage() {
   return (
-    <div className="mesh-bg min-h-screen">
-      <header className="border-b border-slate-200 bg-white/80 backdrop-blur">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-3">
+    <div className="min-h-screen bg-bg">
+      <header className="border-b border-black/[0.06] bg-white/80 backdrop-blur">
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
           <Link href="/" className="inline-flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-ink text-sm font-bold text-white">
-              S
-            </div>
-            <span className="font-semibold">Studennnn</span>
+            <LogoMark className="h-6 w-6 text-black" />
+            <span
+              className="text-lg font-medium text-black"
+              style={{ letterSpacing: "-0.02em" }}
+            >
+              Studennnn
+            </span>
           </Link>
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-6 py-12 animate-fade-in">
-        <div className="badge-gold mb-4">
-          นโยบายความเป็นส่วนตัว · เวอร์ชัน 1.0
-        </div>
-        <h1 className="text-4xl font-bold tracking-tight">
-          <span className="text-gradient-ink">นโยบายความเป็นส่วนตัว</span>
+      <main className="mx-auto max-w-3xl animate-fade-in px-6 py-12">
+        <div className="badge mb-4">นโยบายความเป็นส่วนตัว · เวอร์ชัน 1.0</div>
+        <h1
+          className="text-4xl font-medium text-black md:text-5xl"
+          style={{ letterSpacing: "-0.03em" }}
+        >
+          นโยบายความเป็นส่วนตัว
         </h1>
-        <p className="mt-3 text-sm text-ink-soft">
+        <p className="mt-3 text-sm text-black/60">
           อัปเดตล่าสุด: 31 พฤษภาคม 2569 · สอดคล้องตาม{" "}
-          <strong>พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562 (PDPA)</strong>
+          <strong className="font-medium text-black">
+            พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562 (PDPA)
+          </strong>
         </p>
 
-        <article className="prose prose-slate mt-8 max-w-none space-y-6 text-sm leading-relaxed text-ink-soft">
+        <article className="mt-10 max-w-none space-y-8 text-sm leading-relaxed text-black/70">
           <section>
-            <h2 className="font-semibold tracking-tight text-ink">
+            <h2
+              className="font-medium text-black"
+              style={{ letterSpacing: "-0.02em" }}
+            >
               1. ข้อมูลที่เราเก็บ
             </h2>
             <ul className="mt-2 list-inside list-disc">
@@ -49,7 +71,10 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-semibold tracking-tight text-ink">
+            <h2
+              className="font-medium text-black"
+              style={{ letterSpacing: "-0.02em" }}
+            >
               2. วัตถุประสงค์
             </h2>
             <p>
@@ -59,36 +84,50 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-semibold tracking-tight text-ink">
+            <h2
+              className="font-medium text-black"
+              style={{ letterSpacing: "-0.02em" }}
+            >
               3. ผู้ที่เข้าถึงข้อมูล
             </h2>
             <ul className="mt-2 list-inside list-disc">
               <li>
-                <strong>นักเรียน:</strong> เห็นเฉพาะข้อมูลของตนเอง
+                <strong className="font-medium text-black">นักเรียน:</strong>{" "}
+                เห็นเฉพาะข้อมูลของตนเอง
               </li>
               <li>
-                <strong>ครู:</strong> เห็นข้อมูลนักเรียนเฉพาะในห้องที่ตนเองสอน
+                <strong className="font-medium text-black">ครู:</strong>{" "}
+                เห็นข้อมูลนักเรียนเฉพาะในห้องที่ตนเองสอน
               </li>
               <li>
-                <strong>ผู้ดูแลระบบ (Admin):</strong> เข้าถึงข้อมูลเพื่อตรวจสอบ
-                — ทุกการเข้าดูถูกบันทึก
+                <strong className="font-medium text-black">
+                  ผู้ดูแลระบบ (Admin):
+                </strong>{" "}
+                เข้าถึงข้อมูลเพื่อตรวจสอบ — ทุกการเข้าดูถูกบันทึก
               </li>
             </ul>
           </section>
 
           <section>
-            <h2 className="font-semibold tracking-tight text-ink">
+            <h2
+              className="font-medium text-black"
+              style={{ letterSpacing: "-0.02em" }}
+            >
               4. ระยะเวลาเก็บข้อมูล
             </h2>
             <p>
-              เก็บไว้ตลอดระยะเวลาการศึกษาบวก <strong>2 ปีการศึกษา</strong>{" "}
+              เก็บไว้ตลอดระยะเวลาการศึกษาบวก{" "}
+              <strong className="font-medium text-black">2 ปีการศึกษา</strong>{" "}
               หลังจบ จากนั้นจะลบข้อมูลส่วนบุคคล (anonymize) —
               เก็บแค่สถิติชั้นเรียน
             </p>
           </section>
 
           <section>
-            <h2 className="font-semibold tracking-tight text-ink">
+            <h2
+              className="font-medium text-black"
+              style={{ letterSpacing: "-0.02em" }}
+            >
               5. สิทธิ์ของเจ้าของข้อมูล
             </h2>
             <ul className="mt-2 list-inside list-disc">
@@ -102,7 +141,10 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-semibold tracking-tight text-ink">
+            <h2
+              className="font-medium text-black"
+              style={{ letterSpacing: "-0.02em" }}
+            >
               6. ความปลอดภัย
             </h2>
             <ul className="mt-2 list-inside list-disc">
@@ -114,12 +156,15 @@ export default function PrivacyPage() {
           </section>
 
           <section id="contact">
-            <h2 className="font-semibold tracking-tight text-ink">
+            <h2
+              className="font-medium text-black"
+              style={{ letterSpacing: "-0.02em" }}
+            >
               7. ติดต่อเจ้าหน้าที่คุ้มครองข้อมูล (DPO)
             </h2>
             <p>
               อีเมล:{" "}
-              <code className="rounded bg-slate-100 px-1.5 py-0.5">
+              <code className="rounded-md bg-black/[0.05] px-1.5 py-0.5">
                 dpo@studennnn.local
               </code>
               <br />
@@ -128,7 +173,10 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-semibold tracking-tight text-ink">
+            <h2
+              className="font-medium text-black"
+              style={{ letterSpacing: "-0.02em" }}
+            >
               8. การเปลี่ยนแปลงนโยบาย
             </h2>
             <p>
