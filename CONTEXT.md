@@ -32,12 +32,15 @@
 ระบบใช้ **L1 Visibility** — นักเรียนเห็น:
 - ✅ ข้อมูลของตัวเอง 100%
 - ✅ Metadata ห้อง (ชื่อวิชา, ครูสอน, ตารางเรียน, Class Code? **ไม่**, Announcement, Material, Assignment)
-- ✅ รายชื่อสมาชิก (ชื่อ, ไม่มีคะแนน/attendance)
+- ✅ รายชื่อสมาชิกของ CourseOffering — **เฉพาะ "ชื่อ-นามสกุล" ของเพื่อน** (ไม่เห็น `studentId`, ไม่เห็น `enrolledAt`, ไม่เห็นคะแนน/attendance)
 - ✅ Class-wide Comments (ทั้งห้องเห็น)
+- ❌ studentId ของเพื่อน (เป็น login identifier — นับเป็น PII)
 - ❌ คะแนนคนอื่น
 - ❌ Attendance คนอื่น
 - ❌ Submission คนอื่น
 - ❌ Private Comments ระหว่างครู↔เพื่อนคนอื่น
+
+> Members list ฝั่งครูแสดง studentId + ชื่อ-นามสกุล + enrolledAt + ปุ่ม remove — ฝั่งนักเรียนแสดงเฉพาะชื่อ-นามสกุล (sorted by Thai name)
 
 ---
 
@@ -79,6 +82,16 @@
 ### Enrollment (การลงทะเบียน)
 ความสัมพันธ์ระหว่าง Student กับ CourseOffering
 **สร้างได้โดย:** Student ใช้ Class Code
+**Soft-deletable:** มี `removedAt`, `removedById`, `removedReason` — ครูกด "Remove" ไม่ทำลาย row (เพื่อกัน orphan ScoreEntry/Submission ใน Phase 5/6) — Active members = `removedAt IS NULL`
+
+### Remove from Course (นำออกจากห้อง)
+Action ของครู — soft-delete Enrollment row ของ Student คนหนึ่ง
+**บังคับ:** ใส่ `reason` (min 5 ตัวอักษร) + audit event `COURSE_MEMBER_REMOVED`
+นักเรียนที่ถูก remove แล้ว → ScoreEntry/Submission/Attendance ยังคงอยู่ใน DB เพื่อ trace ได้
+
+### Restore by Rejoin (กลับเข้าด้วย Class Code)
+ถ้านักเรียนที่ถูก remove ใช้ Class Code เดิม join อีก → ระบบ `removedAt = null` อัตโนมัติ + audit event `COURSE_MEMBER_RESTORED_BY_REJOIN`
+ถ้าครูต้องการ block ถาวร → deactivate Class Code (Settings tab) — Phase 3 ยังไม่มี per-student block
 
 ### Class Code
 รหัสที่ครูสร้างให้นักเรียนใช้ enroll
