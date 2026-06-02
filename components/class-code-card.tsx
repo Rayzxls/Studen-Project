@@ -19,36 +19,41 @@ export function ClassCodeCard({
   const inviteUrl = `${appUrl}/join?code=${encodeURIComponent(classCode)}`;
 
   return (
-    <div className="card sheen p-6">
+    <div className="card p-6">
       <div className="mb-4">
-        <h2 className="font-semibold tracking-tight">เชิญนักเรียนเข้าห้อง</h2>
-        <p className="mt-0.5 text-xs text-ink-soft">
+        <h2
+          className="text-lg font-medium text-black"
+          style={{ letterSpacing: "-0.02em" }}
+        >
+          เชิญนักเรียนเข้าห้อง
+        </h2>
+        <p className="mt-1 text-xs text-black/60">
           ให้นักเรียนใช้รหัส, สแกน QR, หรือกดลิงก์
         </p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-4">
+        <div className="flex flex-col items-center justify-center rounded-2xl bg-white p-4 ring-1 ring-black/[0.06]">
           <QRCodeSVG
             value={inviteUrl}
             size={180}
             level="M"
             includeMargin={false}
-            fgColor="#0F172A"
+            fgColor="#000000"
             bgColor="#FFFFFF"
           />
-          <p className="mt-3 text-center text-xs text-ink-soft">
+          <p className="mt-3 text-center text-xs text-black/60">
             สแกนด้วยมือถือเพื่อเข้าห้อง
           </p>
         </div>
 
         <div className="space-y-3">
           <div>
-            <div className="mb-1.5 text-xs font-medium uppercase tracking-wider text-ink-soft">
+            <div className="mb-1.5 text-xs font-medium text-black/60">
               รหัสห้องเรียน
             </div>
             <div className="flex items-center gap-2">
-              <code className="flex-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-lg font-bold tracking-wider text-ink">
+              <code className="flex-1 rounded-xl bg-black/[0.04] px-3 py-2 font-mono text-lg font-medium tracking-wider text-black">
                 {classCode}
               </code>
               <CopyButton text={classCode} />
@@ -56,20 +61,20 @@ export function ClassCodeCard({
           </div>
 
           <div>
-            <div className="mb-1.5 text-xs font-medium uppercase tracking-wider text-ink-soft">
+            <div className="mb-1.5 text-xs font-medium text-black/60">
               ลิงก์เชิญ
             </div>
             <div className="flex items-center gap-2">
-              <code className="flex-1 truncate rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-xs text-ink">
+              <code className="flex-1 truncate rounded-xl bg-black/[0.04] px-3 py-2 font-mono text-xs text-black">
                 {inviteUrl}
               </code>
               <CopyButton text={inviteUrl} />
             </div>
           </div>
 
-          <div className="rounded-lg bg-accent-soft p-3 text-xs">
-            <div className="font-semibold text-amber-800">{courseName}</div>
-            <div className="text-amber-700">ห้อง {className}</div>
+          <div className="rounded-xl bg-black/[0.04] p-3 text-xs">
+            <div className="font-medium text-black">{courseName}</div>
+            <div className="text-black/60">ห้อง {className}</div>
           </div>
         </div>
       </div>
