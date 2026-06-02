@@ -26,8 +26,10 @@ export type AuditEvent =
   | "COURSE_OFFERING_CREATED"
   // Class Code (Phase 2)
   | "CLASS_CODE_REGENERATE"
-  | "STUDENT_JOINED_COURSE"
-  | "STUDENT_REMOVED_FROM_COURSE"
+  // Course Membership lifecycle (Phase 2 join · Phase 3 remove/restore · ADR-0013)
+  | "COURSE_MEMBER_JOINED"
+  | "COURSE_MEMBER_REMOVED"
+  | "COURSE_MEMBER_RESTORED_BY_REJOIN"
   // Scoring (Phase 5)
   | "SCORE_ITEM_CREATE"
   | "SCORE_ITEM_DELETE"

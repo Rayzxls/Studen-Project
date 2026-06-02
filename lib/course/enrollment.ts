@@ -61,7 +61,7 @@ export async function enrollByClassCode(params: {
         {
           actorId: params.studentUserId,
           actorRole: "STUDENT",
-          action: "STUDENT_JOINED_COURSE",
+          action: "COURSE_MEMBER_JOINED",
           targetType: "Enrollment",
           targetId: enrollment.id,
           ipAddress: params.ipAddress,
