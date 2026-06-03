@@ -41,6 +41,7 @@ export type AuditEvent =
   | "SCORE_DELETE_AFTER_PUBLISH"
   // Attendance (Phase 4)
   | "ATTENDANCE_BACK_EDIT"
+  | "SESSION_CANCELLED"
   // Assignment (Phase 6)
   | "ASSIGNMENT_CREATE"
   | "ASSIGNMENT_EDIT"

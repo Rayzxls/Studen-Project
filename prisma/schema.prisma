@@ -1,6 +1,7 @@
 // Studennnn — Prisma Schema
 // Phase 1: Identity + Auth + Audit
 // Phase 2: Academic structure + Course Offerings + Enrollments
+// Phase 4: Attendance (TimetableSlot + Session + AttendanceRecord) — ADR-0015, ADR-0016
 // Workspace model (ADR-0012): teacher-owned CourseOffering, no school-wide Subject
 // See: Architecture.md § 3 Data Model · Security.md · CONTEXT.md
 
@@ -181,7 +182,9 @@ model CourseOffering {
   gradeRulesJson Json? // override default grade thresholds
   createdAt      DateTime  @default(now())
 
-  enrollments Enrollment[]
+  enrollments    Enrollment[]
+  timetableSlots TimetableSlot[]
+  sessions       Session[]
 
   @@index([classCode])
   @@index([teacherId])
@@ -201,9 +204,95 @@ model Enrollment {
   removedById   String? // User.id of the teacher who removed (or admin for moderation)
   removedReason String? // Min 5 chars enforced at API boundary
 
+  attendanceRecords AttendanceRecord[]
+
   @@unique([studentId, courseOfferingId])
   @@index([courseOfferingId])
   @@index([removedAt]) // fast "active members" filtering (where removedAt: null)
+}
+
+// ═══════════════════════════════════════════════════════════
+// Attendance (Phase 4) — ADR-0015 (lazy materialization) · ADR-0016 (sparse records + Enrollment FK)
+// ═══════════════════════════════════════════════════════════
+
+// Template — recurring weekly schedule. Optional per CourseOffering.
+// Editing/deleting a slot does NOT propagate to existing Session rows (ADR-0015 § 4).
+model TimetableSlot {
+  id               String         @id @default(cuid())
+  courseOfferingId String
+  course           CourseOffering @relation(fields: [courseOfferingId], references: [id], onDelete: Cascade)
+  dayOfWeek        Int            // 0=Sun..6=Sat (matches JS Date.getDay())
+  startTime        String         // "HH:mm" 24h, local Bangkok time
+  endTime          String         // "HH:mm" 24h, local Bangkok time
+  location         String?        // "อาคาร 3 ห้อง 305"
+  createdAt        DateTime       @default(now())
+
+  sessions Session[]
+
+  // Intra-course overlap blocking: exact duplicate slot rejected at DB layer.
+  // Time-range overlap (different startTime) blocked at lib layer (Q4a).
+  @@unique([courseOfferingId, dayOfWeek, startTime])
+  @@index([courseOfferingId])
+}
+
+// Concrete class meeting — materialized lazily on first teacher action.
+// Created via findOrCreateSession({courseOfferingId, scheduledStart, ...}).
+model Session {
+  id               String         @id @default(cuid())
+  courseOfferingId String
+  course           CourseOffering @relation(fields: [courseOfferingId], references: [id], onDelete: Cascade)
+
+  // Provenance — null = manually opened ad-hoc.
+  // SetNull so deleting a TimetableSlot does not orphan historical Sessions.
+  timetableSlotId String?
+  timetableSlot   TimetableSlot? @relation(fields: [timetableSlotId], references: [id], onDelete: SetNull)
+
+  scheduledStart DateTime // UTC instant (Postgres TIMESTAMPTZ); display layer converts to Asia/Bangkok
+  scheduledEnd   DateTime
+  note           String?
+
+  // Soft-cancel — see ADR-0015 § 3, audit event SESSION_CANCELLED (Critical tier).
+  cancelledAt     DateTime?
+  cancelledById   String?
+  cancelledReason String? // Min 5 chars enforced at action layer
+
+  createdAt   DateTime @default(now())
+  createdById String   // Teacher who opened the session (Restrict via Teacher FK enforced at lib layer)
+
+  records AttendanceRecord[]
+
+  // Prevents race-condition double-create from concurrent "เปิดคาบ" clicks.
+  @@unique([courseOfferingId, scheduledStart])
+  // Grid list query: "Sessions of this course, newest first"
+  @@index([courseOfferingId, scheduledStart])
+  @@index([timetableSlotId])
+}
+
+enum AttendanceStatus {
+  PRESENT
+  LATE
+  EXCUSED
+  ABSENT
+}
+
+// Sparse — no row = "ยังไม่เช็ค" (not yet marked), distinct from ABSENT (ADR-0016 § 1).
+model AttendanceRecord {
+  id           String           @id @default(cuid())
+  sessionId    String
+  session      Session          @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  enrollmentId String
+  enrollment   Enrollment       @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  status       AttendanceStatus
+  note         String? // "ลาป่วยมีใบรับรอง", "สาย 15 นาที"
+
+  markedAt   DateTime @default(now()) // first mark — stable
+  markedById String                    // teacher who last marked (overwritten on edit)
+  updatedAt  DateTime @updatedAt
+  editCount  Int      @default(0)      // increments on each edit; back-edit reason required when scheduledStart > 24h ago
+
+  @@unique([sessionId, enrollmentId])
+  @@index([enrollmentId]) // student stats query
+  @@index([sessionId])
 }
 
 // ═══════════════════════════════════════════════════════════
