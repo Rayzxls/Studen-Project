@@ -105,12 +105,12 @@ own those domains).
 - [x] `assert.ownsCourse` + `assert.isActiveCourseMember` (+ pure `can.*`)
 - [x] Smoke checks for all tab routes + L1 visibility body assertions
 
-**Deferred to a dedicated next session:**
-- [ ] P3-7 — integration test infra (`tests/integration/permissions/`)
-      for `assert.*` + lib/course/* — needs test-DB setup decision
-      before code (real Postgres vs Prisma mock)
+- [x] P3-7 — integration permission tests (real Neon DB, 22 cases across
+      4 files: enrollment-removal, enrollment-restore, members-listing,
+      class-code-mutations) + `pnpm test:integration` script
 
-**DoD:** ✅ course tabs ทำงาน, soft-delete + restore flow ทำงาน, smoke ครบ
+**DoD:** ✅ course tabs ทำงาน, soft-delete + restore flow ทำงาน,
+        smoke ครบ, integration tests ครบ (108 tests pass total)
 
 ---
 

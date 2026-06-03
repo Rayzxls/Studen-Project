@@ -3,17 +3,13 @@
 > เอกสารนี้ใช้สำหรับเริ่ม **session ใหม่** กับ AI assistant แล้วต่อยอดได้ทันที
 > อ่านไฟล์นี้ + `CLAUDE.md` + `CONTEXT.md` ก่อนเริ่มงาน
 
-อัพเดตล่าสุด: **2026-06-03** · 40+ commits · **Phase 0-2 + Calm Ledger pivot + Phase 3 (P3-1..6, P3-8) เสร็จ · P3-7 deferred**
+อัพเดตล่าสุด: **2026-06-03** · 40+ commits · **Phase 0-2 + Calm Ledger pivot + Phase 3 (P3-1..9) เสร็จทั้งหมด**
 
 ---
 
 ## ⚠️ Latest Session State (2026-06-03) — read this first
 
-### Phase 3 — feature work shipped end-to-end
-
-Original 9-task plan landed except for the integration test infra (P3-7),
-which was deliberately deferred — it requires a test-DB decision that
-deserves its own grilling session.
+### Phase 3 — DONE end-to-end (all 9 sub-tasks shipped)
 
 | Task | Status | SHA(s) |
 |------|--------|--------|
@@ -23,9 +19,9 @@ deserves its own grilling session.
 | P3-4 components/course/{course-shell, tab-nav} scaffold | ✅ | `32270da` |
 | P3-5 teacher tabs (Overview migration · Members + remove dialog · Settings + Class Code controls) | ✅ | `5a6432e`, `0d4cff8`, `3b12a52` |
 | P3-6 student tabs (Overview + dashboard links · Members L1-filtered) | ✅ | `9e549bc`, `b0e5fa0` |
-| P3-7 integration permission tests | ⏸️ deferred (next session) | — |
+| P3-7 integration permission tests (real Neon DB, 22 cases) | ✅ | `a4ca88e` |
 | P3-8 smoke-test.ts +13 Phase 3 checks | ✅ | `0db1339` |
-| P3-9 docs update (Task.md + HANDOFF) | ✅ | this commit |
+| P3-9 docs update (Task.md + HANDOFF) | ✅ | `41ff537` + this commit |
 
 ### What "shipped" means today
 
@@ -59,14 +55,20 @@ Security.md § 7 reflects all of these.
 - **useActionState + Server Action `.bind(null, contextId)`** — the established form pattern for dialogs and inline mutations. RemoveMemberDialog + ClassCodeControls both use it.
 - **React 19 lint gotcha** — `set-state-in-effect` rule fires on post-success effects. Workaround: only do DOM side-effects in the effect (e.g. `dialogRef.current?.close()`), leave React state alone; the per-row component unmounts after revalidation anyway.
 
-### What needs deciding before resuming P3-7
+### Test commands (post-P3-7 script split)
 
-Integration test infra has 3 plausible shapes:
-1. **Real Postgres test DB** — separate DATABASE_URL, fixture seed per test, full fidelity. Most setup.
-2. **Prisma mock via vitest-mock-extended** — fast, no DB, but mocks the boundary we want to verify. Lowest fidelity.
-3. **Hybrid** — pure `can.*` covered by existing `tests/unit/permissions.test.ts` style; mutation flows covered by extending `scripts/smoke-test.ts` (already against live DB). Skip the `tests/integration/permissions/` folder entirely.
+| Command | Scope | DB needed? | Time |
+|---------|-------|------------|------|
+| `pnpm test` | `tests/unit/**` (86 cases) | no | ~4s |
+| `pnpm test:integration` | `tests/integration/**` (22 cases) | yes — uses DATABASE_URL via `.env.local` | ~20s |
+| `pnpm test:all` | both | yes | ~25s |
+| `pnpm exec dotenv -e .env.local -- tsx scripts/smoke-test.ts` | E2E HTTP smoke (live dev server required) | yes | ~30s |
 
-Recommend grilling option 3 first — we already have ~13 Phase 3 smoke assertions; topping up to ~25 across mutations + restore + cross-course gates may be enough without standing up new infra. Decide in the P3-7 session.
+`pnpm test` (CI script) stays unit-only so the existing GitHub Actions
+job needs no env changes. Devs run `pnpm test:integration` locally
+before pushing changes that touch lib/course/*. Adding a Postgres
+service container (or pointing CI at a dedicated Neon branch) to the
+test-unit job is a clean follow-up — not blocking.
 
 ### CI status — green ✅
 
@@ -142,7 +144,7 @@ All commits since `c46b7c4` have passed 3/3 jobs (Lint/Typecheck, Unit Tests, Bu
 | **2b** | Teacher pages (list/create/detail + QR + ClassPicker) | ✅ DONE |
 | **2c** | Admin pages (list/students/teachers + CSV import + audit viewer) | ✅ DONE |
 | **2.5** | Calm Ledger theme pivot (ADR-0014) + Anuphan + landing rebuild + touch-up ทุก surface | ✅ DONE |
-| **3** | Course tabs (Overview · Members · Settings) + soft-delete + restoration | ✅ DONE (P3-1..6, P3-8 · P3-7 integration tests deferred) |
+| **3** | Course tabs (Overview · Members · Settings) + soft-delete + restoration | ✅ DONE (P3-1..9 all complete · 22 integration tests pass) |
 | **4** | Attendance (timetable, sessions, records) | ⏳ TODO |
 | **5** | Scoring + Term GPA + Print transcript | ⏳ TODO |
 | **6** | Assignment + Submission + Comments + R2 file upload | ⏳ TODO |
