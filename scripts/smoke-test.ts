@@ -530,6 +530,172 @@ async function testPhase2Join() {
   }
 }
 
+async function testPhase3CourseTabs() {
+  console.log("\n🎓 Phase 3: course tab shell + L1 visibility");
+
+  const demoCode = "MATH4A-DEMO1";
+  const course = await db.courseOffering.findUnique({
+    where: { classCode: demoCode },
+    select: { id: true },
+  });
+  if (!course) {
+    fail(
+      "Phase 3 setup",
+      `Demo course "${demoCode}" missing — run pnpm db:seed`
+    );
+    return;
+  }
+
+  // ── Teacher 3 tabs ──────────────────────────────────────────────
+  const teacherCookie = await signin("teacher@studennnn.local", "Teacher1234!");
+  if (!teacherCookie) {
+    fail("Teacher login (Phase 3)", "no cookie");
+    return;
+  }
+
+  const tOverview = await getWithCookie(
+    `/teacher/courses/${course.id}`,
+    teacherCookie
+  );
+  await expect(
+    "Teacher GET Overview → 200",
+    tOverview.status === 200,
+    `got ${tOverview.status}`
+  );
+  const tOverviewBody = await tOverview.text();
+  await expect(
+    "Teacher Overview shows class code",
+    tOverviewBody.includes(demoCode),
+    "demo code missing from overview"
+  );
+  await expect(
+    "Teacher Overview links to /members tab",
+    tOverviewBody.includes(`/teacher/courses/${course.id}/members`),
+    "members link not present"
+  );
+
+  const tMembers = await getWithCookie(
+    `/teacher/courses/${course.id}/members`,
+    teacherCookie
+  );
+  await expect(
+    "Teacher GET Members → 200",
+    tMembers.status === 200,
+    `got ${tMembers.status}`
+  );
+  const tMembersBody = await tMembers.text();
+  await expect(
+    "Teacher Members shows seed student (60001)",
+    tMembersBody.includes("60001"),
+    "studentId 60001 not rendered for teacher"
+  );
+  await expect(
+    "Teacher Members shows remove affordance",
+    tMembersBody.includes("นำออก"),
+    "remove button label missing"
+  );
+
+  const tSettings = await getWithCookie(
+    `/teacher/courses/${course.id}/settings`,
+    teacherCookie
+  );
+  await expect(
+    "Teacher GET Settings → 200",
+    tSettings.status === 200,
+    `got ${tSettings.status}`
+  );
+  const tSettingsBody = await tSettings.text();
+  await expect(
+    "Teacher Settings shows class code controls",
+    tSettingsBody.includes("สร้างรหัสใหม่") &&
+      (tSettingsBody.includes("ปิดรหัส") ||
+        tSettingsBody.includes("เปิดรหัสอีกครั้ง")),
+    "regen or toggle button missing"
+  );
+
+  // ── Student 2 tabs (60001 seeded in MATH4A-DEMO1) ───────────────
+  const studentCookie = await signin("60001", "Student1234");
+  if (!studentCookie) {
+    fail("Student login (Phase 3)", "no cookie");
+    return;
+  }
+
+  const sOverview = await getWithCookie(
+    `/student/courses/${course.id}`,
+    studentCookie
+  );
+  await expect(
+    "Student GET own course Overview → 200",
+    sOverview.status === 200,
+    `got ${sOverview.status}`
+  );
+  const sOverviewBody = await sOverview.text();
+  await expect(
+    "L1: student Overview does NOT contain class code",
+    !sOverviewBody.includes(demoCode),
+    "class code leaked to student view"
+  );
+
+  const sMembers = await getWithCookie(
+    `/student/courses/${course.id}/members`,
+    studentCookie
+  );
+  await expect(
+    "Student GET own course Members → 200",
+    sMembers.status === 200,
+    `got ${sMembers.status}`
+  );
+  const sMembersBody = await sMembers.text();
+  await expect(
+    "L1: student Members does NOT contain peer studentIds",
+    !sMembersBody.includes("60001") ||
+      sMembersBody.match(/60001/g)!.length === 0,
+    "studentId 60001 found in student Members body (PII leak)"
+  );
+
+  // ── Role boundaries ─────────────────────────────────────────────
+  const sToTeacher = await getWithCookie(
+    `/teacher/courses/${course.id}`,
+    studentCookie
+  );
+  await expect(
+    "Student → /teacher/courses/[id] redirected",
+    sToTeacher.status === 307 || sToTeacher.status === 302,
+    `got ${sToTeacher.status}`
+  );
+
+  const sToSettings = await getWithCookie(
+    `/teacher/courses/${course.id}/settings`,
+    studentCookie
+  );
+  await expect(
+    "Student → /teacher/courses/[id]/settings redirected",
+    sToSettings.status === 307 || sToSettings.status === 302,
+    `got ${sToSettings.status}`
+  );
+
+  // ── L1 gate: student tries to view another course ───────────────
+  // Create a second course owned by teacher but never joined by 60001.
+  // For smoke purposes we lazily look for any OTHER course in the DB.
+  const otherCourse = await db.courseOffering.findFirst({
+    where: { id: { not: course.id } },
+    select: { id: true },
+  });
+  if (otherCourse) {
+    const sForeign = await getWithCookie(
+      `/student/courses/${otherCourse.id}`,
+      studentCookie
+    );
+    await expect(
+      "L1: student GET non-enrolled course → 404",
+      sForeign.status === 404,
+      `got ${sForeign.status}`
+    );
+  } else {
+    pass("L1: non-enrolled course check (skipped — only 1 course seeded)");
+  }
+}
+
 async function testAuditLog() {
   console.log("\n📝 Audit log verification");
 
@@ -596,6 +762,7 @@ async function main() {
   await testRateLimitLockout();
   await testForceResetRedirect();
   await testPhase2Join();
+  await testPhase3CourseTabs();
   await testAuditLog();
 
   console.log(`\n╭───────────────────────────────────╮`);
