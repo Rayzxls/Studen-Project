@@ -128,6 +128,121 @@ export async function getScoreboardForTeacher(
 }
 
 // ─────────────────────────────────────────────────────────────
+// Teacher view — single ScoreItem grid (one column of teacher scoreboard)
+// ─────────────────────────────────────────────────────────────
+
+export interface ScoreItemGridRow {
+  enrollmentId: string;
+  studentUserId: string;
+  studentId: string;
+  firstName: string;
+  lastName: string;
+  removedAt: Date | null;
+  value: number | null;
+  note: string | null;
+  editCount: number;
+}
+
+export interface ScoreItemGrid {
+  item: {
+    id: string;
+    courseOfferingId: string;
+    name: string;
+    fullScore: number;
+    weight: number;
+    position: number;
+    publishedAt: Date | null;
+  };
+  rows: ScoreItemGridRow[];
+}
+
+/**
+ * Per-ScoreItem grid for the teacher entry page. Same active∪ever-graded
+ * union as `getScoreboardForTeacher` (Pattern 14) — historical entries
+ * from removed enrollments persist as read-only rows.
+ *
+ * Authorization: actor must be the teacher who owns the parent
+ * CourseOffering. Use `assert.canMutateScoreItem` upstream to get the
+ * `{ session, item }` pair and avoid a duplicate read for the item shape.
+ */
+export async function getScoreItemGridForTeacher(
+  scoreItemId: string,
+  actorUserId: string
+): Promise<ScoreItemGrid | null> {
+  const item = await db.scoreItem.findUnique({
+    where: { id: scoreItemId },
+    select: {
+      id: true,
+      courseOfferingId: true,
+      name: true,
+      fullScore: true,
+      weight: true,
+      position: true,
+      publishedAt: true,
+      course: { select: { teacherId: true } },
+    },
+  });
+  if (!item) return null;
+  if (item.course.teacherId !== actorUserId) {
+    throw new Forbidden("not_course_owner");
+  }
+
+  const enrollments = await db.enrollment.findMany({
+    where: {
+      courseOfferingId: item.courseOfferingId,
+      OR: [{ removedAt: null }, { scoreEntries: { some: { scoreItemId } } }],
+    },
+    select: {
+      id: true,
+      removedAt: true,
+      student: {
+        select: {
+          userId: true,
+          studentId: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
+      scoreEntries: {
+        where: { scoreItemId },
+        select: { value: true, note: true, editCount: true },
+        take: 1,
+      },
+    },
+    orderBy: [
+      { student: { firstName: "asc" } },
+      { student: { lastName: "asc" } },
+    ],
+  });
+
+  return {
+    item: {
+      id: item.id,
+      courseOfferingId: item.courseOfferingId,
+      name: item.name,
+      fullScore: item.fullScore,
+      weight: item.weight,
+      position: item.position,
+      publishedAt: item.publishedAt,
+    },
+    rows: enrollments.map((e) => {
+      const entry = e.scoreEntries[0] ?? null;
+      return {
+        enrollmentId: e.id,
+        studentUserId: e.student.userId,
+        studentId: e.student.studentId,
+        firstName: e.student.firstName,
+        lastName: e.student.lastName,
+        removedAt: e.removedAt,
+        value: entry?.value ?? null,
+        note: entry?.note ?? null,
+        editCount: entry?.editCount ?? 0,
+      };
+    }),
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
 // Student view — own scores only, published items only (L1)
 // ─────────────────────────────────────────────────────────────
 
