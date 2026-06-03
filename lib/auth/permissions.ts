@@ -109,4 +109,27 @@ export const can = {
     if (session.user.role !== "TEACHER") return false;
     return session.user.id === sessionRow.course.teacherId;
   },
+
+  /**
+   * Owning TEACHER can mutate a ScoreItem of their CourseOffering — Phase 5.
+   *
+   * Scope: create / update / publish / delete of ScoreItem rows AND bulk
+   * upsert of their ScoreEntry rows. ADR-0017 + ADR-0018 lifecycle rules
+   * (publish gate, field-class edit policy, one-way publish, reason gate)
+   * live in `lib/scoring/*` — this predicate is the "who", not the "what".
+   * The lib layer surfaces `Conflict` / `ValidationError` for state /
+   * invariant violations.
+   *
+   * ADMIN is rejected (mirrors `mutateSession` / `ownsCourse` posture).
+   *
+   * Pure — caller fetches `item.course.teacherId` and passes it in. For
+   * DB-backed lookup use `assert.canMutateScoreItem` in guards.ts.
+   */
+  mutateScoreItem(
+    session: Session,
+    item: { course: { teacherId: string } }
+  ): boolean {
+    if (session.user.role !== "TEACHER") return false;
+    return session.user.id === item.course.teacherId;
+  },
 };

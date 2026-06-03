@@ -185,6 +185,47 @@ describe("can.mutateSession (Phase 4, P4-3)", () => {
   });
 });
 
+describe("can.mutateScoreItem (Phase 5, P5-3)", () => {
+  const item = { course: { teacherId: "t1" } };
+
+  it("allows the owning TEACHER", () => {
+    expect(can.mutateScoreItem(mkSession("TEACHER", "t1"), item)).toBe(true);
+  });
+
+  it("rejects a different TEACHER", () => {
+    expect(can.mutateScoreItem(mkSession("TEACHER", "t2"), item)).toBe(false);
+  });
+
+  it("rejects ADMIN (Phase 5 scopes scoring writes to course owner)", () => {
+    expect(can.mutateScoreItem(mkSession("ADMIN", "t1"), item)).toBe(false);
+  });
+
+  it("rejects STUDENT even when id collides with teacherId", () => {
+    expect(can.mutateScoreItem(mkSession("STUDENT", "t1"), item)).toBe(false);
+  });
+
+  it("is pure — does not depend on publishedAt (lib layer enforces lifecycle)", () => {
+    // ADR-0018: the publish gate / field-class dispatch / reason gate all
+    // live in lib/scoring/score-item.ts. This predicate is "who", not "what state".
+    expect(can.mutateScoreItem(mkSession("TEACHER", "t1"), item)).toBe(true);
+  });
+
+  it("matches mutateSession shape exactly (consistency across course-owned entities)", () => {
+    // Phase 4 sessionRow shape and Phase 5 scoreItem shape are isomorphic
+    // for authz purposes: both wrap `course.teacherId`. The predicates
+    // should agree on every Session-Item-Teacher triple.
+    const t1 = mkSession("TEACHER", "t1");
+    const t2 = mkSession("TEACHER", "t2");
+    const sessionRow = { course: { teacherId: "t1" } };
+    expect(can.mutateScoreItem(t1, item)).toBe(
+      can.mutateSession(t1, sessionRow)
+    );
+    expect(can.mutateScoreItem(t2, item)).toBe(
+      can.mutateSession(t2, sessionRow)
+    );
+  });
+});
+
 describe("L1 visibility (Phase 1) — students never see others", () => {
   it("STUDENT cannot view audit logs", () => {
     expect(can.viewAuditLog(mkSession("STUDENT"))).toBe(false);

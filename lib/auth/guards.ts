@@ -194,4 +194,58 @@ export const assert = {
     if (!can.mutateSession(session, sessionRow)) throw new Forbidden();
     return { session, sessionRow };
   },
+
+  /**
+   * Assert the session belongs to the teacher who owns the CourseOffering
+   * that contains the given ScoreItem. Phase 5 — score-item CUD + publish +
+   * score-entry upserts.
+   *
+   * Return shape: divergent like `canMutateSession`. The `item` is
+   * returned because the authz decision already fetched it, so callers
+   * (a Server Action wanting to render the publish-confirm dialog with
+   * the current weight + fullScore, or to gate the field-class edit
+   * dispatch in the UI) don't have to issue a duplicate read. The field
+   * set exposes the minimum needed by the Score grid + Publish dialog.
+   *
+   * `publishedAt` is returned as a Date | null so the caller can drive
+   * Pattern 12 (useState lazy initializer for "is this published?" UI flags)
+   * and the field-class dispatch in `updateScoreItem`.
+   *
+   * Throws:
+   *   - Unauthorized — no session
+   *   - NotFound     — score item doesn't exist (cuid id-space, same
+   *                     enumeration-risk posture as `ownsCourse`)
+   *   - Forbidden    — session is not the owning teacher
+   */
+  async canMutateScoreItem(scoreItemId: string): Promise<{
+    session: Session;
+    item: {
+      id: string;
+      courseOfferingId: string;
+      name: string;
+      fullScore: number;
+      weight: number;
+      position: number;
+      publishedAt: Date | null;
+      course: { name: string; teacherId: string };
+    };
+  }> {
+    const session = await requireAuth();
+    const item = await db.scoreItem.findUnique({
+      where: { id: scoreItemId },
+      select: {
+        id: true,
+        courseOfferingId: true,
+        name: true,
+        fullScore: true,
+        weight: true,
+        position: true,
+        publishedAt: true,
+        course: { select: { name: true, teacherId: true } },
+      },
+    });
+    if (!item) throw new NotFound("score_item_not_found");
+    if (!can.mutateScoreItem(session, item)) throw new Forbidden();
+    return { session, item };
+  },
 };
