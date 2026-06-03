@@ -3,13 +3,13 @@
 > เอกสารนี้ใช้สำหรับเริ่ม **session ใหม่** กับ AI assistant แล้วต่อยอดได้ทันที
 > อ่านไฟล์นี้ + `CLAUDE.md` + `CONTEXT.md` ก่อนเริ่มงาน
 
-อัพเดตล่าสุด: **2026-06-04** · 55+ commits · **Phase 0-4 ปิดครบ · พร้อมเริ่ม Phase 5 (Scoring)**
+อัพเดตล่าสุด: **2026-06-04** · 70+ commits · **Phase 0-5 ปิดครบ · พร้อมเริ่ม Phase 6 (Assignment + Submission + R2)**
 
 ---
 
-## ⚠️ START HERE — Latest Session State (2026-06-04)
+## ⚠️ START HERE — Latest Session State (2026-06-04 · post-Phase-5)
 
-### Phase 1-2-3-4 — ปิดครบ ✅
+### Phase 1-2-3-4-5 — ปิดครบ ✅
 
 อ่าน 3 ไฟล์เรียงนี้ก่อนแตะอะไร:
 1. **`HANDOFF.md`** (ไฟล์นี้ — START block + Patterns section)
@@ -22,6 +22,8 @@ ADR ที่ต้องเข้าใจก่อนแตะ feature:
 - `docs/adr/0014-theme-calm-ledger-supersedes-ink-gold.md` — Calm Ledger pivot (supersedes 0011)
 - `docs/adr/0015-lazy-session-materialization.md` — Session created on demand, no cron, no eager batch
 - `docs/adr/0016-sparse-attendance-and-enrollment-fk.md` — sparse rows + Enrollment FK + active∪ever-marked grid
+- `docs/adr/0017-weight-invariant-basis-points-and-publish-gate.md` — ScoreItem.weight = integer basis points 0..10000; publish-gate Σ === 10000 strict; PURE calc.ts
+- `docs/adr/0018-publish-is-a-contract-no-unpublish-and-field-class-edit-rules.md` — publishedAt one-way; field-class A/B/C edit dispatch; SCORE_EDIT_AFTER_PUBLISH + SCORE_DELETE_AFTER_PUBLISH escape hatches
 
 ### Phase 3 — DONE end-to-end (all 9 sub-tasks + 4 manual-QA hotfixes)
 
@@ -55,19 +57,51 @@ ADR ที่ต้องเข้าใจก่อนแตะ feature:
 | P4-8 smoke checks (+13 against live dev · 57 → 72 total) | ✅ | `547bee6` |
 | P4-9 docs (this commit) | ✅ | — |
 
+### Phase 5 — DONE end-to-end (all sub-tasks + Q-grill ADRs + 1 lib bug caught by P5-7)
+
+| Task | Status | SHA(s) |
+|------|--------|--------|
+| Grill ADR-0017 (weight basis points + publish gate) | ✅ | `5db9852` |
+| Grill ADR-0018 (publish one-way + field-class edit rules) | ✅ | `33c562f` |
+| CONTEXT.md Phase 5 glossary updates (Score Item · Publish · Grade · Term GPA · Term Status) | ✅ | `ac992ea` |
+| Dashboard footer phase pointer hotfix (was stuck on Phase 2) | ✅ | `20f95d7` |
+| P5-1 schema (ScoreItem + ScoreEntry + ScoreItemSource enum) | ✅ | `54dfcc7` |
+| P5-2a `lib/scoring/*` PURE (constants · format · calc · term-gpa · term-status) + 4 test files (+59 unit cases) | ✅ | `fc5a768` |
+| P5-2b `lib/scoring/*` DB-touching (score-item · score-entry · queries) + audit enum past-tense rename | ✅ | `76e944a` |
+| P5-3 `can.mutateScoreItem` + `assert.canMutateScoreItem` + 6 unit tests (cross-predicate consistency with mutateSession) | ✅ | `e48942a` |
+| P5-4a Teacher Scores tab + Score Item list + create dialog (live Σ pill, % → bp conversion) | ✅ | `425bc74` |
+| P5-4b Per-ScoreItem grid + bulk save (dual-layout Pattern 13 · empty-cell skip semantic · post-publish reason gate triggered only on value changes) | ✅ | `c369a77` |
+| P5-4c Publish + Delete dialogs + Settings `เกณฑ์เกรด` read-only card | ✅ | `890b8d5` |
+| P5-5a Student Scores tab (L1 projection via Pattern 4, published items only, weighted preview) | ✅ | `35ce4ac` |
+| P5-5b `/student/terms` + `/student/terms/[termId]` + TermPicker + Print button + dashboard link | ✅ | `61dc5a1` |
+| P5-5c Print stylesheet polish + transcript footer (พิมพ์เมื่อ + reference code) | ✅ | `4b3367d` |
+| P5-7 integration tests (3 files, 45 cases · 71 → 116 total) + caught + fixed L1 Forbidden guard bug | ✅ | `de9012e` |
+| P5-8 smoke checks (+16 against live dev · 72 → 88 total) | ✅ | `710cc78` |
+| P5-9 docs (this commit) | ✅ | — |
+
+**P5-6 ScoreItemTemplate** — deferred per Q5 grill lock; reserved for a future phase once teachers report demand for template-copy across CourseOfferings.
+
 ### What "shipped" means today
 
-- **Teacher course detail** — 4 tabs (ภาพรวม · สมาชิก · เช็คชื่อ · ตั้งค่า):
+- **Teacher course detail** — 5 tabs (ภาพรวม · สมาชิก · เช็คชื่อ · คะแนน · ตั้งค่า):
   - Overview: ClassCodeCard + member count link
   - Members: active-only list + "นำออก" dialog (reason 5–500, audit `COURSE_MEMBER_REMOVED`)
-  - **Attendance**: Session list (newest first · cancelled inline-muted · ad-hoc badge) + "+ เปิดคาบ" dialog (date · slot picker · time inputs) + per-Session grid page (status button group with semantic colors · bulk "ทุกคนมา"/"ล้าง" · back-edit reason gate >24h · cancel-session dialog · removed-but-marked rows render opacity-60 + "ถูกนำออกแล้ว" badge read-only)
-  - Settings: regenerate code, activate-toggle, set/clear expiry — each with its own audit event — **+ TimetableEditor card** (slot CRUD with intra-course overlap rejection, no audit on slot CUD per Q11C)
-- **Student course detail** — 3 tabs (ภาพรวม · เพื่อนร่วมห้อง · เช็คชื่อ):
+  - **Attendance**: Session list + "+ เปิดคาบ" dialog + per-Session grid (Pattern 13 dual-layout) + back-edit reason gate (>24h) + cancel-session dialog · `SESSION_CANCELLED` / `ATTENDANCE_BACK_EDIT` audits
+  - **Scores (Phase 5)**: Score Item list + Σ น้ำหนัก pill (green @ 10000bp / amber otherwise) · `+ เพิ่มรายการคะแนน` dialog · per-row Publish + Delete dialogs · per-item grid (Pattern 13 dual-layout) with bulk `ทุกคนคะแนนเต็ม` + post-publish reason gate that triggers ONLY on value changes (not note-only) · empty-cell skip semantic at the action layer
+  - Settings: regenerate code, activate-toggle, set/clear expiry — each with its own audit event · **TimetableEditor card** · **`เกณฑ์เกรด` read-only card** (Q5 lock: editor deferred, runtime `gradeFor()` already accepts `gradeRulesJson` overrides so future enablement is UI-only)
+- **Student course detail** — 4 tabs (ภาพรวม · เพื่อนร่วมห้อง · เช็คชื่อ · คะแนน):
   - L1 visibility enforced at the Prisma SELECT layer — no classCode, no peer studentIds, no enrolledAt on the wire
-  - **Attendance L1 view**: KPI "อัตราการมาเรียน %" + 4-status count tiles + per-Session timeline showing own status only (peer marks never queried)
+  - **Attendance L1 view**: KPI "อัตราการมาเรียน %" + 4-status count tiles + per-Session timeline showing own status only
+  - **Scores L1 view (Phase 5)**: weighted total preview over published portion · per-course grade (only when fully published) · published items + own values only · Lock card surfacing unpublished item count
   - Dashboard student cards now LINK to `/student/courses/[id]`
+- **Student top-level — `ผลการเรียน` (Phase 5)** at `/student/terms` (default = active term) + `/student/terms/[termId]` (history):
+  - Term GPA headline · 3-state badge `EMPTY | IN_PROGRESS | COMPLETED` (one-way per ADR-0018) · progress bar (publishedItems / totalItems)
+  - Transcript table: วิชา · ครู · หน่วยกิต · % · เกรด · GPA footer row
+  - TermPicker dropdown (when student has > 1 historical term)
+  - **Print PDF** via `window.print()` — A4 stylesheet hides chrome/forms/btns, prints transcript-style with print-only footer "พิมพ์เมื่อ … · เอกสารอ้างอิง: <studentId/termSuffix>"
 - **Auto-restore on rejoin** — removed student using the same class code triggers `restoreByRejoin` inside `enrollByClassCode`, audit `COURSE_MEMBER_RESTORED_BY_REJOIN`. Permanent block = deactivate code in Settings (ADR-0013 § 2 kill switch)
 - **Session lifecycle (Phase 4)** — lazy materialization via `findOrCreateSession` (race-safe), soft-cancel via `cancelSession` (audit `SESSION_CANCELLED` Critical tier with reason ≥ 5), sparse `AttendanceRecord` with `editCount` + back-edit reason gate (`ATTENDANCE_BACK_EDIT` Important tier when >24h elapsed AND a row changes/creates)
+- **ScoreItem lifecycle (Phase 5)** — strict basis-point weight invariant (ADR-0017 § Decision 1, `WEIGHT_SUM_BP = 10000`, no tolerance, no auto-distribute) · publish is a one-way door (ADR-0018, no `unpublishScoreItem` function exists) · post-publish field edits dispatch by class A (cosmetic, free) / B (`fullScore` / `weight`, `reason ≥ 5` + `SCORE_EDIT_AFTER_PUBLISH` audit + Σ revalidation in tx + fullScore-shrink-vs-entries gate) / C (`source`, immutable — `field_immutable_after_publish`) · post-publish delete requires reason + `SCORE_DELETE_AFTER_PUBLISH` Critical-tier audit + explicit ScoreEntry cascade in tx
 
 ### Audit event additions
 
@@ -83,7 +117,13 @@ Phase 4 (attendance family):
 - `SESSION_CANCELLED` (new · Critical tier · with reason ≥ 5)
 - `ATTENDANCE_BACK_EDIT` (existing in enum, first fire site this phase · Important tier · with reason ≥ 5 when scheduledStart > 24h ago AND a row changes/creates)
 
-**Verbose tier (NOT logged)** — TimetableSlot CRUD (Q11C: configuration only, no student-data impact until a Session is materialized), normal in-window attendance writes (recorded in the current row).
+Phase 5 (scoring family, past-tense per Pattern 10 — enum cleaned to drop pre-publish events that we explicitly do NOT log):
+- `SCORE_ITEM_PUBLISHED` (new · Important tier · after-payload includes name/weight/fullScore/publishedAt)
+- `SCORE_EDIT_AFTER_PUBLISH` (existing in enum, first fire sites this phase · Important tier · with reason ≥ 5) — fires from class-B field edits in `updateScoreItem` AND from value-changing `bulkUpsertScoreEntries` calls on a published ScoreItem (single audit row per batch)
+- `SCORE_DELETE_AFTER_PUBLISH` (existing in enum, first fire site this phase · Critical tier · with reason ≥ 5)
+- **Removed from enum**: `SCORE_ITEM_CREATE`, `SCORE_ITEM_DELETE`, `SCORE_ITEM_PUBLISH` (verb-form). Renamed `SCORE_ITEM_PUBLISH → SCORE_ITEM_PUBLISHED`. Zero migration — no fire site existed.
+
+**Verbose tier (NOT logged)** — TimetableSlot CRUD (Q11C), normal in-window attendance writes, **pre-publish ScoreItem CUD** (ADR-0018 § Negative consequences — teachers freely build the gradebook in draft state), normal in-window ScoreEntry writes on draft items.
 
 Security.md § 7 reflects all of these.
 
@@ -195,12 +235,12 @@ Removed-then-marked rows persist with `opacity-60` + read-only badge. **Phase 5+
 
 | Command | Scope | DB needed? | Time |
 |---------|-------|------------|------|
-| `pnpm test` | `tests/unit/**` (91 cases) | no | ~4s |
-| `pnpm test:integration` | `tests/integration/**` (71 cases · 8 files) | yes — uses DATABASE_URL via `.env.local` | ~150s |
-| `pnpm test:all` | both | yes | ~155s |
-| `pnpm exec dotenv -e .env.local -- tsx scripts/smoke-test.ts` | E2E HTTP smoke (72 checks · live dev server required) | yes | ~45s |
+| `pnpm test` | `tests/unit/**` (156 cases · 12 files) | no | ~5s |
+| `pnpm test:integration` | `tests/integration/**` (116 cases · 11 files) | yes — uses DATABASE_URL via `.env.local` | ~290s |
+| `pnpm test:all` | both | yes | ~295s |
+| `pnpm exec dotenv -e .env.local -- tsx scripts/smoke-test.ts` | E2E HTTP smoke (88 checks · live dev server required) | yes | ~60s |
 
-**Total verifications post-Phase 4:** 91 unit + 71 integration + 72 smoke = 234.
+**Total verifications post-Phase 5:** 156 unit + 116 integration + 88 smoke = **360**.
 
 `pnpm test` (CI script) stays unit-only so the existing GitHub Actions
 job needs no env changes. Devs run `pnpm test:integration` locally
@@ -234,72 +274,74 @@ All commits since `c46b7c4` have passed 3/3 jobs (Lint/Typecheck, Unit Tests, Bu
 | Sentry / Vercel deploy | Phase 0 (planned) | As-planned → Phase 9 | Pre-launch only |
 | GitHub branch protection on `main` | Phase 0 | **User-side TODO** | Can't config from code — verify in GitHub Settings before Phase 4 push if you haven't |
 
-### Next session — Phase 5 entry point
+### Next session — Phase 6 entry point
 
-**Phase 5 — Scoring + Term GPA + Print transcript** (Task.md § Phase 5)
+**Phase 6 — Assignment + Submission + Comments + R2 file upload** (Task.md § Phase 6)
 
 Schema to add:
-- `ScoreItem` (per CourseOffering — name, full_score, weight, is_published, published_at, source, score_item_template_id?, position)
-- `ScoreEntry` (Enrollment × ScoreItem × value)
-- `ScoreItemTemplate` (saved sets a teacher can copy across CourseOfferings — Task.md L138-139)
-- Optional `CourseOffering.gradeRulesJson` (already present in schema — used to override default grade thresholds)
+- `Assignment` (per CourseOffering — title, description, dueAt?, allow_text/file/link, attachments, is_scored, score_item_id?, submission_closed)
+- `Submission` (Enrollment × Assignment — unique)
+- `SubmissionVersion` (version_number, text_content?, attachments[], links[], submitted_at, is_late, is_current)
+- `SubmissionStatus` enum: NOT_SUBMITTED · DRAFT · SUBMITTED · LATE_SUBMITTED · RETURNED · GRADED
+- `FileAttachment` (polymorphic — `owner_type` enum ASSIGNMENT/MATERIAL/ANNOUNCEMENT/SUBMISSION_VERSION/COMMENT, `owner_id`, r2_key, mime, size)
+- `Comment` (polymorphic scope — CLASS_WIDE on Assignment/Material/Announcement, PRIVATE on Submission)
 
-Library to add (mirror lib/attendance/* layout):
-- `lib/scoring/constants.ts` — TX_OPTS, REASON_MIN/MAX, default grade thresholds, weight invariant tolerance
-- `lib/scoring/score-item.ts` — CRUD + `publishScoreItem` + `unpublishScoreItem` (with reason if has entries) + `validateWeights` (Σ weight = 100% per CourseOffering)
-- `lib/scoring/score-entry.ts` — `upsertScoreEntry` / `bulkUpsertScoreEntries` (mirror `bulkMarkAttendance`) with **edit-after-publish** reason gate + audit `SCORE_EDIT_AFTER_PUBLISH`
-- `lib/scoring/calc.ts` — **PURE** (per CLAUDE.md Critical Files) — `weightedTotal(entries, items)` → 0..100, `gradeFor(percent, thresholds)` → 0..4
-- `lib/scoring/term-gpa.ts` — **PURE** — `Σ(grade × creditHours) / Σ(creditHours)` across all CourseOfferings in a Term for one Student; returns null if any ScoreItem unpublished (Decision 2.4)
-- `lib/scoring/term-status.ts` — **PURE** — IN_PROGRESS | COMPLETED
-- `lib/scoring/queries.ts` — `getScoreboardForTeacher(courseId)` (active∪ever-marked enrollment × every ScoreItem · Pattern 14) · `getOwnScoresForStudent(courseId, studentUserId)` (L1 projection · published items only · Pattern 4)
+ScoreItem ↔ Assignment coupling (CLAUDE.md hard rule):
+- If `Assignment.is_scored = true` → atomically create a `ScoreItem` with `source = ASSIGNMENT_LINKED` and link FK
+- `source = ASSIGNMENT_LINKED` is the class-C immutable case per ADR-0018 — to "delete the link", delete the ScoreItem (Critical audit) which cascades the unlink
+- Deleting an Assignment that owns a published ScoreItem → block (Phase 6 entry must add `assert.canDeleteAssignmentNotPublishedScoreItem` or similar)
+
+Library to add (mirror `lib/scoring/*` layout):
+- `lib/assignment/*` — constants, validation, assignment.ts (create/update/delete + ScoreItem coupling), submission.ts (submit/return/grade), comment.ts
+- `lib/storage/*` — R2 client, signed-URL gen post permission-check, presigned PUT for client→R2 direct upload, MIME magic-byte verify, EXIF strip
 
 Permissions:
-- `can.mutateScoreItem(session, course)` + `assert.canMutateScoreItem(scoreItemId)` returning `{session, item: {courseOfferingId, publishedAt, …}}` (Pattern 1, divergent shape mirrors `assert.canMutateSession`)
+- `can.mutateAssignment(session, course)` + `assert.canMutateAssignment(assignmentId)` → `{session, assignment: {courseOfferingId, scoreItemId?, …}}`
+- `can.submitTo(session, assignment, enrollment)` + `assert.canSubmitTo(submissionId)` for resubmit flows
+- `can.viewSubmission(session, submission)` — student sees own; teacher sees all for owned course; admin moderation TBD
 
 UI to add:
-- Teacher: **Scores** tab — Score Item list + weight invariant check + **score grid** (Enrollment × Score Item) with inline edit + bulk save (same form-based batch as Phase 4 grid, **autosave optional defer** per Q10 spirit)
-- Teacher: Publish flow — confirm dialog + audit `SCORE_ITEM_PUBLISHED`
-- Teacher: Edit-after-publish reason modal — gates `SCORE_EDIT_AFTER_PUBLISH` audit
-- Teacher: Score Item Template — save + reuse (defer to second commit, low priority)
-- Student: **Scores** tab — published items only · weighted total · grade
-- Student: **`/student/terms`** — top-level nav, default = current term, dropdown for history, Term GPA + flag "ยังไม่จบเทอม" + Print PDF (Father print stylesheet)
+- Teacher: **การบ้าน** tab on course shell (between คะแนน + ตั้งค่า) — list + create dialog + per-assignment grid (submissions × status) + grade flow (writes to linked ScoreItem)
+- Student: **การบ้าน** tab — list of assignments + submit form (text + file upload + link) + version history + status badges
+- Comment composer (class-wide vs private) on Assignment/Submission detail pages
 
-Patterns to inherit verbatim (Patterns 1-14 in § above):
-- Pattern 1: pure `can.*` + DB-touching `assert.*` — `assert.canMutateScoreItem(id)`
-- Pattern 2: authz inside `$transaction` — re-fetch ownership inside the tx
-- Pattern 3: `TX_OPTS = { maxWait: 10_000, timeout: 15_000 }` on every `$transaction`
-- Pattern 4: DB-layer projection for L1 — `getOwnScoresForStudent` returns ONLY own ScoreEntry rows (don't fetch peers + map)
-- Pattern 5: extend teacher `_tabs.ts` (insert "คะแนน" between "เช็คชื่อ" and "ตั้งค่า")
-- Pattern 6: hidden `<input name="courseId/scoreItemId">` — no `.bind()`
-- Pattern 7: native `<dialog>` with explicit centering + deferred close for Publish + Edit-after-publish + Delete dialogs
-- Pattern 8: `"use server"` files = async exports only
-- Pattern 9: avoid `setState`-in-effect; uncontrolled inputs or row remount via revalidate
-- Pattern 10: past-tense audit family — `SCORE_ITEM_PUBLISHED`, `SCORE_EDIT_AFTER_PUBLISH`, `SCORE_DELETE_AFTER_PUBLISH`
-- Pattern 11: store UTC, render via `Intl.DateTimeFormat("th-TH-u-ca-buddhist")` — publish timestamps follow the attendance posture (`formatThaiDate`)
-- Pattern 12: `useState` lazy initializer for "is this published?" derived flags
-- Pattern 13: dual-layout grid (mobile cards + desktop table) — same component, CSS toggle
-- Pattern 14: active ∪ ever-graded enrollment union for the scoreboard query
+Patterns to inherit verbatim (Patterns 1-14 above):
+- Pattern 1: `assert.canMutateAssignment(id)` returning `{session, assignment}` divergent shape
+- Pattern 2: authz inside `$transaction` for every mutation; ScoreItem-coupling atomic with Assignment in the same tx
+- Pattern 3: `TX_OPTS` on every transaction
+- Pattern 4: DB-layer projection for L1 — students see ONLY their own Submission, never peer rows
+- Pattern 5: extend teacher `_tabs.ts` (insert "การบ้าน" between "คะแนน" and "ตั้งค่า")
+- Pattern 6: hidden form fields for context IDs; no `.bind()` on Server Actions
+- Pattern 7: native `<dialog>` with explicit centering + deferred close (Pattern 7 from Phase 4 is the canonical form)
+- Pattern 8: `"use server"` async exports only
+- Pattern 9: avoid `setState`-in-effect (uncontrolled inputs or row remount via revalidate)
+- Pattern 10: past-tense audit family — `ASSIGNMENT_CREATED`, `ASSIGNMENT_GRADED`, `SUBMISSION_RETURNED`, `COMMENT_MODERATED`, `FILE_UPLOAD`, `FILE_INFECTED_BLOCKED`
+- Pattern 11: store UTC, render Buddhist + Asia/Bangkok via Intl (dueAt formatter)
+- Pattern 12: `useState` lazy initializer for "is past deadline?" / "is current version?" flags
+- Pattern 13: dual-layout grid (mobile cards + desktop table) for the submission grid
+- Pattern 14: active ∪ ever-submitted enrollment union for the submission grid
 
-**Recommended P5 sub-task breakdown** (mirrors P4 structure — 9 sub-tasks):
-- P5-1 schema migration (ScoreItem · ScoreEntry · ScoreItemTemplate) + ADR if a non-obvious decision arises (e.g. weight tolerance, template scope, published-then-edited semantics)
-- P5-2 `lib/scoring/*` — constants, calc (PURE), term-gpa (PURE), term-status (PURE), score-item, score-entry, queries
-- P5-3 `can.mutateScoreItem` + `assert.canMutateScoreItem` + unit tests for calc + term-gpa boundary cases (Phase 5 calc is the most-tested code in the codebase per CLAUDE.md Critical Files)
-- P5-4 teacher Scores tab + grid + publish/unpublish dialogs
-- P5-5 student Scores tab (L1 projection) + `/student/terms` page + Print stylesheet
-- P5-6 (optional) Score Item Template save + reuse — defer if scope creeps
-- P5-7 integration tests for publish flow + edit-after-publish reason gate + weighted total + term-GPA-null-when-incomplete
-- P5-8 smoke checks (~10 new): teacher Score grid · student Scores tab · `/student/terms` route · published-only L1 boundary
-- P5-9 docs close-out (this HANDOFF block + Task.md mark + ADR new files)
+**Recommended P6 sub-task breakdown** (mirrors P5 structure — 9 sub-tasks):
+- P6-1 schema migration (Assignment · Submission · SubmissionVersion · SubmissionStatus enum · FileAttachment polymorphic · Comment polymorphic) + ADRs for the coupling decisions surfaced in grill
+- P6-2 `lib/assignment/*` — constants, validation, assignment.ts (CRUD + ScoreItem coupling + Phase 5 invariants), submission.ts (submit/resubmit/return/grade), comment.ts
+- P6-3 `lib/storage/*` — R2 client setup, signed URL helpers, presigned PUT, MIME magic-byte verification, EXIF strip
+- P6-4 `can.mutateAssignment` + `assert.*` + permissions test cases (Pattern 1, mirror Phase 5 P5-3)
+- P6-5 teacher Assignment tab + create dialog + submission grid + grade flow + comment composer
+- P6-6 student Assignment tab + submit form (text + file via presigned PUT) + version history view + comment composer (private)
+- P6-7 integration tests (Assignment-ScoreItem coupling · Submission grading flow · L1 projection · R2 mock or test-bucket)
+- P6-8 smoke checks (~10 new): teacher Assignment tab · student submit flow · L1 boundary · file upload
+- P6-9 docs close-out (HANDOFF + Task.md + ADR files)
 
-**Grill before code** — Phase 5 has at least 4 non-obvious branches that should be locked first via `/grill-with-docs` (or just a direct grilling conversation):
+**Grill before code** — Phase 6 has non-obvious branches that should be locked first via `/grill-with-docs`:
 
-1. **Weight invariant** — Σ = 100% exactly, or 100 ± ε with rounding tolerance? What if a teacher has 2 ScoreItems at 33.33% each (rounded)? Soft-warn vs hard-block on save? Block publish if Σ ≠ 100?
-2. **Edit after publish** — Score Item field changes (weight ↑/↓ after publish) — allowed with reason, blocked entirely, or split into "safe edits" (name) vs "score-impacting edits" (weight, full_score) needing reason?
-3. **Unpublish** — Allowed at all? Or "once published, only edit-with-reason"? If allowed, what's the audit story?
-4. **Term GPA = null when incomplete** — Decision 2.4 in CONTEXT.md says null until all items in all CourseOfferings of the Term are published. Confirm threshold + render: "—" or "0%" or progress bar? Edge: Student has 0 enrollments → null or 0?
-5. **Grade thresholds override per CourseOffering** — Phase 5 v1 ship default-only or include `gradeRulesJson` editor? Editor lives where (Settings? Score Item list?)
+1. **Assignment ↔ ScoreItem atomicity** — `is_scored=true` creates a linked ScoreItem in the same tx; what if create succeeds and link fails? Use Pattern 2 transaction with cascade rollback. What weight does the auto-created ScoreItem get? Teacher must set it before publish — block publish until weight is set?
+2. **Resubmission semantics** — `RETURNED` → student resubmits → new `SubmissionVersion` row with `is_current=true`; old row stays for audit. What if teacher already graded before returning? Score Entry stays at old value or resets to null?
+3. **Late submission scoring** — `LATE_SUBMITTED` after deadline — does the linked Score Entry still accept the grade? Default behavior + opt-out toggle?
+4. **File upload security** — `magic-byte verification on server vs client-side validation only`; SVG with embedded script — block entirely or sanitize? Max file size + chunk threshold?
+5. **Comment moderation lifecycle** — teacher can `COMMENT_MODERATED` (delete + audit) any class-wide comment; can admin moderate teacher comments? Per Comment.scope (CLASS_WIDE vs PRIVATE)?
+6. **R2 signed URL TTL** — 5 minutes per CLAUDE.md hard rules; verify against R2 ergonomics for large downloads. Re-issue on each page render or cache for 5min?
 
-Recommend the same flow as Phase 4: grill 1-by-1, ADR for any "hard to reverse + surprising + real trade-off" outcome (likely 1-2 ADRs: weight invariant + edit-after-publish semantic).
+Recommend grilling Q1 + Q2 + Q4 first (highest blast radius). Q3 + Q5 + Q6 can be locked inline during P6-2 / P6-3 implementation.
 
 ---
 
@@ -365,7 +407,7 @@ Recommend the same flow as Phase 4: grill 1-by-1, ADR for any "hard to reverse +
 | **2.5** | Calm Ledger theme pivot (ADR-0014) + Anuphan + landing rebuild + touch-up ทุก surface | ✅ DONE |
 | **3** | Course tabs (Overview · Members · Settings) + soft-delete + restoration | ✅ DONE (P3-1..9 all complete · 22 integration tests pass) |
 | **4** | Attendance (TimetableSlot · Session lazy materialization · sparse AttendanceRecord · back-edit audit) | ✅ DONE (P4-1..9 all complete · 91 unit + 71 integration + 72 smoke pass) |
-| **5** | Scoring + Term GPA + Print transcript | ⏳ TODO |
+| **5** | Scoring + Term GPA + Print transcript (ADR-0017 + ADR-0018) | ✅ DONE (P5-1..9 all complete · 156 unit + 116 integration + 88 smoke pass · ScoreItemTemplate deferred) |
 | **6** | Assignment + Submission + Comments + R2 file upload | ⏳ TODO |
 | **7** | Feed + Notifications | ⏳ TODO |
 | **8** | Admin polish (more audit tools) | ⏳ TODO |
@@ -654,7 +696,7 @@ Paste this into the new session as your first message:
 
 > ผมทำงานต่อจาก project Studennnn ที่ `D:\Studennnn`
 > อ่าน `HANDOFF.md` + `CLAUDE.md` + `CONTEXT.md` ก่อนเริ่ม
-> ตอนนี้ Phase 0-4 เสร็จแล้ว (91 unit + 71 integration + 72 smoke = 234 verifications passing)
+> ตอนนี้ Phase 0-5 เสร็จแล้ว (156 unit + 116 integration + 88 smoke = 360 verifications passing)
 > อยากทำต่อ: [ระบุ Phase หรือ feature ที่อยากทำ]
 
 หรือถ้าจะ verify state ก่อน:

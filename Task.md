@@ -4,7 +4,7 @@
 
 > Time estimate: solo dev ทำงาน focus ~4 ชม/วัน
 >
-> **สถานะปัจจุบัน:** Phase 0-4 ✅ DONE · Phase 5 = next · ดู `HANDOFF.md` สำหรับสรุป
+> **สถานะปัจจุบัน:** Phase 0-5 ✅ DONE · Phase 6 = next · ดู `HANDOFF.md` สำหรับสรุป
 
 ---
 
@@ -131,32 +131,33 @@ own those domains).
 
 ---
 
-## Phase 5 — Scoring (5-6 วัน)
+## ✅ Phase 5 — Scoring (DONE — 16 commits · ADR-0017 + ADR-0018)
 
-- [ ] Prisma: `ScoreItem`, `ScoreEntry`
-- [ ] `lib/scoring/` pure functions (weightedTotal, gradeFor, validateWeights)
-- [ ] Teacher: CRUD Score Item, weight validation (block save if ≠ 100)
-- [ ] Score Entry grid — inline edit, debounced autosave
-- [ ] **Publish flow** + confirm modal
-- [ ] Score Item Template (save + reuse)
-- [ ] **Edit after publish** → reason modal → audit
-- [ ] Grade rules editor (default + override)
-- [ ] Student view: published scores, weighted total, grade
-- [ ] Notification: Score Item published
-- [ ] **Term Summary page (`/student/terms`)** — top-level nav
-  - [ ] `lib/scoring/term-gpa.ts` (PURE — weighted by creditHours)
-  - [ ] `lib/scoring/term-status.ts` (IN_PROGRESS | COMPLETED)
-  - [ ] Default page = current term + dropdown เลือกเทอมประวัติ
-  - [ ] Table: subject · teacher · credit · % · grade
-  - [ ] Show Term GPA (or `—` + "ยังไม่จบเทอม" badge if IN_PROGRESS)
-  - [ ] Print button (Father @media print stylesheet)
-- [ ] Tests:
-  - [ ] scoring math (boundary cases)
-  - [ ] Term GPA (with various credit weights, edge: all 0 credits)
-  - [ ] Term Status transition (last Score Item publish → COMPLETED)
-  - [ ] publish flow, permission
+- [x] Prisma: `ScoreItem`, `ScoreEntry`, `ScoreItemSource` enum (P5-1 · `54dfcc7`)
+- [x] `lib/scoring/` PURE: `weightedTotal`, `gradeFor`, `gradeForCourseOffering`, `validateWeights`, `termGpa`, `deriveTermStatus`, `formatBasisPoints`, `formatGpa`, `formatPercent` (P5-2a · `fc5a768`)
+- [x] `lib/scoring/` DB-touching: `createScoreItem` / `updateScoreItem` / `publishScoreItem` / `deleteScoreItem` (field-class A/B/C dispatch) / `bulkUpsertScoreEntries` / `getScoreboardForTeacher` / `getScoreItemGridForTeacher` / `getOwnScoresForStudent` / `getStudentTermSnapshot` / `listTermsForStudent` (P5-2b · `76e944a`)
+- [x] Teacher: CRUD Score Item + live Σ น้ำหนัก pill (green @ 10000bp / amber otherwise · server `validateWeights` for display, hard gate at publish) (P5-4a · `425bc74`)
+- [x] Score Entry grid — Pattern 13 dual-layout · empty-cell skip semantic · bulk `ทุกคนคะแนนเต็ม` / `ล้าง` (P5-4b · `c369a77`)  ※ debounced autosave **not shipped** — bulk-submit only per the original Q10 spirit
+- [x] **Publish flow** + confirm modal (intentionally heavier per ADR-0018 §Negative consequences — preview + Σ gate + one-way warning) (P5-4c · `890b8d5`)
+- [ ] ~~Score Item Template (save + reuse)~~ — **DEFERRED** per Q5 grill lock (HANDOFF L240 P5-6 "optional · low priority"); schema column + lib reads + UI all not present
+- [x] **Edit after publish** → reason modal → audit (`SCORE_EDIT_AFTER_PUBLISH` Important tier, value-change-only detection so note-only edits don't trip) (P5-4b grid + P5-4c dialogs)
+- [x] Grade rules — **default-only display** in Settings (Q5 lock); runtime `gradeFor(percent, thresholds = DEFAULT)` already accepts `CourseOffering.gradeRulesJson` overrides, so the editor enablement is UI-only in a future phase (P5-4c · `890b8d5`)
+- [x] Student view: published scores, weighted total preview, course grade (only when fully published per Q4) (P5-5a · `35ce4ac`)
+- [ ] ~~Notification: Score Item published~~ — **DEFERRED** to Phase 7 (notifications system lives there per the original phasing)
+- [x] **Term Summary page (`/student/terms`)** — top-level nav (P5-5b · `61dc5a1`)
+  - [x] `lib/scoring/term-gpa.ts` (PURE · weighted by creditHours · `creditHours === 0` excluded from GPA + completion per Q4)
+  - [x] `lib/scoring/term-status.ts` (EMPTY | IN_PROGRESS | COMPLETED · one-way transitions per ADR-0018)
+  - [x] Default page = current term + TermPicker dropdown for history; `/student/terms/[termId]` for canonical history URLs
+  - [x] Table: วิชา · ครู · หน่วยกิต · % · เกรด · GPA footer row
+  - [x] Show Term GPA (or `—` + 3-state badge `EMPTY` / `ยังไม่จบเทอม` / `จบเทอมแล้ว`) + progress bar publishedItems/totalItems
+  - [x] Print button → `window.print()` with A4 transcript stylesheet + print-only footer "พิมพ์เมื่อ … · เอกสารอ้างอิง: <studentId/termSuffix>" (P5-5c · `4b3367d`)
+- [x] Tests:
+  - [x] PURE math: 59 unit cases (weightedTotal · gradeFor · gradeForCourseOffering · termGpa · deriveTermStatus · format — boundary cases incl. 9999/10001 Σ rejection, threshold-tier inclusivity, 33.33%×3 rounding, 0 enrollments → EMPTY, creditHours=0 escape) (P5-2a)
+  - [x] Permissions: 6 unit cases on `can.mutateScoreItem` (owner/peer-teacher/admin/student/published-state-independence/cross-predicate consistency with `mutateSession`) (P5-3 · `e48942a`)
+  - [x] Integration vs Neon: 45 cases (publishScoreItem Σ-gate, one-way Conflict, class A/B/C dispatch, fullScore shrink rejection, bulkUpsertScoreEntries reason gate w/ note-only carve-out, Pattern-14 active-vs-removed-with-history, deleteScoreItem cascade + audit, L1 own-only projection, termGpa pipeline end-to-end) — caught + fixed L1 Forbidden guard bug in `getOwnScoresForStudent` (P5-7 · `de9012e`)
+  - [x] Smoke: 16 new HTTP checks (teacher Scores list/grid · Settings thresholds card · Student Scores tab · `/student/terms` · L1 cross-role redirects) (P5-8 · `710cc78`)
 
-**DoD:** ครูใส่คะแนน + publish ครบ flow, นักเรียนเห็นเฉพาะที่ publish, grade ถูก, Term Summary หน้าทำงานทั้ง active + ประวัติ + print PDF ได้
+**DoD met:** ครูใส่คะแนน + publish ครบ flow ✅ · นักเรียนเห็นเฉพาะที่ publish ✅ · grade ถูก ✅ · Term Summary หน้าทำงานทั้ง active + ประวัติ + print PDF ได้ ✅
 
 ---
 
