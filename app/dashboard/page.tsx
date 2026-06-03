@@ -270,13 +270,28 @@ export default async function DashboardPage() {
             อยู่ระหว่างพัฒนา
           </h2>
           <p className="mt-2 text-sm text-black/60">
-            <span className="font-medium text-black">Phase ปัจจุบัน:</span> 2 —
-            Academic Data + Class Code + Join
+            <span className="font-medium text-black">Phase ปัจจุบัน:</span> 5 —
+            คะแนน + Term Summary
           </p>
           <ul className="mt-3 list-inside list-disc space-y-1 text-sm text-black/60">
-            <li>Phase 3 — สมาชิกห้อง (ละเอียดขึ้น)</li>
-            <li>Phase 4 — เช็คชื่อ</li>
-            <li>Phase 5 — คะแนน + Term Summary</li>
+            <li>
+              <span className="text-black/40 line-through">
+                Phase 2 — Academic Data + Class Code + Join
+              </span>{" "}
+              ✓
+            </li>
+            <li>
+              <span className="text-black/40 line-through">
+                Phase 3 — สมาชิกห้อง (ละเอียดขึ้น)
+              </span>{" "}
+              ✓
+            </li>
+            <li>
+              <span className="text-black/40 line-through">
+                Phase 4 — เช็คชื่อ
+              </span>{" "}
+              ✓
+            </li>
             <li>Phase 6 — การบ้าน + Comments</li>
             <li>Phase 7 — Feed + Notifications</li>
             <li>Phase 8 — Admin Audit Tools</li>
