@@ -198,10 +198,15 @@ export default async function DashboardPage() {
               >
                 ห้องเรียนของฉัน ({studentCourses.length})
               </h2>
-              <Link href="/join" className="btn-secondary btn-sm">
-                <LogIn className="h-4 w-4" />
-                เข้าร่วมด้วยรหัส
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link href="/student/terms" className="btn-ghost btn-sm">
+                  ผลการเรียน
+                </Link>
+                <Link href="/join" className="btn-secondary btn-sm">
+                  <LogIn className="h-4 w-4" />
+                  เข้าร่วมด้วยรหัส
+                </Link>
+              </div>
             </div>
 
             {studentCourses.length === 0 ? (

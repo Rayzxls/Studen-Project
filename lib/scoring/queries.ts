@@ -243,6 +243,152 @@ export async function getScoreItemGridForTeacher(
 }
 
 // ─────────────────────────────────────────────────────────────
+// Student view — term-level (Term GPA + list of CourseOfferings)
+// ─────────────────────────────────────────────────────────────
+
+import type { TermCourseBundle } from "./term-gpa";
+
+/**
+ * Term-level read for the student's `/student/terms` page.
+ *
+ * Returns the bundles needed by `termGpa()` PURE — one per Active
+ * Enrollment of the student in `termId` (CONTEXT § Term GPA Scope rules:
+ * removed enrollments don't count).
+ *
+ * Also returns lightweight CourseOffering metadata (name, teacher name,
+ * creditHours, gradeRulesJson) so the transcript table can render
+ * alongside the GPA computation without a second query.
+ */
+export interface StudentTermCourseRow {
+  courseOfferingId: string;
+  name: string;
+  subjectCode: string | null;
+  creditHours: number;
+  teacherFirstName: string;
+  teacherLastName: string;
+  /** Optional override — `null` => DEFAULT_GRADE_THRESHOLDS. */
+  gradeRulesJson: unknown;
+}
+
+export interface StudentTermSnapshot {
+  rows: StudentTermCourseRow[];
+  bundles: TermCourseBundle[];
+}
+
+export async function getStudentTermSnapshot(
+  studentUserId: string,
+  termId: string
+): Promise<StudentTermSnapshot> {
+  const enrollments = await db.enrollment.findMany({
+    where: {
+      studentId: studentUserId,
+      removedAt: null,
+      course: { termId },
+    },
+    select: {
+      id: true,
+      course: {
+        select: {
+          id: true,
+          name: true,
+          subjectCode: true,
+          creditHours: true,
+          gradeRulesJson: true,
+          teacher: { select: { firstName: true, lastName: true } },
+          scoreItems: {
+            select: {
+              id: true,
+              fullScore: true,
+              weight: true,
+              publishedAt: true,
+              entries: {
+                where: { enrollmentId: { not: undefined } },
+                select: { value: true, enrollmentId: true },
+              },
+            },
+          },
+        },
+      },
+    },
+    orderBy: [{ course: { name: "asc" } }],
+  });
+
+  const rows: StudentTermCourseRow[] = [];
+  const bundles: TermCourseBundle[] = [];
+  for (const e of enrollments) {
+    const c = e.course;
+    rows.push({
+      courseOfferingId: c.id,
+      name: c.name,
+      subjectCode: c.subjectCode,
+      creditHours: c.creditHours,
+      teacherFirstName: c.teacher.firstName,
+      teacherLastName: c.teacher.lastName,
+      gradeRulesJson: c.gradeRulesJson,
+    });
+    bundles.push({
+      courseOfferingId: c.id,
+      creditHours: c.creditHours,
+      items: c.scoreItems.map((it) => ({
+        id: it.id,
+        fullScore: it.fullScore,
+        weight: it.weight,
+        publishedAt: it.publishedAt,
+      })),
+      entries: c.scoreItems.flatMap((it) =>
+        it.entries
+          .filter((en) => en.enrollmentId === e.id)
+          .map((en) => ({ scoreItemId: it.id, value: en.value }))
+      ),
+    });
+  }
+
+  return { rows, bundles };
+}
+
+/**
+ * Distinct list of Terms the student has any (active or removed) Enrollment
+ * in — for the history dropdown on the `/student/terms` page.
+ *
+ * Removed enrollments are INCLUDED here (history view); the live GPA
+ * computation filters back down to active-only via `getStudentTermSnapshot`.
+ */
+export interface StudentTermOption {
+  id: string;
+  name: string;
+  number: number;
+  academicYearName: string;
+  isActive: boolean;
+}
+
+export async function listTermsForStudent(
+  studentUserId: string
+): Promise<StudentTermOption[]> {
+  const terms = await db.term.findMany({
+    where: {
+      courses: {
+        some: { enrollments: { some: { studentId: studentUserId } } },
+      },
+    },
+    select: {
+      id: true,
+      name: true,
+      number: true,
+      isActive: true,
+      academicYear: { select: { name: true } },
+    },
+    orderBy: [{ academicYear: { name: "desc" } }, { number: "desc" }],
+  });
+  return terms.map((t) => ({
+    id: t.id,
+    name: t.name,
+    number: t.number,
+    academicYearName: t.academicYear.name,
+    isActive: t.isActive,
+  }));
+}
+
+// ─────────────────────────────────────────────────────────────
 // Student view — own scores only, published items only (L1)
 // ─────────────────────────────────────────────────────────────
 
