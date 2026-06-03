@@ -1,7 +1,9 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { Users } from "lucide-react";
+import { ArrowRight, Users } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
 import { getCourseOfferingForTeacher } from "@/lib/course/queries";
+import { getActiveMembers } from "@/lib/course/enrollment";
 import { ClassCodeCard } from "@/components/class-code-card";
 import { CourseShell } from "@/components/course/course-shell";
 import { teacherCourseTabs } from "./_tabs";
@@ -25,12 +27,8 @@ export default async function CourseOverviewPage({ params }: PageProps) {
   const course = await getCourseOfferingForTeacher(id, session.user.id);
   if (!course) notFound();
 
-  const fullDateFmt = new Intl.DateTimeFormat("th-TH", {
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  // Active member count — Members tab owns the full list now (P3-5/2).
+  const activeMembers = await getActiveMembers(id);
 
   return (
     <CourseShell
@@ -46,46 +44,21 @@ export default async function CourseOverviewPage({ params }: PageProps) {
           className={course.class.name}
         />
 
-        <div className="card p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <h2
-              className="inline-flex items-center gap-2 font-medium text-black"
-              style={{ letterSpacing: "-0.02em" }}
-            >
-              <Users className="h-4 w-4 text-black/60" />
-              สมาชิก ({course.enrollments.length} คน)
-            </h2>
+        <Link
+          href={`/teacher/courses/${id}/members`}
+          className="card group flex items-center justify-between p-5 transition-colors hover:bg-black/[0.02]"
+        >
+          <div className="flex items-center gap-3">
+            <Users className="h-4 w-4 text-black/60" />
+            <span className="font-medium text-black">
+              สมาชิก {activeMembers.length} คน
+            </span>
           </div>
-
-          {course.enrollments.length === 0 ? (
-            <p className="rounded-xl bg-black/[0.04] p-4 text-center text-sm text-black/60">
-              ยังไม่มีนักเรียนเข้าร่วม — แชร์รหัสด้านบนให้นักเรียนได้เลย
-            </p>
-          ) : (
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>เลขประจำตัว</th>
-                  <th>ชื่อ-นามสกุล</th>
-                  <th>เข้าร่วมเมื่อ</th>
-                </tr>
-              </thead>
-              <tbody>
-                {course.enrollments.map((e) => (
-                  <tr key={e.id}>
-                    <td className="font-mono text-sm">{e.student.studentId}</td>
-                    <td>
-                      {e.student.firstName} {e.student.lastName}
-                    </td>
-                    <td className="text-xs text-black/60">
-                      {fullDateFmt.format(e.enrolledAt)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+          <span className="inline-flex items-center gap-1 text-sm text-black/60 group-hover:text-black">
+            ดูทั้งหมด
+            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+          </span>
+        </Link>
       </div>
     </CourseShell>
   );
