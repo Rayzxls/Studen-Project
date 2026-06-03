@@ -145,4 +145,53 @@ export const assert = {
       },
     };
   },
+
+  /**
+   * Assert the session belongs to the teacher who owns the CourseOffering
+   * that contains the given Session. Phase 4 — attendance mark / cancel.
+   *
+   * Return shape: divergent like `ownsCourse` / `isActiveCourseMember`. The
+   * sessionRow is returned because the authz decision already fetched it,
+   * so callers (e.g. an action that needs `scheduledStart` to render a
+   * back-edit warning) don't have to issue a duplicate read. Field set
+   * exposes the minimum needed for the attendance UI page render.
+   *
+   * `cancelledAt` is intentionally NOT a rejection here — `can.mutateSession`
+   * is about "who", and the lib layer (`bulkMarkAttendance`, `cancelSession`)
+   * issues the proper `Conflict` if state is wrong. The action layer can
+   * read `cancelledAt` from the returned row to disable the form UI.
+   *
+   * Throws:
+   *   - Unauthorized — no session
+   *   - NotFound     — session doesn't exist (cuid id-space, enumeration
+   *                     risk acceptable; same posture as `ownsCourse`)
+   *   - Forbidden    — session is not the owning teacher
+   */
+  async canMutateSession(sessionId: string): Promise<{
+    session: Session;
+    sessionRow: {
+      id: string;
+      courseOfferingId: string;
+      scheduledStart: Date;
+      scheduledEnd: Date;
+      cancelledAt: Date | null;
+      course: { name: string; teacherId: string };
+    };
+  }> {
+    const session = await requireAuth();
+    const sessionRow = await db.session.findUnique({
+      where: { id: sessionId },
+      select: {
+        id: true,
+        courseOfferingId: true,
+        scheduledStart: true,
+        scheduledEnd: true,
+        cancelledAt: true,
+        course: { select: { name: true, teacherId: true } },
+      },
+    });
+    if (!sessionRow) throw new NotFound("session_not_found");
+    if (!can.mutateSession(session, sessionRow)) throw new Forbidden();
+    return { session, sessionRow };
+  },
 };

@@ -151,6 +151,40 @@ describe("can.isActiveCourseMember (ADR-0013, P3-3)", () => {
   });
 });
 
+describe("can.mutateSession (Phase 4, P4-3)", () => {
+  const sessionRow = { course: { teacherId: "t1" } };
+
+  it("allows the owning TEACHER", () => {
+    expect(can.mutateSession(mkSession("TEACHER", "t1"), sessionRow)).toBe(
+      true
+    );
+  });
+
+  it("rejects a different TEACHER", () => {
+    expect(can.mutateSession(mkSession("TEACHER", "t2"), sessionRow)).toBe(
+      false
+    );
+  });
+
+  it("rejects ADMIN (Phase 4 scopes attendance writes to course owner)", () => {
+    expect(can.mutateSession(mkSession("ADMIN", "t1"), sessionRow)).toBe(false);
+  });
+
+  it("rejects STUDENT even when id collides with teacherId", () => {
+    expect(can.mutateSession(mkSession("STUDENT", "t1"), sessionRow)).toBe(
+      false
+    );
+  });
+
+  it("is pure — does not depend on cancelledAt (lib layer enforces state)", () => {
+    // The predicate's contract is "who", not "current state". The lib's
+    // bulkMarkAttendance / cancelSession check cancelledAt and throw Conflict.
+    expect(can.mutateSession(mkSession("TEACHER", "t1"), sessionRow)).toBe(
+      true
+    );
+  });
+});
+
 describe("L1 visibility (Phase 1) — students never see others", () => {
   it("STUDENT cannot view audit logs", () => {
     expect(can.viewAuditLog(mkSession("STUDENT"))).toBe(false);

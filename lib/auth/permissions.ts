@@ -88,4 +88,25 @@ export const can = {
     if (enrollment.removedAt !== null) return false;
     return session.user.id === enrollment.studentId;
   },
+
+  /**
+   * Owning TEACHER can mutate (mark / cancel) a Session of their CourseOffering.
+   *
+   * Phase 4 (ADR-0015 / ADR-0016): attendance writes are scoped to the
+   * course owner. ADMIN is rejected — admin moderation of attendance is
+   * out of scope for Phase 4 (mirrors `ownsCourse` posture). A cancelled
+   * Session is NOT rejected here — the lib layer surfaces `Conflict` if
+   * the caller tries to cancel-an-already-cancelled or mark-on-cancelled;
+   * this predicate is about "who", not "current state".
+   *
+   * Pure — caller fetches `session.course.teacherId` and passes it in.
+   * For DB-backed lookup use `assert.canMutateSession` in guards.ts.
+   */
+  mutateSession(
+    session: Session,
+    sessionRow: { course: { teacherId: string } }
+  ): boolean {
+    if (session.user.role !== "TEACHER") return false;
+    return session.user.id === sessionRow.course.teacherId;
+  },
 };
