@@ -3,13 +3,13 @@
 > เอกสารนี้ใช้สำหรับเริ่ม **session ใหม่** กับ AI assistant แล้วต่อยอดได้ทันที
 > อ่านไฟล์นี้ + `CLAUDE.md` + `CONTEXT.md` ก่อนเริ่มงาน
 
-อัพเดตล่าสุด: **2026-06-03** · 45+ commits · **Phase 0-3 ปิดครบ + 4 hotfix หลัง manual QA · พร้อมเริ่ม Phase 4**
+อัพเดตล่าสุด: **2026-06-04** · 55+ commits · **Phase 0-4 ปิดครบ · พร้อมเริ่ม Phase 5 (Scoring)**
 
 ---
 
-## ⚠️ START HERE — Latest Session State (2026-06-03 evening)
+## ⚠️ START HERE — Latest Session State (2026-06-04)
 
-### Phase 1-2-3 — ปิดครบ ✅
+### Phase 1-2-3-4 — ปิดครบ ✅
 
 อ่าน 3 ไฟล์เรียงนี้ก่อนแตะอะไร:
 1. **`HANDOFF.md`** (ไฟล์นี้ — START block + Patterns section)
@@ -20,6 +20,8 @@ ADR ที่ต้องเข้าใจก่อนแตะ feature:
 - `docs/adr/0012-workspace-model-no-subject-template.md` — CourseOffering = workspace, no Subject template
 - `docs/adr/0013-enrollment-soft-delete-and-rejoin-restore.md` — soft-delete + auto-restore + kill switch
 - `docs/adr/0014-theme-calm-ledger-supersedes-ink-gold.md` — Calm Ledger pivot (supersedes 0011)
+- `docs/adr/0015-lazy-session-materialization.md` — Session created on demand, no cron, no eager batch
+- `docs/adr/0016-sparse-attendance-and-enrollment-fk.md` — sparse rows + Enrollment FK + active∪ever-marked grid
 
 ### Phase 3 — DONE end-to-end (all 9 sub-tasks + 4 manual-QA hotfixes)
 
@@ -39,26 +41,49 @@ ADR ที่ต้องเข้าใจก่อนแตะ feature:
 | **Hotfix 3** — drop `.bind()` on Server Actions (session lost under Auth.js beta) | ✅ | `bb53d8a` |
 | **Hotfix 4** — TX_OPTS for Neon cold-start + serialize integration tests | ✅ | `6879564` |
 
+### Phase 4 — DONE end-to-end (all 9 sub-tasks)
+
+| Task | Status | SHA(s) |
+|------|--------|--------|
+| P4-1 schema (TimetableSlot + Session + AttendanceRecord + AttendanceStatus) + ADR-0015 + ADR-0016 + CONTEXT.md glossary + `SESSION_CANCELLED` audit + Security.md tier update | ✅ | `43e8a8e` |
+| P4-2 lib/attendance lifecycle (constants · timetable CRUD + pure `detectOverlap` · `findOrCreateSession` race-safe via P2002 recovery · `cancelSession` audit · `bulkMarkAttendance` upsert with back-edit detection · `getAttendanceGridForTeacher` active∪ever-marked · `getAttendanceStatsForStudent` L1 projection) | ✅ | `02886be` |
+| P4-3 `can.mutateSession` + `assert.canMutateSession` returning `{session, sessionRow}` + 5 unit tests (86 → 91) | ✅ | `bc3cbc0` |
+| P4-4 teacher UI (Attendance tab + list page + grid page + Server Actions + create-session-form + grid component + cancel-session-dialog + Thai+Buddhist Intl helpers) | ✅ | `f352f24` |
+| P4-5 student attendance tab (L1 view · `getStudentSessionAttendance` query · StudentAttendanceStatsView KPI + timeline) | ✅ | `b94490f` |
+| P4-6 timetable editor in Settings (TimetableEditor card · `createSlotAction` + `deleteSlotAction` · overlap rejection mapped to field error) | ✅ | `0f670b8` |
+| P4-7 integration tests (4 files, 49 cases · 22 → 71 total) + fixtures cleanup updated for AttendanceRecord onDelete:Restrict | ✅ | `ad7de4c` |
+| P4-8 smoke checks (+13 against live dev · 57 → 72 total) | ✅ | `547bee6` |
+| P4-9 docs (this commit) | ✅ | — |
+
 ### What "shipped" means today
 
-- **Teacher course detail** — 3 tabs (ภาพรวม · สมาชิก · ตั้งค่า):
+- **Teacher course detail** — 4 tabs (ภาพรวม · สมาชิก · เช็คชื่อ · ตั้งค่า):
   - Overview: ClassCodeCard + member count link
   - Members: active-only list + "นำออก" dialog (reason 5–500, audit `COURSE_MEMBER_REMOVED`)
-  - Settings: regenerate code (with confirm dialog), activate-toggle, set/clear expiry — each with its own audit event
-- **Student course detail** — 2 tabs (ภาพรวม · เพื่อนร่วมห้อง):
+  - **Attendance**: Session list (newest first · cancelled inline-muted · ad-hoc badge) + "+ เปิดคาบ" dialog (date · slot picker · time inputs) + per-Session grid page (status button group with semantic colors · bulk "ทุกคนมา"/"ล้าง" · back-edit reason gate >24h · cancel-session dialog · removed-but-marked rows render opacity-60 + "ถูกนำออกแล้ว" badge read-only)
+  - Settings: regenerate code, activate-toggle, set/clear expiry — each with its own audit event — **+ TimetableEditor card** (slot CRUD with intra-course overlap rejection, no audit on slot CUD per Q11C)
+- **Student course detail** — 3 tabs (ภาพรวม · เพื่อนร่วมห้อง · เช็คชื่อ):
   - L1 visibility enforced at the Prisma SELECT layer — no classCode, no peer studentIds, no enrolledAt on the wire
-  - Dashboard student cards now LINK to `/student/courses/[id]` (previously they rendered but did nothing)
+  - **Attendance L1 view**: KPI "อัตราการมาเรียน %" + 4-status count tiles + per-Session timeline showing own status only (peer marks never queried)
+  - Dashboard student cards now LINK to `/student/courses/[id]`
 - **Auto-restore on rejoin** — removed student using the same class code triggers `restoreByRejoin` inside `enrollByClassCode`, audit `COURSE_MEMBER_RESTORED_BY_REJOIN`. Permanent block = deactivate code in Settings (ADR-0013 § 2 kill switch)
+- **Session lifecycle (Phase 4)** — lazy materialization via `findOrCreateSession` (race-safe), soft-cancel via `cancelSession` (audit `SESSION_CANCELLED` Critical tier with reason ≥ 5), sparse `AttendanceRecord` with `editCount` + back-edit reason gate (`ATTENDANCE_BACK_EDIT` Important tier when >24h elapsed AND a row changes/creates)
 
 ### Audit event additions
 
-The CLASS_CODE family was bumped to past-tense (zero migration — no fire site existed for the old verb form):
+Phase 3 (CLASS_CODE + COURSE_MEMBER families, past-tense — zero migration since no fire site existed for the old verb form):
 - `COURSE_MEMBER_JOINED` (replaces `STUDENT_JOINED_COURSE`)
 - `COURSE_MEMBER_REMOVED` (new — was reserved as `STUDENT_REMOVED_FROM_COURSE`, never fired)
 - `COURSE_MEMBER_RESTORED_BY_REJOIN` (new)
 - `CLASS_CODE_REGENERATED` (renamed from `CLASS_CODE_REGENERATE`)
 - `CLASS_CODE_DEACTIVATED` / `CLASS_CODE_REACTIVATED` (new)
 - `CLASS_CODE_EXPIRY_SET` (new — covers both set and clear via before/after)
+
+Phase 4 (attendance family):
+- `SESSION_CANCELLED` (new · Critical tier · with reason ≥ 5)
+- `ATTENDANCE_BACK_EDIT` (existing in enum, first fire site this phase · Important tier · with reason ≥ 5 when scheduledStart > 24h ago AND a row changes/creates)
+
+**Verbose tier (NOT logged)** — TimetableSlot CRUD (Q11C: configuration only, no student-data impact until a Session is materialized), normal in-window attendance writes (recorded in the current row).
 
 Security.md § 7 reflects all of these.
 
@@ -135,16 +160,47 @@ Next 16 strictly enforces "A 'use server' file can only export async functions".
 Don't call `setState` inside `useEffect` based on action result. DOM side effects (`dialogRef.current?.close()`) are fine. To reset form state, rely on the row unmounting after revalidation OR use uncontrolled inputs.
 
 #### 10. Audit event naming — past-tense, namespaced family
-COURSE_MEMBER_* and CLASS_CODE_* families established. **Phase 4:** create ATTENDANCE_* family. Use past-tense (`ATTENDANCE_MARKED`, `ATTENDANCE_EDITED_AFTER_24H`) not verb form.
+COURSE_MEMBER_*, CLASS_CODE_*, and (Phase 4) attendance families established. Past-tense (`SESSION_CANCELLED`, `ATTENDANCE_BACK_EDIT`) not verb form. **Phase 5:** create SCORE_* family — `SCORE_ITEM_PUBLISHED` (replaces `SCORE_ITEM_PUBLISH`), `SCORE_EDIT_AFTER_PUBLISH` (with reason ≥ 5), `SCORE_DELETE_AFTER_PUBLISH`.
+
+#### 11. Time zones — store UTC, render via Intl with Buddhist calendar (Phase 4)
+All `DateTime` columns are UTC instants (Postgres `TIMESTAMPTZ`, Prisma `Date`). Conversion to/from "Asia/Bangkok wall-clock" is centralised in `lib/attendance/format.ts`:
+- `formatThaiDate(d)` / `formatSessionHeader(start, end)` — `Intl.DateTimeFormat("th-TH-u-ca-buddhist", { timeZone: "Asia/Bangkok", … })` → "วันพุธที่ 3 มิ.ย. 2569 · 13:00–14:00 น."
+- `bangkokDateTimeToUtc(dateStr, timeStr)` — converts a `YYYY-MM-DD` + `HH:mm` pair entered in a Bangkok-local form back to a UTC `Date`. Bangkok is fixed +07:00 (no DST), so the math is direct: subtract 7h after building the wall-clock as if UTC.
+- `dayOfWeekForDateString` / `todayInBangkok` — server-safe, no manual TZ math.
+
+**Phase 5 implication:** Term GPA + Score Item published timestamps follow the same posture. Don't pass `new Date(localString)` into the lib — always go through the format helper.
+
+#### 12. `useState` lazy initializer to dodge React 19 purity lint (Phase 4)
+React 19's `react-hooks/purity` rule flags `Date.now()` inside `useMemo`. For values that are stable for the lifetime of the component (e.g. "is this Session past the 24h back-edit threshold?"), capture once at mount:
+```tsx
+const [isBackEdit] = useState(
+  () => Date.now() - new Date(scheduledStartIso).getTime() > THRESHOLD_MS
+);
+```
+The initializer runs once. **Phase 5+** any client-side time-of-render derived flag (e.g. "is this Score Item published in the future?", "is this Submission past deadline?") uses the same pattern.
+
+#### 13. Mobile/desktop dual-layout via CSS toggle (Phase 4)
+Teacher attendance grid renders BOTH a vertical card list (`md:hidden`) and a table (`hidden md:block`) from the same component, swapping by Tailwind breakpoint at CSS layer. Avoids SSR hydration mismatch from JS breakpoint detection. Bundle hit is the duplicate markup, which is small for ≤50-row grids. **Phase 5 scoring grid:** apply same posture — desktop-first table, mobile vertical card per student.
+
+#### 14. Sparse semantics + "active ∪ ever-marked" union (Phase 4 · ADR-0016)
+The grid query for a Session is NOT "active members at this moment". It's:
+```sql
+SELECT enrollment FROM enrollment
+  WHERE courseOfferingId = $1
+    AND (removedAt IS NULL OR EXISTS(SELECT 1 FROM attendanceRecord WHERE ...))
+```
+Removed-then-marked rows persist with `opacity-60` + read-only badge. **Phase 5+** any "what rows do I show for this `<event>` of a course?" follows the same union when soft-deletion intersects with student-data writes (ScoreEntry, Submission). The bare `removedAt IS NULL` filter is wrong for historical event views.
 
 ### Test commands (post-P3-7 script split)
 
 | Command | Scope | DB needed? | Time |
 |---------|-------|------------|------|
-| `pnpm test` | `tests/unit/**` (86 cases) | no | ~4s |
-| `pnpm test:integration` | `tests/integration/**` (22 cases) | yes — uses DATABASE_URL via `.env.local` | ~20s |
-| `pnpm test:all` | both | yes | ~25s |
-| `pnpm exec dotenv -e .env.local -- tsx scripts/smoke-test.ts` | E2E HTTP smoke (live dev server required) | yes | ~30s |
+| `pnpm test` | `tests/unit/**` (91 cases) | no | ~4s |
+| `pnpm test:integration` | `tests/integration/**` (71 cases · 8 files) | yes — uses DATABASE_URL via `.env.local` | ~150s |
+| `pnpm test:all` | both | yes | ~155s |
+| `pnpm exec dotenv -e .env.local -- tsx scripts/smoke-test.ts` | E2E HTTP smoke (72 checks · live dev server required) | yes | ~45s |
+
+**Total verifications post-Phase 4:** 91 unit + 71 integration + 72 smoke = 234.
 
 `pnpm test` (CI script) stays unit-only so the existing GitHub Actions
 job needs no env changes. Devs run `pnpm test:integration` locally
@@ -178,39 +234,72 @@ All commits since `c46b7c4` have passed 3/3 jobs (Lint/Typecheck, Unit Tests, Bu
 | Sentry / Vercel deploy | Phase 0 (planned) | As-planned → Phase 9 | Pre-launch only |
 | GitHub branch protection on `main` | Phase 0 | **User-side TODO** | Can't config from code — verify in GitHub Settings before Phase 4 push if you haven't |
 
-### Next session — Phase 4 entry point
+### Next session — Phase 5 entry point
 
-**Phase 4 — Attendance** (Task.md § Phase 4)
+**Phase 5 — Scoring + Term GPA + Print transcript** (Task.md § Phase 5)
 
 Schema to add:
-- `TimetableSlot` (DOW + start/end times, per CourseOffering)
-- `Session` (instance of a class meeting — manual or scheduled)
-- `AttendanceRecord` (Student × Session × {Present | Late | Excused | Absent})
+- `ScoreItem` (per CourseOffering — name, full_score, weight, is_published, published_at, source, score_item_template_id?, position)
+- `ScoreEntry` (Enrollment × ScoreItem × value)
+- `ScoreItemTemplate` (saved sets a teacher can copy across CourseOfferings — Task.md L138-139)
+- Optional `CourseOffering.gradeRulesJson` (already present in schema — used to override default grade thresholds)
+
+Library to add (mirror lib/attendance/* layout):
+- `lib/scoring/constants.ts` — TX_OPTS, REASON_MIN/MAX, default grade thresholds, weight invariant tolerance
+- `lib/scoring/score-item.ts` — CRUD + `publishScoreItem` + `unpublishScoreItem` (with reason if has entries) + `validateWeights` (Σ weight = 100% per CourseOffering)
+- `lib/scoring/score-entry.ts` — `upsertScoreEntry` / `bulkUpsertScoreEntries` (mirror `bulkMarkAttendance`) with **edit-after-publish** reason gate + audit `SCORE_EDIT_AFTER_PUBLISH`
+- `lib/scoring/calc.ts` — **PURE** (per CLAUDE.md Critical Files) — `weightedTotal(entries, items)` → 0..100, `gradeFor(percent, thresholds)` → 0..4
+- `lib/scoring/term-gpa.ts` — **PURE** — `Σ(grade × creditHours) / Σ(creditHours)` across all CourseOfferings in a Term for one Student; returns null if any ScoreItem unpublished (Decision 2.4)
+- `lib/scoring/term-status.ts` — **PURE** — IN_PROGRESS | COMPLETED
+- `lib/scoring/queries.ts` — `getScoreboardForTeacher(courseId)` (active∪ever-marked enrollment × every ScoreItem · Pattern 14) · `getOwnScoresForStudent(courseId, studentUserId)` (L1 projection · published items only · Pattern 4)
+
+Permissions:
+- `can.mutateScoreItem(session, course)` + `assert.canMutateScoreItem(scoreItemId)` returning `{session, item: {courseOfferingId, publishedAt, …}}` (Pattern 1, divergent shape mirrors `assert.canMutateSession`)
 
 UI to add:
-- Teacher: Attendance tab (4th tab in `app/teacher/courses/[id]/`) — grid student × session
-- Teacher: Timetable editor in Settings (extends ClassCodeControls)
-- Student: Attendance tab (3rd tab in `app/student/courses/[id]/`) — own stats only
+- Teacher: **Scores** tab — Score Item list + weight invariant check + **score grid** (Enrollment × Score Item) with inline edit + bulk save (same form-based batch as Phase 4 grid, **autosave optional defer** per Q10 spirit)
+- Teacher: Publish flow — confirm dialog + audit `SCORE_ITEM_PUBLISHED`
+- Teacher: Edit-after-publish reason modal — gates `SCORE_EDIT_AFTER_PUBLISH` audit
+- Teacher: Score Item Template — save + reuse (defer to second commit, low priority)
+- Student: **Scores** tab — published items only · weighted total · grade
+- Student: **`/student/terms`** — top-level nav, default = current term, dropdown for history, Term GPA + flag "ยังไม่จบเทอม" + Print PDF (Father print stylesheet)
 
-Patterns to inherit (from § "Patterns established this phase"):
-- Add `assert.canMarkAttendance(sessionId)` + `assert.canViewAttendance(courseId)` in `lib/auth/guards.ts`
-- `lib/attendance/` library with `markAttendance`, `bulkMarkAttendance`, `getAttendanceStats` — all wrap `$transaction` with `TX_OPTS`
-- Audit events: `ATTENDANCE_MARKED`, `ATTENDANCE_BACK_EDIT` (already in union — fire when edit > 24h after Session)
-- Server Actions: hidden form field for `sessionId`, NOT `.bind()`
-- Attendance grid is desktop-first (CLAUDE.md), mobile shows simplified view
-- Add `app/teacher/courses/[id]/attendance/{page, actions}.tsx` + `_tabs.ts` entry
-- Add integration tests in `tests/integration/permissions/attendance-*.test.ts`
+Patterns to inherit verbatim (Patterns 1-14 in § above):
+- Pattern 1: pure `can.*` + DB-touching `assert.*` — `assert.canMutateScoreItem(id)`
+- Pattern 2: authz inside `$transaction` — re-fetch ownership inside the tx
+- Pattern 3: `TX_OPTS = { maxWait: 10_000, timeout: 15_000 }` on every `$transaction`
+- Pattern 4: DB-layer projection for L1 — `getOwnScoresForStudent` returns ONLY own ScoreEntry rows (don't fetch peers + map)
+- Pattern 5: extend teacher `_tabs.ts` (insert "คะแนน" between "เช็คชื่อ" and "ตั้งค่า")
+- Pattern 6: hidden `<input name="courseId/scoreItemId">` — no `.bind()`
+- Pattern 7: native `<dialog>` with explicit centering + deferred close for Publish + Edit-after-publish + Delete dialogs
+- Pattern 8: `"use server"` files = async exports only
+- Pattern 9: avoid `setState`-in-effect; uncontrolled inputs or row remount via revalidate
+- Pattern 10: past-tense audit family — `SCORE_ITEM_PUBLISHED`, `SCORE_EDIT_AFTER_PUBLISH`, `SCORE_DELETE_AFTER_PUBLISH`
+- Pattern 11: store UTC, render via `Intl.DateTimeFormat("th-TH-u-ca-buddhist")` — publish timestamps follow the attendance posture (`formatThaiDate`)
+- Pattern 12: `useState` lazy initializer for "is this published?" derived flags
+- Pattern 13: dual-layout grid (mobile cards + desktop table) — same component, CSS toggle
+- Pattern 14: active ∪ ever-graded enrollment union for the scoreboard query
 
-**Recommended P4 sub-task breakdown** (mirrors P3 structure):
-- P4-1 schema migration
-- P4-2 lib/attendance/* (mark, edit, stats, bulk)
-- P4-3 assert.canMarkAttendance + permissions
-- P4-4 teacher Attendance tab + grid UI
-- P4-5 student Attendance tab + stats
-- P4-6 timetable editor in Settings (Sessions auto-generated from slots)
-- P4-7 integration tests
-- P4-8 smoke checks
-- P4-9 docs
+**Recommended P5 sub-task breakdown** (mirrors P4 structure — 9 sub-tasks):
+- P5-1 schema migration (ScoreItem · ScoreEntry · ScoreItemTemplate) + ADR if a non-obvious decision arises (e.g. weight tolerance, template scope, published-then-edited semantics)
+- P5-2 `lib/scoring/*` — constants, calc (PURE), term-gpa (PURE), term-status (PURE), score-item, score-entry, queries
+- P5-3 `can.mutateScoreItem` + `assert.canMutateScoreItem` + unit tests for calc + term-gpa boundary cases (Phase 5 calc is the most-tested code in the codebase per CLAUDE.md Critical Files)
+- P5-4 teacher Scores tab + grid + publish/unpublish dialogs
+- P5-5 student Scores tab (L1 projection) + `/student/terms` page + Print stylesheet
+- P5-6 (optional) Score Item Template save + reuse — defer if scope creeps
+- P5-7 integration tests for publish flow + edit-after-publish reason gate + weighted total + term-GPA-null-when-incomplete
+- P5-8 smoke checks (~10 new): teacher Score grid · student Scores tab · `/student/terms` route · published-only L1 boundary
+- P5-9 docs close-out (this HANDOFF block + Task.md mark + ADR new files)
+
+**Grill before code** — Phase 5 has at least 4 non-obvious branches that should be locked first via `/grill-with-docs` (or just a direct grilling conversation):
+
+1. **Weight invariant** — Σ = 100% exactly, or 100 ± ε with rounding tolerance? What if a teacher has 2 ScoreItems at 33.33% each (rounded)? Soft-warn vs hard-block on save? Block publish if Σ ≠ 100?
+2. **Edit after publish** — Score Item field changes (weight ↑/↓ after publish) — allowed with reason, blocked entirely, or split into "safe edits" (name) vs "score-impacting edits" (weight, full_score) needing reason?
+3. **Unpublish** — Allowed at all? Or "once published, only edit-with-reason"? If allowed, what's the audit story?
+4. **Term GPA = null when incomplete** — Decision 2.4 in CONTEXT.md says null until all items in all CourseOfferings of the Term are published. Confirm threshold + render: "—" or "0%" or progress bar? Edge: Student has 0 enrollments → null or 0?
+5. **Grade thresholds override per CourseOffering** — Phase 5 v1 ship default-only or include `gradeRulesJson` editor? Editor lives where (Settings? Score Item list?)
+
+Recommend the same flow as Phase 4: grill 1-by-1, ADR for any "hard to reverse + surprising + real trade-off" outcome (likely 1-2 ADRs: weight invariant + edit-after-publish semantic).
 
 ---
 
@@ -275,7 +364,7 @@ Patterns to inherit (from § "Patterns established this phase"):
 | **2c** | Admin pages (list/students/teachers + CSV import + audit viewer) | ✅ DONE |
 | **2.5** | Calm Ledger theme pivot (ADR-0014) + Anuphan + landing rebuild + touch-up ทุก surface | ✅ DONE |
 | **3** | Course tabs (Overview · Members · Settings) + soft-delete + restoration | ✅ DONE (P3-1..9 all complete · 22 integration tests pass) |
-| **4** | Attendance (timetable, sessions, records) | ⏳ TODO |
+| **4** | Attendance (TimetableSlot · Session lazy materialization · sparse AttendanceRecord · back-edit audit) | ✅ DONE (P4-1..9 all complete · 91 unit + 71 integration + 72 smoke pass) |
 | **5** | Scoring + Term GPA + Print transcript | ⏳ TODO |
 | **6** | Assignment + Submission + Comments + R2 file upload | ⏳ TODO |
 | **7** | Feed + Notifications | ⏳ TODO |
@@ -394,6 +483,10 @@ ADRs ที่ **เขียนเป็นไฟล์แล้ว** (in `docs
 |---|-------|------|
 | 0011 | Theme: Ink + Gold (adopted from Father) | `0011-theme-ink-gold.md` |
 | 0012 | Workspace Model: Teacher-Owned CourseOffering (no Subject) | `0012-workspace-model-no-subject-template.md` |
+| 0013 | Enrollment Soft-Delete + Auto-Restore by Rejoin | `0013-enrollment-soft-delete-and-rejoin-restore.md` |
+| 0014 | Theme pivot: Calm Ledger supersedes Ink + Gold | `0014-theme-calm-ledger-supersedes-ink-gold.md` |
+| 0015 | Lazy Session Materialization (no cron, no eager batch) | `0015-lazy-session-materialization.md` |
+| 0016 | Sparse AttendanceRecord + Enrollment FK + Grid Membership Rule | `0016-sparse-attendance-and-enrollment-fk.md` |
 
 ADRs ที่ **ตัดสินใจแล้วแต่ยังไม่ได้เขียนเป็นไฟล์** (จดไว้ใน Architecture.md § Key Decisions):
 
@@ -561,7 +654,7 @@ Paste this into the new session as your first message:
 
 > ผมทำงานต่อจาก project Studennnn ที่ `D:\Studennnn`
 > อ่าน `HANDOFF.md` + `CLAUDE.md` + `CONTEXT.md` ก่อนเริ่ม
-> ตอนนี้ Phase 0-2 เสร็จแล้ว (77 unit tests + 44 smoke tests passing)
+> ตอนนี้ Phase 0-4 เสร็จแล้ว (91 unit + 71 integration + 72 smoke = 234 verifications passing)
 > อยากทำต่อ: [ระบุ Phase หรือ feature ที่อยากทำ]
 
 หรือถ้าจะ verify state ก่อน:

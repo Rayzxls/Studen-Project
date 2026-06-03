@@ -4,7 +4,7 @@
 
 > Time estimate: solo dev ทำงาน focus ~4 ชม/วัน
 >
-> **สถานะปัจจุบัน:** Phase 0-2 ✅ DONE · Phase 3 = next · ดู `HANDOFF.md` สำหรับสรุป
+> **สถานะปัจจุบัน:** Phase 0-4 ✅ DONE · Phase 5 = next · ดู `HANDOFF.md` สำหรับสรุป
 
 ---
 
@@ -114,19 +114,20 @@ own those domains).
 
 ---
 
-## Phase 4 — Attendance (3-4 วัน)
+## ✅ Phase 4 — Attendance (3-4 วัน) — DONE
 
-- [ ] Prisma: `TimetableSlot`, `Session`, `AttendanceRecord`
-- [ ] CourseOffering settings: timetable editor
-- [ ] Session generator (hybrid: schedule + manual create)
-- [ ] Attendance UI — grid student × status (desktop-optimized, mobile fallback)
-- [ ] Bulk action: all-present / clear
-- [ ] Back-dated edit warning + audit log if >24h
-- [ ] Student view: attendance % per CourseOffering
-- [ ] Homeroom teacher view (if applicable)
-- [ ] Tests: session gen, bulk save, E2E
+- [x] Prisma: `TimetableSlot`, `Session`, `AttendanceRecord` (+ `AttendanceStatus` enum) — ADR-0015, ADR-0016
+- [x] CourseOffering settings: timetable editor (TimetableEditor component, intra-course overlap rejection per Q4a)
+- [x] Session generator (hybrid: schedule + manual create) — `findOrCreateSession` lazy materialization, no cron (ADR-0015)
+- [x] Attendance UI — grid student × status (desktop table + mobile cards CSS toggle, Pattern 13)
+- [x] Bulk action: all-present / clear
+- [x] Back-dated edit warning + audit log if >24h — `ATTENDANCE_BACK_EDIT` audit (anchor on `scheduledStart`, reason ≥ 5 required)
+- [x] Student view: attendance % per CourseOffering — KPI + 4-status count tiles + per-Session timeline (L1 projection)
+- [x] **+** Cancel Session flow — `SESSION_CANCELLED` audit (Critical tier, reason ≥ 5)
+- [ ] Homeroom teacher view — **defer to Phase 8** (cross-class roll-up; out of scope for Phase 4 v1)
+- [x] Tests: 49 integration cases + 13 smoke checks + 5 new unit cases for `can.mutateSession`
 
-**DoD:** ครูเช็คชื่อได้, นักเรียนเห็นสถิติ
+**DoD:** ครูเช็คชื่อได้, นักเรียนเห็นสถิติ — ✅ shipped + verified end-to-end
 
 ---
 
