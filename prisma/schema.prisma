@@ -2,6 +2,7 @@
 // Phase 1: Identity + Auth + Audit
 // Phase 2: Academic structure + Course Offerings + Enrollments
 // Phase 4: Attendance (TimetableSlot + Session + AttendanceRecord) — ADR-0015, ADR-0016
+// Phase 5: Scoring (ScoreItem + ScoreEntry) — ADR-0017, ADR-0018
 // Workspace model (ADR-0012): teacher-owned CourseOffering, no school-wide Subject
 // See: Architecture.md § 3 Data Model · Security.md · CONTEXT.md
 
@@ -147,12 +148,12 @@ model Term {
 }
 
 model Class {
-  id             String       @id @default(cuid())
-  academicYearId String
-  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
-  name           String // "ม.4/2"
-  gradeLevel     String // "ม.4"
-  homeroomTeacher Teacher? @relation("HomeroomOf")
+  id              String       @id @default(cuid())
+  academicYearId  String
+  academicYear    AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  name            String // "ม.4/2"
+  gradeLevel      String // "ม.4"
+  homeroomTeacher Teacher?     @relation("HomeroomOf")
 
   students Student[]
   courses  CourseOffering[]
@@ -185,6 +186,7 @@ model CourseOffering {
   enrollments    Enrollment[]
   timetableSlots TimetableSlot[]
   sessions       Session[]
+  scoreItems     ScoreItem[]
 
   @@index([classCode])
   @@index([teacherId])
@@ -205,6 +207,7 @@ model Enrollment {
   removedReason String? // Min 5 chars enforced at API boundary
 
   attendanceRecords AttendanceRecord[]
+  scoreEntries      ScoreEntry[]
 
   @@unique([studentId, courseOfferingId])
   @@index([courseOfferingId])
@@ -221,10 +224,10 @@ model TimetableSlot {
   id               String         @id @default(cuid())
   courseOfferingId String
   course           CourseOffering @relation(fields: [courseOfferingId], references: [id], onDelete: Cascade)
-  dayOfWeek        Int            // 0=Sun..6=Sat (matches JS Date.getDay())
-  startTime        String         // "HH:mm" 24h, local Bangkok time
-  endTime          String         // "HH:mm" 24h, local Bangkok time
-  location         String?        // "อาคาร 3 ห้อง 305"
+  dayOfWeek        Int // 0=Sun..6=Sat (matches JS Date.getDay())
+  startTime        String // "HH:mm" 24h, local Bangkok time
+  endTime          String // "HH:mm" 24h, local Bangkok time
+  location         String? // "อาคาร 3 ห้อง 305"
   createdAt        DateTime       @default(now())
 
   sessions Session[]
@@ -257,7 +260,7 @@ model Session {
   cancelledReason String? // Min 5 chars enforced at action layer
 
   createdAt   DateTime @default(now())
-  createdById String   // Teacher who opened the session (Restrict via Teacher FK enforced at lib layer)
+  createdById String // Teacher who opened the session (Restrict via Teacher FK enforced at lib layer)
 
   records AttendanceRecord[]
 
@@ -286,13 +289,66 @@ model AttendanceRecord {
   note         String? // "ลาป่วยมีใบรับรอง", "สาย 15 นาที"
 
   markedAt   DateTime @default(now()) // first mark — stable
-  markedById String                    // teacher who last marked (overwritten on edit)
+  markedById String // teacher who last marked (overwritten on edit)
   updatedAt  DateTime @updatedAt
-  editCount  Int      @default(0)      // increments on each edit; back-edit reason required when scheduledStart > 24h ago
+  editCount  Int      @default(0) // increments on each edit; back-edit reason required when scheduledStart > 24h ago
 
   @@unique([sessionId, enrollmentId])
   @@index([enrollmentId]) // student stats query
   @@index([sessionId])
+}
+
+// ═══════════════════════════════════════════════════════════
+// Scoring (Phase 5) — ADR-0017 (weight basis points + publish gate) · ADR-0018 (publish one-way + field-class edit rules)
+// ═══════════════════════════════════════════════════════════
+
+enum ScoreItemSource {
+  MANUAL // teacher created manually via Score Item form
+  ASSIGNMENT_LINKED // created automatically when Assignment.isScored=true (Phase 6)
+}
+
+// One scoring "slot" per CourseOffering — name + weight + fullScore.
+// Weight is stored as integer basis points (0..10000 = 0.00%..100.00%) — ADR-0017.
+// publishedAt is set exactly once; never null again — ADR-0018 (no unpublish).
+model ScoreItem {
+  id               String          @id @default(cuid())
+  courseOfferingId String
+  course           CourseOffering  @relation(fields: [courseOfferingId], references: [id], onDelete: Cascade)
+  name             String // teacher-defined, ≤ 200 chars (validated at API boundary)
+  fullScore        Int // > 0 (validated at API boundary); see ADR-0017 §1 for why Int not Decimal
+  weight           Int // basis points 0..10000 (= 0.00%..100.00%) — see ADR-0017
+  source           ScoreItemSource @default(MANUAL)
+  position         Int             @default(0) // display order within the CourseOffering
+  publishedAt      DateTime? // null = draft; non-null = visible to students (one-way per ADR-0018)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  entries ScoreEntry[]
+
+  @@index([courseOfferingId, position]) // ordered list rendering
+  @@index([courseOfferingId, publishedAt]) // term-GPA completion check
+}
+
+// One row per (Enrollment × ScoreItem). Value stored as Int (whole points).
+// FK to Enrollment (not Student) per Pattern 14 / ADR-0016 — preserves trace
+// across soft-deleted Enrollment rows.
+model ScoreEntry {
+  id           String     @id @default(cuid())
+  scoreItemId  String
+  scoreItem    ScoreItem  @relation(fields: [scoreItemId], references: [id], onDelete: Restrict)
+  enrollmentId String
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  value        Int // 0..fullScore (validated at API boundary against parent ScoreItem.fullScore)
+  note         String? // optional teacher comment for this specific entry
+
+  markedAt   DateTime @default(now()) // first mark — stable, not overwritten on edit
+  markedById String // teacher who last marked (overwritten on edit)
+  updatedAt  DateTime @updatedAt
+  editCount  Int      @default(0) // increments per edit; post-publish edits require reason ≥ 5 → audit SCORE_EDIT_AFTER_PUBLISH
+
+  @@unique([scoreItemId, enrollmentId])
+  @@index([enrollmentId]) // student-facing "my scores" query
+  @@index([scoreItemId]) // teacher-facing scoreboard query
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -301,11 +357,11 @@ model AttendanceRecord {
 // ═══════════════════════════════════════════════════════════
 
 model RateLimitBucket {
-  id        String   @id // "<action>:<identifier>" e.g. "login:admin@example.com"
-  count     Int      @default(0)
+  id        String    @id // "<action>:<identifier>" e.g. "login:admin@example.com"
+  count     Int       @default(0)
   resetAt   DateTime
   lockedAt  DateTime?
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime  @updatedAt
 
   @@index([resetAt])
 }
