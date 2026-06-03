@@ -24,8 +24,11 @@ export type AuditEvent =
   // CSV Import (Phase 2)
   | "CSV_IMPORT"
   | "COURSE_OFFERING_CREATED"
-  // Class Code (Phase 2)
-  | "CLASS_CODE_REGENERATE"
+  // Class Code (Phase 2 regen · Phase 3 admin controls)
+  | "CLASS_CODE_REGENERATED"
+  | "CLASS_CODE_DEACTIVATED"
+  | "CLASS_CODE_REACTIVATED"
+  | "CLASS_CODE_EXPIRY_SET"
   // Course Membership lifecycle (Phase 2 join · Phase 3 remove/restore · ADR-0013)
   | "COURSE_MEMBER_JOINED"
   | "COURSE_MEMBER_REMOVED"

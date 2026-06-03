@@ -1,5 +1,8 @@
 import crypto from "node:crypto";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db/client";
+import { audit } from "@/lib/audit/log";
+import { Forbidden, NotFound } from "@/lib/errors";
 
 /**
  * Class Code generator
@@ -75,4 +78,168 @@ export function normalizeClassCode(input: string): string {
     .toUpperCase()
     .replace(/\s+/g, "")
     .replace(/[^A-Z0-9-]/g, "");
+}
+
+// ═══════════════════════════════════════════════════════════
+// Class Code mutation wrappers (Phase 3 P3-5/3 — Settings tab)
+// ═══════════════════════════════════════════════════════════
+//
+// All wrappers enforce teacher-ownership inside the same $transaction
+// as the mutation + audit (same pattern as lib/course/enrollment.removeMember).
+// Admin-side controls are deferred to Phase 8.
+//
+// Audit event names use the past-tense family CLASS_CODE_* established
+// in this commit.
+
+async function assertOwningTeacherInTx(
+  tx: Prisma.TransactionClient,
+  courseOfferingId: string,
+  actorUserId: string
+): Promise<{
+  classCode: string;
+  codeActive: boolean;
+  codeExpiresAt: Date | null;
+}> {
+  const course = await tx.courseOffering.findUnique({
+    where: { id: courseOfferingId },
+    select: {
+      teacherId: true,
+      classCode: true,
+      codeActive: true,
+      codeExpiresAt: true,
+    },
+  });
+  if (!course) throw new NotFound("course_not_found");
+  if (course.teacherId !== actorUserId) throw new Forbidden("not_course_owner");
+  return {
+    classCode: course.classCode,
+    codeActive: course.codeActive,
+    codeExpiresAt: course.codeExpiresAt,
+  };
+}
+
+/**
+ * Generate a fresh code + replace the existing one. Old code is dead
+ * immediately — students mid-join will see the same `class_code_invalid`
+ * the wrapper returns for any stale code.
+ */
+export async function regenerateClassCode(params: {
+  courseOfferingId: string;
+  actorUserId: string;
+  ipAddress?: string;
+  userAgent?: string;
+}): Promise<{ classCode: string }> {
+  const newCode = await generateUniqueClassCode();
+
+  await db.$transaction(async (tx) => {
+    const before = await assertOwningTeacherInTx(
+      tx,
+      params.courseOfferingId,
+      params.actorUserId
+    );
+    await tx.courseOffering.update({
+      where: { id: params.courseOfferingId },
+      data: { classCode: newCode },
+    });
+    await audit(
+      {
+        actorId: params.actorUserId,
+        actorRole: "TEACHER",
+        action: "CLASS_CODE_REGENERATED",
+        targetType: "CourseOffering",
+        targetId: params.courseOfferingId,
+        ipAddress: params.ipAddress,
+        userAgent: params.userAgent,
+        before: { classCode: before.classCode },
+        after: { classCode: newCode },
+      },
+      tx
+    );
+  });
+
+  return { classCode: newCode };
+}
+
+/**
+ * Toggle `codeActive`. ADR-0013 § 2 — this is the documented permanent
+ * block for a removed student (deactivate prevents both new joins and
+ * rejoin-restores).
+ */
+export async function setClassCodeActive(params: {
+  courseOfferingId: string;
+  actorUserId: string;
+  active: boolean;
+  ipAddress?: string;
+  userAgent?: string;
+}): Promise<void> {
+  await db.$transaction(async (tx) => {
+    const before = await assertOwningTeacherInTx(
+      tx,
+      params.courseOfferingId,
+      params.actorUserId
+    );
+    if (before.codeActive === params.active) return; // idempotent no-op
+    await tx.courseOffering.update({
+      where: { id: params.courseOfferingId },
+      data: { codeActive: params.active },
+    });
+    await audit(
+      {
+        actorId: params.actorUserId,
+        actorRole: "TEACHER",
+        action: params.active
+          ? "CLASS_CODE_REACTIVATED"
+          : "CLASS_CODE_DEACTIVATED",
+        targetType: "CourseOffering",
+        targetId: params.courseOfferingId,
+        ipAddress: params.ipAddress,
+        userAgent: params.userAgent,
+        before: { codeActive: before.codeActive },
+        after: { codeActive: params.active },
+      },
+      tx
+    );
+  });
+}
+
+/**
+ * Set (or clear) the code expiry. `null` means "ใช้งานได้ตลอด".
+ * Single audit event covers both directions — before/after captures the
+ * actual transition.
+ */
+export async function setClassCodeExpiry(params: {
+  courseOfferingId: string;
+  actorUserId: string;
+  expiresAt: Date | null;
+  ipAddress?: string;
+  userAgent?: string;
+}): Promise<void> {
+  await db.$transaction(async (tx) => {
+    const before = await assertOwningTeacherInTx(
+      tx,
+      params.courseOfferingId,
+      params.actorUserId
+    );
+    const beforeIso = before.codeExpiresAt?.toISOString() ?? null;
+    const afterIso = params.expiresAt?.toISOString() ?? null;
+    if (beforeIso === afterIso) return; // idempotent no-op
+    await tx.courseOffering.update({
+      where: { id: params.courseOfferingId },
+      data: { codeExpiresAt: params.expiresAt },
+    });
+    await audit(
+      {
+        actorId: params.actorUserId,
+        actorRole: "TEACHER",
+        action: "CLASS_CODE_EXPIRY_SET",
+        targetType: "CourseOffering",
+        targetId: params.courseOfferingId,
+        ipAddress: params.ipAddress,
+        userAgent: params.userAgent,
+        before: { codeExpiresAt: beforeIso },
+        after: { codeExpiresAt: afterIso },
+      },
+      tx
+    );
+  });
 }
