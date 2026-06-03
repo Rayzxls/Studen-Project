@@ -13,4 +13,5 @@ export const studentCourseTabs = (courseId: string): CourseTab[] => [
   { label: "ภาพรวม", href: `/student/courses/${courseId}` },
   { label: "เพื่อนร่วมห้อง", href: `/student/courses/${courseId}/members` },
   { label: "เช็คชื่อ", href: `/student/courses/${courseId}/attendance` },
+  { label: "คะแนน", href: `/student/courses/${courseId}/scores` },
 ];
