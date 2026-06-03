@@ -1,9 +1,10 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ChevronLeft, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
 import { getCourseOfferingForTeacher } from "@/lib/course/queries";
 import { ClassCodeCard } from "@/components/class-code-card";
+import { CourseShell } from "@/components/course/course-shell";
+import { teacherCourseTabs } from "./_tabs";
 
 // Auth-gated DB-fetching page — skip static prerender.
 export const dynamic = "force-dynamic";
@@ -12,7 +13,7 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-export default async function CourseDetailPage({ params }: PageProps) {
+export default async function CourseOverviewPage({ params }: PageProps) {
   let session;
   try {
     session = await requireRole(["TEACHER"]);
@@ -32,34 +33,13 @@ export default async function CourseDetailPage({ params }: PageProps) {
   });
 
   return (
-    <div className="min-h-screen bg-bg">
-      <header className="border-b border-black/[0.06] bg-white/80 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <Link href="/teacher/courses" className="btn-ghost btn-sm">
-            <ChevronLeft className="h-4 w-4" />
-            กลับ
-          </Link>
-          <span className="text-xs text-black/60">{course.term.name}</span>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-5xl animate-fade-in space-y-6 px-6 py-10">
-        <div>
-          <div className="badge mb-2">รายวิชาที่สอน</div>
-          <h1
-            className="text-3xl font-medium text-black md:text-4xl"
-            style={{ letterSpacing: "-0.03em" }}
-          >
-            {course.name}
-          </h1>
-          <p className="mt-1 text-sm text-black/60">
-            ห้อง {course.class.name} · {course.gradeLevel} ·{" "}
-            {course.creditHours} หน่วยกิต
-            {course.subjectCode ? ` · รหัส ${course.subjectCode}` : ""} · สอนโดย{" "}
-            {course.teacher.firstName} {course.teacher.lastName}
-          </p>
-        </div>
-
+    <CourseShell
+      course={course}
+      eyebrow="รายวิชาที่สอน"
+      backHref="/teacher/courses"
+      tabs={teacherCourseTabs(id)}
+    >
+      <div className="space-y-6">
         <ClassCodeCard
           classCode={course.classCode}
           courseName={course.name}
@@ -106,7 +86,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
             </table>
           )}
         </div>
-      </main>
-    </div>
+      </div>
+    </CourseShell>
   );
 }
