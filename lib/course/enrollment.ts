@@ -8,6 +8,17 @@ const REASON_MIN = 5;
 const REASON_MAX = 500;
 
 /**
+ * Transaction options for course mutation wrappers.
+ *
+ * Neon's dev branch occasionally takes >2s to wake / acquire a connection,
+ * which trips Prisma's default `maxWait` and throws
+ * `Transaction API error: Unable to start a transaction in the given time`.
+ * 10s wait + 15s timeout is generous for these admin-frequency actions
+ * (a few clicks per minute, not a hot path).
+ */
+const TX_OPTS = { maxWait: 10_000, timeout: 15_000 } as const;
+
+/**
  * Enroll a student in a CourseOffering using a class code.
  * Workspace model (ADR-0012): course details come from CourseOffering directly.
  *
@@ -128,7 +139,7 @@ export async function enrollByClassCode(params: {
         },
         tx
       );
-    });
+    }, TX_OPTS);
   } catch (err) {
     // Race: another tx created the same (studentId, courseOfferingId) row
     // between our findUnique and create. Unique constraint catches it.
@@ -289,7 +300,7 @@ export async function removeMember(params: {
       },
       tx
     );
-  });
+  }, TX_OPTS);
 }
 
 /**

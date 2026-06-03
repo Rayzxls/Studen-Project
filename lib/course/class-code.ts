@@ -91,6 +91,17 @@ export function normalizeClassCode(input: string): string {
 // Audit event names use the past-tense family CLASS_CODE_* established
 // in this commit.
 
+/**
+ * Transaction options for Class Code admin mutations.
+ *
+ * Neon's dev branch occasionally takes >2s (the Prisma default `maxWait`)
+ * to acquire a fresh connection — particularly the first request after
+ * compute-suspend. 10s wait + 15s total timeout is generous for these
+ * admin-frequency actions; doubling Prisma defaults is safer than letting
+ * the user see `Unable to start a transaction in the given time`.
+ */
+const TX_OPTS = { maxWait: 10_000, timeout: 15_000 } as const;
+
 async function assertOwningTeacherInTx(
   tx: Prisma.TransactionClient,
   courseOfferingId: string,
@@ -155,7 +166,7 @@ export async function regenerateClassCode(params: {
       },
       tx
     );
-  });
+  }, TX_OPTS);
 
   return { classCode: newCode };
 }
@@ -199,7 +210,7 @@ export async function setClassCodeActive(params: {
       },
       tx
     );
-  });
+  }, TX_OPTS);
 }
 
 /**
@@ -241,5 +252,5 @@ export async function setClassCodeExpiry(params: {
       },
       tx
     );
-  });
+  }, TX_OPTS);
 }
