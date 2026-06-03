@@ -168,7 +168,11 @@ export async function setupTestCourse(): Promise<TestCourseContext> {
     cleanup: async () => {
       // Order matters — FKs cascade User → Teacher/Student via onDelete:Cascade,
       // but CourseOffering has onDelete:Restrict against Teacher so we must
-      // delete the course first.
+      // delete the course first. Phase 4: AttendanceRecord.enrollmentId is
+      // onDelete:Restrict (ADR-0016 § 2), so we cannot simply rely on
+      // CourseOffering cascade (which would cascade both Enrollment and
+      // Session in non-deterministic order) — instead, drain children
+      // bottom-up before deleting the parent.
       // Audit logs — match by actor (test users) OR by course target.
       // We intentionally do NOT match `targetType: "Enrollment"` broadly,
       // since that would touch other tests' enrollment audits.
@@ -176,6 +180,18 @@ export async function setupTestCourse(): Promise<TestCourseContext> {
         where: {
           OR: [{ actorId: { in: userIds } }, { targetId: course.id }],
         },
+      });
+      // AttendanceRecord — must die before its Enrollment parent (Restrict).
+      // Reach via Session.courseOfferingId since AttendanceRecord lacks a
+      // direct courseOfferingId column.
+      await db.attendanceRecord.deleteMany({
+        where: { session: { courseOfferingId: course.id } },
+      });
+      await db.session.deleteMany({
+        where: { courseOfferingId: course.id },
+      });
+      await db.timetableSlot.deleteMany({
+        where: { courseOfferingId: course.id },
       });
       await db.enrollment.deleteMany({
         where: { courseOfferingId: course.id },
