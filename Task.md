@@ -85,15 +85,32 @@
 
 ---
 
-## 🔜 Phase 3 — Members + Course Skeleton (2-3 วัน) — NEXT
+## ✅ Phase 3 — Members + Course Skeleton — DONE (feature work)
 
-- [ ] Course page shell: tabs (Feed / Attendance / Scores / Assignments / Members / Settings)
-- [ ] Members tab — list students ใน CourseOffering (ชื่อเท่านั้น, no scores)
-- [ ] Teacher view: remove student from course (audit log)
-- [ ] Student view: see members list
-- [ ] Tests: permissions (student เห็น members แต่ไม่เห็นคะแนน)
+Final scope narrowed from the original 6-tab plan: shipped Overview ·
+Members · Settings for teacher; Overview · เพื่อนร่วมห้อง for student.
+Feed/Attendance/Scores/Assignments tabs deferred to Phases 4-7 (which
+own those domains).
 
-**DoD:** หน้า course tab พร้อม, Members tab ทำงาน
+- [x] Course page shell + tab nav (`<CourseShell>` + `<TabNav>`)
+- [x] Teacher Overview · Members · Settings tabs
+- [x] Student Overview · Members tabs (L1 visibility — DB-layer projection)
+- [x] Teacher view: remove student with required reason + audit
+      (`COURSE_MEMBER_REMOVED`)
+- [x] Auto-restore on rejoin via class code (ADR-0013, audit
+      `COURSE_MEMBER_RESTORED_BY_REJOIN`)
+- [x] Class Code admin controls — regenerate · activate-toggle · expiry,
+      each with own audit event
+- [x] Soft-delete schema for Enrollment (`removedAt/removedById/removedReason`)
+- [x] `assert.ownsCourse` + `assert.isActiveCourseMember` (+ pure `can.*`)
+- [x] Smoke checks for all tab routes + L1 visibility body assertions
+
+**Deferred to a dedicated next session:**
+- [ ] P3-7 — integration test infra (`tests/integration/permissions/`)
+      for `assert.*` + lib/course/* — needs test-DB setup decision
+      before code (real Postgres vs Prisma mock)
+
+**DoD:** ✅ course tabs ทำงาน, soft-delete + restore flow ทำงาน, smoke ครบ
 
 ---
 

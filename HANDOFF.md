@@ -3,64 +3,76 @@
 > เอกสารนี้ใช้สำหรับเริ่ม **session ใหม่** กับ AI assistant แล้วต่อยอดได้ทันที
 > อ่านไฟล์นี้ + `CLAUDE.md` + `CONTEXT.md` ก่อนเริ่มงาน
 
-อัพเดตล่าสุด: **2026-06-02** · 30+ commits · **Phase 0-2 + Calm Ledger pivot + Phase 3 (P3-1) เสร็จ**
+อัพเดตล่าสุด: **2026-06-03** · 40+ commits · **Phase 0-2 + Calm Ledger pivot + Phase 3 (P3-1..6, P3-8) เสร็จ · P3-7 deferred**
 
 ---
 
-## ⚠️ Latest Session State (2026-06-02) — read this first
+## ⚠️ Latest Session State (2026-06-03) — read this first
 
-### Theme พิวอตจาก Ink+Gold → Calm Ledger (ADR-0014)
+### Phase 3 — feature work shipped end-to-end
 
-ADR-0011 (Ink + Gold) **superseded** โดย ADR-0014 (Calm Ledger):
-- Off-white `#F5F5F5` body + True Black `#000000` + Aubergine `#2B2644` (surface only, ไม่ใช่ button)
-- Font: **Anuphan** (Cadson Demak, Thai+Latin) replace IBM Plex Sans Thai
-- Drop: `text-gradient-gold`, `mesh-bg`, `tilt-card`, `blob`, `sheen`, `glass`, `text-gradient-ink` (ตอนนี้เป็น compat shims no-op ใน `globals.css` — touch-up หน้าทั้งหมดแล้ว)
-- Button: `rounded-full` pill (black primary, white secondary) แทน rounded-lg gold-gradient
-- Cards: `rounded-2xl` + flat-by-default + lift on hover (subtle shadow)
-- Role badges: neutral grayscale (No-Saturated-Role-Colour Rule) — ไม่มี rose/blue/emerald
-- Hero landing: 3 รูป webp ใน `public/landing/` (hero-bg, info-card-1, use-cases-teacher) — see `image-prompts.md`
+Original 9-task plan landed except for the integration test infra (P3-7),
+which was deliberately deferred — it requires a test-DB decision that
+deserves its own grilling session.
 
-อ่าน `PRODUCT.md` (brand personality + anti-references) + `DESIGN.md` (frontmatter + 6 Stitch sections + Named Rules) + `docs/adr/0014-theme-calm-ledger-supersedes-ink-gold.md` ก่อนทำงาน UI ต่อ
+| Task | Status | SHA(s) |
+|------|--------|--------|
+| P3-1 schema (Enrollment soft-delete fields + index) | ✅ | `1a73d1e` |
+| P3-2 lib/course/enrollment lifecycle (rename audit family → COURSE_MEMBER_* · removeMember · restoreByRejoin · getActiveMembers · enrollByClassCode refactor · tighten list queries) | ✅ | `da44ade`, `b8cbe58` |
+| P3-3 lib/auth course-scoped helpers (can.ownsCourse, can.isActiveCourseMember, assert.*) + 9 new unit tests | ✅ | `e0014cb` |
+| P3-4 components/course/{course-shell, tab-nav} scaffold | ✅ | `32270da` |
+| P3-5 teacher tabs (Overview migration · Members + remove dialog · Settings + Class Code controls) | ✅ | `5a6432e`, `0d4cff8`, `3b12a52` |
+| P3-6 student tabs (Overview + dashboard links · Members L1-filtered) | ✅ | `9e549bc`, `b0e5fa0` |
+| P3-7 integration permission tests | ⏸️ deferred (next session) | — |
+| P3-8 smoke-test.ts +13 Phase 3 checks | ✅ | `0db1339` |
+| P3-9 docs update (Task.md + HANDOFF) | ✅ | this commit |
 
-### Phase 3 — kicked off, paused mid-flight
+### What "shipped" means today
 
-| Task | Status |
-|------|--------|
-| P3-1 schema (Enrollment soft-delete: removedAt, removedById, removedReason + index) | ✅ committed `1a73d1e` · applied via `pnpm db:push` |
-| P3-2 lib/course/enrollment removeMember + restoreByRejoin + audit | ⏸️ paused — รอ Prisma client regenerate (dev server lock blocks DLL) |
-| P3-3 lib/auth can.ownsCourse + can.isActiveCourseMember + assert.* | pending |
-| P3-4 components/course/{course-shell, tab-nav} | pending |
-| P3-5 teacher tabs (Overview · Members · Settings) | pending |
-| P3-6 student tabs (Overview · Members) | pending |
-| P3-7 +15 unit tests + integration permission folder | pending |
-| P3-8 +12 smoke checks | pending |
-| P3-9 docs (Task.md DONE flip + HANDOFF update) | pending |
+- **Teacher course detail** — 3 tabs (ภาพรวม · สมาชิก · ตั้งค่า):
+  - Overview: ClassCodeCard + member count link
+  - Members: active-only list + "นำออก" dialog (reason 5–500, audit `COURSE_MEMBER_REMOVED`)
+  - Settings: regenerate code (with confirm dialog), activate-toggle, set/clear expiry — each with its own audit event
+- **Student course detail** — 2 tabs (ภาพรวม · เพื่อนร่วมห้อง):
+  - L1 visibility enforced at the Prisma SELECT layer — no classCode, no peer studentIds, no enrolledAt on the wire
+  - Dashboard student cards now LINK to `/student/courses/[id]` (previously they rendered but did nothing)
+- **Auto-restore on rejoin** — removed student using the same class code triggers `restoreByRejoin` inside `enrollByClassCode`, audit `COURSE_MEMBER_RESTORED_BY_REJOIN`. Permanent block = deactivate code in Settings (ADR-0013 § 2 kill switch)
 
-**Phase 3 design decisions ครบ** — ดู ADR-0013 + grilling notes early in session transcript
+### Audit event additions
 
-**Tab active style override** (Q8 จาก grilling ใช้ gold underline แต่ Calm Ledger ไม่มี gold): **bg-black/[0.05] + text-black** (quiet pill style, consistent กับ admin sidebar)
+The CLASS_CODE family was bumped to past-tense (zero migration — no fire site existed for the old verb form):
+- `COURSE_MEMBER_JOINED` (replaces `STUDENT_JOINED_COURSE`)
+- `COURSE_MEMBER_REMOVED` (new — was reserved as `STUDENT_REMOVED_FROM_COURSE`, never fired)
+- `COURSE_MEMBER_RESTORED_BY_REJOIN` (new)
+- `CLASS_CODE_REGENERATED` (renamed from `CLASS_CODE_REGENERATE`)
+- `CLASS_CODE_DEACTIVATED` / `CLASS_CODE_REACTIVATED` (new)
+- `CLASS_CODE_EXPIRY_SET` (new — covers both set and clear via before/after)
 
-### Resume P3-2 ต้องทำก่อน:
+Security.md § 7 reflects all of these.
 
-```bash
-# 1. Stop dev server (Ctrl+C ใน terminal ที่ run pnpm dev)
-# 2. Regen Prisma client (จะ pick up removedAt/removedById/removedReason types)
-pnpm db:generate
-# 3. Restart dev
-pnpm dev
-```
+### Patterns established this phase (worth knowing for Phase 4+)
 
-หลังจากนั้น Prisma TypeScript types สำหรับ `Enrollment.removedAt` etc. จะ available — `lib/course/enrollment.ts` รุ่นถัดไปจะ typecheck ได้
+- **Pure `can.*` + DB-touching `assert.*`** — the predicate-vs-guard split holds; course-scoped asserts return `{session, course}` / `{session, enrollment}` (divergent from simple asserts which return Session alone) to avoid a duplicate fetch in callers. Documented inline.
+- **Authorization inside the transaction** — `removeMember`, `regenerateClassCode`, `setClassCodeActive`, `setClassCodeExpiry` all check teacher-ownership inside `$transaction` to close TOCTOU. Repeat this for Phase 4-5 mutation wrappers.
+- **DB-layer projection for L1** — `getActiveMembersForStudent` strips `studentId`/`enrolledAt` at SELECT, not at caller `.map`. Use this pattern for any "students see X" query in Phase 4-7.
+- **`_tabs.ts` per role** — `app/{teacher,student}/courses/[id]/_tabs.ts` exports a `<role>CourseTabs(id)` function each tab page imports. Underscore prefix keeps Next.js from routing it.
+- **useActionState + Server Action `.bind(null, contextId)`** — the established form pattern for dialogs and inline mutations. RemoveMemberDialog + ClassCodeControls both use it.
+- **React 19 lint gotcha** — `set-state-in-effect` rule fires on post-success effects. Workaround: only do DOM side-effects in the effect (e.g. `dialogRef.current?.close()`), leave React state alone; the per-row component unmounts after revalidation anyway.
 
-### CI ตอนนี้ green ✅
+### What needs deciding before resuming P3-7
 
-หลัง pivot CI fail 4 รอบติด root cause 2 ตัวต่างกัน — แก้แล้วทั้งคู่ commit `54929ce` + `c46b7c4`:
-- **`postinstall: prisma generate`** ใน package.json (Lint/Typecheck + Unit Tests ผ่าน)
-- **`export const dynamic = "force-dynamic"`** ใน 5 auth-gated DB-fetching pages (Build ผ่าน)
+Integration test infra has 3 plausible shapes:
+1. **Real Postgres test DB** — separate DATABASE_URL, fixture seed per test, full fidelity. Most setup.
+2. **Prisma mock via vitest-mock-extended** — fast, no DB, but mocks the boundary we want to verify. Lowest fidelity.
+3. **Hybrid** — pure `can.*` covered by existing `tests/unit/permissions.test.ts` style; mutation flows covered by extending `scripts/smoke-test.ts` (already against live DB). Skip the `tests/integration/permissions/` folder entirely.
 
-ทุก commit ใหม่หลังจากนี้ควรได้ ✅ 3/3 jobs
+Recommend grilling option 3 first — we already have ~13 Phase 3 smoke assertions; topping up to ~25 across mutations + restore + cross-course gates may be enough without standing up new infra. Decide in the P3-7 session.
 
-### Commit discipline rule (CLAUDE.md § Commits) — strict from now
+### CI status — green ✅
+
+All commits since `c46b7c4` have passed 3/3 jobs (Lint/Typecheck, Unit Tests, Build). Pre-commit hooks (prettier + eslint + husky stash backup) catch issues before they hit CI.
+
+### Commit discipline rule (CLAUDE.md § Commits) — held throughout this phase
 
 - Every diff → review + commit ตามนั้น (ไม่สะสมข้าม feature)
 - 1 commit = 1 concern
@@ -130,7 +142,7 @@ pnpm dev
 | **2b** | Teacher pages (list/create/detail + QR + ClassPicker) | ✅ DONE |
 | **2c** | Admin pages (list/students/teachers + CSV import + audit viewer) | ✅ DONE |
 | **2.5** | Calm Ledger theme pivot (ADR-0014) + Anuphan + landing rebuild + touch-up ทุก surface | ✅ DONE |
-| **3** | Course tabs (Overview · Members · Settings) + soft-delete + restoration | 🚧 P3-1 ✅ · P3-2 to 9 pending |
+| **3** | Course tabs (Overview · Members · Settings) + soft-delete + restoration | ✅ DONE (P3-1..6, P3-8 · P3-7 integration tests deferred) |
 | **4** | Attendance (timetable, sessions, records) | ⏳ TODO |
 | **5** | Scoring + Term GPA + Print transcript | ⏳ TODO |
 | **6** | Assignment + Submission + Comments + R2 file upload | ⏳ TODO |
