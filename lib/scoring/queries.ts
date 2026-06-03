@@ -453,11 +453,13 @@ export async function getOwnScoresForStudent(
 
   const totalItems = allItems.length;
   let publishedItems = 0;
+  let ownEntryCount = 0;
   const items: StudentScoreItem[] = [];
   for (const it of allItems) {
     if (it.publishedAt === null) continue;
     publishedItems++;
     const own = it.entries[0] ?? null;
+    if (own) ownEntryCount++;
     items.push({
       id: it.id,
       name: it.name,
@@ -470,9 +472,10 @@ export async function getOwnScoresForStudent(
     });
   }
 
-  // Removed enrollment with NO entries → block (defensive — Prisma would
-  // already return zero rows but we want a clear 403 over an empty 200).
-  if (enrollment.removedAt !== null && publishedItems === 0) {
+  // Removed enrollment with NO own entries anywhere → block (defensive 403
+  // over an empty 200). The history-preservation case keeps access for
+  // removed-but-previously-graded students.
+  if (enrollment.removedAt !== null && ownEntryCount === 0) {
     throw new Forbidden("enrollment_removed_no_history");
   }
 

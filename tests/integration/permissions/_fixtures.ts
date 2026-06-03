@@ -193,6 +193,14 @@ export async function setupTestCourse(): Promise<TestCourseContext> {
       await db.timetableSlot.deleteMany({
         where: { courseOfferingId: course.id },
       });
+      // Phase 5: ScoreEntry FK to Enrollment is onDelete:Restrict (mirrors
+      // AttendanceRecord per ADR-0016). Drain entries → items → enrollments.
+      await db.scoreEntry.deleteMany({
+        where: { scoreItem: { courseOfferingId: course.id } },
+      });
+      await db.scoreItem.deleteMany({
+        where: { courseOfferingId: course.id },
+      });
       await db.enrollment.deleteMany({
         where: { courseOfferingId: course.id },
       });
