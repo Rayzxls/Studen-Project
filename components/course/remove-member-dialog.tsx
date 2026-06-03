@@ -29,8 +29,7 @@ export function RemoveMemberDialog({
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [reason, setReason] = useState("");
 
-  const boundAction = removeMemberAction.bind(null, courseId);
-  const [state, formAction] = useActionState(boundAction, INITIAL_STATE);
+  const [state, formAction] = useActionState(removeMemberAction, INITIAL_STATE);
 
   // Close dialog on success. We deliberately do NOT reset `reason` here:
   // (a) React 19's `set-state-in-effect` rule discourages it, and
@@ -82,6 +81,7 @@ export function RemoveMemberDialog({
         }}
       >
         <form action={formAction} className="p-6">
+          <input type="hidden" name="courseId" value={courseId} />
           <input type="hidden" name="enrollmentId" value={enrollmentId} />
 
           <div className="mb-4 flex items-start justify-between gap-4">

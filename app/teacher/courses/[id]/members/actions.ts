@@ -19,22 +19,23 @@ export type RemoveMemberState = {
  * so this layer just collects request metadata + serialises errors back
  * to the form via useActionState.
  *
- * `courseId` is bound by the caller (`.bind(null, courseId)`) so we know
- * which path to revalidate after the mutation.
+ * `courseId` arrives via a hidden form field (NOT `.bind`) — under
+ * Next 16 + Auth.js v5 beta the bound-Server-Action path intermittently
+ * drops the session cookie after a prior revalidatePath cycle. Reading
+ * from FormData side-steps the binding code path entirely.
  */
 export async function removeMemberAction(
-  courseId: string,
   _prev: RemoveMemberState,
   formData: FormData
 ): Promise<RemoveMemberState> {
   const session = await requireRole(["TEACHER"]);
 
+  const courseId = String(formData.get("courseId") ?? "");
   const enrollmentId = String(formData.get("enrollmentId") ?? "");
   const reason = String(formData.get("reason") ?? "");
 
-  if (!enrollmentId) {
-    return { fieldErrors: { enrollmentId: "missing" } };
-  }
+  if (!courseId) return { error: "missing_course_id" };
+  if (!enrollmentId) return { fieldErrors: { enrollmentId: "missing" } };
 
   const meta = await getRequestMeta();
 

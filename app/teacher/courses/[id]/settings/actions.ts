@@ -22,13 +22,25 @@ function revalidateAll(courseId: string) {
   revalidatePath(`/teacher/courses/${courseId}/settings`);
 }
 
+// `courseId` lives in a hidden form field (not `.bind`) because the
+// Next 16 + Auth.js v5 beta combo drops the session cookie in certain
+// bound-Server-Action invocations after a prior revalidatePath cycle —
+// reading from FormData side-steps the binding code path entirely.
+
+function readCourseId(formData: FormData): string | null {
+  const v = String(formData.get("courseId") ?? "").trim();
+  return v.length > 0 ? v : null;
+}
+
 export async function regenerateClassCodeAction(
-  courseId: string,
   _prev: ClassCodeActionState,
-  _formData: FormData
+  formData: FormData
 ): Promise<ClassCodeActionState> {
   const session = await requireRole(["TEACHER"]);
   const meta = await getRequestMeta();
+
+  const courseId = readCourseId(formData);
+  if (!courseId) return { error: "missing_course_id" };
 
   try {
     await regenerateClassCode({
@@ -48,12 +60,14 @@ export async function regenerateClassCodeAction(
 }
 
 export async function toggleClassCodeActiveAction(
-  courseId: string,
   _prev: ClassCodeActionState,
   formData: FormData
 ): Promise<ClassCodeActionState> {
   const session = await requireRole(["TEACHER"]);
   const meta = await getRequestMeta();
+
+  const courseId = readCourseId(formData);
+  if (!courseId) return { error: "missing_course_id" };
 
   const active = String(formData.get("active") ?? "") === "true";
 
@@ -75,12 +89,14 @@ export async function toggleClassCodeActiveAction(
 }
 
 export async function setClassCodeExpiryAction(
-  courseId: string,
   _prev: ClassCodeActionState,
   formData: FormData
 ): Promise<ClassCodeActionState> {
   const session = await requireRole(["TEACHER"]);
   const meta = await getRequestMeta();
+
+  const courseId = readCourseId(formData);
+  if (!courseId) return { error: "missing_course_id" };
 
   // "" or absent → null (clear expiry).
   // Otherwise expect a `datetime-local` string ("YYYY-MM-DDTHH:mm") which

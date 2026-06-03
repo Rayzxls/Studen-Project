@@ -68,8 +68,10 @@ function CurrentCodeSection({
   codeActive: boolean;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const boundAction = regenerateClassCodeAction.bind(null, courseId);
-  const [state, formAction] = useActionState(boundAction, INITIAL);
+  const [state, formAction] = useActionState(
+    regenerateClassCodeAction,
+    INITIAL
+  );
 
   useEffect(() => {
     if (!state.ok) return;
@@ -129,6 +131,7 @@ function CurrentCodeSection({
         }}
       >
         <form action={formAction} className="p-6">
+          <input type="hidden" name="courseId" value={courseId} />
           <div className="mb-4 flex items-start justify-between gap-4">
             <h2
               className="text-lg font-medium text-black"
@@ -187,8 +190,10 @@ function ActiveToggleSection({
   courseId: string;
   codeActive: boolean;
 }) {
-  const boundAction = toggleClassCodeActiveAction.bind(null, courseId);
-  const [state, formAction] = useActionState(boundAction, INITIAL);
+  const [state, formAction] = useActionState(
+    toggleClassCodeActiveAction,
+    INITIAL
+  );
 
   return (
     <div className="card p-5">
@@ -210,6 +215,7 @@ function ActiveToggleSection({
       </header>
 
       <form action={formAction}>
+        <input type="hidden" name="courseId" value={courseId} />
         <input
           type="hidden"
           name="active"
@@ -241,8 +247,7 @@ function ExpirySection({
   courseId: string;
   codeExpiresAt: Date | null;
 }) {
-  const boundAction = setClassCodeExpiryAction.bind(null, courseId);
-  const [state, formAction] = useActionState(boundAction, INITIAL);
+  const [state, formAction] = useActionState(setClassCodeExpiryAction, INITIAL);
   const [value, setValue] = useState(toLocalInputValue(codeExpiresAt));
 
   // If the server updates the expiry (e.g. after submit), reflect it in the input.
@@ -267,6 +272,7 @@ function ExpirySection({
       </header>
 
       <form action={formAction} className="space-y-3">
+        <input type="hidden" name="courseId" value={courseId} />
         <input
           type="datetime-local"
           name="expiresAt"
