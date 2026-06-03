@@ -124,6 +124,78 @@ export async function getAttendanceGridForTeacher(
   };
 }
 
+export interface StudentSessionAttendance {
+  sessionId: string;
+  scheduledStart: Date;
+  scheduledEnd: Date;
+  cancelledAt: Date | null;
+  cancelledReason: string | null;
+  note: string | null;
+  ownStatus: AttendanceStatus | null;
+  ownNote: string | null;
+}
+
+/**
+ * Per-Session attendance for THIS student in one CourseOffering — L1
+ * projection (Pattern 4). The query joins Session × this-enrollment's
+ * AttendanceRecord. Peer rows are never selected — there is no `select`
+ * clause that fetches other enrollments at all.
+ *
+ * Cancelled Sessions are included so the student can see "ครูยกเลิกคาบ
+ * วันที่ X (เหตุผล: Y)" — but `ownStatus` will be null in that case (and
+ * the row should render with cancelled-styling in the UI).
+ *
+ * Returns empty array if the student has no Enrollment row for this course
+ * (which the caller's L1 gate should have already rejected). The query
+ * doesn't return that distinction itself — use getAttendanceStatsForStudent
+ * (returns null) to distinguish "never joined" from "no sessions yet".
+ */
+export async function getStudentSessionAttendance(params: {
+  courseOfferingId: string;
+  studentUserId: string;
+}): Promise<StudentSessionAttendance[]> {
+  const enrollment = await db.enrollment.findUnique({
+    where: {
+      studentId_courseOfferingId: {
+        studentId: params.studentUserId,
+        courseOfferingId: params.courseOfferingId,
+      },
+    },
+    select: { id: true },
+  });
+  if (!enrollment) return [];
+
+  const sessions = await db.session.findMany({
+    where: { courseOfferingId: params.courseOfferingId },
+    orderBy: { scheduledStart: "desc" },
+    select: {
+      id: true,
+      scheduledStart: true,
+      scheduledEnd: true,
+      cancelledAt: true,
+      cancelledReason: true,
+      note: true,
+      records: {
+        // Only THIS enrollment's records — peer rows are never fetched.
+        where: { enrollmentId: enrollment.id },
+        select: { status: true, note: true },
+        take: 1,
+      },
+    },
+  });
+
+  return sessions.map((s) => ({
+    sessionId: s.id,
+    scheduledStart: s.scheduledStart,
+    scheduledEnd: s.scheduledEnd,
+    cancelledAt: s.cancelledAt,
+    cancelledReason: s.cancelledReason,
+    note: s.note,
+    ownStatus: s.records[0]?.status ?? null,
+    ownNote: s.records[0]?.note ?? null,
+  }));
+}
+
 export interface StudentAttendanceStats {
   totalSessions: number;
   marked: number;
