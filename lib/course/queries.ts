@@ -108,3 +108,39 @@ export async function getCourseOfferingForTeacher(
     },
   });
 }
+
+/**
+ * Student-side course meta for the CourseShell header (P3-6).
+ *
+ * Returns null unless `studentUserId` has an active (non-removed) Enrollment
+ * in the course — this is the L1 visibility gate for course-detail access.
+ * The classCode field is intentionally NOT selected: it is a teacher-only
+ * sharing helper, not part of the student view (CONTEXT.md § Visibility).
+ *
+ * Counter to getCourseOfferingForTeacher, no nested enrollments — the
+ * Members tab handles its own L1-filtered list via getActiveMembersForStudent.
+ */
+export async function getCourseOfferingForStudent(
+  courseOfferingId: string,
+  studentUserId: string
+) {
+  return db.courseOffering.findFirst({
+    where: {
+      id: courseOfferingId,
+      enrollments: {
+        some: { studentId: studentUserId, removedAt: null },
+      },
+    },
+    select: {
+      id: true,
+      name: true,
+      subjectCode: true,
+      gradeLevel: true,
+      creditHours: true,
+      createdAt: true,
+      class: { select: { name: true } },
+      term: { select: { name: true } },
+      teacher: { select: { firstName: true, lastName: true } },
+    },
+  });
+}

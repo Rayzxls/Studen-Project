@@ -218,7 +218,11 @@ export default async function DashboardPage() {
             ) : (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {studentCourses.map((e) => (
-                  <div key={e.id} className="card p-5">
+                  <Link
+                    key={e.id}
+                    href={`/student/courses/${e.course.id}`}
+                    className="card p-5 hover:no-underline"
+                  >
                     <h3
                       className="font-medium text-black"
                       style={{ letterSpacing: "-0.01em" }}
@@ -232,7 +236,7 @@ export default async function DashboardPage() {
                       ครู {e.course.teacher.firstName}{" "}
                       {e.course.teacher.lastName}
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
