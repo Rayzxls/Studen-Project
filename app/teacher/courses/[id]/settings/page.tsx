@@ -1,8 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth/guards";
 import { getCourseOfferingForTeacher } from "@/lib/course/queries";
+import { listTimetableSlots } from "@/lib/attendance/timetable";
 import { CourseShell } from "@/components/course/course-shell";
 import { ClassCodeControls } from "@/components/course/class-code-controls";
+import { TimetableEditor } from "@/components/attendance/timetable-editor";
 import { teacherCourseTabs } from "../_tabs";
 
 // Auth-gated DB-fetching page — skip static prerender.
@@ -21,7 +23,10 @@ export default async function CourseSettingsPage({ params }: PageProps) {
   }
 
   const { id } = await params;
-  const course = await getCourseOfferingForTeacher(id, session.user.id);
+  const [course, slots] = await Promise.all([
+    getCourseOfferingForTeacher(id, session.user.id),
+    listTimetableSlots(id),
+  ]);
   if (!course) notFound();
 
   return (
@@ -31,12 +36,15 @@ export default async function CourseSettingsPage({ params }: PageProps) {
       backHref="/teacher/courses"
       tabs={teacherCourseTabs(id)}
     >
-      <ClassCodeControls
-        courseId={id}
-        classCode={course.classCode}
-        codeActive={course.codeActive}
-        codeExpiresAt={course.codeExpiresAt}
-      />
+      <div className="space-y-4">
+        <ClassCodeControls
+          courseId={id}
+          classCode={course.classCode}
+          codeActive={course.codeActive}
+          codeExpiresAt={course.codeExpiresAt}
+        />
+        <TimetableEditor courseId={id} slots={slots} />
+      </div>
     </CourseShell>
   );
 }
