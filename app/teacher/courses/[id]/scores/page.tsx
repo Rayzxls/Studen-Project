@@ -8,6 +8,8 @@ import { validateWeights } from "@/lib/scoring/score-item";
 import { formatBasisPoints } from "@/lib/scoring/format";
 import { CourseShell } from "@/components/course/course-shell";
 import { CreateScoreItemForm } from "@/components/scoring/create-score-item-form";
+import { PublishScoreItemDialog } from "@/components/scoring/publish-score-item-dialog";
+import { DeleteScoreItemDialog } from "@/components/scoring/delete-score-item-dialog";
 import { teacherCourseTabs } from "../_tabs";
 
 // Auth-gated DB-fetching page — skip static prerender.
@@ -30,20 +32,25 @@ export default async function ScoresListPage({ params }: PageProps) {
   if (!course) notFound();
 
   // Authorization is already enforced by getCourseOfferingForTeacher (which
-  // checks teacherId); the read here is scoped to this CourseOffering.
-  const items = await db.scoreItem.findMany({
-    where: { courseOfferingId: id },
-    select: {
-      id: true,
-      name: true,
-      fullScore: true,
-      weight: true,
-      position: true,
-      publishedAt: true,
-      _count: { select: { entries: true } },
-    },
-    orderBy: [{ position: "asc" }, { id: "asc" }],
-  });
+  // checks teacherId); reads below are scoped to this CourseOffering.
+  const [items, activeMemberCount] = await Promise.all([
+    db.scoreItem.findMany({
+      where: { courseOfferingId: id },
+      select: {
+        id: true,
+        name: true,
+        fullScore: true,
+        weight: true,
+        position: true,
+        publishedAt: true,
+        _count: { select: { entries: true } },
+      },
+      orderBy: [{ position: "asc" }, { id: "asc" }],
+    }),
+    db.enrollment.count({
+      where: { courseOfferingId: id, removedAt: null },
+    }),
+  ]);
 
   const { sum, isValid } = validateWeights(items);
   const allPublished =
@@ -92,10 +99,10 @@ export default async function ScoresListPage({ params }: PageProps) {
             {items.map((it) => {
               const published = it.publishedAt !== null;
               return (
-                <li key={it.id}>
+                <li key={it.id} className="-mx-2 flex items-center gap-2 px-2">
                   <Link
                     href={`/teacher/courses/${id}/scores/${it.id}`}
-                    className="-mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-slate-50/60"
+                    className="-mx-2 flex flex-1 items-center justify-between gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-slate-50/60"
                   >
                     <div className="min-w-0">
                       <p className="flex items-center gap-2 truncate text-sm font-medium text-black">
@@ -113,13 +120,31 @@ export default async function ScoresListPage({ params }: PageProps) {
                       </p>
                       <p className="mt-0.5 text-xs text-black/50">
                         น้ำหนัก {formatBasisPoints(it.weight)} · คะแนนเต็ม{" "}
-                        {it.fullScore}
+                        {it.fullScore} · {it._count.entries} คะแนน
                       </p>
                     </div>
-                    <div className="shrink-0 text-right text-xs text-black/40">
-                      {it._count.entries} คะแนน
-                    </div>
                   </Link>
+                  <div className="flex shrink-0 items-center gap-1">
+                    {!published && (
+                      <PublishScoreItemDialog
+                        courseId={id}
+                        scoreItemId={it.id}
+                        scoreItemName={it.name}
+                        weight={it.weight}
+                        fullScore={it.fullScore}
+                        entriesCount={it._count.entries}
+                        activeMemberCount={activeMemberCount}
+                        currentSumBp={sum}
+                      />
+                    )}
+                    <DeleteScoreItemDialog
+                      courseId={id}
+                      scoreItemId={it.id}
+                      scoreItemName={it.name}
+                      isPublished={published}
+                      entriesCount={it._count.entries}
+                    />
+                  </div>
                 </li>
               );
             })}

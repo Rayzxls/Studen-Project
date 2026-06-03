@@ -2,20 +2,24 @@
 
 import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth/guards";
-import { createScoreItem, deleteScoreItem } from "@/lib/scoring/score-item";
+import {
+  createScoreItem,
+  deleteScoreItem,
+  publishScoreItem,
+} from "@/lib/scoring/score-item";
 import { getRequestMeta } from "@/lib/utils/request";
 import { HttpError, ValidationError } from "@/lib/errors";
 
 /**
- * Server Actions — ScoreItem create + delete (Phase 5 · P5-4a)
+ * Server Actions — ScoreItem create / publish / delete (Phase 5 · P5-4a + P5-4c)
  *
- * Publish + update (rename / reweight) live in P5-4c so each Server Action
- * file stays focused. All actions follow Pattern 6 (hidden form fields, no
- * `.bind()`) and Pattern 8 (only async exports from a "use server" file).
+ * All actions follow Pattern 6 (hidden form fields, no `.bind()`) and
+ * Pattern 8 (only async exports from a "use server" file).
  *
- * Pre-publish delete is a free action without a reason field — pre-publish
- * lifecycle is unaudited per ADR-0018 § Negative consequences. Post-publish
- * delete (Critical tier with reason ≥ 5) is wired in P5-4c.
+ * Pre-publish lifecycle is unaudited per ADR-0018 § Negative consequences.
+ * Post-publish delete fires `SCORE_DELETE_AFTER_PUBLISH` (Critical tier,
+ * reason ≥ 5). Publish itself fires `SCORE_ITEM_PUBLISHED` (Important tier)
+ * after the `Σ === 10000` gate passes.
  */
 
 export type CreateScoreItemState = {
@@ -68,6 +72,41 @@ export async function createScoreItemAction(
   }
 
   revalidatePath(`/teacher/courses/${courseId}/scores`);
+  return { ok: true };
+}
+
+export type PublishScoreItemState = {
+  fieldErrors?: Record<string, string>;
+  error?: string;
+  ok?: boolean;
+};
+
+export async function publishScoreItemAction(
+  _prev: PublishScoreItemState,
+  formData: FormData
+): Promise<PublishScoreItemState> {
+  const session = await requireRole(["TEACHER"]);
+  const meta = await getRequestMeta();
+
+  const courseId = String(formData.get("courseId") ?? "");
+  const scoreItemId = String(formData.get("scoreItemId") ?? "");
+  if (!courseId) return { error: "missing_course_id" };
+  if (!scoreItemId) return { error: "missing_score_item_id" };
+
+  try {
+    await publishScoreItem(scoreItemId, {
+      actorUserId: session.user.id,
+      ipAddress: meta.ipAddress ?? undefined,
+      userAgent: meta.userAgent ?? undefined,
+    });
+  } catch (err) {
+    if (err instanceof ValidationError) return { fieldErrors: err.errors };
+    if (err instanceof HttpError) return { error: err.message };
+    throw err;
+  }
+
+  revalidatePath(`/teacher/courses/${courseId}/scores`);
+  revalidatePath(`/teacher/courses/${courseId}/scores/${scoreItemId}`);
   return { ok: true };
 }
 

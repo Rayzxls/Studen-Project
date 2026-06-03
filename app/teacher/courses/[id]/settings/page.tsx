@@ -5,6 +5,7 @@ import { listTimetableSlots } from "@/lib/attendance/timetable";
 import { CourseShell } from "@/components/course/course-shell";
 import { ClassCodeControls } from "@/components/course/class-code-controls";
 import { TimetableEditor } from "@/components/attendance/timetable-editor";
+import { GradeThresholdsCard } from "@/components/scoring/grade-thresholds-card";
 import { teacherCourseTabs } from "../_tabs";
 
 // Auth-gated DB-fetching page — skip static prerender.
@@ -44,6 +45,7 @@ export default async function CourseSettingsPage({ params }: PageProps) {
           codeExpiresAt={course.codeExpiresAt}
         />
         <TimetableEditor courseId={id} slots={slots} />
+        <GradeThresholdsCard />
       </div>
     </CourseShell>
   );
