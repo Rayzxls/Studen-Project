@@ -12,5 +12,6 @@ import type { CourseTab } from "@/components/course/tab-nav";
 export const teacherCourseTabs = (courseId: string): CourseTab[] => [
   { label: "ภาพรวม", href: `/teacher/courses/${courseId}` },
   { label: "สมาชิก", href: `/teacher/courses/${courseId}/members` },
+  { label: "เช็คชื่อ", href: `/teacher/courses/${courseId}/attendance` },
   { label: "ตั้งค่า", href: `/teacher/courses/${courseId}/settings` },
 ];
