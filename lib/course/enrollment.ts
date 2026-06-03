@@ -324,6 +324,42 @@ export async function getActiveMembers(courseOfferingId: string) {
   });
 }
 
+/**
+ * Active members of a CourseOffering — STUDENT-SAFE projection (P3-6).
+ *
+ * Counter to getActiveMembers (teacher-side), this returns ONLY the fields
+ * a student is allowed to see per CONTEXT.md § L1 Visibility:
+ *   ✅ firstName, lastName (display only)
+ *   ❌ studentId (PII — login identifier)
+ *   ❌ enrolledAt (timestamp not part of L1)
+ *   ❌ userId (never exposed cross-student)
+ *
+ * The projection is at the DB SELECT layer rather than a caller-side `map`
+ * — the data physically does not leave Prisma, so a future refactor that
+ * forwards the result to a client boundary cannot leak PII by accident.
+ *
+ * Enrollment.id is intentionally kept as the React list key — it's a CUID
+ * with no semantic content beyond row identity.
+ */
+export async function getActiveMembersForStudent(courseOfferingId: string) {
+  return db.enrollment.findMany({
+    where: { courseOfferingId, removedAt: null },
+    orderBy: [
+      { student: { lastName: "asc" } },
+      { student: { firstName: "asc" } },
+    ],
+    select: {
+      id: true,
+      student: {
+        select: {
+          firstName: true,
+          lastName: true,
+        },
+      },
+    },
+  });
+}
+
 /** List a student's enrollments (active only — soft-deleted hidden). */
 export async function listStudentCourses(studentUserId: string) {
   return db.enrollment.findMany({
