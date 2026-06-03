@@ -37,8 +37,19 @@ export function RemoveMemberDialog({
   // (b) on success the row vanishes from the table after revalidation,
   //     so this dialog instance will never re-open. Per-row state isolation
   //     means each Members table row has its own component + own state.
+  //
+  // The setTimeout + removeAttribute belt-and-braces is needed because
+  // calling close() synchronously inside the same commit cycle as the
+  // Server Action result sometimes doesn't take under Next 16 + React 19
+  // + Turbopack — the dialog stays visible despite the action succeeding.
   useEffect(() => {
-    if (state.ok) dialogRef.current?.close();
+    if (!state.ok) return;
+    setTimeout(() => {
+      const d = dialogRef.current;
+      if (!d) return;
+      d.close();
+      d.removeAttribute("open");
+    }, 0);
   }, [state.ok]);
 
   const open = () => dialogRef.current?.showModal();
@@ -64,7 +75,7 @@ export function RemoveMemberDialog({
 
       <dialog
         ref={dialogRef}
-        className="w-full max-w-md rounded-2xl bg-white p-0 shadow-lift backdrop:bg-black/40 backdrop:backdrop-blur-sm"
+        className="fixed inset-0 m-auto h-fit w-[calc(100%-2rem)] max-w-md rounded-2xl bg-white p-0 shadow-lift backdrop:bg-black/40 backdrop:backdrop-blur-sm"
         onClick={(e) => {
           // close on backdrop click
           if (e.target === dialogRef.current) close();

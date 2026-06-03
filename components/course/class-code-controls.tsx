@@ -72,7 +72,17 @@ function CurrentCodeSection({
   const [state, formAction] = useActionState(boundAction, INITIAL);
 
   useEffect(() => {
-    if (state.ok) dialogRef.current?.close();
+    if (!state.ok) return;
+    // Under Next 16 + React 19 + Turbopack, calling close() synchronously
+    // inside the same commit cycle as the Server Action result sometimes
+    // doesn't take. Defer one tick + also remove the [open] attribute
+    // as belt-and-braces.
+    setTimeout(() => {
+      const d = dialogRef.current;
+      if (!d) return;
+      d.close();
+      d.removeAttribute("open");
+    }, 0);
   }, [state.ok]);
 
   return (
@@ -113,7 +123,7 @@ function CurrentCodeSection({
 
       <dialog
         ref={dialogRef}
-        className="w-full max-w-md rounded-2xl bg-white p-0 shadow-lift backdrop:bg-black/40 backdrop:backdrop-blur-sm"
+        className="fixed inset-0 m-auto h-fit w-[calc(100%-2rem)] max-w-md rounded-2xl bg-white p-0 shadow-lift backdrop:bg-black/40 backdrop:backdrop-blur-sm"
         onClick={(e) => {
           if (e.target === dialogRef.current) dialogRef.current.close();
         }}
