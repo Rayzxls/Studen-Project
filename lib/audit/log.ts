@@ -33,10 +33,8 @@ export type AuditEvent =
   | "COURSE_MEMBER_JOINED"
   | "COURSE_MEMBER_REMOVED"
   | "COURSE_MEMBER_RESTORED_BY_REJOIN"
-  // Scoring (Phase 5)
-  | "SCORE_ITEM_CREATE"
-  | "SCORE_ITEM_DELETE"
-  | "SCORE_ITEM_PUBLISH"
+  // Scoring (Phase 5) — past-tense per Pattern 10; pre-publish CUD not audited (Verbose tier)
+  | "SCORE_ITEM_PUBLISHED"
   | "SCORE_EDIT_AFTER_PUBLISH"
   | "SCORE_DELETE_AFTER_PUBLISH"
   // Attendance (Phase 4)
