@@ -868,6 +868,186 @@ async function testPhase4Attendance() {
   await db.session.delete({ where: { id: session.id } });
 }
 
+async function testPhase5Scoring() {
+  console.log("\n📊 Phase 5: scoring + Term GPA + transcript");
+
+  const demoCode = "MATH4A-DEMO1";
+  const course = await db.courseOffering.findUnique({
+    where: { classCode: demoCode },
+    select: { id: true, teacherId: true, termId: true },
+  });
+  if (!course) {
+    fail(
+      "Phase 5 setup",
+      `Demo course "${demoCode}" missing — run pnpm db:seed`
+    );
+    return;
+  }
+
+  // ── Teacher: Scores tab + per-item grid ─────────────────────────
+  const teacherCookie = await signin("teacher@studennnn.local", "Teacher1234!");
+  if (!teacherCookie) {
+    fail("Teacher login (Phase 5)", "no cookie");
+    return;
+  }
+
+  const tScores = await getWithCookie(
+    `/teacher/courses/${course.id}/scores`,
+    teacherCookie
+  );
+  await expect(
+    "Teacher GET /scores → 200",
+    tScores.status === 200,
+    `got ${tScores.status}`
+  );
+  const tScoresBody = await tScores.text();
+  await expect(
+    "Teacher Scores shows '+ เพิ่มรายการคะแนน' CTA",
+    tScoresBody.includes("เพิ่มรายการคะแนน"),
+    "create CTA missing"
+  );
+  await expect(
+    "Teacher Scores shows Σ weight pill",
+    tScoresBody.includes("Σ น้ำหนัก"),
+    "weight sum pill missing"
+  );
+  await expect(
+    "Teacher Scores tab is reachable from course shell",
+    tScoresBody.includes(`/teacher/courses/${course.id}`),
+    "course shell missing"
+  );
+
+  // Provision a one-off ScoreItem so the per-item grid renders.
+  // Uses a marker name so we can clean up at end.
+  const SMOKE_NAME = `__smoke_${Date.now().toString(36)}`;
+  const scoreItem = await db.scoreItem.create({
+    data: {
+      courseOfferingId: course.id,
+      name: SMOKE_NAME,
+      fullScore: 10,
+      weight: 10000,
+      position: 999,
+    },
+    select: { id: true },
+  });
+
+  const tGrid = await getWithCookie(
+    `/teacher/courses/${course.id}/scores/${scoreItem.id}`,
+    teacherCookie
+  );
+  await expect(
+    "Teacher GET /scores/[scoreItemId] → 200",
+    tGrid.status === 200,
+    `got ${tGrid.status}`
+  );
+  const tGridBody = await tGrid.text();
+  await expect(
+    "Teacher score grid shows 'ทุกคนคะแนนเต็ม' bulk action",
+    tGridBody.includes("ทุกคนคะแนนเต็ม"),
+    "bulk-fill CTA missing"
+  );
+  await expect(
+    "Teacher score grid shows 'บันทึกคะแนน' submit",
+    tGridBody.includes("บันทึกคะแนน"),
+    "submit CTA missing"
+  );
+
+  // Settings page should now have the read-only thresholds card.
+  const tSettings = await getWithCookie(
+    `/teacher/courses/${course.id}/settings`,
+    teacherCookie
+  );
+  await expect(
+    "Teacher Settings shows 'เกณฑ์เกรด' read-only card (P5-4c)",
+    (await tSettings.text()).includes("เกณฑ์เกรด"),
+    "GradeThresholdsCard missing from Settings"
+  );
+
+  // ── Student: Scores tab + /student/terms ────────────────────────
+  const studentCookie = await signin("60001", "Student1234");
+  if (!studentCookie) {
+    fail("Student login (Phase 5)", "no cookie");
+    return;
+  }
+
+  const sScores = await getWithCookie(
+    `/student/courses/${course.id}/scores`,
+    studentCookie
+  );
+  await expect(
+    "Student GET own /scores → 200",
+    sScores.status === 200,
+    `got ${sScores.status}`
+  );
+  const sScoresBody = await sScores.text();
+  await expect(
+    "Student Scores shows 'คะแนนรวม' KPI label",
+    sScoresBody.includes("คะแนนรวม"),
+    "KPI heading missing"
+  );
+
+  const sTerms = await getWithCookie(`/student/terms`, studentCookie);
+  await expect(
+    "Student GET /student/terms → 200",
+    sTerms.status === 200,
+    `got ${sTerms.status}`
+  );
+  const sTermsBody = await sTerms.text();
+  await expect(
+    "Student /terms shows 'GPA ภาคเรียน' headline",
+    sTermsBody.includes("GPA ภาคเรียน"),
+    "GPA headline missing"
+  );
+  await expect(
+    "Student /terms shows 'Print PDF' button",
+    sTermsBody.includes("Print PDF"),
+    "Print PDF CTA missing"
+  );
+
+  // ── L1: student blocked from teacher score routes ───────────────
+  const sToTeacherScores = await getWithCookie(
+    `/teacher/courses/${course.id}/scores`,
+    studentCookie
+  );
+  await expect(
+    "Student → /teacher/.../scores redirected (L1)",
+    sToTeacherScores.status === 307 || sToTeacherScores.status === 302,
+    `got ${sToTeacherScores.status}`
+  );
+  const sToTeacherGrid = await getWithCookie(
+    `/teacher/courses/${course.id}/scores/${scoreItem.id}`,
+    studentCookie
+  );
+  await expect(
+    "Student → /teacher/.../scores/[id] redirected (L1)",
+    sToTeacherGrid.status === 307 || sToTeacherGrid.status === 302,
+    `got ${sToTeacherGrid.status}`
+  );
+
+  // ── L1: non-enrolled student → own scores route redirected ──────
+  const otherCourse = await db.courseOffering.findFirst({
+    where: { id: { not: course.id } },
+    select: { id: true },
+  });
+  if (otherCourse) {
+    const sForeignScores = await getWithCookie(
+      `/student/courses/${otherCourse.id}/scores`,
+      studentCookie
+    );
+    await expect(
+      "Student → non-enrolled /student/.../scores redirected (L1)",
+      sForeignScores.status === 307 || sForeignScores.status === 302,
+      `got ${sForeignScores.status}`
+    );
+  } else {
+    pass("L1: non-enrolled scores check (skipped — only 1 course seeded)");
+  }
+
+  // Cleanup the smoke ScoreItem (and any entries it might have collected).
+  await db.scoreEntry.deleteMany({ where: { scoreItemId: scoreItem.id } });
+  await db.scoreItem.delete({ where: { id: scoreItem.id } });
+}
+
 async function testAuditLog() {
   console.log("\n📝 Audit log verification");
 
@@ -936,6 +1116,7 @@ async function main() {
   await testPhase2Join();
   await testPhase3CourseTabs();
   await testPhase4Attendance();
+  await testPhase5Scoring();
   await testAuditLog();
 
   console.log(`\n╭───────────────────────────────────╮`);
