@@ -696,6 +696,178 @@ async function testPhase3CourseTabs() {
   }
 }
 
+async function testPhase4Attendance() {
+  console.log("\n📅 Phase 4: attendance + timetable + L1");
+
+  const demoCode = "MATH4A-DEMO1";
+  const course = await db.courseOffering.findUnique({
+    where: { classCode: demoCode },
+    select: { id: true, teacherId: true },
+  });
+  if (!course) {
+    fail(
+      "Phase 4 setup",
+      `Demo course "${demoCode}" missing — run pnpm db:seed`
+    );
+    return;
+  }
+
+  // ── Teacher: attendance list + slot editor ──────────────────────
+  const teacherCookie = await signin("teacher@studennnn.local", "Teacher1234!");
+  if (!teacherCookie) {
+    fail("Teacher login (Phase 4)", "no cookie");
+    return;
+  }
+
+  const tAttn = await getWithCookie(
+    `/teacher/courses/${course.id}/attendance`,
+    teacherCookie
+  );
+  await expect(
+    "Teacher GET /attendance → 200",
+    tAttn.status === 200,
+    `got ${tAttn.status}`
+  );
+  const tAttnBody = await tAttn.text();
+  await expect(
+    "Teacher Attendance shows 'เปิดคาบ' CTA",
+    tAttnBody.includes("เปิดคาบ"),
+    "open-session CTA missing"
+  );
+  await expect(
+    "Teacher Attendance tab is reachable from course shell",
+    tAttnBody.includes(`/teacher/courses/${course.id}`),
+    "course shell missing"
+  );
+
+  const tSettings = await getWithCookie(
+    `/teacher/courses/${course.id}/settings`,
+    teacherCookie
+  );
+  await expect(
+    "Teacher Settings shows timetable editor",
+    (await tSettings.text()).includes("ตารางสอน"),
+    "TimetableEditor card missing from Settings"
+  );
+
+  // Provision a one-off Session for the student-side smoke tests.
+  // findOrCreate-style — if it exists, reuse. Avoids the back-edit window.
+  const scheduledStart = new Date(Date.now() - 5 * 60 * 1000); // 5 min ago
+  const scheduledEnd = new Date(Date.now() + 10 * 60 * 1000); // 10 min from now
+  const session = await db.session.upsert({
+    where: {
+      courseOfferingId_scheduledStart: {
+        courseOfferingId: course.id,
+        scheduledStart,
+      },
+    },
+    create: {
+      courseOfferingId: course.id,
+      scheduledStart,
+      scheduledEnd,
+      createdById: course.teacherId,
+    },
+    update: {},
+    select: { id: true },
+  });
+
+  const tGrid = await getWithCookie(
+    `/teacher/courses/${course.id}/attendance/${session.id}`,
+    teacherCookie
+  );
+  await expect(
+    "Teacher GET /attendance/[sessionId] → 200",
+    tGrid.status === 200,
+    `got ${tGrid.status}`
+  );
+  const tGridBody = await tGrid.text();
+  await expect(
+    "Teacher grid page shows cancel-session button",
+    tGridBody.includes("ยกเลิกคาบ"),
+    "cancel CTA missing"
+  );
+  await expect(
+    "Teacher grid page shows submit button",
+    tGridBody.includes("บันทึกการเช็คชื่อ"),
+    "submit button missing"
+  );
+
+  // ── Student: attendance L1 view ─────────────────────────────────
+  const studentCookie = await signin("60001", "Student1234");
+  if (!studentCookie) {
+    fail("Student login (Phase 4)", "no cookie");
+    return;
+  }
+
+  const sAttn = await getWithCookie(
+    `/student/courses/${course.id}/attendance`,
+    studentCookie
+  );
+  await expect(
+    "Student GET own /attendance → 200",
+    sAttn.status === 200,
+    `got ${sAttn.status}`
+  );
+  const sAttnBody = await sAttn.text();
+  await expect(
+    "Student attendance shows KPI 'อัตราการมาเรียน'",
+    sAttnBody.includes("อัตราการมาเรียน"),
+    "KPI heading missing"
+  );
+  await expect(
+    "Student attendance shows 4-status counts (มา/สาย/ลา/ขาด)",
+    sAttnBody.includes("มา") &&
+      sAttnBody.includes("สาย") &&
+      sAttnBody.includes("ลา") &&
+      sAttnBody.includes("ขาด"),
+    "status labels missing"
+  );
+
+  // ── L1: student cannot reach teacher attendance routes ──────────
+  const sToTeacherAttn = await getWithCookie(
+    `/teacher/courses/${course.id}/attendance`,
+    studentCookie
+  );
+  await expect(
+    "Student → /teacher/.../attendance redirected",
+    sToTeacherAttn.status === 307 || sToTeacherAttn.status === 302,
+    `got ${sToTeacherAttn.status}`
+  );
+
+  const sToTeacherGrid = await getWithCookie(
+    `/teacher/courses/${course.id}/attendance/${session.id}`,
+    studentCookie
+  );
+  await expect(
+    "Student → /teacher/.../attendance/[sessionId] redirected",
+    sToTeacherGrid.status === 307 || sToTeacherGrid.status === 302,
+    `got ${sToTeacherGrid.status}`
+  );
+
+  // ── L1: non-member student attendance page → redirect ───────────
+  const otherCourse = await db.courseOffering.findFirst({
+    where: { id: { not: course.id } },
+    select: { id: true },
+  });
+  if (otherCourse) {
+    const sForeignAttn = await getWithCookie(
+      `/student/courses/${otherCourse.id}/attendance`,
+      studentCookie
+    );
+    await expect(
+      "Student → non-enrolled /student/.../attendance redirected",
+      sForeignAttn.status === 307 || sForeignAttn.status === 302,
+      `got ${sForeignAttn.status}`
+    );
+  } else {
+    pass("L1: non-enrolled attendance check (skipped — only 1 course seeded)");
+  }
+
+  // Cleanup the smoke Session (and any orphan AttendanceRecord from prior runs).
+  await db.attendanceRecord.deleteMany({ where: { sessionId: session.id } });
+  await db.session.delete({ where: { id: session.id } });
+}
+
 async function testAuditLog() {
   console.log("\n📝 Audit log verification");
 
@@ -763,6 +935,7 @@ async function main() {
   await testForceResetRedirect();
   await testPhase2Join();
   await testPhase3CourseTabs();
+  await testPhase4Attendance();
   await testAuditLog();
 
   console.log(`\n╭───────────────────────────────────╮`);
