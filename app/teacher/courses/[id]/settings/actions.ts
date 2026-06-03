@@ -16,8 +16,6 @@ export type ClassCodeActionState = {
   ok?: boolean;
 };
 
-const EMPTY: ClassCodeActionState = {};
-
 function revalidateAll(courseId: string) {
   revalidatePath(`/teacher/courses/${courseId}`);
   revalidatePath(`/teacher/courses/${courseId}/members`);
@@ -116,6 +114,3 @@ export async function setClassCodeExpiryAction(
   revalidateAll(courseId);
   return { ok: true };
 }
-
-// Re-export for client component initial state usage
-export const initialClassCodeActionState = EMPTY;
