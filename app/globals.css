@@ -386,4 +386,27 @@
     box-shadow: none !important;
     padding: 0 !important;
   }
+
+  /* Phase 5 / P5-5c — Transcript print polish.
+     Tailwind print: variants in TermSummaryView do most of the work; these
+     rules cover anything the utility classes can't reach.
+
+     - Page-level: stop URL footers from cluttering the transcript.
+     - Tables: darker borders (slate-200 is too pale on paper) + slightly
+       larger font for the per-row values (the global 11px is fine for
+       data tables; transcript rows need 12px). */
+
+  /* Transcript headline letterspacing tightens up nicely on paper. */
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.02em !important;
+    page-break-after: avoid;
+  }
+
+  /* Hide native focus rings (inherited from inputs that survived the hide). */
+  *:focus,
+  *:focus-visible {
+    outline: none !important;
+  }
 }

@@ -202,6 +202,23 @@ export function TermSummaryView({
           </div>
         )}
       </div>
+
+      {/* Print-only footer — transcript identification stamp. Hidden on
+          screen via Tailwind `hidden print:block`. */}
+      <p className="hidden text-[10px] text-black/60 print:block">
+        พิมพ์เมื่อ{" "}
+        {new Intl.DateTimeFormat("th-TH-u-ca-buddhist", {
+          timeZone: "Asia/Bangkok",
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hourCycle: "h23",
+        }).format(new Date())}{" "}
+        น. · เอกสารอ้างอิง:{" "}
+        {`${studentIdNumber}/${selectedTerm.id.slice(-6).toUpperCase()}`}
+      </p>
     </div>
   );
 }
