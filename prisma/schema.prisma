@@ -39,12 +39,15 @@ model User {
   updatedAt      DateTime  @updatedAt
   deletedAt      DateTime? // soft delete
 
-  admin            Admin?
-  teacher          Teacher?
-  student          Student?
-  sessions         UserSession[]
-  auditLogsAsActor AuditLog[]    @relation("ActorLogs")
-  commentsAuthored Comment[]     @relation("CommentAuthor")
+  admin                 Admin?
+  teacher               Teacher?
+  student               Student?
+  sessions              UserSession[]
+  auditLogsAsActor      AuditLog[]     @relation("ActorLogs")
+  commentsAuthored      Comment[]      @relation("CommentAuthor")
+  notifications         Notification[] @relation("NotificationRecipient") // Phase 7
+  materialsPosted       Material[]     @relation("MaterialAuthor") // Phase 7
+  announcementsPosted   Announcement[] @relation("AnnouncementAuthor") // Phase 7
 
   @@index([role])
   @@index([deletedAt])
@@ -190,6 +193,8 @@ model CourseOffering {
   sessions       Session[]
   scoreItems     ScoreItem[]
   assignments    Assignment[]
+  materials      Material[] // Phase 7
+  announcements  Announcement[] // Phase 7
 
   @@index([classCode])
   @@index([teacherId])
@@ -561,4 +566,137 @@ model RateLimitBucket {
   updatedAt DateTime  @updatedAt
 
   @@index([resetAt])
+}
+
+// ═══════════════════════════════════════════════════════════
+// Notifications (Phase 7) — ADR-0022
+// Fan-out rows · in-tx delivery · snapshot payload · soft suppress.
+// Partial unique index on post-once kinds is applied via raw SQL
+// after `prisma db push` (Prisma 6 @@unique does not support WHERE).
+// See prisma/raw-sql/0001-notification-partial-unique.sql.
+// ═══════════════════════════════════════════════════════════
+
+enum NotificationKind {
+  // Broadcast — 1 row per active enrollment
+  SCORE_ITEM_PUBLISHED
+  ASSIGNMENT_POSTED
+  MATERIAL_POSTED
+  ANNOUNCEMENT_POSTED
+  // Targeted — 1 row per affected student
+  SCORE_ENTRY_EDITED // post-publish, value-change-only, 1 per student per batch
+  SUBMISSION_GRADED
+  SUBMISSION_RETURNED // merges with the private RETURN comment
+  // Thread — fan-out to thread participants ∪ entity author − self
+  COMMENT_REPLIED
+  // Teacher
+  CLASS_CODE_JOINED
+}
+
+enum NotifEntityType {
+  SCORE_ITEM
+  ASSIGNMENT
+  MATERIAL
+  ANNOUNCEMENT
+  SUBMISSION
+  COMMENT
+  ENROLLMENT // for CLASS_CODE_JOINED
+}
+
+model Notification {
+  id String @id @default(cuid())
+
+  recipientId String
+  recipient   User   @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  kind             NotificationKind
+  sourceEntityType NotifEntityType
+  sourceEntityId   String
+
+  // Snapshot of entity at fan-out time — bell renders without joining
+  // source tables (ADR-0022 § 4). Accepts drift on entity edits in
+  // exchange for immutability + dead-entity graceful fallback.
+  payloadJson Json
+
+  // Denormalized for suppress-batch lookup (ADR-0022 § 5) + future
+  // per-course filter. Nullable to leave room for system-wide
+  // notifications in Phase 8+ (Q7.2 grill lock).
+  courseOfferingId String?
+
+  readAt       DateTime?
+  suppressedAt DateTime?
+  createdAt    DateTime  @default(now())
+
+  // Bell list + badge count: WHERE recipientId = me AND
+  //   suppressedAt IS NULL ORDER BY createdAt DESC.
+  // The composite index (recipientId, readAt, createdAt DESC) covers
+  // both the unread-count and the chronological list query plans.
+  @@index([recipientId, readAt, createdAt(sort: Desc)])
+  // Suppress-batch on removeMember + entity soft-delete cascade.
+  @@index([recipientId, courseOfferingId, suppressedAt])
+}
+
+// ═══════════════════════════════════════════════════════════
+// Material + Announcement (Phase 7)
+// Teacher-posted content — no submission, no scored coupling.
+// Material = study resource ("ต้องอ่าน/ใช้"); Announcement = news/info.
+// Comments are CLASS_WIDE only (CONTEXT § Comment Scope + Q12.7 lock).
+// ═══════════════════════════════════════════════════════════
+
+model Material {
+  id String @id @default(cuid())
+
+  courseOfferingId String
+  course           CourseOffering @relation(fields: [courseOfferingId], references: [id], onDelete: Cascade)
+
+  // 1..200 chars (validated at lib/material/validation)
+  title String
+
+  // 0..5000 chars, markdown subset (rendered via react-markdown + rehype-sanitize)
+  body String
+
+  // Ordered pointer arrays — mirror SubmissionVersion.fileAttachmentIds
+  // pattern. FileAttachment rows live under owner SUBMISSION/ASSIGNMENT
+  // and ownerType=MATERIAL once wired through P7-3 + P7-7.
+  fileAttachmentIds Json @default("[]")
+  linkUrls          Json @default("[]") // ≤ 5 URLs per Q12.4 lock
+
+  postedById String
+  postedBy   User   @relation("MaterialAuthor", fields: [postedById], references: [id], onDelete: Restrict)
+  postedAt   DateTime @default(now())
+
+  // Soft-delete — `MATERIAL_DELETED` Important audit fires here per
+  // Q4.2 (edit free + Verbose, delete = Important).
+  deletedAt     DateTime?
+  deletedById   String?
+  deletedReason String? // ≥ 5 chars when present
+
+  @@index([courseOfferingId, postedAt(sort: Desc)])
+  @@index([deletedAt])
+}
+
+model Announcement {
+  id String @id @default(cuid())
+
+  courseOfferingId String
+  course           CourseOffering @relation(fields: [courseOfferingId], references: [id], onDelete: Cascade)
+
+  // 0..200 chars optional (Q4.1 = b — body required, title optional)
+  title String?
+
+  // 0..5000 chars, markdown subset
+  body String
+
+  fileAttachmentIds Json @default("[]")
+  linkUrls          Json @default("[]")
+
+  postedById String
+  postedBy   User   @relation("AnnouncementAuthor", fields: [postedById], references: [id], onDelete: Restrict)
+  postedAt   DateTime @default(now())
+
+  deletedAt     DateTime?
+  deletedById   String?
+  deletedReason String?
+
+  @@index([courseOfferingId, postedAt(sort: Desc)])
+  @@index([deletedAt])
 }
