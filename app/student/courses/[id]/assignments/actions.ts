@@ -18,8 +18,9 @@ import { HttpError, ValidationError } from "@/lib/errors";
  *     findOrCreateSession).
  *
  * `links` is a single textarea with newline-separated URLs — split + trim
- * + drop empties at the action edge. fileAttachmentIds stays empty until
- * the P6-3d deferred wiring + UI uploader lands.
+ * + drop empties at the action edge. `fileAttachmentIds` is a hidden
+ * JSON-encoded array of FileAttachment ids that the client uploaded via
+ * /api/storage/presign + /api/storage/commit before submitting (P7-0c).
  */
 
 export type SubmitVersionState = {
@@ -49,13 +50,31 @@ export async function submitVersionAction(
     .map((s) => s.trim())
     .filter((s) => s.length > 0);
 
+  const fileAttachmentIdsRaw = String(formData.get("fileAttachmentIds") ?? "");
+  let fileAttachmentIds: string[] = [];
+  if (fileAttachmentIdsRaw.trim().length > 0) {
+    try {
+      const parsed: unknown = JSON.parse(fileAttachmentIdsRaw);
+      if (
+        Array.isArray(parsed) &&
+        parsed.every((x): x is string => typeof x === "string")
+      ) {
+        fileAttachmentIds = parsed;
+      } else {
+        return { fieldErrors: { fileAttachmentIds: "ไฟล์แนบไม่ถูกต้อง" } };
+      }
+    } catch {
+      return { fieldErrors: { fileAttachmentIds: "ไฟล์แนบไม่ถูกต้อง" } };
+    }
+  }
+
   try {
     await submitVersion(
       {
         assignmentId,
         submissionId,
         textContent: textContent.trim() === "" ? undefined : textContent,
-        fileAttachmentIds: [],
+        fileAttachmentIds,
         links,
       },
       {

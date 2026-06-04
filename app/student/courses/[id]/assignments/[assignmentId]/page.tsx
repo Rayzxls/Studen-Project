@@ -236,6 +236,7 @@ export default async function StudentAssignmentDetailPage({
               assignmentId={assignmentId}
               submissionId={submission.id}
               allowText={assignment.allowText}
+              allowFile={assignment.allowFile}
               allowLink={assignment.allowLink}
               hasExistingCurrent={submission.versions.some((v) => v.isCurrent)}
             />

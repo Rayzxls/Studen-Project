@@ -20,11 +20,11 @@
  *                        reason gate inherited from lib/scoring). Ungraded
  *                        Assignment: marks Submission.status = GRADED.
  *
- * File handling for SubmissionVersion is deferred to P6-3 (lib/storage).
- * `fileAttachmentIds` is accepted in the Zod schema (so the wire shape
- * is stable from Phase 6 day one) but submitVersion rejects non-empty
- * arrays until the R2 commit endpoint exists. Text + links land cleanly
- * today.
+ * File handling (P7-0c): `fileAttachmentIds` is validated against the
+ * Submission scope — every referenced FileAttachment must be ownerType=
+ * SUBMISSION + ownerId = this Submission.id. Files attach to the parent
+ * Submission (P7-0a) and SubmissionVersion.fileAttachmentIds is the
+ * per-version pointer array (ADR-0021 § 1 chicken-and-egg resolved).
  */
 
 import type { Prisma, Submission, SubmissionVersion } from "@prisma/client";
@@ -123,22 +123,18 @@ async function findOrCreateSubmission(
  * Verbose tier — no audit. Same posture as Phase 5 pre-publish ScoreItem
  * CUD (ADR-0020 § 4 SUBMISSION_VERSION_CREATED not in enum).
  *
- * NOTE on files: `fileAttachmentIds` non-empty rejects with
- * `files_not_yet_supported` until P6-3 wires `lib/storage`. Text + links
- * land today.
+ * Files: `fileAttachmentIds` is the snapshot pointer array for this
+ * version — each id must reference a FileAttachment with ownerType=
+ * SUBMISSION and ownerId equal to the parent Submission.id. Verification
+ * happens inside the same $transaction as the version insert (Pattern 2
+ * extended) so a presign/commit race with a competing student cannot
+ * land a foreign file into the version.
  */
 export async function submitVersion(
   input: SubmitVersionInput & { assignmentId: string },
   ctx: ActorCtx
 ): Promise<SubmissionVersion> {
   const parsed = SubmitVersionSchema.parse(input);
-
-  if (parsed.fileAttachmentIds.length > 0) {
-    throw new ValidationError({
-      fileAttachmentIds:
-        "files_not_yet_supported — file upload pipeline lands in P6-3 (lib/storage)",
-    });
-  }
 
   const now = new Date();
 
@@ -202,6 +198,39 @@ export async function submitVersion(
       enrollment.id
     );
 
+    // File scope verification (P7-0c) — each referenced FileAttachment must
+    // be ownerType=SUBMISSION + ownerId=this Submission.id. Done inside the
+    // same tx as the version insert so a concurrent file move cannot slip
+    // a foreign attachment in. Files that no longer match (e.g. soft-
+    // deleted between commit and submit) are surfaced individually so the
+    // client can recover by re-uploading.
+    if (parsed.fileAttachmentIds.length > 0) {
+      if (!assignment.allowFile) {
+        throw new ValidationError({
+          fileAttachmentIds:
+            "channel_not_allowed — ครูปิดการแนบไฟล์สำหรับงานนี้",
+        });
+      }
+      const owned = await tx.fileAttachment.findMany({
+        where: {
+          id: { in: parsed.fileAttachmentIds },
+          ownerType: "SUBMISSION",
+          ownerId: submission.id,
+          deletedAt: null,
+        },
+        select: { id: true },
+      });
+      const ownedSet = new Set(owned.map((r) => r.id));
+      const missing = parsed.fileAttachmentIds.filter(
+        (id) => !ownedSet.has(id)
+      );
+      if (missing.length > 0) {
+        throw new ValidationError({
+          fileAttachmentIds: `file_not_owned_by_submission — ${missing.join(",")}`,
+        });
+      }
+    }
+
     // Find the latest version number on this Submission.
     const latest = await tx.submissionVersion.findFirst({
       where: { submissionId: submission.id },
@@ -226,6 +255,7 @@ export async function submitVersion(
         versionNumber: nextVersionNumber,
         textContent: parsed.textContent ?? null,
         links: parsed.links as Prisma.InputJsonValue,
+        fileAttachmentIds: parsed.fileAttachmentIds as Prisma.InputJsonValue,
         submittedAt: now,
         isLate: newIsLate,
         isCurrent: true,
