@@ -33,6 +33,7 @@ import type { CommentOwnerType, Role } from "@prisma/client";
 import { db } from "@/lib/db/client";
 import { audit } from "@/lib/audit/log";
 import { Conflict, Forbidden, NotFound, ValidationError } from "@/lib/errors";
+import { clipExcerpt, fanOutTargeted, fanOutThread } from "@/lib/notification";
 import { COMMENT_EDIT_WINDOW_MS, TX_OPTS } from "./constants";
 import {
   CreateCommentSchema,
@@ -194,16 +195,99 @@ export async function createComment(
     }
   }
 
-  const created = await db.comment.create({
-    data: {
-      ownerType: parsed.ownerType,
-      ownerId: parsed.ownerId,
-      scope: parsed.scope,
-      authorId: ctx.actorUserId,
-      body: parsed.body,
-    },
-    select: { id: true },
-  });
+  // P7-2 — wrap in tx so the comment insert + COMMENT_REPLIED fan-out
+  // either commit together or roll back together (Pattern 2 extended).
+  const created = await db.$transaction(async (tx) => {
+    const row = await tx.comment.create({
+      data: {
+        ownerType: parsed.ownerType,
+        ownerId: parsed.ownerId,
+        scope: parsed.scope,
+        authorId: ctx.actorUserId,
+        body: parsed.body,
+      },
+      select: { id: true },
+    });
+
+    // Resolve author name + course name for the snapshot payload.
+    const author = await tx.user.findUniqueOrThrow({
+      where: { id: ctx.actorUserId },
+      select: {
+        teacher: { select: { firstName: true, lastName: true } },
+        student: { select: { firstName: true, lastName: true } },
+        admin: { select: { firstName: true, lastName: true } },
+      },
+    });
+    const commenterName = author.teacher
+      ? `${author.teacher.firstName} ${author.teacher.lastName}`
+      : author.student
+        ? `${author.student.firstName} ${author.student.lastName}`
+        : author.admin
+          ? `${author.admin.firstName} ${author.admin.lastName}`
+          : "ผู้ใช้";
+
+    const course = await tx.courseOffering.findUniqueOrThrow({
+      where: { id: owner.courseOfferingId },
+      select: { name: true },
+    });
+    const excerpt = clipExcerpt(parsed.body);
+
+    if (parsed.scope === "PRIVATE") {
+      // PRIVATE — the "other party" is the only recipient.
+      const otherPartyId =
+        ctx.actorUserId === teacherId
+          ? owner.studentOfSubmissionUserId!
+          : teacherId!;
+      // Resolve the Submission's parent Assignment title for the snapshot.
+      const sub = await tx.submission.findUniqueOrThrow({
+        where: { id: parsed.ownerId },
+        select: { assignment: { select: { title: true } } },
+      });
+      await fanOutTargeted(tx, {
+        kind: "COMMENT_REPLIED",
+        sourceEntityType: "COMMENT",
+        sourceEntityId: row.id,
+        courseOfferingId: owner.courseOfferingId,
+        recipientId: otherPartyId,
+        payload: {
+          courseId: owner.courseOfferingId,
+          courseName: course.name,
+          entityKind: "SUBMISSION",
+          entityTitle: sub.assignment.title,
+          commenterName,
+          commentExcerpt: excerpt,
+        },
+      });
+    } else {
+      // CLASS_WIDE — thread participants ∪ entity author − self (Q5 = B).
+      // Currently only ASSIGNMENT owners reach this path (Material +
+      // Announcement plug in during P7-3). Entity author = Assignment.createdById.
+      const asg = await tx.assignment.findUniqueOrThrow({
+        where: { id: parsed.ownerId },
+        select: { title: true, createdById: true },
+      });
+      await fanOutThread(tx, {
+        kind: "COMMENT_REPLIED",
+        sourceEntityType: "COMMENT",
+        sourceEntityId: row.id,
+        courseOfferingId: owner.courseOfferingId,
+        entityOwnerType: "ASSIGNMENT",
+        entityOwnerId: parsed.ownerId,
+        entityAuthorId: asg.createdById,
+        selfId: ctx.actorUserId,
+        payload: {
+          courseId: owner.courseOfferingId,
+          courseName: course.name,
+          entityKind: "ASSIGNMENT",
+          entityTitle: asg.title,
+          commenterName,
+          commentExcerpt: excerpt,
+        },
+      });
+    }
+
+    return row;
+  }, TX_OPTS);
   return created;
 }
 

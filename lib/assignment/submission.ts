@@ -31,6 +31,7 @@ import type { Prisma, Submission, SubmissionVersion } from "@prisma/client";
 import { db } from "@/lib/db/client";
 import { audit } from "@/lib/audit/log";
 import { Conflict, Forbidden, NotFound, ValidationError } from "@/lib/errors";
+import { clipExcerpt, fanOutTargeted } from "@/lib/notification";
 import { REASON_MIN, TX_OPTS } from "./constants";
 import {
   ReturnSubmissionSchema,
@@ -359,6 +360,40 @@ export async function returnSubmission(
       },
       tx
     );
+
+    // P7-2 fan-out — SUBMISSION_RETURNED to the student. Merges with the
+    // private RETURN comment per Q5.2 — no COMMENT_REPLIED fires here
+    // (the comment body lands as commentExcerpt in this payload).
+    const enriched = await tx.submission.findUniqueOrThrow({
+      where: { id: submission.id },
+      select: {
+        enrollment: { select: { studentId: true } },
+        assignment: {
+          select: {
+            title: true,
+            course: { select: { id: true, name: true } },
+          },
+        },
+      },
+    });
+    const teacher = await tx.teacher.findUniqueOrThrow({
+      where: { userId: ctx.actorUserId },
+      select: { firstName: true, lastName: true },
+    });
+    await fanOutTargeted(tx, {
+      kind: "SUBMISSION_RETURNED",
+      sourceEntityType: "SUBMISSION",
+      sourceEntityId: submission.id,
+      courseOfferingId: enriched.assignment.course.id,
+      recipientId: enriched.enrollment.studentId,
+      payload: {
+        courseId: enriched.assignment.course.id,
+        courseName: enriched.assignment.course.name,
+        assignmentTitle: enriched.assignment.title,
+        teacherName: `${teacher.firstName} ${teacher.lastName}`,
+        commentExcerpt: clipExcerpt(parsed.comment),
+      },
+    });
   }, TX_OPTS);
 }
 
@@ -515,6 +550,40 @@ export async function gradeSubmission(
       await tx.submission.update({
         where: { id: submission.id },
         data: { status: "GRADED" },
+      });
+
+      // P7-2 fan-out — SUBMISSION_GRADED to the student. Only fires on
+      // the explicit "I'm done" transition (markGraded=true), not on
+      // every ScoreEntry edit — those have their own SCORE_ENTRY_EDITED
+      // notification path on published items.
+      const enriched = await tx.submission.findUniqueOrThrow({
+        where: { id: submission.id },
+        select: {
+          enrollment: { select: { studentId: true } },
+          assignment: {
+            select: {
+              title: true,
+              course: { select: { id: true, name: true } },
+            },
+          },
+        },
+      });
+      const grader = await tx.teacher.findUniqueOrThrow({
+        where: { userId: ctx.actorUserId },
+        select: { firstName: true, lastName: true },
+      });
+      await fanOutTargeted(tx, {
+        kind: "SUBMISSION_GRADED",
+        sourceEntityType: "SUBMISSION",
+        sourceEntityId: submission.id,
+        courseOfferingId: enriched.assignment.course.id,
+        recipientId: enriched.enrollment.studentId,
+        payload: {
+          courseId: enriched.assignment.course.id,
+          courseName: enriched.assignment.course.name,
+          assignmentTitle: enriched.assignment.title,
+          graderName: `${grader.firstName} ${grader.lastName}`,
+        },
       });
     }
   }, TX_OPTS);

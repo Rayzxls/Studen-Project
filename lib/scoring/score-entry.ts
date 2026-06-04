@@ -13,6 +13,7 @@ import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db/client";
 import { audit } from "@/lib/audit/log";
 import { Conflict, Forbidden, NotFound, ValidationError } from "@/lib/errors";
+import { fanOutTargetedMany } from "@/lib/notification";
 import { NOTE_MAX, REASON_MAX, REASON_MIN, TX_OPTS } from "./constants";
 
 export interface ScoreEntryInput {
@@ -249,6 +250,33 @@ export async function bulkUpsertScoreEntries(params: {
         },
         tx
       );
+
+      // P7-2 fan-out — SCORE_ENTRY_EDITED to each affected student
+      // (Q6 lock — 1 row per student per batch, value-change-only).
+      const affectedEnrollmentIds = changes.map((c) => c.enrollmentId);
+      const affectedStudents = await tx.enrollment.findMany({
+        where: { id: { in: affectedEnrollmentIds } },
+        select: { studentId: true },
+      });
+      const item = await tx.scoreItem.findUniqueOrThrow({
+        where: { id: scoreItem.id },
+        select: {
+          name: true,
+          course: { select: { id: true, name: true } },
+        },
+      });
+      await fanOutTargetedMany(tx, {
+        kind: "SCORE_ENTRY_EDITED",
+        sourceEntityType: "SCORE_ITEM",
+        sourceEntityId: scoreItem.id,
+        courseOfferingId: scoreItem.courseOfferingId,
+        recipientIds: affectedStudents.map((s) => s.studentId),
+        payload: {
+          courseId: item.course.id,
+          courseName: item.course.name,
+          itemName: item.name,
+        },
+      });
     }
 
     return { upserted: params.items.length, audited: triggersAudit };

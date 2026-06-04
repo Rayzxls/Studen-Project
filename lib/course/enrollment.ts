@@ -2,6 +2,11 @@ import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db/client";
 import { audit } from "@/lib/audit/log";
 import { Conflict, Forbidden, NotFound, ValidationError } from "@/lib/errors";
+import {
+  fanOutTargeted,
+  suppressNotificationsForRemovedMember,
+  unsuppressNotificationsOnRestore,
+} from "@/lib/notification";
 import { isValidClassCodeFormat, normalizeClassCode } from "./class-code";
 
 const REASON_MIN = 5;
@@ -139,6 +144,29 @@ export async function enrollByClassCode(params: {
         },
         tx
       );
+
+      // P7-2 fan-out — notify the teacher who owns the course.
+      const studentProfile = await tx.student.findUniqueOrThrow({
+        where: { userId: params.studentUserId },
+        select: { firstName: true, lastName: true },
+      });
+      const teacherUser = await tx.courseOffering.findUniqueOrThrow({
+        where: { id: course.id },
+        select: { teacherId: true },
+      });
+      await fanOutTargeted(tx, {
+        kind: "CLASS_CODE_JOINED",
+        sourceEntityType: "ENROLLMENT",
+        sourceEntityId: created.id,
+        courseOfferingId: course.id,
+        recipientId: teacherUser.teacherId,
+        payload: {
+          courseId: course.id,
+          courseName: course.name,
+          studentName: `${studentProfile.firstName} ${studentProfile.lastName}`,
+          classCode: code,
+        },
+      });
     }, TX_OPTS);
   } catch (err) {
     // Race: another tx created the same (studentId, courseOfferingId) row
@@ -211,6 +239,13 @@ async function restoreByRejoin(params: {
     },
     params.tx
   );
+
+  // P7-2 — un-suppress notifications scoped to this (student × course)
+  // pair so the bell history restores along with the enrollment.
+  await unsuppressNotificationsOnRestore(params.tx, {
+    recipientId: params.studentUserId,
+    courseOfferingId: params.courseOfferingId,
+  });
 }
 
 /**
@@ -300,6 +335,14 @@ export async function removeMember(params: {
       },
       tx
     );
+
+    // P7-2 — suppress this student's notifications scoped to the course.
+    // ADR-0022 § 5: bell history persists in DB (trace) but hides from
+    // the bell. Restore-by-rejoin un-suppresses inside the rejoin tx.
+    await suppressNotificationsForRemovedMember(tx, {
+      recipientId: enrollment.studentId,
+      courseOfferingId: enrollment.courseOfferingId,
+    });
   }, TX_OPTS);
 }
 

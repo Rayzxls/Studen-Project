@@ -14,6 +14,11 @@ import { db } from "@/lib/db/client";
 import { audit } from "@/lib/audit/log";
 import { Conflict, Forbidden, NotFound, ValidationError } from "@/lib/errors";
 import {
+  fanOutBroadcast,
+  fanOutTargetedMany,
+  suppressNotificationsForDeletedEntity,
+} from "@/lib/notification";
+import {
   NAME_MAX,
   REASON_MAX,
   REASON_MIN,
@@ -359,6 +364,26 @@ export async function publishScoreItem(
       tx
     );
 
+    // P7-2 fan-out — broadcast to active enrollment (ADR-0022 § 1 + § 8
+    // snapshot-at-publish-time semantics).
+    const course = await tx.courseOffering.findUniqueOrThrow({
+      where: { id: current.courseOfferingId },
+      select: { name: true },
+    });
+    await fanOutBroadcast(tx, {
+      kind: "SCORE_ITEM_PUBLISHED",
+      sourceEntityType: "SCORE_ITEM",
+      sourceEntityId: scoreItemId,
+      courseOfferingId: current.courseOfferingId,
+      payload: {
+        courseId: current.courseOfferingId,
+        courseName: course.name,
+        itemName: current.name,
+        publishedAt:
+          updated.publishedAt?.toISOString() ?? new Date().toISOString(),
+      },
+    });
+
     return updated;
   }, TX_OPTS);
 }
@@ -436,6 +461,14 @@ export async function deleteScoreItem(
         tx
       );
     }
+
+    // P7-2 cascade — suppress notifications that reference this ScoreItem
+    // (kind SCORE_ITEM_PUBLISHED + SCORE_ENTRY_EDITED both ref SCORE_ITEM).
+    // ADR-0022 § 5 + Q13.3 lock.
+    await suppressNotificationsForDeletedEntity(tx, {
+      sourceEntityType: "SCORE_ITEM",
+      sourceEntityId: scoreItemId,
+    });
   }, TX_OPTS);
 }
 

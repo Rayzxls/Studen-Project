@@ -16,6 +16,7 @@
 import type { Assignment, Prisma } from "@prisma/client";
 import { db } from "@/lib/db/client";
 import { Conflict, Forbidden, NotFound, ValidationError } from "@/lib/errors";
+import { fanOutBroadcast } from "@/lib/notification";
 import { TX_OPTS } from "./constants";
 import {
   CreateAssignmentSchema,
@@ -84,6 +85,7 @@ export async function createAssignment(
       },
     });
 
+    let result: Assignment = assignment;
     if (parsed.isScored) {
       // ADR-0019 § 1 — atomic coupling.
       const scoreItem = await tx.scoreItem.create({
@@ -95,13 +97,31 @@ export async function createAssignment(
           source: "ASSIGNMENT_LINKED",
         },
       });
-      return tx.assignment.update({
+      result = await tx.assignment.update({
         where: { id: assignment.id },
         data: { scoreItemId: scoreItem.id },
       });
     }
 
-    return assignment;
+    // P7-2 fan-out — ASSIGNMENT_POSTED broadcast (ADR-0022 § 1).
+    const courseRow = await tx.courseOffering.findUniqueOrThrow({
+      where: { id: parsed.courseOfferingId },
+      select: { name: true },
+    });
+    await fanOutBroadcast(tx, {
+      kind: "ASSIGNMENT_POSTED",
+      sourceEntityType: "ASSIGNMENT",
+      sourceEntityId: assignment.id,
+      courseOfferingId: parsed.courseOfferingId,
+      payload: {
+        courseId: parsed.courseOfferingId,
+        courseName: courseRow.name,
+        assignmentTitle: parsed.title,
+        dueAt: parsed.dueAt?.toISOString() ?? null,
+      },
+    });
+
+    return result;
   }, TX_OPTS);
 }
 
