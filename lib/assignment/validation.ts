@@ -79,7 +79,9 @@ export const CreateAssignmentSchema = z
     path: ["fullScore"],
   });
 
-export type CreateAssignmentInput = z.infer<typeof CreateAssignmentSchema>;
+// Use z.input so callers may omit fields with `.default()` — the Zod
+// parser still produces a fully-populated value at the lib layer.
+export type CreateAssignmentInput = z.input<typeof CreateAssignmentSchema>;
 
 /**
  * Update Assignment input. `isScored` toggle here triggers the 3-state
@@ -140,7 +142,14 @@ const LinkUrlSchema = z
  */
 export const SubmitVersionSchema = z
   .object({
-    submissionId: z.string().min(1),
+    /**
+     * Optional UI hint — lib/assignment.submitVersion calls
+     * findOrCreateSubmission(assignmentId, enrollmentId) internally so this
+     * value is never required for correctness. The Student detail page still
+     * sends it when a Submission already exists, so the UI can render the
+     * version history independently of this round-trip.
+     */
+    submissionId: z.string().optional(),
     textContent: z
       .string()
       .max(TEXT_CONTENT_MAX, "ข้อความยาวเกินไป")

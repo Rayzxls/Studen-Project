@@ -198,6 +198,49 @@ export async function setupTestCourse(): Promise<TestCourseContext> {
       await db.scoreEntry.deleteMany({
         where: { scoreItem: { courseOfferingId: course.id } },
       });
+      // Phase 6 — Comment is polymorphic; clear class-wide + private threads
+      // hosted under Assignment / Submission of this course before draining
+      // SubmissionVersion / Submission / Assignment.
+      const assignmentIds = (
+        await db.assignment.findMany({
+          where: { courseOfferingId: course.id },
+          select: { id: true },
+        })
+      ).map((a) => a.id);
+      const submissionIds = (
+        await db.submission.findMany({
+          where: { assignmentId: { in: assignmentIds } },
+          select: { id: true },
+        })
+      ).map((s) => s.id);
+      await db.comment.deleteMany({
+        where: {
+          OR: [
+            { ownerType: "ASSIGNMENT", ownerId: { in: assignmentIds } },
+            { ownerType: "SUBMISSION", ownerId: { in: submissionIds } },
+          ],
+        },
+      });
+      await db.fileAttachment.deleteMany({
+        where: {
+          OR: [
+            { ownerType: "ASSIGNMENT", ownerId: { in: assignmentIds } },
+            { ownerType: "SUBMISSION_VERSION", ownerId: { in: submissionIds } },
+          ],
+        },
+      });
+      await db.submissionVersion.deleteMany({
+        where: { submissionId: { in: submissionIds } },
+      });
+      await db.submission.deleteMany({
+        where: { id: { in: submissionIds } },
+      });
+      // Now safe to drop assignments + their linked ScoreItem (SetNull on
+      // Assignment.scoreItem; ScoreItem deletion handled by the scoring
+      // drain below.
+      await db.assignment.deleteMany({
+        where: { courseOfferingId: course.id },
+      });
       await db.scoreItem.deleteMany({
         where: { courseOfferingId: course.id },
       });
