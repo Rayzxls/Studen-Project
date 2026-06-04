@@ -1048,6 +1048,126 @@ async function testPhase5Scoring() {
   await db.scoreItem.delete({ where: { id: scoreItem.id } });
 }
 
+async function testPhase6Assignments() {
+  console.log("\n📝 Phase 6: assignments + submission + L1");
+
+  const demoCode = "MATH4A-DEMO1";
+  const course = await db.courseOffering.findUnique({
+    where: { classCode: demoCode },
+    select: { id: true, teacherId: true },
+  });
+  if (!course) {
+    fail(
+      "Phase 6 setup",
+      `Demo course "${demoCode}" missing — run pnpm db:seed`
+    );
+    return;
+  }
+
+  // ── Teacher: Assignments tab ────────────────────────────────────
+  const teacherCookie = await signin("teacher@studennnn.local", "Teacher1234!");
+  if (!teacherCookie) {
+    fail("Teacher login (Phase 6)", "no cookie");
+    return;
+  }
+
+  const tList = await getWithCookie(
+    `/teacher/courses/${course.id}/assignments`,
+    teacherCookie
+  );
+  await expect(
+    "Teacher GET /assignments → 200",
+    tList.status === 200,
+    `got ${tList.status}`
+  );
+  const tListBody = await tList.text();
+  await expect(
+    "Teacher Assignments tab shows 'เพิ่มการบ้าน' CTA",
+    tListBody.includes("เพิ่มการบ้าน"),
+    "create CTA missing"
+  );
+  await expect(
+    "Teacher Assignments tab is reachable from course shell",
+    tListBody.includes(`/teacher/courses/${course.id}`),
+    "course shell missing"
+  );
+  await expect(
+    "Teacher Assignments tab nav links to all 6 tabs",
+    ["ภาพรวม", "สมาชิก", "เช็คชื่อ", "คะแนน", "การบ้าน", "ตั้งค่า"].every(
+      (label) => tListBody.includes(label)
+    ),
+    "tab labels missing"
+  );
+
+  // ── Student: Assignments tab ────────────────────────────────────
+  const studentCookie = await signin("60001", "Student1234");
+  if (!studentCookie) {
+    fail("Student login (Phase 6)", "no cookie");
+    return;
+  }
+
+  const sList = await getWithCookie(
+    `/student/courses/${course.id}/assignments`,
+    studentCookie
+  );
+  await expect(
+    "Student GET /assignments → 200",
+    sList.status === 200,
+    `got ${sList.status}`
+  );
+  const sListBody = await sList.text();
+  await expect(
+    "Student Assignments tab header renders",
+    sListBody.includes("การบ้าน"),
+    "tab header missing"
+  );
+  await expect(
+    "Student Assignments tab does NOT expose '+ เพิ่มการบ้าน' CTA (L1 — read-only)",
+    !sListBody.includes("เพิ่มการบ้าน"),
+    "student incorrectly sees create CTA"
+  );
+  await expect(
+    "Student tabs include 'การบ้าน' link",
+    sListBody.includes(`/student/courses/${course.id}/assignments`),
+    "student การบ้าน link missing"
+  );
+
+  // ── L1 boundary — student cannot reach teacher detail page ──────
+  // Pick the first Assignment if any exists so we have an id to probe;
+  // otherwise skip the cross-role check.
+  const anyAssignment = await db.assignment.findFirst({
+    where: { courseOfferingId: course.id },
+    select: { id: true },
+  });
+  if (anyAssignment) {
+    const sToTeacher = await getWithCookie(
+      `/teacher/courses/${course.id}/assignments/${anyAssignment.id}`,
+      studentCookie
+    );
+    await expect(
+      "Student → teacher Assignment detail redirects / 4xx (L1 boundary)",
+      sToTeacher.status === 302 ||
+        sToTeacher.status === 307 ||
+        sToTeacher.status === 403 ||
+        sToTeacher.status === 404,
+      `expected redirect/403/404, got ${sToTeacher.status}`
+    );
+  }
+
+  // ── Auth boundary — anonymous cannot reach either tab ───────────
+  const anonList = await fetch(
+    `${BASE}/teacher/courses/${course.id}/assignments`,
+    {
+      redirect: "manual",
+    }
+  );
+  await expect(
+    "Anonymous → teacher Assignments tab redirects (auth boundary)",
+    anonList.status === 302 || anonList.status === 307,
+    `expected redirect, got ${anonList.status}`
+  );
+}
+
 async function testAuditLog() {
   console.log("\n📝 Audit log verification");
 
@@ -1117,6 +1237,7 @@ async function main() {
   await testPhase3CourseTabs();
   await testPhase4Attendance();
   await testPhase5Scoring();
+  await testPhase6Assignments();
   await testAuditLog();
 
   console.log(`\n╭───────────────────────────────────╮`);
