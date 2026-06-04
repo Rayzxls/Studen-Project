@@ -332,9 +332,72 @@ All commits since `c46b7c4` have passed 3/3 jobs (Lint/Typecheck, Unit Tests, Bu
 
 **Total verifications post-Phase 6:** 299 unit + 135 integration + ~98 smoke = **~532**.
 
-### Next session — Phase 7 entry point
+### Phase 7 progress — paused at P7-4 (2026-06-04 · `b64a786`)
 
-**Phase 7 — Feed + Notifications** (Task.md § Phase 7)
+| Sub-task | Status | SHA |
+|---|---|---|
+| Grill Q1–Q13 + ADR-0022 + ADR-0023 + CONTEXT.md updates | ✅ | `43df25f` · `fa11175` · `7eb65e7` |
+| P7-0a schema — SubmissionVersion.fileAttachmentIds + FileOwnerType rename | ✅ | `00de7ae` |
+| P7-0b storage routes — /api/storage/{presign,commit} + SUBMISSION dispatch | ✅ | `f419f38` |
+| P7-0c student submit-version-form file upload UI | ✅ | `099a116` |
+| P7-0d integration + smoke + auth-first reorder | ✅ | `4fc81b4` |
+| P7-1 schema — Notification + Material + Announcement + partial unique | ✅ | `9b4912c` |
+| P7-2 lib/notification + wire fan-out into 7 existing mutation sites | ✅ | `acfccbd` |
+| P7-3 lib/material + lib/announcement + CommentOwnerType plug-in | ✅ | `73a7684` |
+| P7-4 notification read routes + lib/feed/aggregator + scope query | ✅ | `b64a786` |
+| **P7-5 Bell UI navbar + dropdown** | ⏳ TODO | — |
+| P7-6 Dashboard User Feed section + Due Soon widget | ⏳ TODO | — |
+| P7-7 Teacher Material + Announcement UI | ⏳ TODO | — |
+| P7-8 Student Material + Announcement UI | ⏳ TODO | — |
+| P7-9 Integration tests (broader fan-out coverage) | ⏳ TODO | — |
+| P7-10 Smoke + HANDOFF close-out | ⏳ TODO | — |
+
+**Verifications post-P7-4:** 330 unit + 148 integration + ~103 smoke = ~581 checks
+
+**Lib layer essentially done.** All 9 NotificationKinds have wired event sources end-to-end:
+
+| Kind | Source mutation | Fan-out helper |
+|---|---|---|
+| `SCORE_ITEM_PUBLISHED` | `publishScoreItem` | broadcast |
+| `SCORE_ENTRY_EDITED` | `bulkUpsertScoreEntries` (post-publish, value change) | targetedMany |
+| `ASSIGNMENT_POSTED` | `createAssignment` | broadcast |
+| `MATERIAL_POSTED` | `createMaterial` | broadcast |
+| `ANNOUNCEMENT_POSTED` | `createAnnouncement` | broadcast |
+| `SUBMISSION_GRADED` | `gradeSubmission` (markGraded=true) | targeted |
+| `SUBMISSION_RETURNED` | `returnSubmission` (merges with private comment) | targeted |
+| `COMMENT_REPLIED` | `createComment` (PRIVATE → targeted, CLASS_WIDE → thread) | targeted/thread |
+| `CLASS_CODE_JOINED` | `enrollByClassCode` | targeted |
+
+Suppress hooks:
+- `removeMember` → suppressNotificationsForRemovedMember (in-tx)
+- `restoreByRejoin` → unsuppressNotificationsOnRestore (in-tx)
+- `deleteScoreItem` / `softDeleteMaterial` / `softDeleteAnnouncement` → suppressNotificationsForDeletedEntity (in-tx)
+
+Read surface:
+- `lib/notification.listNotificationsForRecipient(cursor)` — bell dropdown query
+- `lib/notification.countUnreadNotifications` — badge count
+- `lib/notification.markNotificationRead` — click row
+- `lib/notification.markAllNotificationsRead` — "ทำเครื่องหมายว่าอ่านทั้งหมด"
+- `lib/feed.getUserFeed(session, cursor?)` — dashboard User Feed
+- `lib/feed.getCourseScopeForUser(session)` — single L1 boundary, reused by widget
+
+API routes (auth-first posture):
+- `POST /api/notification/[id]/read`
+- `POST /api/notification/read-all`
+- `POST /api/storage/presign` (P7-0b)
+- `POST /api/storage/commit` (P7-0b)
+
+**Next session resume point — P7-5:** Bell UI component in the navbar. Needs:
+- Server Component reading `listNotificationsForRecipient` + `countUnreadNotifications`
+- Client Component for the dropdown (Pattern 7 native `<dialog>` or popover) — click row fires `markNotificationRead` server action then navigates
+- Snapshot payloadJson → human-readable preview by kind (use the NotificationPayload discriminated union from lib/notification/types.ts)
+- "ทำเครื่องหมายว่าอ่านทั้งหมด" button calls `markAllNotificationsRead` action
+- No audit (Pattern 10 Verbose)
+- Mobile-first; navbar component lives somewhere shared (likely components/layout/)
+
+Phase 6 carryover (now historical):
+
+
 
 Schema to add:
 - `Notification` (recipientId, kind enum, payloadJson, readAt?, createdAt)
