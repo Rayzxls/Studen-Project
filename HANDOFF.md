@@ -3,7 +3,7 @@
 > เอกสารนี้ใช้สำหรับเริ่ม **session ใหม่** กับ AI assistant แล้วต่อยอดได้ทันที
 > อ่านไฟล์นี้ + `CLAUDE.md` + `CONTEXT.md` ก่อนเริ่มงาน
 
-อัพเดตล่าสุด: **2026-06-04** · 90+ commits · **Phase 0-6 ปิดครบ · พร้อมเริ่ม Phase 7 (Feed + Notifications)**
+อัพเดตล่าสุด: **2026-06-04** · 95+ commits · **Phase 0-6 ปิดครบ · Phase 7 ถึง P7-5 (Bell UI ในนำทาง)**
 
 ---
 
@@ -332,7 +332,7 @@ All commits since `c46b7c4` have passed 3/3 jobs (Lint/Typecheck, Unit Tests, Bu
 
 **Total verifications post-Phase 6:** 299 unit + 135 integration + ~98 smoke = **~532**.
 
-### Phase 7 progress — paused at P7-4 (2026-06-04 · `b64a786`)
+### Phase 7 progress — paused at P7-5 (2026-06-04 · `996532c`)
 
 | Sub-task | Status | SHA |
 |---|---|---|
@@ -345,14 +345,14 @@ All commits since `c46b7c4` have passed 3/3 jobs (Lint/Typecheck, Unit Tests, Bu
 | P7-2 lib/notification + wire fan-out into 7 existing mutation sites | ✅ | `acfccbd` |
 | P7-3 lib/material + lib/announcement + CommentOwnerType plug-in | ✅ | `73a7684` |
 | P7-4 notification read routes + lib/feed/aggregator + scope query | ✅ | `b64a786` |
-| **P7-5 Bell UI navbar + dropdown** | ⏳ TODO | — |
+| P7-5 Bell UI navbar + dropdown (lib helpers · bell components · shared TopNav · migrate 6 surfaces) | ✅ | `a2615ed` · `9d82121` · `996532c` |
 | P7-6 Dashboard User Feed section + Due Soon widget | ⏳ TODO | — |
 | P7-7 Teacher Material + Announcement UI | ⏳ TODO | — |
 | P7-8 Student Material + Announcement UI | ⏳ TODO | — |
 | P7-9 Integration tests (broader fan-out coverage) | ⏳ TODO | — |
 | P7-10 Smoke + HANDOFF close-out | ⏳ TODO | — |
 
-**Verifications post-P7-4:** 330 unit + 148 integration + ~103 smoke = ~581 checks
+**Verifications post-P7-5:** 372 unit (+42) + 148 integration + ~103 smoke (+5) = ~623 checks
 
 **Lib layer essentially done.** All 9 NotificationKinds have wired event sources end-to-end:
 
@@ -387,13 +387,57 @@ API routes (auth-first posture):
 - `POST /api/storage/presign` (P7-0b)
 - `POST /api/storage/commit` (P7-0b)
 
-**Next session resume point — P7-5:** Bell UI component in the navbar. Needs:
-- Server Component reading `listNotificationsForRecipient` + `countUnreadNotifications`
-- Client Component for the dropdown (Pattern 7 native `<dialog>` or popover) — click row fires `markNotificationRead` server action then navigates
-- Snapshot payloadJson → human-readable preview by kind (use the NotificationPayload discriminated union from lib/notification/types.ts)
-- "ทำเครื่องหมายว่าอ่านทั้งหมด" button calls `markAllNotificationsRead` action
-- No audit (Pattern 10 Verbose)
-- Mobile-first; navbar component lives somewhere shared (likely components/layout/)
+**P7-5 — what shipped (2026-06-04 · `996532c`)**
+
+Bell + shared TopNav are live across every role-facing surface. 15-question
+grill locked the design tree before code (Q1 surface = shared TopNav · Q2
+admin = no bell · Q3 = server-render eager · Q4 = HTML popover (not Pattern
+7 dialog) · Q5 = server-resolved href, fallback to course root for
+MATERIAL/ANNOUNCEMENT/SUBMISSION_*/COMMENT_REPLIED · Q6 = Server Action +
+redirect · Q7 = time DESC + opacity-60 read + black dot unread · Q8 =
+hybrid 7d relative/absolute · Q9 = per-kind lucide icons + Thai preview ·
+Q10 = illustrated empty + top-right mark-all conditional · Q11 = cap 20
+no load-more · Q12 = replace headers · Q13 = file structure middle-ground
+· Q14 = no audit · Q15 = stack TopNav above CourseShell's course bar).
+
+**New files (`a2615ed`):** `lib/notification/{navigation,preview,time-format}.ts`
+pure helpers; their 42 unit tests (330 → 372).
+
+**New files (`9d82121`):** `components/notification/{bell,bell-icon,relative-time,actions}.tsx`.
+Bell is a Server Component fetching count + 20-row list via P7-4 read
+surface, builds per-row href + preview server-side, renders an HTML
+`popover` panel (browser-native open/close — no JS state). Per-row form
+posts to `markReadAndNavigate` server action that marks read + redirects.
+
+**New files / migrations (`996532c`):** `components/layout/top-nav.tsx`
+shared Server Component (logo + bell + sign-out, `showBell` prop for
+admin = false, `showRoleBadge` prop for admin layout). Replaces inline
+headers on `app/admin/layout.tsx`, `app/dashboard/page.tsx`,
+`app/teacher/courses/page.tsx`, `app/teacher/courses/new/page.tsx`,
+`components/scoring/student-terms-shell.tsx`, and stacks above
+CourseShell's existing course-context bar (Q15). 13 CourseShell call
+sites updated to pass `session` (uses `guard.session` where applicable).
+
+**Drive-by:** P7-4 had a typecheck-only drift in
+`tests/integration/permissions/feed-aggregator.test.ts` `mkSession`
+helper (missing `mustResetPwd`); fixed forward in commit `a2615ed`.
+
+**Known follow-ups for P7-6+:**
+- Enrich `SubmissionGradedPayload` / `SubmissionReturnedPayload` /
+  `CommentRepliedPayload` with `assignmentId` / `entityOwnerId` at fan-out
+  time so the bell can deep-link to the assignment detail page (today
+  these fall back to the course's assignments list).
+- After P7-7 / P7-8 land Material + Announcement UI, the navigation
+  resolver's `MATERIAL_POSTED` / `ANNOUNCEMENT_POSTED` cases can switch
+  from course-root fallback to the entity detail URL.
+- Phase 5/6 teacher login + Phase 7 storage student login in
+  `scripts/smoke-test.ts` still cascade-fail on rate-limit lockout from
+  earlier sections. The new bell section preempts this with a
+  `db.rateLimitBucket.deleteMany({where:{id:{startsWith:"login:"}}})`
+  at its top; the same pattern would unbreak the other sections.
+
+**Next session resume point — P7-6:** Dashboard User Feed section +
+Due Soon widget.
 
 Phase 6 carryover (now historical):
 
