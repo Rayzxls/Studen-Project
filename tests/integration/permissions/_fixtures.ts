@@ -225,7 +225,7 @@ export async function setupTestCourse(): Promise<TestCourseContext> {
         where: {
           OR: [
             { ownerType: "ASSIGNMENT", ownerId: { in: assignmentIds } },
-            { ownerType: "SUBMISSION_VERSION", ownerId: { in: submissionIds } },
+            { ownerType: "SUBMISSION", ownerId: { in: submissionIds } },
           ],
         },
       });

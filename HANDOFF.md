@@ -351,7 +351,7 @@ Phase 7 recommended sub-task breakdown:
 - P7-1 schema (Notification + Material + Announcement) + the Phase-6-deferred SubmissionVersion.fileAttachmentIds column + FileOwnerType.SUBMISSION
 - P7-2 `lib/notification/*` PURE + DB-touching (event dispatch + delivery in-app)
 - P7-3 `lib/material/*` + `lib/announcement/*` (mirror lib/assignment shape)
-- P7-4 `/api/storage/presign` + `/api/storage/commit` route handlers + integration with lib/auth.canUploadTo for ASSIGNMENT + SUBMISSION_VERSION dispatch
+- P7-4 `/api/storage/presign` + `/api/storage/commit` route handlers + integration with lib/auth.canUploadTo for ASSIGNMENT + SUBMISSION dispatch
 - P7-5 `lib/feed/aggregator.ts` (CONTEXT § Feed Activity Types — query union over Assignment / Material / Announcement / Score Published / Comments)
 - P7-6 Notification bell UI (navbar component + badge count + recent list)
 - P7-7 Material + Announcement UI (teacher post + student read)
@@ -387,7 +387,7 @@ Schema to add:
 - `Submission` (Enrollment × Assignment — unique)
 - `SubmissionVersion` (version_number, text_content?, attachments[], links[], submitted_at, is_late, is_current)
 - `SubmissionStatus` enum: NOT_SUBMITTED · DRAFT · SUBMITTED · LATE_SUBMITTED · RETURNED · GRADED
-- `FileAttachment` (polymorphic — `owner_type` enum ASSIGNMENT/MATERIAL/ANNOUNCEMENT/SUBMISSION_VERSION/COMMENT, `owner_id`, r2_key, mime, size)
+- `FileAttachment` (polymorphic — `owner_type` enum ASSIGNMENT/MATERIAL/ANNOUNCEMENT/SUBMISSION/COMMENT, `owner_id`, r2_key, mime, size)
 - `Comment` (polymorphic scope — CLASS_WIDE on Assignment/Material/Announcement, PRIVATE on Submission)
 
 ScoreItem ↔ Assignment coupling (CLAUDE.md hard rule):

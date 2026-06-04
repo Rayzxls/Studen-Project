@@ -472,8 +472,9 @@ export const assert = {
    *
    * Phase 6 only supports `ownerType=ASSIGNMENT` (teacher attaching
    * worksheet to brief). Other ownerTypes throw
-   * `owner_type_not_supported_yet` — student SUBMISSION_VERSION upload
-   * lands when the schema decision in P6-3d's deferred note is made;
+   * `owner_type_not_supported_yet` — student SUBMISSION upload wires in
+   * P7-0b storage routes (files attach to parent Submission per
+   * ADR-0021 chicken-and-egg + ADR-0022 fileAttachmentIds pointer);
    * MATERIAL / ANNOUNCEMENT / COMMENT are Phase 7+.
    *
    * Returns Session — no row to share with the caller (the presign

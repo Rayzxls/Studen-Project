@@ -17,7 +17,7 @@ const SECRET = "test-secret-do-not-use-in-prod";
 const BASE_PAYLOAD: Omit<CommitTokenPayload, "exp"> = {
   stg: "staging/user-1/abc-123",
   uid: "user-1",
-  oTy: "SUBMISSION_VERSION",
+  oTy: "SUBMISSION",
   oId: "ver-1",
   dMt: "application/pdf",
   dSz: 1024,

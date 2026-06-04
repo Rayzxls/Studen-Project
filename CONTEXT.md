@@ -441,7 +441,7 @@ Edit เสรี (Verbose, ไม่ log) · soft-delete = audit `MATERIAL_DELE
 **Properties:**
 - `id`, `r2_key` (path ใน R2 bucket = `permanent/<owner_type>/<owner_id>/<uuid>.<verified-ext>` · key ไม่เคยรวม user filename · ดู ADR-0021)
 - `original_filename` (display only · ไม่ใช้ใน path), `mime_type` (verified ผ่าน magic-byte), `size_bytes` (≤ 20 MB)
-- `owner_type` (enum: ASSIGNMENT, MATERIAL, ANNOUNCEMENT, SUBMISSION_VERSION, COMMENT)
+- `owner_type` (enum: ASSIGNMENT, MATERIAL, ANNOUNCEMENT, SUBMISSION, COMMENT) — SUBMISSION attaches to parent Submission row; SubmissionVersion.fileAttachmentIds is the per-version pointer array (P7-0a / ADR-0022 sibling decision · ADR-0021 chicken-and-egg resolved)
 - `owner_id`, `uploaded_by`, `uploaded_at`
 
 **MIME allow-list (ADR-0021):** PDF · JPEG/PNG/WEBP/HEIC/HEIF · DOCX/XLSX/PPTX

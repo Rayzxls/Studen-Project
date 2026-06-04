@@ -408,7 +408,7 @@ describe("can.uploadToAssignment (Phase 6, P6-4 · ADR-0021 § 1 step 2)", () =>
     );
   });
 
-  it("STUDENT → false (Phase 6 only allows teacher upload to Assignment brief; student SUBMISSION_VERSION upload follows P6-3d deferred work)", () => {
+  it("STUDENT → false (Phase 6 only allows teacher upload to Assignment brief; student SUBMISSION upload wires in P7-0b storage routes)", () => {
     expect(can.uploadToAssignment(mkSession("STUDENT", "s1"), assignment)).toBe(
       false
     );

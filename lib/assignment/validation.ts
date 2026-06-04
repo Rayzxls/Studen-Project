@@ -245,7 +245,7 @@ export const FileOwnerTypeSchema = z.enum([
   "ASSIGNMENT",
   "MATERIAL",
   "ANNOUNCEMENT",
-  "SUBMISSION_VERSION",
+  "SUBMISSION",
   "COMMENT",
 ]);
 

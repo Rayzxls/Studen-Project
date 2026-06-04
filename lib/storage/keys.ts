@@ -67,7 +67,7 @@ export const FILE_OWNER_TYPES = [
   "ASSIGNMENT",
   "MATERIAL",
   "ANNOUNCEMENT",
-  "SUBMISSION_VERSION",
+  "SUBMISSION",
   "COMMENT",
 ] as const;
 

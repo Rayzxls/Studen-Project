@@ -243,8 +243,9 @@ export const can = {
    * `lib/storage/presign` defers this decision via a `canUpload` callback.
    * For Phase 6 only ASSIGNMENT ownerType fires — Teacher of the host
    * CourseOffering uploads worksheets to the Assignment brief. Student
-   * upload to SUBMISSION_VERSION lands when the chicken-and-egg schema
-   * decision is made (P6-3d deferred note).
+   * upload to SUBMISSION (P7-0a — files attach to parent Submission, see
+   * SubmissionVersion.fileAttachmentIds pointer array) is now wired in
+   * P7-0b storage routes.
    *
    * Pure — caller resolves the owner's host teacherId (Assignment.course.
    * teacherId) and passes it in. For DB-backed dispatch use

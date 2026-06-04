@@ -460,7 +460,7 @@ model FileAttachment {
   submissionVersion   SubmissionVersion? @relation(fields: [submissionVersionId], references: [id])
 }
 
-enum AttachmentOwner { ASSIGNMENT ANNOUNCEMENT MATERIAL SUBMISSION_VERSION }
+enum AttachmentOwner { ASSIGNMENT ANNOUNCEMENT MATERIAL SUBMISSION COMMENT }
 enum ScanStatus      { PENDING CLEAN INFECTED ERROR }
 
 // ───── Notification ─────

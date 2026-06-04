@@ -449,8 +449,9 @@ model SubmissionVersion {
   submission    Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
   versionNumber Int // 1, 2, 3, ...
 
-  textContent String? // markdown subset, ≤ 50000 chars
-  links       Json // string[] URLs, validated at API boundary (≤ 10 per version, each ≤ 2000 chars)
+  textContent       String? // markdown subset, ≤ 50000 chars
+  links             Json // string[] URLs, validated at API boundary (≤ 10 per version, each ≤ 2000 chars)
+  fileAttachmentIds Json    @default("[]") // string[] of FileAttachment.id under owner SUBMISSION (P7-0a) — ordered pointer array per version; files attach to parent Submission (chicken-and-egg per ADR-0021), pointer array per version snapshots which ones belong to this submit
 
   submittedAt DateTime @default(now())
   isLate      Boolean // immutable — computed at submit-time vs Assignment.dueAt
@@ -468,7 +469,7 @@ enum FileOwnerType {
   ASSIGNMENT // attached by teacher to the assignment brief
   MATERIAL // teacher post (Phase 7 — reserved)
   ANNOUNCEMENT // teacher post (Phase 7 — reserved)
-  SUBMISSION_VERSION // student-submitted file (per version — files attach to a specific submit)
+  SUBMISSION // student-submitted file — attached to parent Submission (P7-0a); SubmissionVersion.fileAttachmentIds is the per-version pointer array
   COMMENT // file embedded in a comment (Phase 7 — reserved)
 }
 

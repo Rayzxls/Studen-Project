@@ -337,7 +337,7 @@ describe("ReturnSubmissionSchema", () => {
 
 describe("PresignUploadSchema", () => {
   const base = {
-    ownerType: "SUBMISSION_VERSION" as const,
+    ownerType: "SUBMISSION" as const,
     ownerId: "ver-1",
     declaredMime: "application/pdf",
     declaredSize: 1024,

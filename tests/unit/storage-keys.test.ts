@@ -61,12 +61,12 @@ describe("permanentKey", () => {
   it("builds permanent/<ownerType>/<ownerId>/<uuid>.<ext>", () => {
     expect(
       permanentKey({
-        ownerType: "SUBMISSION_VERSION",
+        ownerType: "SUBMISSION",
         ownerId: "ver-1",
         uuid: "abc-123",
         verifiedExt: "pdf",
       })
-    ).toBe("permanent/SUBMISSION_VERSION/ver-1/abc-123.pdf");
+    ).toBe("permanent/SUBMISSION/ver-1/abc-123.pdf");
   });
 
   it("rejects an unknown owner type", () => {
@@ -83,7 +83,7 @@ describe("permanentKey", () => {
   it("rejects an extension outside the verified allow-list", () => {
     expect(() =>
       permanentKey({
-        ownerType: "SUBMISSION_VERSION",
+        ownerType: "SUBMISSION",
         ownerId: "ver-1",
         uuid: "u",
         verifiedExt: "svg", // blocked per ADR-0021 § 3
@@ -91,7 +91,7 @@ describe("permanentKey", () => {
     ).toThrow();
     expect(() =>
       permanentKey({
-        ownerType: "SUBMISSION_VERSION",
+        ownerType: "SUBMISSION",
         ownerId: "ver-1",
         uuid: "u",
         verifiedExt: "exe",
@@ -102,7 +102,7 @@ describe("permanentKey", () => {
   it("rejects a path-traversal-style ownerId", () => {
     expect(() =>
       permanentKey({
-        ownerType: "SUBMISSION_VERSION",
+        ownerType: "SUBMISSION",
         ownerId: "../other-student",
         uuid: "u",
         verifiedExt: "pdf",
@@ -148,7 +148,7 @@ describe("isFileOwnerType", () => {
     expect(isFileOwnerType("ASSIGNMENT")).toBe(true);
     expect(isFileOwnerType("MATERIAL")).toBe(true);
     expect(isFileOwnerType("ANNOUNCEMENT")).toBe(true);
-    expect(isFileOwnerType("SUBMISSION_VERSION")).toBe(true);
+    expect(isFileOwnerType("SUBMISSION")).toBe(true);
     expect(isFileOwnerType("COMMENT")).toBe(true);
   });
 
@@ -173,11 +173,9 @@ describe("parseR2Key", () => {
   });
 
   it("parses a permanent key", () => {
-    expect(
-      parseR2Key("permanent/SUBMISSION_VERSION/ver-1/file-uuid.pdf")
-    ).toEqual({
+    expect(parseR2Key("permanent/SUBMISSION/ver-1/file-uuid.pdf")).toEqual({
       kind: "permanent",
-      ownerType: "SUBMISSION_VERSION",
+      ownerType: "SUBMISSION",
       ownerId: "ver-1",
       uuid: "file-uuid",
       verifiedExt: "pdf",
@@ -196,12 +194,12 @@ describe("parseR2Key", () => {
   });
 
   it("returns null for a permanent key with no extension", () => {
-    expect(parseR2Key("permanent/SUBMISSION_VERSION/v-1/uuid")).toBeNull();
+    expect(parseR2Key("permanent/SUBMISSION/v-1/uuid")).toBeNull();
   });
 
   it("returns null for a permanent key with a blocked extension", () => {
-    expect(parseR2Key("permanent/SUBMISSION_VERSION/v-1/uuid.svg")).toBeNull();
-    expect(parseR2Key("permanent/SUBMISSION_VERSION/v-1/uuid.exe")).toBeNull();
+    expect(parseR2Key("permanent/SUBMISSION/v-1/uuid.svg")).toBeNull();
+    expect(parseR2Key("permanent/SUBMISSION/v-1/uuid.exe")).toBeNull();
   });
 
   it("returns null when ownerType is not a Prisma enum literal", () => {
