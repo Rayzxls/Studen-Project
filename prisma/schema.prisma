@@ -394,11 +394,15 @@ model Assignment {
   autoCloseAtDue   Boolean @default(false)
 
   // ScoreItem coupling (ADR-0019). scoreItemId is unique → 1:1 with ScoreItem.
-  // Restrict on delete: deleting a linked ScoreItem requires going through
-  // deleteScoreItem (Critical-tier audit per ADR-0018), not via cascade.
+  // SetNull on delete: when ScoreItem is removed via the Critical-tier
+  // deleteScoreItem path (ADR-0018), Assignment.scoreItemId becomes null.
+  // The invariant "isScored=true ⇒ scoreItemId IS NOT NULL" holds in
+  // steady state at the lib/assignment.* boundary — deleteScoreItem may
+  // briefly land Assignment in (isScored=true, scoreItemId=null) which the
+  // next toggle isScored:true→false call cleans up.
   isScored    Boolean    @default(false)
   scoreItemId String?    @unique
-  scoreItem   ScoreItem? @relation(fields: [scoreItemId], references: [id], onDelete: Restrict)
+  scoreItem   ScoreItem? @relation(fields: [scoreItemId], references: [id], onDelete: SetNull)
 
   createdById String // User.id of the teacher who created it
   createdAt   DateTime @default(now())

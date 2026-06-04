@@ -40,17 +40,21 @@ export type AuditEvent =
   // Attendance (Phase 4)
   | "ATTENDANCE_BACK_EDIT"
   | "SESSION_CANCELLED"
-  // Assignment (Phase 6)
-  | "ASSIGNMENT_CREATE"
-  | "ASSIGNMENT_EDIT"
-  | "ASSIGNMENT_DELETE"
-  | "ASSIGNMENT_GRADE"
-  | "ASSIGNMENT_RETURN"
+  // Assignment + Submission (Phase 6) — past-tense per Pattern 10 · ADR-0020 § 4
+  // Verbose-tier events (ASSIGNMENT_CREATED, ASSIGNMENT_DELETED,
+  // SUBMISSION_VERSION_CREATED, SUBMISSION_GRADED pre-publish,
+  // COMMENT_EDITED in-window, COMMENT_SELF_DELETED) are NOT logged and
+  // therefore intentionally absent from this union — same posture as
+  // Phase 5 pre-publish ScoreItem CUD.
+  | "ASSIGNMENT_UPDATED" // Important only when isScored:true→false toggle with reason ≥ 5
+  | "SUBMISSION_RETURNED" // Important · reason = private comment body (≥ 5)
   // Moderation (Phase 6+)
-  | "COMMENT_MODERATED"
-  // Files (Phase 6)
-  | "FILE_INFECTED_BLOCKED"
-  | "FILE_UPLOAD"
+  | "COMMENT_MODERATED" // Important when Teacher (own course) · Critical when Admin × PRIVATE
+  // Files (Phase 6) — ADR-0021 audit family
+  | "FILE_UPLOADED" // Important · payload omits URL string (CLAUDE.md hard rule)
+  | "FILE_REJECTED" // Important · category: magic_byte_mismatch / mime_not_whitelisted / size_exceeds / permission_denied
+  | "FILE_DELETED" // Important · owner removal or moderator delete
+  | "FILE_INFECTED_BLOCKED" // Critical · enum reserved, no fire site in Phase 6 (AV deferred to Phase 9)
   // Admin
   | "ADMIN_VIEW_STUDENT_DATA";
 
