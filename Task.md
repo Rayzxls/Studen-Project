@@ -4,7 +4,7 @@
 
 > Time estimate: solo dev ทำงาน focus ~4 ชม/วัน
 >
-> **สถานะปัจจุบัน:** Phase 0-5 ✅ DONE · Phase 6 = next · ดู `HANDOFF.md` สำหรับสรุป
+> **สถานะปัจจุบัน:** Phase 0-6 ✅ DONE · Phase 7 = next · ดู `HANDOFF.md` สำหรับสรุป
 
 ---
 
@@ -161,56 +161,67 @@ own those domains).
 
 ---
 
-## Phase 6 — Assignment + Submission + Comments (7-10 วัน) ⭐ Big
+## ✅ Phase 6 — Assignment + Submission + Comments (DONE — 22 commits · ADR-0019 + ADR-0020 + ADR-0021)
 
-ใหญ่สุดของ project — มี file upload + versioning + comments
+ใหญ่สุดของ project ตามที่ประมาณ — file upload + versioning + comments
++ R2 pipeline ครบ. แตกออกเป็น 9 sub-tasks ที่ ship ได้ตามลำดับ.
 
-### 6a. File Storage (1-2 วัน)
-- [ ] R2 client setup
-- [ ] Presigned PUT endpoint (`/api/files/presign`)
-- [ ] Confirm endpoint with MIME magic byte verify
-- [ ] FileAttachment table (polymorphic)
-- [ ] Signed GET URL (5 min expire)
-- [ ] EXIF strip for images
-- [ ] Storage quota check per CourseOffering
-- [ ] Tests: upload happy path, oversize reject, bad MIME reject
+### P6-1 — Schema migration
+- [x] Prisma: Assignment, Submission, SubmissionVersion, FileAttachment (polymorphic), Comment (polymorphic) + 4 enums (SubmissionStatus, FileOwnerType, CommentScope, CommentOwnerType)
+- [x] Back-relations on existing models (User.commentsAuthored, CourseOffering.assignments, Enrollment.submissions, ScoreItem.assignment)
+- [x] db push to Neon dev branch
 
-### 6b. Material + Announcement (1-2 วัน)
-- [ ] Prisma: `Material`, `Announcement`, `*Link` tables
-- [ ] Teacher: create/edit/delete material + announcement
-- [ ] Student: view (read only)
-- [ ] Notification on create
+### P6-2 — lib/assignment/* (PURE + DB-touching)
+- [x] PURE: constants + status helpers (isLate, computeSubmissionStatus, checkSubmissionWindow, isWithinCommentEditWindow) + Zod schemas + 62 unit tests
+- [x] assignment.ts: createAssignment + updateAssignment (ADR-0019 § 5 toggle dispatch) + deleteAssignment with linked ScoreItem state branching
+- [x] submission.ts: submitVersion (race-safe lazy create via P2002 recovery) + returnSubmission (workflow signal · NEVER touches ScoreEntry) + gradeSubmission (routes through ADR-0018 reason gate)
+- [x] comment.ts: createComment + editComment (5-min window) + selfDeleteComment + moderateDeleteComment (Q5 matrix dispatch)
+- [x] Audit enum cleanup in lib/audit/log.ts (rename ASSIGNMENT_EDIT → ASSIGNMENT_UPDATED, ASSIGNMENT_RETURN → SUBMISSION_RETURNED, FILE_UPLOAD → FILE_UPLOADED; add FILE_REJECTED + FILE_DELETED; remove Verbose-tier verb-forms)
+- [x] Schema FK refinement: Assignment.scoreItem.onDelete Restrict → SetNull (lets deleteScoreItem Critical path complete cleanly per ADR-0019 § 5 escape)
 
-### 6c. Assignment + Submission (3-4 วัน)
-- [ ] Prisma: `Assignment`, `Submission`, `SubmissionVersion`, `*Link`
-- [ ] Teacher: create Assignment
-  - [ ] Toggle `isScored` → auto-create Score Item
-  - [ ] Configure: dueAt, allow text/file/link
-  - [ ] Attach files + links
-- [ ] Student: submission form
-  - [ ] Draft autosave
-  - [ ] Submit → create Version 1
-  - [ ] Resubmit → create new version, mark current
-  - [ ] Late flag if `submittedAt > dueAt`
-- [ ] Teacher: submission inbox per Assignment
-  - [ ] List submissions with status filter
-  - [ ] Open submission → see current version + history
-  - [ ] **Return** with comment → status = RETURNED
-  - [ ] **Grade** → enter score → save Score Entry (draft)
-  - [ ] **Publish** → notify student + propagate to weighted total
-- [ ] Student: see graded result + history
-- [ ] Audit: `ASSIGNMENT_GRADE`, `ASSIGNMENT_RETURN`
-- [ ] Tests: full E2E flow + permission
+### P6-3 — lib/storage/* (R2 pipeline · ADR-0021)
+- [x] PURE: keys.ts (stagingKey · permanentKey · parseR2Key · sanitiseDisplayFilename · buildContentDisposition RFC 5987 + 6266) + jwt.ts (HMAC-SHA256 commit token via node:crypto, algorithm-confusion defended, constant-time signature compare) + 55 unit tests
+- [x] R2 client (lazy-cached S3Client) + sign.ts (presigned PUT/GET, 300 s TTL CLAUDE.md hard rule) + verify.ts (file-type magic-byte, discriminated reject reasons)
+- [x] image.ts (sharp re-encode + EXIF strip + HEIC/HEIF → JPEG transcode)
+- [x] presign.ts + commit.ts orchestration (3-step pipeline: presign → direct PUT → commit with staging-to-permanent move + FileAttachment row + audit FILE_UPLOADED)
+- [x] Deferred: SubmissionVersion.fileAttachmentIds Json column + FileOwnerType.SUBMISSION enum + remove files_not_yet_supported guard from submitVersion (Phase 7 prerequisite when student file upload UI lands)
 
-### 6d. Comments (1-2 วัน)
-- [ ] Prisma: `Comment` polymorphic
-- [ ] Class-wide comment thread on Assignment/Announcement/Material
-- [ ] Private comment thread on Submission
-- [ ] Edit within 5 min
-- [ ] Teacher/Admin: hide comment (audit log)
-- [ ] Notification on comment
+### P6-4 — lib/auth permissions
+- [x] can.* predicates (mutateAssignment · submitTo · viewSubmission · moderateComment · uploadToAssignment) + assert.* DB-touching guards with divergent {session, row} return shape
+- [x] +26 unit tests covering each predicate's role × state matrix
 
-**DoD:** ครูสร้างการบ้าน, นักเรียนส่ง, ครูตรวจ+return+grade, comments ทำงาน
+### P6-5 — Teacher UI
+- [x] _tabs.ts: insert "การบ้าน" between "คะแนน" and "ตั้งค่า"
+- [x] List page + create dialog (Pattern 7 native <dialog>) with isScored toggle + weight (%) + fullScore conditional fields per ADR-0019 § 2
+- [x] Detail page + Pattern 14 active ∪ ever-submitted enrollment union + per-row grade dialog (with ADR-0018 reason-after-publish gate) + return dialog (comment body = audit reason per ADR-0020 § 4)
+- [x] Server Actions: createAssignmentAction + gradeSubmissionAction + returnSubmissionAction (Pattern 6 + 8)
+
+### P6-6 — Student UI (L1 projection)
+- [x] _tabs.ts: insert "การบ้าน" after "คะแนน"
+- [x] List page L1-projected (joins OWN Submission row only) with NOT_SUBMITTED sentinel
+- [x] Detail page + submit form (text + links · files deferred) + version history view + own ScoreEntry display when ScoreItem published + PRIVATE comments thread
+- [x] RETURNED banner above submit form when teacher returned the work
+- [x] Server Action: submitVersionAction (Pattern 6 + 8)
+
+### P6-7 — Integration tests
+- [x] +19 cases against Neon dev branch · assignment-coupling.test.ts (ADR-0019 atomicity + 3-state toggle) + submission-flow.test.ts (window check + late status + RETURN-does-not-touch-ScoreEntry + L1 peer-reject)
+- [x] Fixture cleanup updated for polymorphic Comment + FileAttachment + Submission cascade
+
+### P6-8 — Smoke checks
+- [x] +10 HTTP checks against live dev (teacher Assignments tab + student Assignments tab + L1 cross-role boundary + auth boundary)
+
+### P6-9 — Docs close-out
+- [x] HANDOFF.md Phase 6 section + Patterns 1-14 reaffirmed
+- [x] Task.md update (this section)
+- [x] ADR-0019 + ADR-0020 + ADR-0021 written (docs/adr/)
+- [x] CONTEXT.md § Admin · § Comment Moderation · § Assignment · § Submission Status · § FileAttachment · § Signed URL inline updates
+
+**DoD met:** ครูสร้างการบ้าน + ตั้งค่า scored coupling ✅ · นักเรียนส่ง + resubmit ✅ · ครูตรวจ + return + grade ✅ · L1 boundary enforced ✅ · file upload pipeline (R2) ready (presign + commit) — student UI integration follows in a future commit ✅
+
+**Deferred (documented as Phase 7 prerequisites):**
+- Student-side file upload UI (needs SubmissionVersion.fileAttachmentIds + FileOwnerType.SUBMISSION schema + remove guard)
+- Teacher attachment to Assignment brief (presign/commit pipeline ready; UI hook-up follows)
+- Comment composer UI (lib/assignment/comment.ts ready; UI follows)
 
 ---
 

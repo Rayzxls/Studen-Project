@@ -3,13 +3,13 @@
 > เอกสารนี้ใช้สำหรับเริ่ม **session ใหม่** กับ AI assistant แล้วต่อยอดได้ทันที
 > อ่านไฟล์นี้ + `CLAUDE.md` + `CONTEXT.md` ก่อนเริ่มงาน
 
-อัพเดตล่าสุด: **2026-06-04** · 70+ commits · **Phase 0-5 ปิดครบ · พร้อมเริ่ม Phase 6 (Assignment + Submission + R2)**
+อัพเดตล่าสุด: **2026-06-04** · 90+ commits · **Phase 0-6 ปิดครบ · พร้อมเริ่ม Phase 7 (Feed + Notifications)**
 
 ---
 
-## ⚠️ START HERE — Latest Session State (2026-06-04 · post-Phase-5)
+## ⚠️ START HERE — Latest Session State (2026-06-04 · post-Phase-6)
 
-### Phase 1-2-3-4-5 — ปิดครบ ✅
+### Phase 1-2-3-4-5-6 — ปิดครบ ✅
 
 อ่าน 3 ไฟล์เรียงนี้ก่อนแตะอะไร:
 1. **`HANDOFF.md`** (ไฟล์นี้ — START block + Patterns section)
@@ -24,6 +24,9 @@ ADR ที่ต้องเข้าใจก่อนแตะ feature:
 - `docs/adr/0016-sparse-attendance-and-enrollment-fk.md` — sparse rows + Enrollment FK + active∪ever-marked grid
 - `docs/adr/0017-weight-invariant-basis-points-and-publish-gate.md` — ScoreItem.weight = integer basis points 0..10000; publish-gate Σ === 10000 strict; PURE calc.ts
 - `docs/adr/0018-publish-is-a-contract-no-unpublish-and-field-class-edit-rules.md` — publishedAt one-way; field-class A/B/C edit dispatch; SCORE_EDIT_AFTER_PUBLISH + SCORE_DELETE_AFTER_PUBLISH escape hatches
+- `docs/adr/0019-assignment-scoreitem-coupling-atomic-no-default-weight.md` — Assignment ↔ ScoreItem synchronous atomic coupling; ครูระบุ weight + fullScore ใน dialog (no default); 3-state toggle dispatch
+- `docs/adr/0020-submission-lifecycle-workflow-signals-vs-score-of-record.md` — Submission lifecycle; RETURN = workflow signal ไม่แตะ ScoreEntry; isLate per-version; status เดินหน้าเสมอ
+- `docs/adr/0021-file-upload-pipeline-presigned-staging-magic-byte-verify-exif-strip.md` — R2 pipeline: presigned PUT + staging → commit verify → permanent; magic-byte enforcement; SVG blocked; EXIF strip via sharp; signed URL strategy hybrid
 
 ### Phase 3 — DONE end-to-end (all 9 sub-tasks + 4 manual-QA hotfixes)
 
@@ -274,7 +277,108 @@ All commits since `c46b7c4` have passed 3/3 jobs (Lint/Typecheck, Unit Tests, Bu
 | Sentry / Vercel deploy | Phase 0 (planned) | As-planned → Phase 9 | Pre-launch only |
 | GitHub branch protection on `main` | Phase 0 | **User-side TODO** | Can't config from code — verify in GitHub Settings before Phase 4 push if you haven't |
 
-### Next session — Phase 6 entry point
+### Phase 6 — DONE end-to-end (all sub-tasks + 3 grilled ADRs + atomic ScoreItem coupling)
+
+| Task | Status | SHA(s) |
+|------|--------|--------|
+| Grill ADR-0019 (Assignment ↔ ScoreItem atomic + no default weight) | ✅ | `3bb3b84` |
+| Grill ADR-0020 (Submission lifecycle workflow signals vs score-of-record) | ✅ | `2fe6e35` |
+| Grill ADR-0021 (file upload pipeline · signed URL strategy hybrid) | ✅ | `49eb1e8` |
+| CONTEXT.md Phase 6 glossary updates (§ Admin · § Comment Moderation · § Assignment · § Submission Status · § FileAttachment · § Signed URL) | ✅ | `e5ca04d` |
+| P6-1 schema (Assignment + Submission + SubmissionVersion + FileAttachment + Comment models + 4 enums) | ✅ | `e427a08` |
+| P6-2a `lib/assignment/*` PURE (constants · status · validation) + 62 unit tests | ✅ | `143fe23` |
+| P6-2b `lib/assignment/assignment.ts` (atomic ScoreItem coupling + toggle 3-state dispatch) + audit enum rename + FK SetNull | ✅ | `ca523b8` |
+| P6-2c `lib/assignment/submission.ts` (submitVersion + returnSubmission + gradeSubmission) | ✅ | `fb8f493` |
+| P6-2d `lib/assignment/comment.ts` (createComment + editComment + selfDeleteComment + moderateDeleteComment Q5 matrix) | ✅ | `61c3d40` |
+| P6-3a `lib/storage/*` PURE (keys + jwt) + 55 unit tests | ✅ | `41f90aa` |
+| P6-3b R2 client + sign (presigned PUT/GET 300 s) + verify (file-type magic-byte) | ✅ | `0cd3485` |
+| P6-3c image pipeline (sharp re-encode + EXIF strip + HEIC/HEIF transcode) | ✅ | `300634f` |
+| P6-3d presign + commit orchestration (3-step staging → permanent flow) | ✅ | `fe200c9` |
+| P6-4 `can.* + assert.*` (mutateAssignment + submitTo + viewSubmission + moderateComment + uploadToAssignment) + 26 unit tests | ✅ | `4fced10` |
+| P6-5a teacher UI: list + create dialog + action | ✅ | `9e9ecf7` |
+| P6-5b teacher UI: detail + grade dialog + return dialog + Pattern 14 active∪ever-submitted grid | ✅ | `c85f30d` |
+| P6-6 student UI: list + detail + submit form + version history + RETURNED banner | ✅ | `88cf510` |
+| P6-7 integration tests (+19 cases · assignment-coupling + submission-flow + L1 boundary) | ✅ | `49c1ef8` |
+| P6-8 smoke checks (+10 against live dev · teacher tab + student tab + L1 boundary + auth boundary) | ✅ | `2530479` |
+| P6-9 docs (this commit) | ✅ | — |
+
+### What "shipped" means today (post-Phase-6)
+
+- **Teacher course detail — 6 tabs** (ภาพรวม · สมาชิก · เช็คชื่อ · คะแนน · **การบ้าน** · ตั้งค่า):
+  - **Assignments (Phase 6)**: list ordered DESC by createdAt · per-row scored-badge + published-ScoreItem badge + submission-closed badge + overdue tinted rose · "+ เพิ่มการบ้าน" Pattern-7 dialog with conditional weight (%) + fullScore inputs when `isScored=true` (per ADR-0019 § 2 no default). Detail page = Pattern-14 active ∪ ever-submitted union (removed students show opacity-60 + badge) + per-row grade dialog (with ADR-0018 reason-after-publish gate that mounts only when needed) + return dialog (comment body = audit reason per ADR-0020 § 4)
+- **Student course detail — 5 tabs** (ภาพรวม · เพื่อนร่วมห้อง · เช็คชื่อ · คะแนน · **การบ้าน**):
+  - **Assignments (Phase 6)** L1-projected: list joins OWN Submission row only (NOT_SUBMITTED sentinel when no row) · detail surfaces RETURNED banner when teacher returned + own ScoreEntry when linked ScoreItem published + PRIVATE comments thread + own version history (DESC by versionNumber, current version highlighted) + submit form for text + links (file upload deferred per P6-3d note)
+- **R2 file pipeline ready**: presign + commit + magic-byte + EXIF-strip + sharp transcode are fully implemented and unit-tested (55 cases). Teacher upload to Assignment brief works through `assert.canUploadTo("ASSIGNMENT", id)`. Student upload to SubmissionVersion follows a small schema patch (SubmissionVersion.fileAttachmentIds + FileOwnerType.SUBMISSION) when the UI surfaces it — documented as a Phase 7 prerequisite in P6-3d commit message.
+
+### Audit event additions (Phase 6 family · past-tense per Pattern 10)
+
+- `SUBMISSION_RETURNED` (new · Important tier · reason = private comment body ≥ 5 chars per ADR-0020 § 4)
+- `ASSIGNMENT_UPDATED` (new · Important only when `isScored: true → false` toggle with reason ≥ 5; verbose tier for normal field edits, not logged)
+- `COMMENT_MODERATED` (new · Important when Teacher · **Critical when Admin × PRIVATE** per CONTEXT § Comment Moderation Q5 escalation)
+- `FILE_UPLOADED` (new · Important · payload omits URL string per CLAUDE.md hard rule — only ids + mime + size)
+- `FILE_REJECTED` (new · Important · categories: `magic_byte_mismatch` / `mime_not_whitelisted` / `size_exceeds` / `permission_denied`)
+- `FILE_DELETED` (new · Important · owner removal or moderator delete)
+- `FILE_INFECTED_BLOCKED` (Critical · enum reserved, no fire site in Phase 6 — AV deferred to Phase 9 hardening sweep)
+- **Removed from enum** (replaced renamed or dropped — zero migration, no prior fire sites): `ASSIGNMENT_CREATE` / `ASSIGNMENT_EDIT` / `ASSIGNMENT_DELETE` / `ASSIGNMENT_GRADE` / `ASSIGNMENT_RETURN` / `FILE_UPLOAD`. The verbose-tier per-action events (CREATE / DELETE / GRADED pre-publish / VERSION_CREATED / COMMENT_EDITED / COMMENT_SELF_DELETED) are not in the enum because they are intentionally not logged — same posture Phase 5 used for pre-publish ScoreItem CUD.
+
+### Test commands (post-P6-7 update)
+
+| Command | Scope | DB needed? | Time |
+|---------|-------|------------|------|
+| `pnpm test` | `tests/unit/**` (299 cases · 16 files) | no | ~6 s |
+| `pnpm test:integration` | `tests/integration/**` (135 cases · 13 files) | yes — uses DATABASE_URL via `.env.local` | ~330 s |
+| `pnpm test:all` | both | yes | ~336 s |
+| `pnpm exec dotenv -e .env.local -- tsx scripts/smoke-test.ts` | E2E HTTP smoke (~98 checks · live dev server required) | yes | ~70 s |
+
+**Total verifications post-Phase 6:** 299 unit + 135 integration + ~98 smoke = **~532**.
+
+### Next session — Phase 7 entry point
+
+**Phase 7 — Feed + Notifications** (Task.md § Phase 7)
+
+Schema to add:
+- `Notification` (recipientId, kind enum, payloadJson, readAt?, createdAt)
+- `Material` + `Announcement` (Phase 7a — teacher-posted content; reserved slots in FileOwnerType + CommentOwnerType enums are ready)
+
+Phase 7 prerequisites carried over from Phase 6 (documented in P6-3d commit message and Task.md § Deferred):
+- Add `SubmissionVersion.fileAttachmentIds Json @default("[]")` column
+- Add `FileOwnerType.SUBMISSION` enum value (so files can attach to a Submission parent scope rather than a specific Version that doesn't yet exist at upload time)
+- Remove the `files_not_yet_supported` guard from `lib/assignment.submitVersion`
+- Wire `lib/storage.presignUpload` + `lib/storage.commitUpload` into a new `/api/storage/presign` + `/api/storage/commit` route pair
+- Update student `submit-version-form.tsx` to accept files via a presign + PUT + commit handshake before submitVersion
+
+Phase 7 recommended sub-task breakdown:
+- P7-1 schema (Notification + Material + Announcement) + the Phase-6-deferred SubmissionVersion.fileAttachmentIds column + FileOwnerType.SUBMISSION
+- P7-2 `lib/notification/*` PURE + DB-touching (event dispatch + delivery in-app)
+- P7-3 `lib/material/*` + `lib/announcement/*` (mirror lib/assignment shape)
+- P7-4 `/api/storage/presign` + `/api/storage/commit` route handlers + integration with lib/auth.canUploadTo for ASSIGNMENT + SUBMISSION_VERSION dispatch
+- P7-5 `lib/feed/aggregator.ts` (CONTEXT § Feed Activity Types — query union over Assignment / Material / Announcement / Score Published / Comments)
+- P7-6 Notification bell UI (navbar component + badge count + recent list)
+- P7-7 Material + Announcement UI (teacher post + student read)
+- P7-8 Student file upload UI (drag-and-drop + progress + presign/commit handshake; replaces the "files_not_yet_supported" branch in submitVersion)
+- P7-9 Integration tests (notification fan-out + feed aggregator L1 + file upload happy path)
+- P7-10 Smoke checks + docs close-out
+
+Patterns to inherit verbatim (Patterns 1-14 unchanged from Phase 5; Phase 6 reaffirmed each):
+- Pattern 1: pure `can.*` + DB-touching `assert.*` returning `{session, row}` divergent shape
+- Pattern 2: authz inside `$transaction` for every mutation
+- Pattern 3: `TX_OPTS` on every transaction
+- Pattern 4: DB-layer projection for L1 visibility (Phase 7 student feed query)
+- Pattern 5: extend `_tabs.ts` per role (insert "ฟีด" if a per-course feed tab lands; otherwise notifications live in navbar)
+- Pattern 6: hidden form fields, no `.bind()`
+- Pattern 7: native `<dialog>` with explicit centering + deferred close (Phase 7 Material / Announcement create dialogs)
+- Pattern 8: `"use server"` async exports only
+- Pattern 9: avoid `setState`-in-effect
+- Pattern 10: past-tense audit family — `NOTIFICATION_DELIVERED` (Verbose, not logged), `MATERIAL_CREATED` / `ANNOUNCEMENT_CREATED` (Verbose), `FEED_VIEWED` (Verbose if logged at all)
+- Pattern 11: store UTC, render Buddhist + Asia/Bangkok via Intl
+- Pattern 12: `useState` lazy initializer for "is this notification read?" / "is feed item older than 24h?" client-side flags
+- Pattern 13: dual-layout (mobile cards + desktop table) for feed list — Phase 7 may relax to single-layout if feed is mobile-first
+- Pattern 14: active ∪ ever-engaged enrollment union (e.g. ever-commented-on-this-feed-item) for any historical feed view
+
+Critical files that Phase 7 will add:
+- `lib/notification/*` — Verbose tier; CLAUDE.md gotcha — do not log signed URL or session token in payloadJson
+- `lib/feed/aggregator.ts` — Phase 4 § Q11C posture: query union not denormalised; L1 boundary at the Prisma SELECT layer
+- `lib/material/*` + `lib/announcement/*` — mirror lib/assignment shape but no scored coupling
 
 **Phase 6 — Assignment + Submission + Comments + R2 file upload** (Task.md § Phase 6)
 
