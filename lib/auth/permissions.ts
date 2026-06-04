@@ -132,4 +132,129 @@ export const can = {
     if (session.user.role !== "TEACHER") return false;
     return session.user.id === item.course.teacherId;
   },
+
+  /**
+   * Owning TEACHER can create / update / delete an Assignment of their
+   * CourseOffering — Phase 6 · ADR-0019.
+   *
+   * Scope: Assignment CRUD AND the toggle dispatch that atomically
+   * creates / deletes the linked ScoreItem in the same tx. ADR-0019 § 5
+   * lifecycle rules (toggle off branching by ScoreItem state, weight gate
+   * on toggle on) live in `lib/assignment/assignment.ts` — this predicate
+   * is the "who", not the "what".
+   *
+   * ADMIN is rejected (mirrors `mutateScoreItem` posture).
+   *
+   * Pure — caller fetches `assignment.course.teacherId` and passes it in.
+   * For DB-backed lookup use `assert.canMutateAssignment` in guards.ts.
+   */
+  mutateAssignment(
+    session: Session,
+    assignment: { course: { teacherId: string } }
+  ): boolean {
+    if (session.user.role !== "TEACHER") return false;
+    return session.user.id === assignment.course.teacherId;
+  },
+
+  /**
+   * Student with an active Enrollment may submit / resubmit to an
+   * Assignment of their CourseOffering — Phase 6 · ADR-0020.
+   *
+   * Pure — caller fetches the matching Enrollment row (or null) for
+   * (assignment.courseOfferingId, session.user.id). A non-null
+   * `enrollment.removedAt` rejects (ADR-0013 — removed students lose
+   * write privileges); the lib layer additionally enforces the submission
+   * window (submissionClosed / autoCloseAtDue) per ADR-0020 § 3.
+   *
+   * TEACHER + ADMIN are rejected — teachers grade, they do not submit.
+   * For DB-backed lookup use `assert.canSubmitTo`.
+   */
+  submitTo(
+    session: Session,
+    enrollment: { studentId: string; removedAt: Date | null } | null
+  ): boolean {
+    if (session.user.role !== "STUDENT") return false;
+    if (!enrollment) return false;
+    if (enrollment.removedAt !== null) return false;
+    return session.user.id === enrollment.studentId;
+  },
+
+  /**
+   * Visibility of a Submission row — Phase 6 · CONTEXT § L1 Visibility.
+   *
+   * Allowed:
+   *   - the student of the Submission (own work);
+   *   - the teacher who owns the Assignment's CourseOffering.
+   *
+   * Rejected:
+   *   - peers (L1 boundary — students never see others' submissions);
+   *   - ADMIN (admin moderation of submission CONTENT is out of scope
+   *     for Phase 6; if PDPA forensic access is needed it goes through
+   *     the audit-log review path, not a direct submission read).
+   *
+   * Pure — caller fetches the submission shape and passes it in.
+   */
+  viewSubmission(
+    session: Session,
+    submission: {
+      enrollment: { studentId: string };
+      assignment: { course: { teacherId: string } };
+    }
+  ): boolean {
+    if (session.user.role === "TEACHER") {
+      return session.user.id === submission.assignment.course.teacherId;
+    }
+    if (session.user.role === "STUDENT") {
+      return session.user.id === submission.enrollment.studentId;
+    }
+    return false;
+  },
+
+  /**
+   * Comment moderation — Phase 6 · CONTEXT § Comment Moderation (Q5).
+   *
+   * Allowed:
+   *   - TEACHER who owns the Comment's host CourseOffering (any scope) —
+   *     audit tier = Important;
+   *   - ADMIN — any course, any scope. Tier escalates to Critical when
+   *     scope=PRIVATE (lib/assignment/comment.moderateDeleteComment writes
+   *     the row; this predicate is the "who", not the tier dispatch).
+   *
+   * Pure — caller fetches the host course's teacherId via
+   * resolveOwnerContext-style logic and passes it in.
+   */
+  moderateComment(
+    session: Session,
+    host: { owningCourseTeacherId: string | null }
+  ): boolean {
+    if (session.user.role === "ADMIN") return true;
+    if (session.user.role === "TEACHER") {
+      return (
+        host.owningCourseTeacherId !== null &&
+        session.user.id === host.owningCourseTeacherId
+      );
+    }
+    return false;
+  },
+
+  /**
+   * File-upload owner-scope check — Phase 6 · ADR-0021 § 1 step 2.
+   *
+   * `lib/storage/presign` defers this decision via a `canUpload` callback.
+   * For Phase 6 only ASSIGNMENT ownerType fires — Teacher of the host
+   * CourseOffering uploads worksheets to the Assignment brief. Student
+   * upload to SUBMISSION_VERSION lands when the chicken-and-egg schema
+   * decision is made (P6-3d deferred note).
+   *
+   * Pure — caller resolves the owner's host teacherId (Assignment.course.
+   * teacherId) and passes it in. For DB-backed dispatch use
+   * `assert.canUploadTo` in guards.ts.
+   */
+  uploadToAssignment(
+    session: Session,
+    assignment: { course: { teacherId: string } }
+  ): boolean {
+    if (session.user.role !== "TEACHER") return false;
+    return session.user.id === assignment.course.teacherId;
+  },
 };

@@ -248,4 +248,287 @@ export const assert = {
     if (!can.mutateScoreItem(session, item)) throw new Forbidden();
     return { session, item };
   },
+
+  /**
+   * Assert the session belongs to the teacher who owns the CourseOffering
+   * that contains the given Assignment. Phase 6 — Assignment CUD + the
+   * ScoreItem-coupling tx (ADR-0019 § 5).
+   *
+   * Return shape: divergent like `canMutateScoreItem`. The `assignment` is
+   * returned because the authz decision already fetched it; callers
+   * driving the toggle-OFF confirm dialog (Pattern 12 lazy initialiser
+   * for "is the linked ScoreItem published?") need this row anyway.
+   *
+   * Throws:
+   *   - Unauthorized — no session
+   *   - NotFound     — assignment doesn't exist (cuid id-space, same
+   *                     enumeration-risk posture as `ownsCourse`)
+   *   - Forbidden    — session is not the owning teacher
+   */
+  async canMutateAssignment(assignmentId: string): Promise<{
+    session: Session;
+    assignment: {
+      id: string;
+      courseOfferingId: string;
+      title: string;
+      dueAt: Date | null;
+      isScored: boolean;
+      scoreItemId: string | null;
+      submissionClosed: boolean;
+      autoCloseAtDue: boolean;
+      course: { name: string; teacherId: string };
+    };
+  }> {
+    const session = await requireAuth();
+    const assignment = await db.assignment.findUnique({
+      where: { id: assignmentId },
+      select: {
+        id: true,
+        courseOfferingId: true,
+        title: true,
+        dueAt: true,
+        isScored: true,
+        scoreItemId: true,
+        submissionClosed: true,
+        autoCloseAtDue: true,
+        course: { select: { name: true, teacherId: true } },
+      },
+    });
+    if (!assignment) throw new NotFound("assignment_not_found");
+    if (!can.mutateAssignment(session, assignment)) throw new Forbidden();
+    return { session, assignment };
+  },
+
+  /**
+   * Assert the session belongs to a student with an active Enrollment in
+   * the given Assignment's CourseOffering. Phase 6 — submit / resubmit
+   * (ADR-0020 § 2).
+   *
+   * The submission row itself is NOT looked up here — callers go through
+   * `lib/assignment/submission.submitVersion` which lazy-materialises
+   * the Submission row inside its own tx (race-safe via P2002 recovery).
+   * This assert produces the (assignment, enrollment) pair the caller
+   * needs to drive `submitVersion`.
+   *
+   * Throws:
+   *   - Unauthorized — no session
+   *   - NotFound     — assignment doesn't exist
+   *   - Forbidden    — not a student, no enrollment, or removed enrollment
+   *                     (single error to avoid leaking enrollment state)
+   */
+  async canSubmitTo(assignmentId: string): Promise<{
+    session: Session;
+    assignment: {
+      id: string;
+      courseOfferingId: string;
+      dueAt: Date | null;
+      submissionClosed: boolean;
+      autoCloseAtDue: boolean;
+      allowText: boolean;
+      allowFile: boolean;
+      allowLink: boolean;
+    };
+    enrollment: { id: string; studentId: string };
+  }> {
+    const session = await requireAuth();
+    const assignment = await db.assignment.findUnique({
+      where: { id: assignmentId },
+      select: {
+        id: true,
+        courseOfferingId: true,
+        dueAt: true,
+        submissionClosed: true,
+        autoCloseAtDue: true,
+        allowText: true,
+        allowFile: true,
+        allowLink: true,
+      },
+    });
+    if (!assignment) throw new NotFound("assignment_not_found");
+    if (session.user.role !== "STUDENT") throw new Forbidden();
+    const enrollment = await db.enrollment.findUnique({
+      where: {
+        studentId_courseOfferingId: {
+          studentId: session.user.id,
+          courseOfferingId: assignment.courseOfferingId,
+        },
+      },
+      select: { id: true, studentId: true, removedAt: true },
+    });
+    if (!can.submitTo(session, enrollment)) throw new Forbidden();
+    return {
+      session,
+      assignment,
+      enrollment: { id: enrollment!.id, studentId: enrollment!.studentId },
+    };
+  },
+
+  /**
+   * Assert the session may view a Submission row. Phase 6 — student own
+   * view + teacher grading view.
+   *
+   * Returns a discriminated `as` field so the caller can branch behaviour
+   * without re-checking the role:
+   *   - "owner"   — student viewing own work
+   *   - "teacher" — teacher viewing one of their students' work
+   *
+   * Throws:
+   *   - Unauthorized — no session
+   *   - NotFound     — submission doesn't exist
+   *   - Forbidden    — peer student or wrong teacher
+   */
+  async canViewSubmission(submissionId: string): Promise<{
+    session: Session;
+    submission: {
+      id: string;
+      status: import("@prisma/client").SubmissionStatus;
+      assignmentId: string;
+      enrollmentId: string;
+      enrollment: { studentId: string };
+      assignment: {
+        id: string;
+        isScored: boolean;
+        scoreItemId: string | null;
+        course: { teacherId: string };
+      };
+    };
+    as: "owner" | "teacher";
+  }> {
+    const session = await requireAuth();
+    const submission = await db.submission.findUnique({
+      where: { id: submissionId },
+      select: {
+        id: true,
+        status: true,
+        assignmentId: true,
+        enrollmentId: true,
+        enrollment: { select: { studentId: true } },
+        assignment: {
+          select: {
+            id: true,
+            isScored: true,
+            scoreItemId: true,
+            course: { select: { teacherId: true } },
+          },
+        },
+      },
+    });
+    if (!submission) throw new NotFound("submission_not_found");
+    if (!can.viewSubmission(session, submission)) throw new Forbidden();
+    const as: "owner" | "teacher" =
+      session.user.role === "TEACHER" ? "teacher" : "owner";
+    return { session, submission, as };
+  },
+
+  /**
+   * Assert the session may moderate (soft-delete with reason) the given
+   * Comment. Phase 6 — Q5 matrix (Teacher × any scope = Important; Admin
+   * × CLASS_WIDE = Important; Admin × PRIVATE = Critical). This assert
+   * only gates the "who"; the tier dispatch happens at the audit fire
+   * site inside `lib/assignment/comment.moderateDeleteComment`.
+   *
+   * Returns the comment + the resolved host CourseOffering.teacherId so
+   * the caller can decide tier without a second lookup.
+   */
+  async canModerateComment(commentId: string): Promise<{
+    session: Session;
+    comment: {
+      id: string;
+      ownerType: import("@prisma/client").CommentOwnerType;
+      ownerId: string;
+      scope: import("@prisma/client").CommentScope;
+      authorId: string;
+      deletedAt: Date | null;
+    };
+    owningCourseTeacherId: string | null;
+  }> {
+    const session = await requireAuth();
+    const comment = await db.comment.findUnique({
+      where: { id: commentId },
+      select: {
+        id: true,
+        ownerType: true,
+        ownerId: true,
+        scope: true,
+        authorId: true,
+        deletedAt: true,
+      },
+    });
+    if (!comment) throw new NotFound("comment_not_found");
+    const owningCourseTeacherId = await resolveOwningCourseTeacherId(
+      comment.ownerType,
+      comment.ownerId
+    );
+    if (!can.moderateComment(session, { owningCourseTeacherId })) {
+      throw new Forbidden();
+    }
+    return { session, comment, owningCourseTeacherId };
+  },
+
+  /**
+   * Assert the session may presign an upload into the given owner scope.
+   * Phase 6 — wraps the `canUpload` predicate that
+   * `lib/storage/presign.presignUpload` consumes.
+   *
+   * Phase 6 only supports `ownerType=ASSIGNMENT` (teacher attaching
+   * worksheet to brief). Other ownerTypes throw
+   * `owner_type_not_supported_yet` — student SUBMISSION_VERSION upload
+   * lands when the schema decision in P6-3d's deferred note is made;
+   * MATERIAL / ANNOUNCEMENT / COMMENT are Phase 7+.
+   *
+   * Returns Session — no row to share with the caller (the presign
+   * worker already has owner ids from its input).
+   */
+  async canUploadTo(
+    ownerType: import("@prisma/client").FileOwnerType,
+    ownerId: string
+  ): Promise<Session> {
+    const session = await requireAuth();
+    if (ownerType !== "ASSIGNMENT") {
+      throw new Forbidden("owner_type_not_supported_yet");
+    }
+    const assignment = await db.assignment.findUnique({
+      where: { id: ownerId },
+      select: { course: { select: { teacherId: true } } },
+    });
+    if (!assignment) throw new NotFound("assignment_not_found");
+    if (!can.uploadToAssignment(session, assignment)) {
+      throw new Forbidden();
+    }
+    return session;
+  },
 };
+
+// ─────────────────────────────────────────────────────────────
+// Internal helpers (shared across asserts)
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Resolve the teacherId of the CourseOffering that hosts a polymorphic
+ * Comment owner. Mirrors `lib/assignment/comment.resolveOwnerContext`
+ * but lifted to lib/auth/guards because moderation authz is here.
+ */
+async function resolveOwningCourseTeacherId(
+  ownerType: import("@prisma/client").CommentOwnerType,
+  ownerId: string
+): Promise<string | null> {
+  if (ownerType === "ASSIGNMENT") {
+    const row = await db.assignment.findUnique({
+      where: { id: ownerId },
+      select: { course: { select: { teacherId: true } } },
+    });
+    return row?.course.teacherId ?? null;
+  }
+  if (ownerType === "SUBMISSION") {
+    const row = await db.submission.findUnique({
+      where: { id: ownerId },
+      select: {
+        assignment: { select: { course: { select: { teacherId: true } } } },
+      },
+    });
+    return row?.assignment.course.teacherId ?? null;
+  }
+  // MATERIAL / ANNOUNCEMENT — Phase 7+. Return null so admins can still
+  // moderate while teachers cannot until the host model exists.
+  return null;
+}

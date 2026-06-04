@@ -226,6 +226,199 @@ describe("can.mutateScoreItem (Phase 5, P5-3)", () => {
   });
 });
 
+// ─────────────────────────────────────────────────────────────
+// Phase 6, P6-4 — Assignment / Submission / Comment / Upload predicates
+// ─────────────────────────────────────────────────────────────
+
+describe("can.mutateAssignment (Phase 6, P6-4)", () => {
+  const assignment = { course: { teacherId: "t1" } };
+
+  it("owning teacher can mutate", () => {
+    expect(can.mutateAssignment(mkSession("TEACHER", "t1"), assignment)).toBe(
+      true
+    );
+  });
+
+  it("non-owning teacher cannot mutate", () => {
+    expect(can.mutateAssignment(mkSession("TEACHER", "t2"), assignment)).toBe(
+      false
+    );
+  });
+
+  it("ADMIN cannot mutate (mirrors ownsCourse / mutateScoreItem posture)", () => {
+    expect(can.mutateAssignment(mkSession("ADMIN"), assignment)).toBe(false);
+  });
+
+  it("STUDENT cannot mutate", () => {
+    expect(can.mutateAssignment(mkSession("STUDENT", "s1"), assignment)).toBe(
+      false
+    );
+  });
+
+  it("agrees with mutateScoreItem on the same (course teacher) pair (cross-predicate consistency)", () => {
+    const t1 = mkSession("TEACHER", "t1");
+    const t2 = mkSession("TEACHER", "t2");
+    const item = { course: { teacherId: "t1" } };
+    expect(can.mutateAssignment(t1, assignment)).toBe(
+      can.mutateScoreItem(t1, item)
+    );
+    expect(can.mutateAssignment(t2, assignment)).toBe(
+      can.mutateScoreItem(t2, item)
+    );
+  });
+});
+
+describe("can.submitTo (Phase 6, P6-4)", () => {
+  const activeEnrollment = { studentId: "s1", removedAt: null };
+  const removedEnrollment = {
+    studentId: "s1",
+    removedAt: new Date("2026-01-01T00:00:00Z"),
+  };
+
+  it("active student matches own enrollment → true", () => {
+    expect(can.submitTo(mkSession("STUDENT", "s1"), activeEnrollment)).toBe(
+      true
+    );
+  });
+
+  it("non-owner student → false", () => {
+    expect(can.submitTo(mkSession("STUDENT", "s2"), activeEnrollment)).toBe(
+      false
+    );
+  });
+
+  it("removed enrollment → false (ADR-0013 — soft-deleted lose write privileges)", () => {
+    expect(can.submitTo(mkSession("STUDENT", "s1"), removedEnrollment)).toBe(
+      false
+    );
+  });
+
+  it("no enrollment row → false", () => {
+    expect(can.submitTo(mkSession("STUDENT", "s1"), null)).toBe(false);
+  });
+
+  it("TEACHER cannot submit (teachers grade, they don't submit)", () => {
+    expect(can.submitTo(mkSession("TEACHER", "t1"), activeEnrollment)).toBe(
+      false
+    );
+  });
+
+  it("ADMIN cannot submit", () => {
+    expect(can.submitTo(mkSession("ADMIN"), activeEnrollment)).toBe(false);
+  });
+});
+
+describe("can.viewSubmission (Phase 6, P6-4 · L1 boundary)", () => {
+  const submission = {
+    enrollment: { studentId: "s1" },
+    assignment: { course: { teacherId: "t1" } },
+  };
+
+  it("owning student → true", () => {
+    expect(can.viewSubmission(mkSession("STUDENT", "s1"), submission)).toBe(
+      true
+    );
+  });
+
+  it("peer student → false (L1 boundary)", () => {
+    expect(can.viewSubmission(mkSession("STUDENT", "s2"), submission)).toBe(
+      false
+    );
+  });
+
+  it("owning teacher → true", () => {
+    expect(can.viewSubmission(mkSession("TEACHER", "t1"), submission)).toBe(
+      true
+    );
+  });
+
+  it("non-owning teacher → false (other course's teacher)", () => {
+    expect(can.viewSubmission(mkSession("TEACHER", "t2"), submission)).toBe(
+      false
+    );
+  });
+
+  it("ADMIN cannot directly view (submission content moderation out of scope Phase 6)", () => {
+    expect(can.viewSubmission(mkSession("ADMIN"), submission)).toBe(false);
+  });
+});
+
+describe("can.moderateComment (Phase 6, P6-4 · Q5 matrix)", () => {
+  it("owning teacher → true (Important tier downstream)", () => {
+    expect(
+      can.moderateComment(mkSession("TEACHER", "t1"), {
+        owningCourseTeacherId: "t1",
+      })
+    ).toBe(true);
+  });
+
+  it("non-owning teacher → false", () => {
+    expect(
+      can.moderateComment(mkSession("TEACHER", "t2"), {
+        owningCourseTeacherId: "t1",
+      })
+    ).toBe(false);
+  });
+
+  it("ADMIN → true for any course (PRIVATE escalates to Critical at the audit fire site)", () => {
+    expect(
+      can.moderateComment(mkSession("ADMIN"), {
+        owningCourseTeacherId: "t1",
+      })
+    ).toBe(true);
+  });
+
+  it("ADMIN can still moderate when course-host resolution is unknown (MATERIAL/ANNOUNCEMENT host model lands Phase 7+)", () => {
+    expect(
+      can.moderateComment(mkSession("ADMIN"), {
+        owningCourseTeacherId: null,
+      })
+    ).toBe(true);
+  });
+
+  it("TEACHER cannot moderate when host resolution failed (null teacherId)", () => {
+    expect(
+      can.moderateComment(mkSession("TEACHER", "t1"), {
+        owningCourseTeacherId: null,
+      })
+    ).toBe(false);
+  });
+
+  it("STUDENT cannot moderate (own self-delete goes through selfDeleteComment, not this predicate)", () => {
+    expect(
+      can.moderateComment(mkSession("STUDENT", "s1"), {
+        owningCourseTeacherId: "t1",
+      })
+    ).toBe(false);
+  });
+});
+
+describe("can.uploadToAssignment (Phase 6, P6-4 · ADR-0021 § 1 step 2)", () => {
+  const assignment = { course: { teacherId: "t1" } };
+
+  it("owning teacher → true", () => {
+    expect(can.uploadToAssignment(mkSession("TEACHER", "t1"), assignment)).toBe(
+      true
+    );
+  });
+
+  it("non-owning teacher → false", () => {
+    expect(can.uploadToAssignment(mkSession("TEACHER", "t2"), assignment)).toBe(
+      false
+    );
+  });
+
+  it("STUDENT → false (Phase 6 only allows teacher upload to Assignment brief; student SUBMISSION_VERSION upload follows P6-3d deferred work)", () => {
+    expect(can.uploadToAssignment(mkSession("STUDENT", "s1"), assignment)).toBe(
+      false
+    );
+  });
+
+  it("ADMIN → false (admin does not create content per CLAUDE.md hard rule)", () => {
+    expect(can.uploadToAssignment(mkSession("ADMIN"), assignment)).toBe(false);
+  });
+});
+
 describe("L1 visibility (Phase 1) — students never see others", () => {
   it("STUDENT cannot view audit logs", () => {
     expect(can.viewAuditLog(mkSession("STUDENT"))).toBe(false);
