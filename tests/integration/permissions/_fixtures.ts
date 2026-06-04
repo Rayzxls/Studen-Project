@@ -199,8 +199,8 @@ export async function setupTestCourse(): Promise<TestCourseContext> {
         where: { scoreItem: { courseOfferingId: course.id } },
       });
       // Phase 6 — Comment is polymorphic; clear class-wide + private threads
-      // hosted under Assignment / Submission of this course before draining
-      // SubmissionVersion / Submission / Assignment.
+      // hosted under Assignment / Submission / Material / Announcement of
+      // this course before draining the children.
       const assignmentIds = (
         await db.assignment.findMany({
           where: { courseOfferingId: course.id },
@@ -213,11 +213,26 @@ export async function setupTestCourse(): Promise<TestCourseContext> {
           select: { id: true },
         })
       ).map((s) => s.id);
+      // Phase 7 — Material + Announcement live under the course.
+      const materialIds = (
+        await db.material.findMany({
+          where: { courseOfferingId: course.id },
+          select: { id: true },
+        })
+      ).map((m) => m.id);
+      const announcementIds = (
+        await db.announcement.findMany({
+          where: { courseOfferingId: course.id },
+          select: { id: true },
+        })
+      ).map((an) => an.id);
       await db.comment.deleteMany({
         where: {
           OR: [
             { ownerType: "ASSIGNMENT", ownerId: { in: assignmentIds } },
             { ownerType: "SUBMISSION", ownerId: { in: submissionIds } },
+            { ownerType: "MATERIAL", ownerId: { in: materialIds } },
+            { ownerType: "ANNOUNCEMENT", ownerId: { in: announcementIds } },
           ],
         },
       });
@@ -226,6 +241,17 @@ export async function setupTestCourse(): Promise<TestCourseContext> {
           OR: [
             { ownerType: "ASSIGNMENT", ownerId: { in: assignmentIds } },
             { ownerType: "SUBMISSION", ownerId: { in: submissionIds } },
+            { ownerType: "MATERIAL", ownerId: { in: materialIds } },
+            { ownerType: "ANNOUNCEMENT", ownerId: { in: announcementIds } },
+          ],
+        },
+      });
+      // Phase 7 — Notification rows scoped to this course OR these users.
+      await db.notification.deleteMany({
+        where: {
+          OR: [
+            { courseOfferingId: course.id },
+            { recipientId: { in: userIds } },
           ],
         },
       });
@@ -234,6 +260,12 @@ export async function setupTestCourse(): Promise<TestCourseContext> {
       });
       await db.submission.deleteMany({
         where: { id: { in: submissionIds } },
+      });
+      await db.material.deleteMany({
+        where: { courseOfferingId: course.id },
+      });
+      await db.announcement.deleteMany({
+        where: { courseOfferingId: course.id },
       });
       // Now safe to drop assignments + their linked ScoreItem (SetNull on
       // Assignment.scoreItem; ScoreItem deletion handled by the scoring
