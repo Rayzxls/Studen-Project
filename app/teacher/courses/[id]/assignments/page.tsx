@@ -1,0 +1,166 @@
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+import { FileText } from "lucide-react";
+import { requireRole } from "@/lib/auth/guards";
+import { getCourseOfferingForTeacher } from "@/lib/course/queries";
+import { db } from "@/lib/db/client";
+import { CourseShell } from "@/components/course/course-shell";
+import { CreateAssignmentDialog } from "@/components/assignment/create-assignment-dialog";
+import { teacherCourseTabs } from "../_tabs";
+
+/**
+ * Teacher Assignments tab — Phase 6 · P6-5a.
+ *
+ * Lists all Assignments of the CourseOffering ordered by createdAt DESC
+ * (newest first — typical teacher mental model is "what did I just
+ * post?"). Per-Assignment row shows:
+ *   - title + due-date status (overdue / due soon / open / no deadline)
+ *   - scored badge when isScored=true + linked ScoreItem.publishedAt
+ *   - submission counts (submitted / late / returned / graded)
+ *   - link to /assignments/[id] detail page
+ *
+ * Dialog (Pattern 7 native `<dialog>`) handles create with the ADR-0019
+ * atomic ScoreItem coupling. Field-class A weight % → basis-point
+ * conversion happens at the action edge (mirrors Phase 5).
+ */
+
+export const dynamic = "force-dynamic";
+
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function AssignmentsListPage({ params }: PageProps) {
+  let session;
+  try {
+    session = await requireRole(["TEACHER"]);
+  } catch {
+    redirect("/dashboard");
+  }
+
+  const { id } = await params;
+  const course = await getCourseOfferingForTeacher(id, session.user.id);
+  if (!course) notFound();
+
+  // Server component — captured once per request. React 19 purity lint
+  // doesn't distinguish server from client; suppress for this single read.
+  // eslint-disable-next-line react-hooks/purity
+  const renderNow = Date.now();
+
+  const assignments = await db.assignment.findMany({
+    where: { courseOfferingId: id },
+    select: {
+      id: true,
+      title: true,
+      dueAt: true,
+      isScored: true,
+      submissionClosed: true,
+      autoCloseAtDue: true,
+      createdAt: true,
+      scoreItem: { select: { publishedAt: true } },
+      _count: { select: { submissions: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return (
+    <CourseShell
+      course={course}
+      eyebrow="รายวิชาที่สอน"
+      backHref="/teacher/courses"
+      tabs={teacherCourseTabs(id)}
+    >
+      <div className="card p-6">
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2
+              className="text-lg font-medium text-black"
+              style={{ letterSpacing: "-0.02em" }}
+            >
+              การบ้าน
+            </h2>
+            <p className="mt-0.5 text-xs text-black/50">
+              {assignments.length === 0
+                ? "ยังไม่มีการบ้าน"
+                : `${assignments.length} รายการ`}
+            </p>
+          </div>
+          <CreateAssignmentDialog courseId={id} />
+        </div>
+
+        {assignments.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-black/15 p-8 text-center">
+            <FileText className="mx-auto h-7 w-7 text-black/30" />
+            <p className="mt-3 text-sm text-black/60">
+              ยังไม่มีการบ้านในวิชานี้
+            </p>
+            <p className="mt-1 text-xs text-black/40">
+              กด &quot;เพิ่มการบ้าน&quot; เพื่อสร้างรายการแรก
+            </p>
+          </div>
+        ) : (
+          <ul className="divide-y divide-black/5">
+            {assignments.map((a) => {
+              const dueLabel = a.dueAt
+                ? new Intl.DateTimeFormat("th-TH-u-ca-buddhist", {
+                    timeZone: "Asia/Bangkok",
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }).format(a.dueAt)
+                : "ส่งเมื่อพร้อม";
+              const isOverdue =
+                a.dueAt !== null && a.dueAt.getTime() < renderNow;
+              const publishedScoreItem =
+                a.isScored && a.scoreItem?.publishedAt !== null;
+              return (
+                <li key={a.id}>
+                  <Link
+                    href={`/teacher/courses/${id}/assignments/${a.id}`}
+                    className="flex items-start justify-between gap-3 py-3 transition-colors hover:bg-black/[0.02]"
+                  >
+                    <div className="min-w-0 flex-1 px-2">
+                      <div className="flex items-center gap-2">
+                        <p className="truncate text-sm font-medium text-black">
+                          {a.title}
+                        </p>
+                        {a.isScored && (
+                          <span className="badge-gold">นับคะแนน</span>
+                        )}
+                        {publishedScoreItem && (
+                          <span className="rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
+                            เผยแพร่
+                          </span>
+                        )}
+                        {a.submissionClosed && (
+                          <span className="rounded-md bg-rose-50 px-1.5 py-0.5 text-[10px] font-medium text-rose-700">
+                            ปิดการส่ง
+                          </span>
+                        )}
+                      </div>
+                      <p
+                        className={`mt-0.5 text-xs ${isOverdue ? "text-rose-600" : "text-black/50"}`}
+                      >
+                        กำหนดส่ง: {dueLabel}
+                        {a.autoCloseAtDue && a.dueAt && (
+                          <span className="ml-2 text-[10px] text-black/40">
+                            (ปิดอัตโนมัติ)
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                    <span className="self-center px-2 text-xs text-black/40">
+                      {a._count.submissions} ส่งแล้ว →
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    </CourseShell>
+  );
+}
