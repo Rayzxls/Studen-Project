@@ -83,6 +83,24 @@ async function resolveOwnerContext(
     if (!row) throw new NotFound("comment_owner_not_found");
     return { courseOfferingId: row.courseOfferingId };
   }
+  if (ownerType === "MATERIAL") {
+    const row = await db.material.findUnique({
+      where: { id: ownerId },
+      select: { courseOfferingId: true, deletedAt: true },
+    });
+    if (!row) throw new NotFound("comment_owner_not_found");
+    if (row.deletedAt !== null) throw new NotFound("comment_owner_deleted");
+    return { courseOfferingId: row.courseOfferingId };
+  }
+  if (ownerType === "ANNOUNCEMENT") {
+    const row = await db.announcement.findUnique({
+      where: { id: ownerId },
+      select: { courseOfferingId: true, deletedAt: true },
+    });
+    if (!row) throw new NotFound("comment_owner_not_found");
+    if (row.deletedAt !== null) throw new NotFound("comment_owner_deleted");
+    return { courseOfferingId: row.courseOfferingId };
+  }
   if (ownerType === "SUBMISSION") {
     const row = await db.submission.findUnique({
       where: { id: ownerId },
@@ -260,26 +278,54 @@ export async function createComment(
       });
     } else {
       // CLASS_WIDE — thread participants ∪ entity author − self (Q5 = B).
-      // Currently only ASSIGNMENT owners reach this path (Material +
-      // Announcement plug in during P7-3). Entity author = Assignment.createdById.
-      const asg = await tx.assignment.findUniqueOrThrow({
-        where: { id: parsed.ownerId },
-        select: { title: true, createdById: true },
-      });
+      // Dispatch by ownerType to pull the right entity title + author.
+      let entityTitle: string | null = null;
+      let entityAuthorId: string | null = null;
+      let entityKind: "ASSIGNMENT" | "MATERIAL" | "ANNOUNCEMENT";
+
+      if (parsed.ownerType === "ASSIGNMENT") {
+        const asg = await tx.assignment.findUniqueOrThrow({
+          where: { id: parsed.ownerId },
+          select: { title: true, createdById: true },
+        });
+        entityTitle = asg.title;
+        entityAuthorId = asg.createdById;
+        entityKind = "ASSIGNMENT";
+      } else if (parsed.ownerType === "MATERIAL") {
+        const mat = await tx.material.findUniqueOrThrow({
+          where: { id: parsed.ownerId },
+          select: { title: true, postedById: true },
+        });
+        entityTitle = mat.title;
+        entityAuthorId = mat.postedById;
+        entityKind = "MATERIAL";
+      } else if (parsed.ownerType === "ANNOUNCEMENT") {
+        const ann = await tx.announcement.findUniqueOrThrow({
+          where: { id: parsed.ownerId },
+          select: { title: true, postedById: true },
+        });
+        entityTitle = ann.title;
+        entityAuthorId = ann.postedById;
+        entityKind = "ANNOUNCEMENT";
+      } else {
+        // SUBMISSION is PRIVATE-only; this branch is unreachable.
+        throw new Conflict("class_wide_on_submission_invariant_broken");
+      }
+
       await fanOutThread(tx, {
         kind: "COMMENT_REPLIED",
         sourceEntityType: "COMMENT",
         sourceEntityId: row.id,
         courseOfferingId: owner.courseOfferingId,
-        entityOwnerType: "ASSIGNMENT",
+        entityOwnerType: entityKind,
         entityOwnerId: parsed.ownerId,
-        entityAuthorId: asg.createdById,
+        entityAuthorId,
         selfId: ctx.actorUserId,
         payload: {
           courseId: owner.courseOfferingId,
           courseName: course.name,
-          entityKind: "ASSIGNMENT",
-          entityTitle: asg.title,
+          entityKind,
+          entityTitle,
           commenterName,
           commentExcerpt: excerpt,
         },

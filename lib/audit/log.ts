@@ -50,6 +50,10 @@ export type AuditEvent =
   | "SUBMISSION_RETURNED" // Important · reason = private comment body (≥ 5)
   // Moderation (Phase 6+)
   | "COMMENT_MODERATED" // Important when Teacher (own course) · Critical when Admin × PRIVATE
+  // Material + Announcement (Phase 7) — past-tense per Pattern 10 · Q4.2 lock
+  // Edit lifecycle is Verbose (no audit); only soft-delete fires Important.
+  | "MATERIAL_DELETED" // Important · reason ≥ 5
+  | "ANNOUNCEMENT_DELETED" // Important · reason ≥ 5
   // Files (Phase 6) — ADR-0021 audit family
   | "FILE_UPLOADED" // Important · payload omits URL string (CLAUDE.md hard rule)
   | "FILE_REJECTED" // Important · category: magic_byte_mismatch / mime_not_whitelisted / size_exceeds / permission_denied
