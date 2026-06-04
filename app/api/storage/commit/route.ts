@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import type { FileOwnerType } from "@prisma/client";
-import { assert } from "@/lib/auth/guards";
+import { assert, requireAuth } from "@/lib/auth/guards";
 import { commitUpload } from "@/lib/storage/commit";
 import { verifyCommitToken } from "@/lib/storage/jwt";
 import { isFileOwnerType } from "@/lib/storage/keys";
@@ -25,9 +25,15 @@ const CommitBodySchema = z.object({
  * TOCTOU defence: a teacher who lost access to the course between presign
  * and commit must fail the commit even though the token would otherwise
  * be valid).
+ *
+ * Auth is checked BEFORE token verification so anonymous probes do not
+ * fingerprint the JWT layer — they get 401, never 400.
  */
 export async function POST(req: Request) {
   try {
+    // Auth-first — anonymous always gets 401 regardless of body shape.
+    await requireAuth();
+
     const meta = await getRequestMeta();
     const parsed = CommitBodySchema.safeParse(await req.json());
     if (!parsed.success) {

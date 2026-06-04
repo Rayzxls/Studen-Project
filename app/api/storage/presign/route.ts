@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { assert } from "@/lib/auth/guards";
+import { assert, requireAuth } from "@/lib/auth/guards";
 import { PresignUploadSchema } from "@/lib/assignment/validation";
 import { presignUpload } from "@/lib/storage/presign";
 import { errorResponse, ValidationError } from "@/lib/errors";
@@ -21,9 +21,14 @@ import { errorResponse, ValidationError } from "@/lib/errors";
  * The authz dispatch happens twice — once here (assert.canUploadTo runs
  * the DB-backed owner-scope check before the staging URL is signed) and
  * once again in /commit (TOCTOU defence per Q9.3 grill).
+ *
+ * Auth is checked BEFORE body parsing so anonymous probes get 401
+ * regardless of payload shape — they cannot fingerprint the Zod schema.
  */
 export async function POST(req: Request) {
   try {
+    await requireAuth();
+
     const body = (await req.json()) as unknown;
     const parsed = PresignUploadSchema.safeParse(body);
     if (!parsed.success) {

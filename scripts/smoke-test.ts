@@ -1168,6 +1168,137 @@ async function testPhase6Assignments() {
   );
 }
 
+async function testPhase7StorageRoutes() {
+  console.log("\n📎 Phase 7 / P7-0b: storage API auth boundary");
+
+  // ── /api/storage/presign — anonymous → 401 ─────────────────────
+  const anonPresign = await fetch(`${BASE}/api/storage/presign`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      ownerType: "ASSIGNMENT",
+      ownerId: "anything",
+      declaredMime: "application/pdf",
+      declaredSize: 1024,
+      originalFilename: "test.pdf",
+    }),
+  });
+  await expect(
+    "Anonymous → /api/storage/presign returns 401 (auth boundary)",
+    anonPresign.status === 401,
+    `got ${anonPresign.status}`
+  );
+
+  // ── /api/storage/commit — anonymous → 401 ──────────────────────
+  const anonCommit = await fetch(`${BASE}/api/storage/commit`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      commitToken: "bogus.bogus.bogus",
+      originalFilename: "test.pdf",
+    }),
+  });
+  await expect(
+    "Anonymous → /api/storage/commit returns 401 (auth boundary)",
+    anonCommit.status === 401,
+    `got ${anonCommit.status}`
+  );
+
+  // ── Authenticated student → presign for ASSIGNMENT → 403 (cannot
+  //    upload to teacher-owned brief) ─────────────────────────────
+  const studentCookie = await signin("60001", "Student1234");
+  if (!studentCookie) {
+    fail("Student login (Phase 7 storage)", "no cookie");
+    return;
+  }
+
+  const demoCode = "MATH4A-DEMO1";
+  const course = await db.courseOffering.findUnique({
+    where: { classCode: demoCode },
+    select: { id: true },
+  });
+  if (!course) {
+    fail(
+      "Phase 7 storage setup",
+      `Demo course "${demoCode}" missing — run pnpm db:seed`
+    );
+    return;
+  }
+  const someAssignment = await db.assignment.findFirst({
+    where: { courseOfferingId: course.id },
+    select: { id: true },
+  });
+  if (someAssignment) {
+    const studentToAsg = await fetch(`${BASE}/api/storage/presign`, {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: studentCookie },
+      body: JSON.stringify({
+        ownerType: "ASSIGNMENT",
+        ownerId: someAssignment.id,
+        declaredMime: "application/pdf",
+        declaredSize: 1024,
+        originalFilename: "homework.pdf",
+      }),
+    });
+    await expect(
+      "Student → presign for ASSIGNMENT scope → 403 (L1 — teacher-only brief)",
+      studentToAsg.status === 403,
+      `got ${studentToAsg.status}`
+    );
+  }
+
+  // ── Authenticated student → presign with oversized declaredSize → 400 ──
+  const oversize = await fetch(`${BASE}/api/storage/presign`, {
+    method: "POST",
+    headers: { "content-type": "application/json", cookie: studentCookie },
+    body: JSON.stringify({
+      ownerType: "SUBMISSION",
+      ownerId: "anything",
+      declaredMime: "application/pdf",
+      declaredSize: 999_999_999, // 1 GB — well over 20 MB cap
+      originalFilename: "huge.pdf",
+    }),
+  });
+  await expect(
+    "Student → presign with 1 GB declaredSize → 400 (validation gate)",
+    oversize.status === 400,
+    `got ${oversize.status}`
+  );
+
+  // ── Authenticated student → presign with blocked MIME (SVG) → 400 ──
+  const blockedMime = await fetch(`${BASE}/api/storage/presign`, {
+    method: "POST",
+    headers: { "content-type": "application/json", cookie: studentCookie },
+    body: JSON.stringify({
+      ownerType: "SUBMISSION",
+      ownerId: "anything",
+      declaredMime: "image/svg+xml",
+      declaredSize: 1024,
+      originalFilename: "x.svg",
+    }),
+  });
+  await expect(
+    "Student → presign with SVG MIME → 400 (ADR-0021 § 3 blocked)",
+    blockedMime.status === 400,
+    `got ${blockedMime.status}`
+  );
+
+  // ── /api/storage/commit with malformed token → 400 ─────────────
+  const badToken = await fetch(`${BASE}/api/storage/commit`, {
+    method: "POST",
+    headers: { "content-type": "application/json", cookie: studentCookie },
+    body: JSON.stringify({
+      commitToken: "not.a.real.jwt",
+      originalFilename: "x.pdf",
+    }),
+  });
+  await expect(
+    "Student → commit with malformed token → 400 (JWT verification gate)",
+    badToken.status === 400,
+    `got ${badToken.status}`
+  );
+}
+
 async function testAuditLog() {
   console.log("\n📝 Audit log verification");
 
@@ -1238,6 +1369,7 @@ async function main() {
   await testPhase4Attendance();
   await testPhase5Scoring();
   await testPhase6Assignments();
+  await testPhase7StorageRoutes();
   await testAuditLog();
 
   console.log(`\n╭───────────────────────────────────╮`);
