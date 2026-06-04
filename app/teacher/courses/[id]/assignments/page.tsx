@@ -65,6 +65,7 @@ export default async function AssignmentsListPage({ params }: PageProps) {
 
   return (
     <CourseShell
+      session={session}
       course={course}
       eyebrow="รายวิชาที่สอน"
       backHref="/teacher/courses"

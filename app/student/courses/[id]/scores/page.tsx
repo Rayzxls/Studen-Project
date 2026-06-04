@@ -65,6 +65,7 @@ export default async function StudentScoresPage({ params }: PageProps) {
 
   return (
     <CourseShell
+      session={guard.session}
       course={course}
       eyebrow="ห้องเรียน"
       backHref="/dashboard"

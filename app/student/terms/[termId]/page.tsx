@@ -46,7 +46,7 @@ export default async function StudentTermPage({ params }: PageProps) {
   const snapshot = await getStudentTermSnapshot(studentUserId, termId);
 
   return (
-    <StudentTermsShell>
+    <StudentTermsShell session={session}>
       <TermSummaryView
         studentName={`${student.firstName} ${student.lastName}`}
         studentIdNumber={student.studentId}

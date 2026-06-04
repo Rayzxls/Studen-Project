@@ -54,6 +54,7 @@ export default async function ScoreItemGridPage({ params }: PageProps) {
 
   return (
     <CourseShell
+      session={guard.session}
       course={course}
       eyebrow="รายวิชาที่สอน"
       backHref="/teacher/courses"

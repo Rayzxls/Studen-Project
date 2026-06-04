@@ -32,6 +32,7 @@ export default async function CourseOverviewPage({ params }: PageProps) {
 
   return (
     <CourseShell
+      session={session}
       course={course}
       eyebrow="รายวิชาที่สอน"
       backHref="/teacher/courses"

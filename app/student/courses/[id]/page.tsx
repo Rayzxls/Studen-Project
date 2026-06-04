@@ -26,6 +26,7 @@ export default async function StudentCourseOverviewPage({ params }: PageProps) {
 
   return (
     <CourseShell
+      session={session}
       course={course}
       eyebrow="ห้องเรียน"
       backHref="/dashboard"

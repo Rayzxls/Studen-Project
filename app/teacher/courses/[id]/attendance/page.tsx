@@ -47,6 +47,7 @@ export default async function AttendanceListPage({ params }: PageProps) {
 
   return (
     <CourseShell
+      session={session}
       course={course}
       eyebrow="รายวิชาที่สอน"
       backHref="/teacher/courses"

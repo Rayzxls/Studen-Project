@@ -93,6 +93,7 @@ export default async function StudentAssignmentsListPage({
 
   return (
     <CourseShell
+      session={session}
       course={course}
       eyebrow="วิชาที่เรียน"
       backHref="/dashboard"

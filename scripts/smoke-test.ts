@@ -1299,6 +1299,98 @@ async function testPhase7StorageRoutes() {
   );
 }
 
+async function testPhase7Bell() {
+  console.log("\n🔔 Phase 7 / P7-5: bell UI presence per role");
+
+  const BELL_LABEL = 'aria-label="การแจ้งเตือน"';
+
+  // Earlier smoke sections exercise the login rate-limit path; clear the
+  // login buckets so the bell section can sign in fresh without the
+  // rate-limit lockout cascading into "no cookie" failures.
+  await db.rateLimitBucket.deleteMany({
+    where: { id: { startsWith: "login:" } },
+  });
+
+  // Student dashboard → bell present
+  const studentCookie = await signin("60001", "Student1234");
+  if (!studentCookie) {
+    fail("Student login (Phase 7 bell)", "no cookie");
+    return;
+  }
+  const sDash = await fetch(`${BASE}/dashboard`, {
+    headers: { cookie: studentCookie },
+  });
+  const sBody = await sDash.text();
+  await expect(
+    "Student dashboard renders bell",
+    sBody.includes(BELL_LABEL),
+    `aria-label not found in body`
+  );
+
+  // Student course detail (CourseShell) → bell present
+  const demoCode = "MATH4A-DEMO1";
+  const course = await db.courseOffering.findUnique({
+    where: { classCode: demoCode },
+    select: { id: true },
+  });
+  if (course) {
+    const sCourse = await fetch(`${BASE}/student/courses/${course.id}`, {
+      headers: { cookie: studentCookie },
+    });
+    const sCourseBody = await sCourse.text();
+    await expect(
+      "Student course detail renders bell (CourseShell stack)",
+      sCourseBody.includes(BELL_LABEL),
+      `aria-label not found`
+    );
+  }
+
+  // Teacher dashboard → bell present
+  const teacherCookie = await signin("teacher@studennnn.local", "Teacher1234!");
+  if (!teacherCookie) {
+    fail("Teacher login (Phase 7 bell)", "no cookie");
+    return;
+  }
+  const tDash = await fetch(`${BASE}/dashboard`, {
+    headers: { cookie: teacherCookie },
+  });
+  const tBody = await tDash.text();
+  await expect(
+    "Teacher dashboard renders bell",
+    tBody.includes(BELL_LABEL),
+    `aria-label not found`
+  );
+
+  // Teacher course detail → bell present
+  if (course) {
+    const tCourse = await fetch(`${BASE}/teacher/courses/${course.id}`, {
+      headers: { cookie: teacherCookie },
+    });
+    const tCourseBody = await tCourse.text();
+    await expect(
+      "Teacher course detail renders bell (CourseShell stack)",
+      tCourseBody.includes(BELL_LABEL),
+      `aria-label not found`
+    );
+  }
+
+  // Admin dashboard → bell NOT present (no NotificationKind targets ADMIN)
+  const adminCookie = await signin("admin@studennnn.local", "Admin1234!");
+  if (!adminCookie) {
+    fail("Admin login (Phase 7 bell)", "no cookie");
+    return;
+  }
+  const aDash = await fetch(`${BASE}/admin/dashboard`, {
+    headers: { cookie: adminCookie },
+  });
+  const aBody = await aDash.text();
+  await expect(
+    "Admin dashboard does NOT render bell (no admin-targeted kind)",
+    !aBody.includes(BELL_LABEL),
+    `bell unexpectedly present in admin response`
+  );
+}
+
 async function testAuditLog() {
   console.log("\n📝 Audit log verification");
 
@@ -1370,6 +1462,7 @@ async function main() {
   await testPhase5Scoring();
   await testPhase6Assignments();
   await testPhase7StorageRoutes();
+  await testPhase7Bell();
   await testAuditLog();
 
   console.log(`\n╭───────────────────────────────────╮`);

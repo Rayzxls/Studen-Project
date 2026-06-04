@@ -38,7 +38,7 @@ export default async function StudentTermsDefaultPage() {
   ]);
   if (!student) {
     return (
-      <StudentTermsShell>
+      <StudentTermsShell session={session}>
         <EmptyState>ไม่พบข้อมูลนักเรียน</EmptyState>
       </StudentTermsShell>
     );
@@ -46,7 +46,7 @@ export default async function StudentTermsDefaultPage() {
 
   if (terms.length === 0) {
     return (
-      <StudentTermsShell>
+      <StudentTermsShell session={session}>
         <EmptyState>
           ยังไม่ได้เข้าร่วมห้องเรียน — ใช้รหัสห้องจากครูที่หน้า{" "}
           <a href="/join" className="underline">
@@ -61,7 +61,7 @@ export default async function StudentTermsDefaultPage() {
   const snapshot = await getStudentTermSnapshot(studentUserId, selectedTerm.id);
 
   return (
-    <StudentTermsShell>
+    <StudentTermsShell session={session}>
       <TermSummaryView
         studentName={`${student.firstName} ${student.lastName}`}
         studentIdNumber={student.studentId}

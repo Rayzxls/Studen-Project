@@ -1,11 +1,17 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
+import type { Role } from "@prisma/client";
+import { TopNav } from "@/components/layout/top-nav";
 import { TabNav, type CourseTab } from "./tab-nav";
 
 /**
  * Layout shell shared by teacher (P3-5) and student (P3-6) CourseOffering
- * tabs. Renders:
- *   - sticky header bar (back link + term name)
+ * tabs. Phase 7 stacks the shared <TopNav> on top of the existing
+ * course context bar (Q15 Stack lock) — app chrome (logo/bell/sign-out)
+ * sits above course chrome (back/term).
+ *
+ *   - <TopNav> (shared, sticky)
+ *   - course context bar (back link + term name)
  *   - course title card (eyebrow badge + h1 + subtitle)
  *   - tab nav (quiet pill style — see TabNav)
  *   - children
@@ -13,11 +19,6 @@ import { TabNav, type CourseTab } from "./tab-nav";
  * Action buttons (e.g. teacher's "QR ของห้องนี้", "regen code") live INSIDE
  * each tab page, not in the shell — keeps the shell prop-light and lets
  * tabs decide their own affordances without prop-drilling.
- *
- * The `course` shape is wider than what `assert.ownsCourse` returns by
- * design: callers will already have fetched the full course via the
- * existing `getCourseOfferingForTeacher` (or its student-side sibling)
- * to populate the page anyway.
  */
 export type CourseShellProps = {
   course: {
@@ -34,6 +35,8 @@ export type CourseShellProps = {
   /** Back-link target — e.g. "/teacher/courses" or "/student/courses" */
   backHref: string;
   tabs: CourseTab[];
+  /** Auth session — drives the bell. Phase 7 adds this; callers must pass it. */
+  session: { user: { id: string; role: Role } };
   children: React.ReactNode;
 };
 
@@ -42,19 +45,22 @@ export function CourseShell({
   eyebrow,
   backHref,
   tabs,
+  session,
   children,
 }: CourseShellProps) {
   return (
     <div className="min-h-screen bg-bg">
-      <header className="border-b border-black/[0.06] bg-white/80 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+      <TopNav session={session} maxWidth="max-w-5xl" />
+
+      <div className="border-b border-black/[0.06] bg-white/60 print:hidden">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
           <Link href={backHref} className="btn-ghost btn-sm">
             <ChevronLeft className="h-4 w-4" />
             กลับ
           </Link>
           <span className="text-xs text-black/60">{course.term.name}</span>
         </div>
-      </header>
+      </div>
 
       <main className="mx-auto max-w-5xl animate-fade-in space-y-6 px-6 py-10">
         <div>

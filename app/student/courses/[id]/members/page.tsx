@@ -31,6 +31,7 @@ export default async function StudentCourseMembersPage({ params }: PageProps) {
 
   return (
     <CourseShell
+      session={session}
       course={course}
       eyebrow="ห้องเรียน"
       backHref="/dashboard"
