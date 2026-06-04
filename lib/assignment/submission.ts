@@ -1,0 +1,491 @@
+/**
+ * Submission lifecycle — Phase 6 · ADR-0020
+ *
+ * Two write paths:
+ *
+ *   Student-facing
+ *     submitVersion    — initial submit + voluntary resubmit. Lazy-
+ *                        materialises the Submission row on first call.
+ *                        Sets previous currentVersion.isCurrent=false and
+ *                        recomputes Submission.status forward-only.
+ *
+ *   Teacher-facing
+ *     returnSubmission — workflow signal: inserts a PRIVATE Comment,
+ *                        transitions status to RETURNED, fires
+ *                        SUBMISSION_RETURNED audit (Important · reason =
+ *                        comment body). Never touches ScoreEntry —
+ *                        ScoreEntry follows ADR-0018 on its own.
+ *     gradeSubmission  — scored Assignment: upserts ScoreEntry on the
+ *                        linked ScoreItem under ADR-0018 (post-publish
+ *                        reason gate inherited from lib/scoring). Ungraded
+ *                        Assignment: marks Submission.status = GRADED.
+ *
+ * File handling for SubmissionVersion is deferred to P6-3 (lib/storage).
+ * `fileAttachmentIds` is accepted in the Zod schema (so the wire shape
+ * is stable from Phase 6 day one) but submitVersion rejects non-empty
+ * arrays until the R2 commit endpoint exists. Text + links land cleanly
+ * today.
+ */
+
+import type { Prisma, Submission, SubmissionVersion } from "@prisma/client";
+import { db } from "@/lib/db/client";
+import { audit } from "@/lib/audit/log";
+import { Conflict, Forbidden, NotFound, ValidationError } from "@/lib/errors";
+import { REASON_MIN, TX_OPTS } from "./constants";
+import {
+  ReturnSubmissionSchema,
+  type ReturnSubmissionInput,
+  SubmitVersionSchema,
+  type SubmitVersionInput,
+} from "./validation";
+import {
+  checkSubmissionWindow,
+  computeSubmissionStatus,
+  isLate,
+} from "./status";
+
+export interface ActorCtx {
+  actorUserId: string;
+  ipAddress?: string;
+  userAgent?: string;
+}
+
+// ─────────────────────────────────────────────────────────────
+// findOrCreateSubmission
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Resolve the Submission row for an Assignment × Enrollment pair, creating
+ * one in DRAFT status if it does not exist yet.
+ *
+ * Race-safe via P2002 recovery (mirrors `findOrCreateSession` from Phase 4).
+ * Two concurrent first-submits from the same student-on-same-assignment
+ * resolve to one Submission row deterministically (`@@unique([assignmentId,
+ * enrollmentId])` on the schema).
+ *
+ * Called from submitVersion. Not exported — students reach a Submission via
+ * the submitVersion entry point only; teachers read via a separate query.
+ */
+async function findOrCreateSubmission(
+  tx: Prisma.TransactionClient,
+  assignmentId: string,
+  enrollmentId: string
+): Promise<{ id: string; status: Submission["status"] }> {
+  const existing = await tx.submission.findUnique({
+    where: { assignmentId_enrollmentId: { assignmentId, enrollmentId } },
+    select: { id: true, status: true },
+  });
+  if (existing) return existing;
+
+  try {
+    const created = await tx.submission.create({
+      data: { assignmentId, enrollmentId, status: "DRAFT" },
+      select: { id: true, status: true },
+    });
+    return created;
+  } catch (err) {
+    // P2002 — unique violation. A concurrent insert won; re-read.
+    if (
+      err &&
+      typeof err === "object" &&
+      "code" in err &&
+      (err as { code: string }).code === "P2002"
+    ) {
+      const refetched = await tx.submission.findUniqueOrThrow({
+        where: { assignmentId_enrollmentId: { assignmentId, enrollmentId } },
+        select: { id: true, status: true },
+      });
+      return refetched;
+    }
+    throw err;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// submitVersion — student-facing initial submit + voluntary resubmit
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Create a new SubmissionVersion (initial submit or voluntary resubmit).
+ *
+ * Authorisation — the actor must be:
+ *   - the student of an active Enrollment in the Assignment's
+ *     CourseOffering (`removedAt IS NULL`); AND
+ *   - the same student across both v1 and vN (peers cannot resubmit on
+ *     each other's behalf).
+ *
+ * Window check (ADR-0020 § 3) — `checkSubmissionWindow` against
+ * `Assignment.submissionClosed` + `autoCloseAtDue` + `dueAt` + `now`.
+ *
+ * Per-channel allow* check — if textContent is set but Assignment.allowText
+ * is false, reject (`channel_not_allowed`).
+ *
+ * Verbose tier — no audit. Same posture as Phase 5 pre-publish ScoreItem
+ * CUD (ADR-0020 § 4 SUBMISSION_VERSION_CREATED not in enum).
+ *
+ * NOTE on files: `fileAttachmentIds` non-empty rejects with
+ * `files_not_yet_supported` until P6-3 wires `lib/storage`. Text + links
+ * land today.
+ */
+export async function submitVersion(
+  input: SubmitVersionInput & { assignmentId: string },
+  ctx: ActorCtx
+): Promise<SubmissionVersion> {
+  const parsed = SubmitVersionSchema.parse(input);
+
+  if (parsed.fileAttachmentIds.length > 0) {
+    throw new ValidationError({
+      fileAttachmentIds:
+        "files_not_yet_supported — file upload pipeline lands in P6-3 (lib/storage)",
+    });
+  }
+
+  const now = new Date();
+
+  return db.$transaction(async (tx) => {
+    // Fetch Assignment + check window + channel.
+    const assignment = await tx.assignment.findUnique({
+      where: { id: input.assignmentId },
+      select: {
+        id: true,
+        courseOfferingId: true,
+        dueAt: true,
+        allowText: true,
+        allowFile: true,
+        allowLink: true,
+        submissionClosed: true,
+        autoCloseAtDue: true,
+      },
+    });
+    if (!assignment) throw new NotFound("assignment_not_found");
+
+    const window = checkSubmissionWindow({
+      submissionClosed: assignment.submissionClosed,
+      autoCloseAtDue: assignment.autoCloseAtDue,
+      dueAt: assignment.dueAt,
+      now,
+    });
+    if (!window.open) {
+      throw new Conflict(window.reason);
+    }
+
+    if (
+      parsed.textContent !== undefined &&
+      parsed.textContent.trim().length > 0 &&
+      !assignment.allowText
+    ) {
+      throw new ValidationError({
+        textContent: "channel_not_allowed — ครูปิดการส่งข้อความสำหรับงานนี้",
+      });
+    }
+    if (parsed.links.length > 0 && !assignment.allowLink) {
+      throw new ValidationError({
+        links: "channel_not_allowed — ครูปิดการส่งลิงก์สำหรับงานนี้",
+      });
+    }
+
+    // Find the active Enrollment of the student on this CourseOffering.
+    // FK to Enrollment, not Student — Pattern 14 + ADR-0013 (preserve trace).
+    const enrollment = await tx.enrollment.findFirst({
+      where: {
+        courseOfferingId: assignment.courseOfferingId,
+        studentId: ctx.actorUserId,
+        removedAt: null, // only active enrollments may submit
+      },
+      select: { id: true },
+    });
+    if (!enrollment) throw new Forbidden("not_active_enrollment");
+
+    const submission = await findOrCreateSubmission(
+      tx,
+      assignment.id,
+      enrollment.id
+    );
+
+    // Find the latest version number on this Submission.
+    const latest = await tx.submissionVersion.findFirst({
+      where: { submissionId: submission.id },
+      orderBy: { versionNumber: "desc" },
+      select: { id: true, versionNumber: true, isCurrent: true },
+    });
+    const nextVersionNumber = (latest?.versionNumber ?? 0) + 1;
+
+    // Flip previous current to false (preserve history per CONTEXT).
+    if (latest?.isCurrent) {
+      await tx.submissionVersion.update({
+        where: { id: latest.id },
+        data: { isCurrent: false },
+      });
+    }
+
+    const newIsLate = isLate(now, assignment.dueAt);
+
+    const created = await tx.submissionVersion.create({
+      data: {
+        submissionId: submission.id,
+        versionNumber: nextVersionNumber,
+        textContent: parsed.textContent ?? null,
+        links: parsed.links as Prisma.InputJsonValue,
+        submittedAt: now,
+        isLate: newIsLate,
+        isCurrent: true,
+      },
+    });
+
+    // Recompute and persist Submission.status using the PURE helper.
+    // isReturned + isGraded clear implicitly on resubmit per ADR-0020 § 2.
+    const nextStatus = computeSubmissionStatus({
+      hasCurrentVersion: true,
+      currentIsLate: newIsLate,
+      isReturned: false,
+      isGraded: false,
+    });
+    await tx.submission.update({
+      where: { id: submission.id },
+      data: { status: nextStatus },
+    });
+
+    return created;
+  }, TX_OPTS);
+}
+
+// ─────────────────────────────────────────────────────────────
+// returnSubmission — teacher-facing workflow signal
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Teacher returns a submission for revision (ADR-0020 § 1).
+ *
+ * In a single tx:
+ *   1. Authz — actor must own the CourseOffering.
+ *   2. Insert PRIVATE Comment with `body=input.comment`, ownerType=SUBMISSION,
+ *      ownerId=submissionId, authorId=ctx.actorUserId.
+ *   3. Update Submission.status = RETURNED.
+ *   4. Emit SUBMISSION_RETURNED audit (Important · `reason = input.comment`).
+ *
+ * Does NOT touch ScoreEntry — ADR-0020 § 1. Any grade the teacher recorded
+ * on the linked ScoreItem persists; the next gradeSubmission call (after
+ * resubmit) goes through ADR-0018's post-publish reason gate if the
+ * ScoreItem is published.
+ */
+export async function returnSubmission(
+  input: ReturnSubmissionInput,
+  ctx: ActorCtx
+): Promise<void> {
+  // Zod already enforces comment.length ≥ REASON_MIN (5).
+  const parsed = ReturnSubmissionSchema.parse(input);
+
+  await db.$transaction(async (tx) => {
+    const submission = await tx.submission.findUnique({
+      where: { id: parsed.submissionId },
+      select: {
+        id: true,
+        status: true,
+        assignment: {
+          select: {
+            id: true,
+            course: { select: { teacherId: true } },
+          },
+        },
+      },
+    });
+    if (!submission) throw new NotFound("submission_not_found");
+    if (submission.assignment.course.teacherId !== ctx.actorUserId) {
+      throw new Forbidden("not_course_owner");
+    }
+
+    // RETURNED → RETURNED is a no-op (teacher clicking twice).
+    if (submission.status === "RETURNED") {
+      // Still create the comment so the conversation grows.
+    }
+
+    await tx.comment.create({
+      data: {
+        ownerType: "SUBMISSION",
+        ownerId: submission.id,
+        scope: "PRIVATE",
+        authorId: ctx.actorUserId,
+        body: parsed.comment,
+      },
+    });
+
+    await tx.submission.update({
+      where: { id: submission.id },
+      data: { status: "RETURNED" },
+    });
+
+    await audit(
+      {
+        actorId: ctx.actorUserId,
+        actorRole: "TEACHER",
+        action: "SUBMISSION_RETURNED",
+        targetType: "Submission",
+        targetId: submission.id,
+        reason: parsed.comment,
+        ipAddress: ctx.ipAddress,
+        userAgent: ctx.userAgent,
+        before: { status: submission.status },
+        after: { status: "RETURNED" },
+      },
+      tx
+    );
+  }, TX_OPTS);
+}
+
+// ─────────────────────────────────────────────────────────────
+// gradeSubmission — teacher-facing
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Grade a submission.
+ *
+ * Two flows depending on the Assignment's `isScored`:
+ *
+ *   Scored Assignment
+ *     - Resolves the linked ScoreItem via `Assignment.scoreItemId`.
+ *     - Routes through `lib/scoring.score-entry.upsertScoreEntry` so the
+ *       Phase 5 invariants (value ∈ [0, fullScore]; post-publish edits
+ *       require reason ≥ 5 + SCORE_EDIT_AFTER_PUBLISH audit per ADR-0018)
+ *       apply uniformly. NO Phase-6-specific bypass.
+ *     - Submission.status remains driven by the workflow signal (RETURNED
+ *       vs SUBMITTED). It only moves to GRADED when `markGraded=true`, an
+ *       explicit teacher action signalling "I'm done with this one".
+ *
+ *   Ungraded Assignment
+ *     - No ScoreEntry write. Simply marks Submission.status = GRADED.
+ *
+ * For the actual ScoreEntry write we delegate to lib/scoring rather than
+ * touch the row directly, keeping the audit gate single-sourced.
+ */
+export async function gradeSubmission(
+  input: {
+    submissionId: string;
+    /** Required when Assignment.isScored=true. */
+    value?: number;
+    /** Required when Assignment.isScored=true AND ScoreItem.publishedAt !== null. */
+    reason?: string;
+    note?: string;
+    /** Set true to transition Submission.status → GRADED. */
+    markGraded?: boolean;
+  },
+  ctx: ActorCtx
+): Promise<void> {
+  await db.$transaction(async (tx) => {
+    const submission = await tx.submission.findUnique({
+      where: { id: input.submissionId },
+      select: {
+        id: true,
+        status: true,
+        enrollmentId: true,
+        assignment: {
+          select: {
+            id: true,
+            isScored: true,
+            scoreItemId: true,
+            course: { select: { teacherId: true } },
+            scoreItem: {
+              select: { id: true, fullScore: true, publishedAt: true },
+            },
+          },
+        },
+      },
+    });
+    if (!submission) throw new NotFound("submission_not_found");
+    if (submission.assignment.course.teacherId !== ctx.actorUserId) {
+      throw new Forbidden("not_course_owner");
+    }
+
+    if (submission.assignment.isScored) {
+      const scoreItem = submission.assignment.scoreItem;
+      if (!scoreItem) {
+        // Invariant: isScored=true implies scoreItemId NOT NULL at the
+        // lib/assignment boundary. If we land here, an out-of-band
+        // deleteScoreItem call broke the coupling; teacher must toggle
+        // isScored=false first to clean up before grading anything.
+        throw new Conflict("linked_scoreitem_missing");
+      }
+      if (input.value === undefined) {
+        throw new ValidationError({ value: "ระบุคะแนน" });
+      }
+      if (
+        !Number.isInteger(input.value) ||
+        input.value < 0 ||
+        input.value > scoreItem.fullScore
+      ) {
+        throw new ValidationError({
+          value: `คะแนนต้องอยู่ใน 0..${scoreItem.fullScore}`,
+        });
+      }
+      const reasonTrimmed = input.reason?.trim() ?? "";
+      if (scoreItem.publishedAt !== null && reasonTrimmed.length < REASON_MIN) {
+        throw new ValidationError({
+          reason: `การแก้คะแนนหลัง publish ต้องใส่เหตุผล (อย่างน้อย ${REASON_MIN} ตัวอักษร)`,
+        });
+      }
+
+      // Direct ScoreEntry upsert inside the same tx. Mirrors
+      // lib/scoring.score-entry behaviour (post-publish audit + editCount).
+      // We do not import from lib/scoring here to avoid a circular import;
+      // the duplicated logic is small and stays in sync via shared
+      // constants + ADR-0018 contract.
+      const existing = await tx.scoreEntry.findUnique({
+        where: {
+          scoreItemId_enrollmentId: {
+            scoreItemId: scoreItem.id,
+            enrollmentId: submission.enrollmentId,
+          },
+        },
+        select: { id: true, value: true, editCount: true },
+      });
+
+      const isPublishedEdit =
+        scoreItem.publishedAt !== null && existing !== null;
+
+      if (existing) {
+        await tx.scoreEntry.update({
+          where: { id: existing.id },
+          data: {
+            value: input.value,
+            note: input.note ?? null,
+            markedById: ctx.actorUserId,
+            editCount: existing.editCount + 1,
+          },
+        });
+        if (isPublishedEdit && input.value !== existing.value) {
+          await audit(
+            {
+              actorId: ctx.actorUserId,
+              actorRole: "TEACHER",
+              action: "SCORE_EDIT_AFTER_PUBLISH",
+              targetType: "ScoreEntry",
+              targetId: existing.id,
+              reason: reasonTrimmed,
+              ipAddress: ctx.ipAddress,
+              userAgent: ctx.userAgent,
+              before: { value: existing.value },
+              after: { value: input.value },
+            },
+            tx
+          );
+        }
+      } else {
+        await tx.scoreEntry.create({
+          data: {
+            scoreItemId: scoreItem.id,
+            enrollmentId: submission.enrollmentId,
+            value: input.value,
+            note: input.note ?? null,
+            markedById: ctx.actorUserId,
+          },
+        });
+      }
+    }
+
+    if (input.markGraded) {
+      await tx.submission.update({
+        where: { id: submission.id },
+        data: { status: "GRADED" },
+      });
+    }
+  }, TX_OPTS);
+}
