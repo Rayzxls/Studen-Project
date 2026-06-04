@@ -419,6 +419,43 @@ describe("can.uploadToAssignment (Phase 6, P6-4 · ADR-0021 § 1 step 2)", () =>
   });
 });
 
+describe("can.uploadToSubmission (Phase 7 · P7-0b · ADR-0021 + ADR-0022 sibling)", () => {
+  const submission = {
+    enrollment: { studentId: "s1", removedAt: null as Date | null },
+  };
+
+  it("owning student of active enrollment → true", () => {
+    expect(can.uploadToSubmission(mkSession("STUDENT", "s1"), submission)).toBe(
+      true
+    );
+  });
+
+  it("different student → false", () => {
+    expect(can.uploadToSubmission(mkSession("STUDENT", "s2"), submission)).toBe(
+      false
+    );
+  });
+
+  it("owning student but enrollment removed → false (ADR-0013 soft-delete blocks upload)", () => {
+    const removed = {
+      enrollment: { studentId: "s1", removedAt: new Date("2026-01-01") },
+    };
+    expect(can.uploadToSubmission(mkSession("STUDENT", "s1"), removed)).toBe(
+      false
+    );
+  });
+
+  it("TEACHER → false (teacher uploads to ASSIGNMENT scope, not SUBMISSION)", () => {
+    expect(can.uploadToSubmission(mkSession("TEACHER", "t1"), submission)).toBe(
+      false
+    );
+  });
+
+  it("ADMIN → false (admin does not create student content per CLAUDE.md hard rule)", () => {
+    expect(can.uploadToSubmission(mkSession("ADMIN"), submission)).toBe(false);
+  });
+});
+
 describe("L1 visibility (Phase 1) — students never see others", () => {
   it("STUDENT cannot view audit logs", () => {
     expect(can.viewAuditLog(mkSession("STUDENT"))).toBe(false);

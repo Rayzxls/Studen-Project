@@ -258,4 +258,33 @@ export const can = {
     if (session.user.role !== "TEACHER") return false;
     return session.user.id === assignment.course.teacherId;
   },
+
+  /**
+   * Student upload to their own Submission row — Phase 7 · P7-0b · ADR-0021 § 1
+   * + ADR-0022 sibling decision (files attach to parent Submission).
+   *
+   * The student must own the enrollment that owns this submission AND the
+   * enrollment must still be active (removedAt IS NULL). Submission row
+   * existed when the presign call started — the chicken-and-egg from P6 is
+   * resolved by P7-0a `FileOwnerType.SUBMISSION` (files attach to parent
+   * Submission, not to a SubmissionVersion that does not yet exist).
+   *
+   * The Assignment-level `submissionClosed` flag and `auto_close_at_due` are
+   * NOT enforced here — they govern `submitVersion`, not the file upload.
+   * A student may upload files then discover at submit-time that the window
+   * is closed; the orphan staging key reaps via R2 lifecycle (ADR-0021 § 1).
+   *
+   * Pure — caller resolves the owning enrollment's studentId + removedAt and
+   * passes them in. DB-backed dispatch lives in `assert.canUploadTo`.
+   */
+  uploadToSubmission(
+    session: Session,
+    submission: {
+      enrollment: { studentId: string; removedAt: Date | null };
+    }
+  ): boolean {
+    if (session.user.role !== "STUDENT") return false;
+    if (submission.enrollment.removedAt !== null) return false;
+    return session.user.id === submission.enrollment.studentId;
+  },
 };

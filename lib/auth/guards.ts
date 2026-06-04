@@ -470,33 +470,50 @@ export const assert = {
    * Phase 6 — wraps the `canUpload` predicate that
    * `lib/storage/presign.presignUpload` consumes.
    *
-   * Phase 6 only supports `ownerType=ASSIGNMENT` (teacher attaching
-   * worksheet to brief). Other ownerTypes throw
-   * `owner_type_not_supported_yet` — student SUBMISSION upload wires in
-   * P7-0b storage routes (files attach to parent Submission per
-   * ADR-0021 chicken-and-egg + ADR-0022 fileAttachmentIds pointer);
-   * MATERIAL / ANNOUNCEMENT / COMMENT are Phase 7+.
+   * Supported ownerTypes (P7-0b):
+   *   • ASSIGNMENT  — Teacher of the host CourseOffering attaches a
+   *                   worksheet to the brief.
+   *   • SUBMISSION  — Student of the owning enrollment attaches files to
+   *                   their Submission (files attach to the parent
+   *                   Submission row; SubmissionVersion.fileAttachmentIds
+   *                   is the per-version pointer array — P7-0a).
    *
-   * Returns Session — no row to share with the caller (the presign
-   * worker already has owner ids from its input).
+   * MATERIAL / ANNOUNCEMENT / COMMENT throw `owner_type_not_supported_yet`
+   * until their host models materialize (Phase 7 main).
+   *
+   * Returns Session — no row to share with the caller (the presign worker
+   * already has owner ids from its input).
    */
   async canUploadTo(
     ownerType: import("@prisma/client").FileOwnerType,
     ownerId: string
   ): Promise<Session> {
     const session = await requireAuth();
-    if (ownerType !== "ASSIGNMENT") {
-      throw new Forbidden("owner_type_not_supported_yet");
+    if (ownerType === "ASSIGNMENT") {
+      const assignment = await db.assignment.findUnique({
+        where: { id: ownerId },
+        select: { course: { select: { teacherId: true } } },
+      });
+      if (!assignment) throw new NotFound("assignment_not_found");
+      if (!can.uploadToAssignment(session, assignment)) {
+        throw new Forbidden();
+      }
+      return session;
     }
-    const assignment = await db.assignment.findUnique({
-      where: { id: ownerId },
-      select: { course: { select: { teacherId: true } } },
-    });
-    if (!assignment) throw new NotFound("assignment_not_found");
-    if (!can.uploadToAssignment(session, assignment)) {
-      throw new Forbidden();
+    if (ownerType === "SUBMISSION") {
+      const submission = await db.submission.findUnique({
+        where: { id: ownerId },
+        select: {
+          enrollment: { select: { studentId: true, removedAt: true } },
+        },
+      });
+      if (!submission) throw new NotFound("submission_not_found");
+      if (!can.uploadToSubmission(session, submission)) {
+        throw new Forbidden();
+      }
+      return session;
     }
-    return session;
+    throw new Forbidden("owner_type_not_supported_yet");
   },
 };
 
