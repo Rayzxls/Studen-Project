@@ -89,9 +89,12 @@ export default async function AdminTeachersPage({ searchParams }: PageProps) {
               {result.items.map((t) => (
                 <tr key={t.userId}>
                   <td>
-                    <div className="font-medium">
+                    <Link
+                      href={`/admin/users/${t.userId}`}
+                      className="font-medium text-black hover:underline"
+                    >
                       {t.firstName} {t.lastName}
-                    </div>
+                    </Link>
                   </td>
                   <td className="text-sm">{t.email}</td>
                   <td className="text-sm">
