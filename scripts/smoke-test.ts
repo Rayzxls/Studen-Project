@@ -1544,6 +1544,120 @@ async function testPhase7TeacherPostUI() {
   }
 }
 
+async function testPhase7StudentPostUI() {
+  console.log(
+    "\n👨‍🎓 Phase 7 / P7-8: student Material + Announcement UI + comments thread"
+  );
+
+  await db.rateLimitBucket.deleteMany({
+    where: { id: { startsWith: "login:" } },
+  });
+
+  const studentCookie = await signin("60001", "Student1234");
+  if (!studentCookie) {
+    fail("Student login (Phase 7 student post UI)", "no cookie");
+    return;
+  }
+
+  const demoCode = "MATH4A-DEMO1";
+  const course = await db.courseOffering.findUnique({
+    where: { classCode: demoCode },
+    select: { id: true },
+  });
+  if (!course) {
+    fail("P7-8 setup", `demo course "${demoCode}" missing`);
+    return;
+  }
+
+  // Student materials list
+  const mat = await fetch(`${BASE}/student/courses/${course.id}/materials`, {
+    headers: { cookie: studentCookie },
+  });
+  const matBody = await mat.text();
+  await expect(
+    "Student Materials list → 200",
+    mat.status === 200,
+    `got ${mat.status}`
+  );
+  await expect(
+    "Student Materials list shows section heading",
+    matBody.includes("เอกสารประกอบ"),
+    "heading not found"
+  );
+  await expect(
+    "Student tab nav includes เอกสาร tab",
+    matBody.includes("เอกสาร"),
+    "tab missing"
+  );
+
+  // Student announcements list
+  const ann = await fetch(
+    `${BASE}/student/courses/${course.id}/announcements`,
+    { headers: { cookie: studentCookie } }
+  );
+  const annBody = await ann.text();
+  await expect(
+    "Student Announcements list → 200",
+    ann.status === 200,
+    `got ${ann.status}`
+  );
+  await expect(
+    "Student tab nav includes ประกาศ tab",
+    annBody.includes("ประกาศ"),
+    "tab missing"
+  );
+
+  // Pick one Material to verify the detail page + comments thread render
+  const material = await db.material.findFirst({
+    where: { courseOfferingId: course.id, deletedAt: null },
+    select: { id: true },
+  });
+  if (material) {
+    const detail = await fetch(
+      `${BASE}/student/courses/${course.id}/materials/${material.id}`,
+      { headers: { cookie: studentCookie } }
+    );
+    const detailBody = await detail.text();
+    await expect(
+      "Student Material detail → 200",
+      detail.status === 200,
+      `got ${detail.status}`
+    );
+    await expect(
+      "Material detail renders comments thread heading",
+      detailBody.includes("ความคิดเห็น"),
+      "thread heading missing"
+    );
+    await expect(
+      "Material detail renders comment composer textarea",
+      detailBody.includes('name="body"') &&
+        detailBody.includes('name="ownerType"'),
+      "composer fields missing"
+    );
+  }
+
+  // Teacher side — composer also reachable on the same Material detail
+  const teacherCookie = await signin("teacher@studennnn.local", "Teacher1234!");
+  if (teacherCookie && material) {
+    const tDetail = await fetch(
+      `${BASE}/teacher/courses/${course.id}/materials/${material.id}`,
+      { headers: { cookie: teacherCookie } }
+    );
+    const tDetailBody = await tDetail.text();
+    await expect(
+      "Teacher Material detail renders comments thread (P7-7 placeholder replaced)",
+      tDetailBody.includes("ความคิดเห็น") &&
+        !tDetailBody.includes("จะเปิดในขั้น P7-8"),
+      "thread missing or placeholder still present"
+    );
+  }
+
+  // L1 — removed student cannot reach student Materials route
+  // (we don't have an automated removed-student fixture here; the
+  // active-enrollment gate is exercised by `assert.isActiveCourseMember`
+  // and covered by P3 integration tests).
+}
+
 async function testAuditLog() {
   console.log("\n📝 Audit log verification");
 
@@ -1618,6 +1732,7 @@ async function main() {
   await testPhase7Bell();
   await testPhase7DashboardFeed();
   await testPhase7TeacherPostUI();
+  await testPhase7StudentPostUI();
   await testAuditLog();
 
   console.log(`\n╭───────────────────────────────────╮`);

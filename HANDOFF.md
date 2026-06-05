@@ -3,7 +3,7 @@
 > เอกสารนี้ใช้สำหรับเริ่ม **session ใหม่** กับ AI assistant แล้วต่อยอดได้ทันที
 > อ่านไฟล์นี้ + `CLAUDE.md` + `CONTEXT.md` ก่อนเริ่มงาน
 
-อัพเดตล่าสุด: **2026-06-05** · 99+ commits · **Phase 0-6 ปิดครบ · Phase 7 ถึง P7-7 (Bell + Dashboard Feed + Teacher Post UI)**
+อัพเดตล่าสุด: **2026-06-05** · 102+ commits · **Phase 0-6 ปิดครบ · Phase 7 ถึง P7-8 (Bell + Feed + Posts + Comments)**
 
 ---
 
@@ -332,7 +332,7 @@ All commits since `c46b7c4` have passed 3/3 jobs (Lint/Typecheck, Unit Tests, Bu
 
 **Total verifications post-Phase 6:** 299 unit + 135 integration + ~98 smoke = **~532**.
 
-### Phase 7 progress — paused at P7-7 (2026-06-05 · `0eb99a5`)
+### Phase 7 progress — paused at P7-8 (2026-06-05 · `e2eb851`)
 
 | Sub-task | Status | SHA |
 |---|---|---|
@@ -348,11 +348,11 @@ All commits since `c46b7c4` have passed 3/3 jobs (Lint/Typecheck, Unit Tests, Bu
 | P7-5 Bell UI navbar + dropdown (lib helpers · bell components · shared TopNav · migrate 6 surfaces) | ✅ | `a2615ed` · `9d82121` · `996532c` |
 | P7-6 Dashboard User Feed + Due Soon Widget (student-only) | ✅ | `4ab67af` · `ca23943` |
 | P7-7 Teacher Material + Announcement UI (tabs · CRUD · Pattern-7 dialogs) | ✅ | `0eb99a5` |
-| P7-8 Student Material + Announcement UI | ⏳ TODO | — |
+| P7-8 Student M+A views + shared CommentsThread on 6 detail pages | ✅ | `af91dde` · `e2eb851` |
 | P7-9 Integration tests (broader fan-out coverage) | ⏳ TODO | — |
 | P7-10 Smoke + HANDOFF close-out | ⏳ TODO | — |
 
-**Verifications post-P7-7:** 384 unit + 148 integration + ~115 smoke (+7) = ~647 checks
+**Verifications post-P7-8:** 384 unit + 148 integration + ~124 smoke (+9) = ~656 checks
 
 **Lib layer essentially done.** All 9 NotificationKinds have wired event sources end-to-end:
 
@@ -513,10 +513,65 @@ announcements list 200 + create btn · 8-tab nav contains เอกสาร +
 - "อยู่ระหว่างพัฒนา" footer card on dashboard still says "Phase
   ปัจจุบัน: 5" — cosmetic; wholesale update at P7-10 close-out
 
-**Next session resume point — P7-8:** Student Material + Announcement
-views + class-wide comments thread on all four content types
-(Assignment + Material + Announcement + Submission), with the
-teacher composer landing in the same commit set.
+**P7-8 — what shipped (2026-06-05 · `e2eb851`)**
+
+Student side of Material + Announcement now exists, and the shared
+`<CommentsThread />` component lands on all six teacher/student ×
+Assignment/Material/Announcement detail pages. 3-question mini-grill
+locked design before code:
+- Q1 = A: single reusable Server Component driven by `ownerType` prop
+- Q2 = A: CLASS_WIDE thread on all 3 content types (Assignment included,
+  not just M+A — single cohesive landing)
+- Q3 = A: full edit/delete affordances (author 5-min edit · author
+  self-delete · moderator delete with reason)
+
+**Student tabs.** `_tabs.ts` gains เอกสาร + ประกาศ in the same position
+the teacher uses; tab nav stays consistent across roles.
+
+**Student Material + Announcement** (`/student/courses/[id]/...`)
+- Read-only mirrors of teacher pages; L1 via
+  `assert.isActiveCourseMember`. Soft-deleted entities 404.
+- Detail pages each host `<CommentsThread />` (the same thread teacher
+  sees on the corresponding teacher detail).
+
+**Shared `<CommentsThread />` component family** (af91dde):
+- `components/comment/comments-thread.tsx` Server Component fetches the
+  thread inline + resolves moderator-ness; renders per-row affordances
+  (author edit pencil · author self-delete · moderator delete dialog)
+- Client islands: `composer.tsx` (with autoreset on success),
+  `edit-comment-dialog.tsx` (Pattern 7), `delete-comment-button.tsx`
+  inline, `moderate-delete-dialog.tsx` (reason ≥ 5)
+- Server Actions cover all 4 lib paths (create / edit / selfDelete /
+  moderateDelete); each accepts a `revalidate` hidden field
+  reconstructed by the thread component from
+  `(rolePrefix, courseId, ownerType, ownerId)`
+- Soft-deleted comments render an italic "ข้อความนี้ถูกลบ" placeholder
+  so chronology stays intact
+
+**Six detail pages now host the thread:**
+- Teacher Material + Announcement (P7-7 placeholder replaced)
+- Teacher + Student Assignment detail (CLASS_WIDE thread appended
+  below the existing submission grid / version history)
+- Student Material + Announcement detail (newly created in P7-8)
+
+**Smoke (+9 checks):** student materials list 200 + heading + tab ·
+student announcements list 200 + tab · material detail thread heading
++ composer fields present · teacher material detail thread replaces
+the P7-7 placeholder (conditional on existing demo Material).
+
+**Known follow-ups for P7-9:**
+- PRIVATE composer on Submission detail (teacher reply + student
+  reply on returned submissions) — Phase 6 ships read-only PRIVATE
+  comments; the full composer ships with P7-9 integration sweep
+- Notification fan-out broader integration tests (multi-recipient
+  COMMENT_REPLIED, dedup, suppress-on-delete cascades)
+- "อยู่ระหว่างพัฒนา" footer card on dashboard still says "Phase
+  ปัจจุบัน: 5" — wholesale update at P7-10 close-out
+
+**Next session resume point — P7-9:** Broader integration tests for
+the Phase-7 fan-out semantics (multi-recipient COMMENT_REPLIED,
+moderator-delete cascade, suppress-on-deleted-entity), PRIVATE
+composer on Submission, and any remaining L1 boundary coverage.
 
 Phase 6 carryover (now historical):
 
