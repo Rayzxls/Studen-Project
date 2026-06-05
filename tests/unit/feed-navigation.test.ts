@@ -31,23 +31,23 @@ describe("resolveFeedHref", () => {
     ).toBe(`/student/courses/${COURSE}/scores`);
   });
 
-  it("MATERIAL falls back to course root (no UI yet)", () => {
+  it("MATERIAL deep-links to material detail (P9-1)", () => {
     expect(
       resolveFeedHref({
         kind: "MATERIAL",
         courseOfferingId: COURSE,
         itemId: "material-1",
       })
-    ).toBe(`/student/courses/${COURSE}`);
+    ).toBe(`/student/courses/${COURSE}/materials/material-1`);
   });
 
-  it("ANNOUNCEMENT falls back to course root (no UI yet)", () => {
+  it("ANNOUNCEMENT deep-links to announcement detail (P9-1)", () => {
     expect(
       resolveFeedHref({
         kind: "ANNOUNCEMENT",
         courseOfferingId: COURSE,
         itemId: "announcement-1",
       })
-    ).toBe(`/student/courses/${COURSE}`);
+    ).toBe(`/student/courses/${COURSE}/announcements/announcement-1`);
   });
 });

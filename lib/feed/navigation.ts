@@ -1,5 +1,5 @@
 /**
- * User Feed href resolver — Phase 7 · P7-6
+ * User Feed href resolver — Phase 7 · P7-6 · upgraded Phase 9 · P9-1
  *
  * Pure (no I/O). Maps a feed item kind + ids → student URL.
  *
@@ -8,9 +8,10 @@
  * the feed for teachers, add another branch — do NOT collapse the
  * student URL pattern.
  *
- * Fallback (matches `lib/notification/navigation` posture):
- *  - MATERIAL / ANNOUNCEMENT have no UI route yet (P7-7/P7-8) → fall
- *    back to course root so the click still lands somewhere useful.
+ * P9-1: MATERIAL / ANNOUNCEMENT now deep-link to the student-side
+ * detail routes that P7-8 shipped, mirroring
+ * `lib/notification/navigation` behaviour. The course-root fallback
+ * predates the P7-8 student M+A routes.
  */
 
 import type { FeedKind } from "./aggregator";
@@ -27,8 +28,8 @@ export function resolveFeedHref(args: {
     case "SCORE_PUBLISHED":
       return `/student/courses/${courseOfferingId}/scores`;
     case "MATERIAL":
+      return `/student/courses/${courseOfferingId}/materials/${itemId}`;
     case "ANNOUNCEMENT":
-      // No UI route yet — P7-7 / P7-8 lands these. Land on course root.
-      return `/student/courses/${courseOfferingId}`;
+      return `/student/courses/${courseOfferingId}/announcements/${itemId}`;
   }
 }

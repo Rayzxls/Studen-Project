@@ -15,7 +15,7 @@
     "test:all": "dotenv -e .env.local -- vitest run --no-file-parallelism",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test:e2e": "playwright test",
+    "test:e2e": "dotenv -e .env.local -- playwright test",
     "db:generate": "prisma generate",
     "db:migrate": "dotenv -e .env.local -- prisma migrate dev",
     "db:migrate:deploy": "dotenv -e .env.local -- prisma migrate deploy",
