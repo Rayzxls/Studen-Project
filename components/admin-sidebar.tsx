@@ -8,10 +8,12 @@ import {
   GraduationCap,
   Upload,
   ScrollText,
+  Settings2,
 } from "lucide-react";
 
 const items = [
   { href: "/admin/dashboard", label: "ภาพรวม", icon: LayoutDashboard },
+  { href: "/admin/setup", label: "ตั้งค่าโครงสร้าง", icon: Settings2 },
   { href: "/admin/teachers", label: "ครู", icon: Users },
   { href: "/admin/students", label: "นักเรียน", icon: GraduationCap },
   { href: "/admin/import", label: "นำเข้า CSV", icon: Upload },
