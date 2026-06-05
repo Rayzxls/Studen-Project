@@ -259,8 +259,8 @@ export default async function DashboardPage() {
             อยู่ระหว่างพัฒนา
           </h2>
           <p className="mt-2 text-sm text-black/60">
-            <span className="font-medium text-black">Phase ปัจจุบัน:</span> 5 —
-            คะแนน + Term Summary
+            <span className="font-medium text-black">Phase ปัจจุบัน:</span> 8 —
+            Admin Audit Tools
           </p>
           <ul className="mt-3 list-inside list-disc space-y-1 text-sm text-black/60">
             <li>
@@ -281,8 +281,24 @@ export default async function DashboardPage() {
               </span>{" "}
               ✓
             </li>
-            <li>Phase 6 — การบ้าน + Comments</li>
-            <li>Phase 7 — Feed + Notifications</li>
+            <li>
+              <span className="text-black/40 line-through">
+                Phase 5 — คะแนน + Term Summary
+              </span>{" "}
+              ✓
+            </li>
+            <li>
+              <span className="text-black/40 line-through">
+                Phase 6 — การบ้าน + Comments
+              </span>{" "}
+              ✓
+            </li>
+            <li>
+              <span className="text-black/40 line-through">
+                Phase 7 — Feed + Notifications
+              </span>{" "}
+              ✓
+            </li>
             <li>Phase 8 — Admin Audit Tools</li>
             <li>Phase 9 — Polish + Hardening</li>
           </ul>

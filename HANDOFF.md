@@ -3,7 +3,7 @@
 > เอกสารนี้ใช้สำหรับเริ่ม **session ใหม่** กับ AI assistant แล้วต่อยอดได้ทันที
 > อ่านไฟล์นี้ + `CLAUDE.md` + `CONTEXT.md` ก่อนเริ่มงาน
 
-อัพเดตล่าสุด: **2026-06-05** · 103+ commits · **Phase 0-6 ปิดครบ · Phase 7 ถึง P7-9 (+integration tests)**
+อัพเดตล่าสุด: **2026-06-05** · 105+ commits · **Phase 0-7 ปิดครบ · พร้อมเริ่ม Phase 8 (Admin Audit Tools)**
 
 ---
 
@@ -332,7 +332,7 @@ All commits since `c46b7c4` have passed 3/3 jobs (Lint/Typecheck, Unit Tests, Bu
 
 **Total verifications post-Phase 6:** 299 unit + 135 integration + ~98 smoke = **~532**.
 
-### Phase 7 progress — paused at P7-9 (2026-06-05 · `ffd7b89`)
+### Phase 7 — CLOSED (2026-06-05 · final `757f4ad` + P7-10 close-out)
 
 | Sub-task | Status | SHA |
 |---|---|---|
@@ -350,7 +350,7 @@ All commits since `c46b7c4` have passed 3/3 jobs (Lint/Typecheck, Unit Tests, Bu
 | P7-7 Teacher Material + Announcement UI (tabs · CRUD · Pattern-7 dialogs) | ✅ | `0eb99a5` |
 | P7-8 Student M+A views + shared CommentsThread on 6 detail pages | ✅ | `af91dde` · `e2eb851` |
 | P7-9 Integration tests — fan-out + suppress + comment moderation | ✅ | `ffd7b89` |
-| P7-10 Smoke + HANDOFF close-out | ⏳ TODO | — |
+| P7-10 Close-out — dashboard footer · final smoke sweep · HANDOFF roll-up | ✅ | `07ad363` |
 
 **Verifications post-P7-9:** 384 unit + 171 integration (+23) + ~124 smoke = ~679 checks
 
@@ -568,6 +568,64 @@ the P7-7 placeholder (conditional on existing demo Material).
 - "อยู่ระหว่างพัฒนา" footer card on dashboard still says "Phase
   ปัจจุบัน: 5" — wholesale update at P7-10 close-out
 
+**Phase 7 — final roll-up (2026-06-05)**
+
+Phase 7 closes with the Bell + dashboard Feed + Due Soon Widget +
+teacher and student Material/Announcement UIs + shared CommentsThread
+on all 6 detail pages + 23 new integration tests covering the fan-out
++ suppress + moderation seams. **Two ADRs landed during the phase:**
+
+- **ADR-0022** — Notification storage model + in-tx fan-out +
+  partial-unique dedup + suppress on entity-soft-delete + snapshot
+  payload posture.
+- **ADR-0023** — User Feed = multi-query union at the application
+  layer + course-scope resolver as the single L1 boundary + Course
+  Feed surface deferred to Phase 8.
+
+**Every P7 SHA in chronological order:**
+
+| Sub-task | SHAs |
+|---|---|
+| Grill + ADRs + CONTEXT updates | `43df25f` · `fa11175` · `7eb65e7` |
+| P7-0a..d Phase-6 carry-over (file upload UI) | `00de7ae` · `f419f38` · `099a116` · `4fc81b4` |
+| P7-1 schema (Notification + Material + Announcement) | `9b4912c` |
+| P7-2 lib/notification + 7 mutation-site fan-out wirings | `acfccbd` |
+| P7-3 lib/material + lib/announcement | `73a7684` |
+| P7-4 notification read routes + lib/feed | `b64a786` |
+| P7-5 Bell UI navbar + shared TopNav + migrate 6 surfaces | `a2615ed` · `9d82121` · `996532c` · `6018b4f` |
+| P7-6 Dashboard User Feed + Due Soon Widget | `4ab67af` · `ca23943` · `70ae78a` |
+| P7-7 Teacher Material + Announcement UI | `0eb99a5` · `7809c05` |
+| P7-8 Student M+A views + shared CommentsThread on 6 detail pages | `af91dde` · `e2eb851` · `2000222` |
+| P7-9 Integration tests — fan-out + suppress + comment moderation | `ffd7b89` · `757f4ad` |
+| P7-10 Close-out — footer + sweep + HANDOFF | this commit |
+
+**Verifications post-Phase 7:** 384 unit + 171 integration (+23) +
+~124 smoke (+30 since post-P7-4 baseline) = ~679 total.
+
+**Pre-existing smoke flakes** (NOT regressions — same on `main` before
+P7-5): Phase 5/6 teacher login + Phase 7 storage student login hit
+the rate-limit cascade from `testRateLimitLockout`. The bell + feed +
+material/announcement sections defensively `db.rateLimitBucket.
+deleteMany({where:{id:{startsWith:"login:"}}})` at section start to
+sidestep; the same prefix-clear would unbreak the other sections in
+a future cleanup commit.
+
+**Deferred items carried into Phase 8 / 9:**
+- PRIVATE composer on Submission detail (teacher reply + student
+  reply on returned submissions). Phase 6 still has read-only PRIVATE
+  comment display; the composer ships alongside Phase 8 admin audit
+  tools or as a Phase 9 polish item.
+- Enrich `SubmissionGradedPayload` / `SubmissionReturnedPayload` /
+  `CommentRepliedPayload` with `assignmentId` / `entityOwnerId` so
+  the bell + feed can deep-link to assignment detail instead of the
+  list fallback.
+- After Material/Announcement get their student-side detail routes
+  in P7-8 (already done), the feed + notification navigation
+  resolvers can switch from course-root fallback to entity detail
+  URL — small follow-up.
+
+---
+
 **P7-9 — what shipped (2026-06-05 · `ffd7b89`)**
 
 Three new integration test files lock the Phase-7 lib seams against a
@@ -613,9 +671,16 @@ real Neon DB; integration tests 148 → 171 (+23).
   with `assignmentId` / `entityOwnerId` so bell + feed can deep-link
   instead of falling back to course root.
 
-**Next session resume point — P7-10:** Phase 7 close-out — smoke
-sweep, dashboard "Phase ปัจจุบัน" footer refresh, and the final
-HANDOFF roll-up of every P7 SHA + ADR.
+**Next session resume point — Phase 8:** Admin Audit Tools. The
+audit log already accumulates Important + Critical events across all
+phases (see `lib/audit/log.ts` + Security.md § 7). Phase 8 adds the
+admin-facing read surface (filterable audit viewer · per-event drill-
+down · CSV export · moderator dashboards). No new lib mutations
+expected; mostly UI + read queries + permission checks.
+
+CONTEXT § Admin already locks the moderation matrix and the
+"Admin × PRIVATE comment = Critical-tier audit" escalation; Phase 8
+will surface those tiers cleanly in the audit viewer.
 
 Phase 6 carryover (now historical):
 
@@ -797,8 +862,8 @@ Recommend grilling Q1 + Q2 + Q4 first (highest blast radius). Q3 + Q5 + Q6 can b
 | **3** | Course tabs (Overview · Members · Settings) + soft-delete + restoration | ✅ DONE (P3-1..9 all complete · 22 integration tests pass) |
 | **4** | Attendance (TimetableSlot · Session lazy materialization · sparse AttendanceRecord · back-edit audit) | ✅ DONE (P4-1..9 all complete · 91 unit + 71 integration + 72 smoke pass) |
 | **5** | Scoring + Term GPA + Print transcript (ADR-0017 + ADR-0018) | ✅ DONE (P5-1..9 all complete · 156 unit + 116 integration + 88 smoke pass · ScoreItemTemplate deferred) |
-| **6** | Assignment + Submission + Comments + R2 file upload | ⏳ TODO |
-| **7** | Feed + Notifications | ⏳ TODO |
+| **6** | Assignment + Submission + Comments + R2 file upload | ✅ DONE (P6-1..9 all complete · 299 unit + 135 integration + 98 smoke pass · 3 ADRs locked) |
+| **7** | Feed + Notifications + Bell + Class-wide Comments | ✅ DONE (P7-0..10 all complete · 384 unit + 171 integration + ~124 smoke pass · 2 ADRs locked) |
 | **8** | Admin polish (more audit tools) | ⏳ TODO |
 | **9** | E2E tests + Hardening + Deploy | ⏳ TODO |
 
