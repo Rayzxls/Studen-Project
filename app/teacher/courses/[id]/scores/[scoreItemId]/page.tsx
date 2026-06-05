@@ -4,7 +4,6 @@ import { ChevronLeft } from "lucide-react";
 import { assert } from "@/lib/auth/guards";
 import { getCourseOfferingForTeacher } from "@/lib/course/queries";
 import { getScoreItemGridForTeacher } from "@/lib/scoring/queries";
-import { formatBasisPoints } from "@/lib/scoring/format";
 import { CourseShell } from "@/components/course/course-shell";
 import { ScoreGrid, type ScoreGridRow } from "@/components/scoring/score-grid";
 import { teacherCourseTabs } from "../../_tabs";
@@ -88,8 +87,7 @@ export default async function ScoreItemGridPage({ params }: PageProps) {
                 )}
               </h2>
               <p className="mt-0.5 text-xs text-black/50">
-                น้ำหนัก {formatBasisPoints(grid.item.weight)} · คะแนนเต็ม{" "}
-                {grid.item.fullScore}
+                คะแนนเต็ม {grid.item.fullScore}
               </p>
             </div>
           </div>

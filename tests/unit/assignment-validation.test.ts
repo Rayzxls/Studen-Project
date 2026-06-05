@@ -79,23 +79,10 @@ describe("CreateAssignmentSchema", () => {
     expect(r.success).toBe(false);
   });
 
-  it("requires weight when isScored=true (ADR-0019 § 2)", () => {
+  it("requires fullScore when isScored=true (ADR-0019 + ADR-0024)", () => {
     const r = CreateAssignmentSchema.safeParse({
       ...baseAssignment,
       isScored: true,
-      fullScore: 10,
-    });
-    expect(r.success).toBe(false);
-    if (!r.success) {
-      expect(r.error.issues.some((i) => i.path.includes("weight"))).toBe(true);
-    }
-  });
-
-  it("requires fullScore when isScored=true (ADR-0019 § 2)", () => {
-    const r = CreateAssignmentSchema.safeParse({
-      ...baseAssignment,
-      isScored: true,
-      weight: 3000,
     });
     expect(r.success).toBe(false);
     if (!r.success) {
@@ -105,47 +92,22 @@ describe("CreateAssignmentSchema", () => {
     }
   });
 
-  it("accepts isScored=true with both weight and fullScore", () => {
+  it("accepts isScored=true with fullScore (ADR-0024 sum-based)", () => {
     const r = CreateAssignmentSchema.safeParse({
       ...baseAssignment,
       isScored: true,
-      weight: 3000,
       fullScore: 10,
     });
     expect(r.success).toBe(true);
   });
 
-  it("rejects weight = 0 (ADR-0019 § 2 — no zero-default footgun)", () => {
-    const r = CreateAssignmentSchema.safeParse({
-      ...baseAssignment,
-      isScored: true,
-      weight: 0,
-      fullScore: 10,
-    });
-    expect(r.success).toBe(false);
-  });
+  // Weight-related cases removed by ADR-0024 cutover — weight channel no
+  // longer exists. Influence in the course grade comes from fullScore alone.
+  // See Task #7 follow-up for the fullScore-based test additions
+  // (e.g. fullScore must be positive integer; large fullScore wins
+  // proportionally in scoreTotal computation).
 
-  it("rejects weight > 10000 (basis-point cap)", () => {
-    const r = CreateAssignmentSchema.safeParse({
-      ...baseAssignment,
-      isScored: true,
-      weight: 10_001,
-      fullScore: 10,
-    });
-    expect(r.success).toBe(false);
-  });
-
-  it("rejects non-integer weight", () => {
-    const r = CreateAssignmentSchema.safeParse({
-      ...baseAssignment,
-      isScored: true,
-      weight: 33.5,
-      fullScore: 10,
-    });
-    expect(r.success).toBe(false);
-  });
-
-  it("does not require weight/fullScore when isScored=false (ungraded Assignment)", () => {
+  it("does not require fullScore when isScored=false (ungraded Assignment)", () => {
     const r = CreateAssignmentSchema.safeParse({
       ...baseAssignment,
       isScored: false,

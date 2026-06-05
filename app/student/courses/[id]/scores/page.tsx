@@ -9,11 +9,7 @@ import {
   type WeightedItem,
   type WeightedEntry,
 } from "@/lib/scoring/calc";
-import {
-  formatBasisPoints,
-  formatPercent,
-  formatGpa,
-} from "@/lib/scoring/format";
+import { formatPercent, formatGpa } from "@/lib/scoring/format";
 import { CourseShell } from "@/components/course/course-shell";
 import { studentCourseTabs } from "../_tabs";
 
@@ -50,7 +46,6 @@ export default async function StudentScoresPage({ params }: PageProps) {
   const calcItems: WeightedItem[] = items.map((it) => ({
     id: it.id,
     fullScore: it.fullScore,
-    weight: it.weight,
     publishedAt: it.publishedAt,
   }));
   const calcEntries: WeightedEntry[] = items
@@ -132,8 +127,7 @@ export default async function StudentScoresPage({ params }: PageProps) {
                           {it.name}
                         </p>
                         <p className="mt-0.5 text-xs text-black/50">
-                          น้ำหนัก {formatBasisPoints(it.weight)} · คะแนนเต็ม{" "}
-                          {it.fullScore}
+                          คะแนนเต็ม {it.fullScore}
                         </p>
                         {it.myNote && (
                           <p className="mt-1 truncate text-xs text-black/70">

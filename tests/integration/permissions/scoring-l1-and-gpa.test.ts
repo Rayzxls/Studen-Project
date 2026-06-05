@@ -34,7 +34,6 @@ describe("getOwnScoresForStudent — L1 projection (Pattern 4)", () => {
         courseOfferingId: ctx.courseOfferingId,
         name: "Final",
         fullScore: 100,
-        weight: 10000,
       },
       { actorUserId: ctx.teacherUserId }
     );
@@ -81,7 +80,6 @@ describe("getOwnScoresForStudent — L1 projection (Pattern 4)", () => {
         courseOfferingId: ctx.courseOfferingId,
         name: "Draft Quiz",
         fullScore: 10,
-        weight: 5000,
       },
       { actorUserId: ctx.teacherUserId }
     );
@@ -169,7 +167,6 @@ describe("getStudentTermSnapshot + termGpa — end-to-end pipeline", () => {
         courseOfferingId: ctx.courseOfferingId,
         name: "Midterm",
         fullScore: 50,
-        weight: 5000,
       },
       { actorUserId: ctx.teacherUserId }
     );
@@ -178,7 +175,6 @@ describe("getStudentTermSnapshot + termGpa — end-to-end pipeline", () => {
         courseOfferingId: ctx.courseOfferingId,
         name: "Final",
         fullScore: 50,
-        weight: 5000,
       },
       { actorUserId: ctx.teacherUserId }
     );
@@ -224,7 +220,6 @@ describe("getStudentTermSnapshot + termGpa — end-to-end pipeline", () => {
         courseOfferingId: ctx.courseOfferingId,
         name: "Only",
         fullScore: 10,
-        weight: 10000,
       },
       { actorUserId: ctx.teacherUserId }
     );
@@ -268,7 +263,6 @@ describe("getStudentTermSnapshot + termGpa — end-to-end pipeline", () => {
         courseOfferingId: ctx.courseOfferingId,
         name: "Conduct",
         fullScore: 10,
-        weight: 10000,
       },
       { actorUserId: ctx.teacherUserId }
     );

@@ -308,7 +308,7 @@ model AttendanceRecord {
 }
 
 // ═══════════════════════════════════════════════════════════
-// Scoring (Phase 5) — ADR-0017 (weight basis points + publish gate) · ADR-0018 (publish one-way + field-class edit rules)
+// Scoring (Phase 5 + Phase 10) — ADR-0024 (sum-based, supersedes ADR-0017) · ADR-0018 (publish one-way + class A/C edit rules — class B narrowed to {fullScore})
 // ═══════════════════════════════════════════════════════════
 
 enum ScoreItemSource {
@@ -316,16 +316,15 @@ enum ScoreItemSource {
   ASSIGNMENT_LINKED // created automatically when Assignment.isScored=true (Phase 6)
 }
 
-// One scoring "slot" per CourseOffering — name + weight + fullScore.
-// Weight is stored as integer basis points (0..10000 = 0.00%..100.00%) — ADR-0017.
+// One scoring "slot" per CourseOffering — name + fullScore.
+// Influence in the course grade is proportional to fullScore (Σscore/ΣfullScore × 100) — ADR-0024.
 // publishedAt is set exactly once; never null again — ADR-0018 (no unpublish).
 model ScoreItem {
   id               String          @id @default(cuid())
   courseOfferingId String
   course           CourseOffering  @relation(fields: [courseOfferingId], references: [id], onDelete: Cascade)
   name             String // teacher-defined, ≤ 200 chars (validated at API boundary)
-  fullScore        Int // > 0 (validated at API boundary); see ADR-0017 §1 for why Int not Decimal
-  weight           Int // basis points 0..10000 (= 0.00%..100.00%) — see ADR-0017
+  fullScore        Int // > 0 (validated at API boundary); also expresses proportional influence in course grade per ADR-0024
   source           ScoreItemSource @default(MANUAL)
   position         Int             @default(0) // display order within the CourseOffering
   publishedAt      DateTime? // null = draft; non-null = visible to students (one-way per ADR-0018)

@@ -140,11 +140,10 @@ export default async function StudentCourseOverviewPage({ params }: PageProps) {
       ? Math.round((attendedCount / stats.marked) * 100)
       : null;
 
-  // ── Weighted-total preview (published items, own values) ──────
+  // ── Score-total preview (published items, own values) — ADR-0024 ──
   const calcItems = scoreResult.items.map((it) => ({
     id: it.id,
     fullScore: it.fullScore,
-    weight: it.weight,
     publishedAt: it.publishedAt,
   }));
   const calcEntries = scoreResult.items

@@ -203,9 +203,9 @@ export const assert = {
    * Return shape: divergent like `canMutateSession`. The `item` is
    * returned because the authz decision already fetched it, so callers
    * (a Server Action wanting to render the publish-confirm dialog with
-   * the current weight + fullScore, or to gate the field-class edit
-   * dispatch in the UI) don't have to issue a duplicate read. The field
-   * set exposes the minimum needed by the Score grid + Publish dialog.
+   * the current fullScore, or to gate the field-class edit dispatch in
+   * the UI) don't have to issue a duplicate read. The field set exposes
+   * the minimum needed by the Score grid + Publish dialog.
    *
    * `publishedAt` is returned as a Date | null so the caller can drive
    * Pattern 12 (useState lazy initializer for "is this published?" UI flags)
@@ -224,7 +224,6 @@ export const assert = {
       courseOfferingId: string;
       name: string;
       fullScore: number;
-      weight: number;
       position: number;
       publishedAt: Date | null;
       course: { name: string; teacherId: string };
@@ -238,7 +237,6 @@ export const assert = {
         courseOfferingId: true,
         name: true,
         fullScore: true,
-        weight: true,
         position: true,
         publishedAt: true,
         course: { select: { name: true, teacherId: true } },

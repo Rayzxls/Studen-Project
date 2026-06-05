@@ -42,8 +42,9 @@ export interface ActorCtx {
 /**
  * Create a new Assignment. When `isScored=true`, atomically create a
  * linked `ScoreItem` (`source = ASSIGNMENT_LINKED`) in the same tx and
- * wire `Assignment.scoreItemId` to it. The dialog collected `weight` (bp)
- * and `fullScore`; this function trusts the Zod-validated values.
+ * wire `Assignment.scoreItemId` to it. The dialog collected `fullScore`
+ * (ADR-0024 — no more `weight` channel); this function trusts the
+ * Zod-validated value.
  *
  * Pre-publish — no audit (Verbose tier, same posture as Phase 5).
  */
@@ -55,7 +56,7 @@ export async function createAssignment(
   //   - title non-empty + ≤ TITLE_MAX
   //   - description ≤ DESCRIPTION_MAX
   //   - at least one allowText/File/Link
-  //   - when isScored=true: weight ≥ 1 + fullScore ≥ 1
+  //   - when isScored=true: fullScore ≥ 1
   const parsed = CreateAssignmentSchema.parse(input);
 
   return db.$transaction(async (tx) => {
@@ -93,7 +94,6 @@ export async function createAssignment(
           courseOfferingId: parsed.courseOfferingId,
           name: parsed.title,
           fullScore: parsed.fullScore!,
-          weight: parsed.weight!,
           source: "ASSIGNMENT_LINKED",
         },
       });
@@ -135,9 +135,8 @@ export async function createAssignment(
  * The interesting case is the `isScored` toggle:
  *
  *   false → true (couple)
- *     - Requires `weight` and `fullScore` in patch (Zod cannot enforce
- *       conditional cross-field rules on a partial patch; the lib layer
- *       does it).
+ *     - Requires `fullScore` in patch (Zod cannot enforce conditional
+ *       cross-field rules on a partial patch; the lib layer does it).
  *     - Creates a new ScoreItem (`source=ASSIGNMENT_LINKED`) and wires
  *       `scoreItemId` in the same tx (mirrors `createAssignment` § 1).
  *
@@ -185,13 +184,8 @@ export async function updateAssignment(
     const toggleOn = parsed.isScored === true && current.isScored === false;
     const toggleOff = parsed.isScored === false && current.isScored === true;
 
-    // Toggle ON — require weight + fullScore in patch, create ScoreItem.
+    // Toggle ON — require fullScore in patch, create ScoreItem.
     if (toggleOn) {
-      if (parsed.weight === undefined) {
-        throw new ValidationError({
-          weight: "ระบุน้ำหนักของรายการคะแนน (ADR-0019)",
-        });
-      }
       if (parsed.fullScore === undefined) {
         throw new ValidationError({
           fullScore: "ระบุคะแนนเต็ม (ADR-0019)",
@@ -202,7 +196,6 @@ export async function updateAssignment(
           courseOfferingId: current.courseOfferingId,
           name: parsed.title ?? (await readTitle(tx, assignmentId)),
           fullScore: parsed.fullScore,
-          weight: parsed.weight,
           source: "ASSIGNMENT_LINKED",
         },
       });
@@ -252,14 +245,13 @@ export async function updateAssignment(
       return updated;
     }
 
-    // Non-toggle update — reject weight / fullScore in patch (those only
-    // accompany a toggle ON; updating the linked ScoreItem's weight or
-    // fullScore goes through lib/scoring.updateScoreItem with class-B reason
-    // gate per ADR-0018).
-    if (parsed.weight !== undefined || parsed.fullScore !== undefined) {
+    // Non-toggle update — reject fullScore in patch (it only accompanies a
+    // toggle ON; updating the linked ScoreItem's fullScore goes through
+    // lib/scoring.updateScoreItem with class-B reason gate per ADR-0018).
+    if (parsed.fullScore !== undefined) {
       throw new ValidationError({
-        weight:
-          "แก้ weight/fullScore ของรายการคะแนนผ่าน lib/scoring.updateScoreItem",
+        fullScore:
+          "แก้ fullScore ของรายการคะแนนผ่าน lib/scoring.updateScoreItem",
       });
     }
 
@@ -355,7 +347,7 @@ async function readTitle(
 
 /**
  * Build the Prisma `UpdateInput` for the non-coupling fields. Excludes
- * `isScored`, `weight`, `fullScore`, `scoreItemId` — those are handled by
+ * `isScored`, `fullScore`, `scoreItemId` — those are handled by
  * the toggle dispatch in the caller.
  */
 function buildPlainFieldsPatch(

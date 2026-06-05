@@ -19,11 +19,12 @@ const D = new Date("2026-06-04T00:00:00Z");
 
 function item(
   id: string,
-  weight: number,
   fullScore: number,
   publishedAt: Date | null = D
 ): WeightedItem {
-  return { id, weight, fullScore, publishedAt };
+  // Phase 10 cutover (ADR-0024): weight removed; fullScore alone encodes
+  // per-item influence in the course grade.
+  return { id, fullScore, publishedAt };
 }
 
 function entry(scoreItemId: string, value: number): WeightedEntry {
@@ -51,8 +52,8 @@ describe("termGpa", () => {
 
   it("treats every-course-creditHours-0 as no grade-bearing courses", () => {
     const res = termGpa([
-      bundle("c1", 0, [item("a", 10000, 10)], [entry("a", 8)]),
-      bundle("c2", 0, [item("b", 10000, 10)], [entry("b", 9)]),
+      bundle("c1", 0, [item("a", 10)], [entry("a", 8)]),
+      bundle("c2", 0, [item("b", 10)], [entry("b", 9)]),
     ]);
     expect(res.value).toBeNull();
     expect(res.gradeBearingCourses).toBe(0);
@@ -65,13 +66,13 @@ describe("termGpa", () => {
     const c1 = bundle(
       "c1",
       1.5,
-      [item("a", 10000, 10, D)],
+      [item("a", 10, D)],
       [entry("a", 9)] // 90% → 4.0
     );
     const c2 = bundle(
       "c2",
       0,
-      [item("b", 10000, 10, null)],
+      [item("b", 10, null)],
       [] // doesn't matter
     );
     const res = termGpa([c1, c2]);
@@ -81,11 +82,11 @@ describe("termGpa", () => {
   });
 
   it("collapses to null when ANY grade-bearing course has unpublished items", () => {
-    const c1 = bundle("c1", 1.0, [item("a", 10000, 10, D)], [entry("a", 10)]);
+    const c1 = bundle("c1", 1.0, [item("a", 10, D)], [entry("a", 10)]);
     const c2 = bundle(
       "c2",
       1.0,
-      [item("b", 5000, 10, D), item("c", 5000, 10, null)], // draft
+      [item("b", 10, D), item("c", 10, null)], // draft
       [entry("b", 10), entry("c", 10)]
     );
     const res = termGpa([c1, c2]);
@@ -96,7 +97,7 @@ describe("termGpa", () => {
   });
 
   it("collapses to null when a grade-bearing course has 0 ScoreItems", () => {
-    const c1 = bundle("c1", 1.0, [item("a", 10000, 10, D)], [entry("a", 10)]);
+    const c1 = bundle("c1", 1.0, [item("a", 10, D)], [entry("a", 10)]);
     const c2 = bundle("c2", 1.0, [], []);
     const res = termGpa([c1, c2]);
     expect(res.value).toBeNull();
@@ -109,8 +110,8 @@ describe("termGpa", () => {
     // c1: 1.5 credit, grade 4.0 (90% → 4.0)
     // c2: 1.0 credit, grade 3.0 (70% → 3.0)
     // GPA = (4×1.5 + 3×1.0) / (1.5+1.0) = (6 + 3) / 2.5 = 3.6
-    const c1 = bundle("c1", 1.5, [item("a", 10000, 10, D)], [entry("a", 9)]);
-    const c2 = bundle("c2", 1.0, [item("b", 10000, 10, D)], [entry("b", 7)]);
+    const c1 = bundle("c1", 1.5, [item("a", 10, D)], [entry("a", 9)]);
+    const c2 = bundle("c2", 1.0, [item("b", 10, D)], [entry("b", 7)]);
     const res = termGpa([c1, c2]);
     expect(res.value).toBe(3.6);
   });
@@ -122,10 +123,10 @@ describe("termGpa", () => {
     // c3: 1.5 credit, grade 3.0
     // raw = (4×1 + 3.5×2 + 3×1.5) / (1+2+1.5) = (4 + 7 + 4.5) / 4.5 = 15.5/4.5 = 3.444...
     // rounded to 2 dp = 3.44
-    const c1 = bundle("c1", 1.0, [item("a", 10000, 10, D)], [entry("a", 9)]);
-    const c2 = bundle("c2", 2.0, [item("b", 10000, 10, D)], [entry("b", 8)]); // 80% → 4.0... wait
+    const c1 = bundle("c1", 1.0, [item("a", 10, D)], [entry("a", 9)]);
+    const c2 = bundle("c2", 2.0, [item("b", 10, D)], [entry("b", 8)]); // 80% → 4.0... wait
     // Recompute: 8/10 = 80% → 4.0 (not 3.5). Use 7.5/10 = 75% → 3.5.
-    const c2b = bundle("c2", 2.0, [item("b", 10000, 10, D)], [entry("b", 8)]);
+    const c2b = bundle("c2", 2.0, [item("b", 10, D)], [entry("b", 8)]);
     // Actually 8/10=80→4.0. Re-pick to land at 3.5: use 7/10 = 70% → 3.0. Hmm.
     // Just verify rounding without insisting on exact grade tier:
     const res = termGpa([c1, c2b]);
@@ -139,7 +140,7 @@ describe("termGpa", () => {
     const single = bundle(
       "c1",
       1.0,
-      [item("a", 10000, 10, D)],
+      [item("a", 10, D)],
       [entry("a", 7)] // 70% → 3.0
     );
     const r2 = termGpa([single]);
@@ -147,8 +148,8 @@ describe("termGpa", () => {
 
     // Fractional avg: c1 grade 4.0 (1.0 cr) + c2 grade 3.0 (1.0 cr) = 3.5
     const mix = termGpa([
-      bundle("c1", 1.0, [item("a", 10000, 10, D)], [entry("a", 9)]), // 90 → 4.0
-      bundle("c2", 1.0, [item("b", 10000, 10, D)], [entry("b", 7)]), // 70 → 3.0
+      bundle("c1", 1.0, [item("a", 10, D)], [entry("a", 9)]), // 90 → 4.0
+      bundle("c2", 1.0, [item("b", 10, D)], [entry("b", 7)]), // 70 → 3.0
     ]);
     expect(mix.value).toBe(3.5);
   });
@@ -164,9 +165,9 @@ describe("termGpa", () => {
     // c3: 1 cr, grade 3.0
     // raw = (4+3+3)/3 = 3.333... → rounded to 2 dp = 3.33
     const res = termGpa([
-      bundle("c1", 1.0, [item("a", 10000, 10, D)], [entry("a", 9)]), // 90 → 4.0
-      bundle("c2", 1.0, [item("b", 10000, 10, D)], [entry("b", 7)]), // 70 → 3.0
-      bundle("c3", 1.0, [item("c", 10000, 10, D)], [entry("c", 7)]), // 70 → 3.0
+      bundle("c1", 1.0, [item("a", 10, D)], [entry("a", 9)]), // 90 → 4.0
+      bundle("c2", 1.0, [item("b", 10, D)], [entry("b", 7)]), // 70 → 3.0
+      bundle("c3", 1.0, [item("c", 10, D)], [entry("c", 7)]), // 70 → 3.0
     ]);
     expect(res.value).toBe(3.33);
   });
@@ -175,13 +176,13 @@ describe("termGpa", () => {
     const c1 = bundle(
       "c1",
       1.0,
-      [item("a", 5000, 10, D), item("b", 5000, 10, null)],
+      [item("a", 10, D), item("b", 10, null)],
       [entry("a", 10), entry("b", 0)]
     );
     const c2 = bundle(
       "c2",
       0, // creditHours=0 — excluded
-      [item("x", 10000, 10, D)],
+      [item("x", 10, D)],
       [entry("x", 10)]
     );
     const res = termGpa([c1, c2]);

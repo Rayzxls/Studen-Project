@@ -925,7 +925,6 @@ async function testPhase5Scoring() {
       courseOfferingId: course.id,
       name: SMOKE_NAME,
       fullScore: 10,
-      weight: 10000,
       position: 999,
     },
     select: { id: true },

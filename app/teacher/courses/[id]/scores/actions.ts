@@ -18,8 +18,8 @@ import { HttpError, ValidationError } from "@/lib/errors";
  *
  * Pre-publish lifecycle is unaudited per ADR-0018 § Negative consequences.
  * Post-publish delete fires `SCORE_DELETE_AFTER_PUBLISH` (Critical tier,
- * reason ≥ 5). Publish itself fires `SCORE_ITEM_PUBLISHED` (Important tier)
- * after the `Σ === 10000` gate passes.
+ * reason ≥ 5). Publish itself fires `SCORE_ITEM_PUBLISHED` (Important tier).
+ * ADR-0024 removed the Σ=10000 publish gate.
  */
 
 export type CreateScoreItemState = {
@@ -38,27 +38,22 @@ export async function createScoreItemAction(
   const courseId = String(formData.get("courseId") ?? "");
   const name = String(formData.get("name") ?? "");
   const fullScoreRaw = String(formData.get("fullScore") ?? "");
-  const weightRaw = String(formData.get("weight") ?? ""); // basis points, integer
   const positionRaw = String(formData.get("position") ?? "0");
 
   if (!courseId) return { error: "missing_course_id" };
 
   const fullScore = Number.parseInt(fullScoreRaw, 10);
-  const weight = Number.parseInt(weightRaw, 10);
   const position = Number.parseInt(positionRaw, 10) || 0;
 
   const fieldErrors: Record<string, string> = {};
   if (Number.isNaN(fullScore) || fullScore <= 0) {
     fieldErrors.fullScore = "ระบุคะแนนเต็มเป็นจำนวนเต็มบวก";
   }
-  if (Number.isNaN(weight) || weight < 0 || weight > 10000) {
-    fieldErrors.weight = "ระบุน้ำหนัก 0..100% (ทศนิยม 2 ตำแหน่ง)";
-  }
   if (Object.keys(fieldErrors).length > 0) return { fieldErrors };
 
   try {
     await createScoreItem(
-      { courseOfferingId: courseId, name, fullScore, weight, position },
+      { courseOfferingId: courseId, name, fullScore, position },
       {
         actorUserId: session.user.id,
         ipAddress: meta.ipAddress ?? undefined,

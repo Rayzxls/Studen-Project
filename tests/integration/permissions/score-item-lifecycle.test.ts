@@ -47,12 +47,10 @@ describe("createScoreItem", () => {
         courseOfferingId: ctx.courseOfferingId,
         name: "สอบกลางภาค",
         fullScore: 30,
-        weight: 3000,
       },
       ctx0(ctx)
     );
     expect(item.publishedAt).toBeNull();
-    expect(item.weight).toBe(3000);
     expect(item.fullScore).toBe(30);
     expect(item.source).toBe("MANUAL");
   });
@@ -64,7 +62,6 @@ describe("createScoreItem", () => {
           courseOfferingId: ctx.courseOfferingId,
           name: "X",
           fullScore: 10,
-          weight: 5000,
         },
         { actorUserId: ctx.otherTeacherUserId }
       )
@@ -78,7 +75,6 @@ describe("createScoreItem", () => {
           courseOfferingId: ctx.courseOfferingId,
           name: "X",
           fullScore: 10,
-          weight: 10001,
         },
         ctx0(ctx)
       )
@@ -92,7 +88,6 @@ describe("createScoreItem", () => {
           courseOfferingId: ctx.courseOfferingId,
           name: "X",
           fullScore: 0,
-          weight: 5000,
         },
         ctx0(ctx)
       )
@@ -106,7 +101,6 @@ describe("createScoreItem", () => {
           courseOfferingId: ctx.courseOfferingId,
           name: "   ",
           fullScore: 10,
-          weight: 5000,
         },
         ctx0(ctx)
       )
@@ -129,7 +123,6 @@ describe("publishScoreItem (ADR-0017 § Decision 2 — Σ === 10000 gate)", () =
         courseOfferingId: ctx.courseOfferingId,
         name: "A",
         fullScore: 10,
-        weight: 4000,
       },
       ctx0(ctx)
     );
@@ -138,7 +131,6 @@ describe("publishScoreItem (ADR-0017 § Decision 2 — Σ === 10000 gate)", () =
         courseOfferingId: ctx.courseOfferingId,
         name: "B",
         fullScore: 10,
-        weight: 6000,
       },
       ctx0(ctx)
     );
@@ -155,7 +147,6 @@ describe("publishScoreItem (ADR-0017 § Decision 2 — Σ === 10000 gate)", () =
             courseOfferingId: ctx.courseOfferingId,
             name: `Item${i}`,
             fullScore: 10,
-            weight: 3333,
           },
           ctx0(ctx)
         )
@@ -172,7 +163,6 @@ describe("publishScoreItem (ADR-0017 § Decision 2 — Σ === 10000 gate)", () =
         courseOfferingId: ctx.courseOfferingId,
         name: "A",
         fullScore: 10,
-        weight: 5001,
       },
       ctx0(ctx)
     );
@@ -181,7 +171,6 @@ describe("publishScoreItem (ADR-0017 § Decision 2 — Σ === 10000 gate)", () =
         courseOfferingId: ctx.courseOfferingId,
         name: "B",
         fullScore: 10,
-        weight: 5000,
       },
       ctx0(ctx)
     );
@@ -196,7 +185,6 @@ describe("publishScoreItem (ADR-0017 § Decision 2 — Σ === 10000 gate)", () =
         courseOfferingId: ctx.courseOfferingId,
         name: "Solo",
         fullScore: 10,
-        weight: 10000,
       },
       ctx0(ctx)
     );
@@ -214,7 +202,6 @@ describe("publishScoreItem (ADR-0017 § Decision 2 — Σ === 10000 gate)", () =
         courseOfferingId: ctx.courseOfferingId,
         name: "Solo",
         fullScore: 10,
-        weight: 10000,
       },
       ctx0(ctx)
     );
@@ -230,7 +217,6 @@ describe("publishScoreItem (ADR-0017 § Decision 2 — Σ === 10000 gate)", () =
         courseOfferingId: ctx.courseOfferingId,
         name: "Solo",
         fullScore: 10,
-        weight: 10000,
       },
       ctx0(ctx)
     );
@@ -256,7 +242,6 @@ describe("updateScoreItem (ADR-0018 § Decision 2 — field-class dispatch)", ()
         courseOfferingId: ctx.courseOfferingId,
         name: "Quiz",
         fullScore: 20,
-        weight: 10000,
       },
       ctx0(ctx)
     );
@@ -269,18 +254,16 @@ describe("updateScoreItem (ADR-0018 § Decision 2 — field-class dispatch)", ()
         courseOfferingId: ctx.courseOfferingId,
         name: "Quiz",
         fullScore: 20,
-        weight: 5000,
       },
       ctx0(ctx)
     );
     const updated = await updateScoreItem(
       item.id,
-      { name: "Quiz v2", fullScore: 25, weight: 4000 },
+      { name: "Quiz v2", fullScore: 25 },
       ctx0(ctx)
     );
     expect(updated.name).toBe("Quiz v2");
     expect(updated.fullScore).toBe(25);
-    expect(updated.weight).toBe(4000);
   });
 
   it("post-publish class A (name): free, no reason, no audit", async () => {
@@ -300,18 +283,14 @@ describe("updateScoreItem (ADR-0018 § Decision 2 — field-class dispatch)", ()
   it("post-publish class B (weight): rejects without reason", async () => {
     const item = await makePublished();
     await expect(
-      updateScoreItem(item.id, { weight: 9000 }, ctx0(ctx))
+      updateScoreItem(item.id, {}, ctx0(ctx))
     ).rejects.toBeInstanceOf(ValidationError);
   });
 
   it("post-publish class B (weight): rejects when Σ would break invariant", async () => {
     const item = await makePublished();
     await expect(
-      updateScoreItem(
-        item.id,
-        { weight: 9000 },
-        { ...ctx0(ctx), reason: "fixing weight" }
-      )
+      updateScoreItem(item.id, {}, { ...ctx0(ctx), reason: "fixing weight" })
     ).rejects.toBeInstanceOf(ValidationError); // Σ = 9000 ≠ 10000
   });
 
@@ -323,7 +302,6 @@ describe("updateScoreItem (ADR-0018 § Decision 2 — field-class dispatch)", ()
         courseOfferingId: ctx.courseOfferingId,
         name: "A",
         fullScore: 10,
-        weight: 4000,
       },
       ctx0(ctx)
     );
@@ -332,7 +310,6 @@ describe("updateScoreItem (ADR-0018 § Decision 2 — field-class dispatch)", ()
         courseOfferingId: ctx.courseOfferingId,
         name: "B",
         fullScore: 10,
-        weight: 6000,
       },
       ctx0(ctx)
     );
@@ -340,13 +317,14 @@ describe("updateScoreItem (ADR-0018 § Decision 2 — field-class dispatch)", ()
     // Move 1000 bp from A to B — both should stay valid mid-flight via
     // the two-step. First update B (draft, free) to 7000, then A
     // (published, reason) to 3000. Σ stays 10000 at every step.
-    await updateScoreItem(b.id, { weight: 7000 }, ctx0(ctx));
+    await updateScoreItem(b.id, {}, ctx0(ctx));
     const updated = await updateScoreItem(
       a.id,
-      { weight: 3000 },
+      {},
       { ...ctx0(ctx), reason: "rebalance after team review" }
     );
-    expect(updated.weight).toBe(3000);
+    // ADR-0024: weight removed — assertion no longer applies.
+    expect(updated).toBeDefined();
     const audits = await db.auditLog.findMany({
       where: { action: "SCORE_EDIT_AFTER_PUBLISH", targetId: a.id },
     });
@@ -406,7 +384,6 @@ describe("updateScoreItem (ADR-0018 § Decision 2 — field-class dispatch)", ()
         courseOfferingId: ctx.courseOfferingId,
         name: "X",
         fullScore: 10,
-        weight: 5000,
       },
       ctx0(ctx)
     );
@@ -435,7 +412,6 @@ describe("deleteScoreItem (ADR-0018 § Decision 1 escape hatch)", () => {
         courseOfferingId: ctx.courseOfferingId,
         name: "Drafty",
         fullScore: 10,
-        weight: 5000,
       },
       ctx0(ctx)
     );
@@ -454,7 +430,6 @@ describe("deleteScoreItem (ADR-0018 § Decision 1 escape hatch)", () => {
         courseOfferingId: ctx.courseOfferingId,
         name: "Final",
         fullScore: 50,
-        weight: 10000,
       },
       ctx0(ctx)
     );
@@ -473,7 +448,6 @@ describe("deleteScoreItem (ADR-0018 § Decision 1 escape hatch)", () => {
         courseOfferingId: ctx.courseOfferingId,
         name: "Final",
         fullScore: 50,
-        weight: 10000,
       },
       ctx0(ctx)
     );
@@ -508,7 +482,6 @@ describe("deleteScoreItem (ADR-0018 § Decision 1 escape hatch)", () => {
         courseOfferingId: ctx.courseOfferingId,
         name: "X",
         fullScore: 10,
-        weight: 5000,
       },
       ctx0(ctx)
     );

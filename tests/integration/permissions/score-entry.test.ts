@@ -35,7 +35,6 @@ describe("bulkUpsertScoreEntries — pre-publish", () => {
         courseOfferingId: ctx.courseOfferingId,
         name: "Quiz",
         fullScore: 20,
-        weight: 5000,
       },
       { actorUserId: ctx.teacherUserId }
     );
@@ -177,7 +176,6 @@ describe("bulkUpsertScoreEntries — post-publish reason gate", () => {
         courseOfferingId: ctx.courseOfferingId,
         name: "Quiz",
         fullScore: 20,
-        weight: 10000,
       },
       { actorUserId: ctx.teacherUserId }
     );

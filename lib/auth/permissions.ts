@@ -139,9 +139,10 @@ export const can = {
    *
    * Scope: Assignment CRUD AND the toggle dispatch that atomically
    * creates / deletes the linked ScoreItem in the same tx. ADR-0019 § 5
-   * lifecycle rules (toggle off branching by ScoreItem state, weight gate
-   * on toggle on) live in `lib/assignment/assignment.ts` — this predicate
-   * is the "who", not the "what".
+   * lifecycle rules (toggle off branching by ScoreItem state, fullScore
+   * required on toggle on per ADR-0024) live in
+   * `lib/assignment/assignment.ts` — this predicate is the "who", not the
+   * "what".
    *
    * ADMIN is rejected (mirrors `mutateScoreItem` posture).
    *

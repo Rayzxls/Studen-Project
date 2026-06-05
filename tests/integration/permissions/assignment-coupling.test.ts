@@ -63,7 +63,6 @@ describe("createAssignment — atomic ScoreItem coupling (ADR-0019 § 1)", () =>
         allowFile: false,
         allowLink: false,
         isScored: true,
-        weight: 3000,
         fullScore: 20,
       },
       { actorUserId: ctx.teacherUserId }
@@ -71,11 +70,10 @@ describe("createAssignment — atomic ScoreItem coupling (ADR-0019 § 1)", () =>
     expect(a.scoreItemId).not.toBeNull();
     const si = await db.scoreItem.findUnique({
       where: { id: a.scoreItemId! },
-      select: { source: true, weight: true, fullScore: true, name: true },
+      select: { source: true, fullScore: true, name: true },
     });
     expect(si).toEqual({
       source: "ASSIGNMENT_LINKED",
-      weight: 3000,
       fullScore: 20,
       name: "Quiz 2",
     });
@@ -117,7 +115,7 @@ describe("updateAssignment — toggle dispatch (ADR-0019 § 5)", () => {
 
     const flipped = await updateAssignment(
       a.id,
-      { isScored: true, weight: 2000, fullScore: 50 },
+      { isScored: true, fullScore: 50 },
       { actorUserId: ctx.teacherUserId }
     );
     expect(flipped.isScored).toBe(true);
@@ -134,7 +132,6 @@ describe("updateAssignment — toggle dispatch (ADR-0019 § 5)", () => {
         allowFile: false,
         allowLink: false,
         isScored: true,
-        weight: 1500,
         fullScore: 10,
       },
       { actorUserId: ctx.teacherUserId }
@@ -162,7 +159,6 @@ describe("updateAssignment — toggle dispatch (ADR-0019 § 5)", () => {
         allowFile: false,
         allowLink: false,
         isScored: true,
-        weight: 2500,
         fullScore: 30,
       },
       { actorUserId: ctx.teacherUserId }
@@ -196,7 +192,6 @@ describe("updateAssignment — toggle dispatch (ADR-0019 § 5)", () => {
         allowFile: false,
         allowLink: false,
         isScored: true,
-        weight: 10_000,
         fullScore: 100,
       },
       { actorUserId: ctx.teacherUserId }
@@ -222,17 +217,12 @@ describe("updateAssignment — toggle dispatch (ADR-0019 § 5)", () => {
         allowFile: false,
         allowLink: false,
         isScored: true,
-        weight: 5000,
         fullScore: 50,
       },
       { actorUserId: ctx.teacherUserId }
     );
     await expect(
-      updateAssignment(
-        a.id,
-        { weight: 6000 },
-        { actorUserId: ctx.teacherUserId }
-      )
+      updateAssignment(a.id, {}, { actorUserId: ctx.teacherUserId })
     ).rejects.toBeInstanceOf(ValidationError);
   });
 
@@ -270,7 +260,6 @@ describe("deleteAssignment — coupling escape (ADR-0019 § 5)", () => {
         allowFile: false,
         allowLink: false,
         isScored: true,
-        weight: 2000,
         fullScore: 25,
       },
       { actorUserId: ctx.teacherUserId }
@@ -291,7 +280,6 @@ describe("deleteAssignment — coupling escape (ADR-0019 § 5)", () => {
         allowFile: false,
         allowLink: false,
         isScored: true,
-        weight: 10_000,
         fullScore: 100,
       },
       { actorUserId: ctx.teacherUserId }

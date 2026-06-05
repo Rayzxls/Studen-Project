@@ -8,7 +8,6 @@ import {
   publishScoreItemAction,
   type PublishScoreItemState,
 } from "@/app/teacher/courses/[id]/scores/actions";
-import { formatBasisPoints } from "@/lib/scoring/format";
 
 const INITIAL_STATE: PublishScoreItemState = {};
 
@@ -16,33 +15,28 @@ type Props = {
   courseId: string;
   scoreItemId: string;
   scoreItemName: string;
-  weight: number; // basis points
   fullScore: number;
   /** Number of ScoreEntry rows already filled for this item — preview only. */
   entriesCount: number;
   /** Total active enrollments in the course — denominator for the entries hint. */
   activeMemberCount: number;
-  /** Current Σ basis points across all items — surfaces the publish gate. */
-  currentSumBp: number;
 };
 
 /**
  * Publish confirm dialog — intentionally heavier than other confirms per
  * ADR-0018 § Negative consequences. Shows item metadata + filled-entries
- * count + Σ gate state + the one-way warning.
+ * count + the one-way warning.
  *
- * The button is disabled when the publish gate would fail (currentSumBp !==
- * 10000) — server still enforces in case the snapshot is stale.
+ * ADR-0024 removed the Σweight publish gate — publish has no aggregate
+ * precondition to check anymore (sum-based scoring uses fullScore directly).
  */
 export function PublishScoreItemDialog({
   courseId,
   scoreItemId,
   scoreItemName,
-  weight,
   fullScore,
   entriesCount,
   activeMemberCount,
-  currentSumBp,
 }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [state, formAction] = useActionState(
@@ -65,20 +59,9 @@ export function PublishScoreItemDialog({
     }, 0);
   }, [state.ok]);
 
-  const weightSumValid = currentSumBp === 10_000;
-  const weightSumLabel = formatBasisPoints(currentSumBp);
-
   return (
     <>
-      <button
-        type="button"
-        onClick={open}
-        className="btn-primary btn-sm"
-        disabled={!weightSumValid}
-        title={
-          weightSumValid ? undefined : "น้ำหนักรวมต้องเท่ากับ 100% ก่อน publish"
-        }
-      >
+      <button type="button" onClick={open} className="btn-primary btn-sm">
         <CheckCircle2 className="mr-1 inline h-4 w-4" />
         เผยแพร่
       </button>
@@ -121,16 +104,10 @@ export function PublishScoreItemDialog({
             <p className="text-sm font-medium text-black">{scoreItemName}</p>
             <dl className="mt-2 grid grid-cols-2 gap-2 text-xs">
               <div>
-                <dt className="text-black/50">น้ำหนัก</dt>
-                <dd className="font-medium text-black">
-                  {formatBasisPoints(weight)}
-                </dd>
-              </div>
-              <div>
                 <dt className="text-black/50">คะแนนเต็ม</dt>
                 <dd className="font-medium text-black">{fullScore}</dd>
               </div>
-              <div className="col-span-2">
+              <div>
                 <dt className="text-black/50">กรอกคะแนนแล้ว</dt>
                 <dd className="font-medium text-black">
                   {entriesCount} / {activeMemberCount} คน
@@ -144,20 +121,6 @@ export function PublishScoreItemDialog({
             </dl>
           </div>
 
-          {/* Σ pill */}
-          <div className="mb-4">
-            <span
-              className={
-                weightSumValid
-                  ? "inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200"
-                  : "inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700 ring-1 ring-rose-200"
-              }
-            >
-              Σ น้ำหนัก = {weightSumLabel}
-              {weightSumValid ? " ✓" : " — ต้องเท่ากับ 100%"}
-            </span>
-          </div>
-
           {/* One-way warning */}
           <div className="mb-4 flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-900 ring-1 ring-amber-200">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -165,25 +128,17 @@ export function PublishScoreItemDialog({
               <p className="font-medium">การเผยแพร่ทำได้ครั้งเดียว</p>
               <p className="mt-0.5">
                 หลังจากเผยแพร่ไม่สามารถยกเลิกได้
-                การแก้คะแนน/น้ำหนัก/คะแนนเต็มหลังเผยแพร่
-                จะต้องระบุเหตุผลและถูกบันทึก audit
-                การเอารายการออกต้องลบโดยมีเหตุผล (audit Critical)
+                การแก้คะแนน/คะแนนเต็มหลังเผยแพร่ จะต้องระบุเหตุผลและถูกบันทึก
+                audit การเอารายการออกต้องลบโดยมีเหตุผล (audit Critical)
               </p>
             </div>
           </div>
 
           {state.error && (
             <p className="mb-3 rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-700">
-              {state.error === "weight_sum_not_100"
-                ? "น้ำหนักรวมไม่เท่ากับ 100% — กลับไปแก้ก่อน"
-                : state.error === "already_published"
-                  ? "รายการนี้เผยแพร่ไปแล้ว"
-                  : state.error}
-            </p>
-          )}
-          {state.fieldErrors?.weight && (
-            <p className="mb-3 rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-700">
-              {state.fieldErrors.weight}
+              {state.error === "already_published"
+                ? "รายการนี้เผยแพร่ไปแล้ว"
+                : state.error}
             </p>
           )}
 
@@ -195,7 +150,7 @@ export function PublishScoreItemDialog({
             >
               ยกเลิก
             </button>
-            <SubmitButton disabled={!weightSumValid} />
+            <SubmitButton />
           </div>
         </form>
       </dialog>
@@ -203,12 +158,12 @@ export function PublishScoreItemDialog({
   );
 }
 
-function SubmitButton({ disabled }: { disabled: boolean }) {
+function SubmitButton() {
   const { pending } = useFormStatus();
   return (
     <button
       type="submit"
-      disabled={disabled || pending}
+      disabled={pending}
       className="btn-primary btn-sm disabled:cursor-not-allowed disabled:opacity-50"
     >
       {pending ? "กำลังเผยแพร่…" : "ยืนยันเผยแพร่"}
