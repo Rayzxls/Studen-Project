@@ -1,20 +1,56 @@
 @import "tailwindcss";
 
 /* ═══════════════════════════════════════════════════════════
-   Design System: "Calm Ledger"
-   Supersedes Ink + Gold — see docs/adr/0014-theme-calm-ledger-supersedes-ink-gold.md
-   Tailwind v4 (CSS-based @theme)
+   Design System: "Calm Ledger v2"
+   Extends ADR-0014 via ADR-0028 — color-friendly + material.
+   Tailwind v4 (CSS-based @theme).
    ═══════════════════════════════════════════════════════════ */
 
 @theme {
-  /* ───── Colors ───── */
-  --color-bg: #f5f5f5;
+  /* ───── Neutral chrome ───── */
+  --color-bg: #f2f2f7; /* iOS systemGroupedBackground (shifted from #f5f5f5) */
   --color-surface: #ffffff;
   --color-ink: #000000;
-  --color-ink-soft: #4d4d4d;
-  --color-ink-mute: #808080;
-  --color-accent: #2b2644;
+  --color-ink-soft: #4d4d4d; /* equiv rgba(0,0,0,0.70) on white */
+  --color-ink-mute: #808080; /* equiv rgba(0,0,0,0.50) on white */
+  --color-ink-faint: #bfbfbf; /* equiv rgba(0,0,0,0.25) on white */
+  --color-hairline: #ebebeb; /* equiv rgba(0,0,0,0.08) on white */
+  --color-hairline-strong: #d6d6d6; /* equiv rgba(0,0,0,0.16) on white */
+  /* Backward-compat alias — old class names still referenced in some pages. */
   --color-border: #ebebeb;
+
+  /* ───── System colours (4 — semantic only, ADR-0028) ───── */
+  --color-blue-50: #eff6ff;
+  --color-blue-500: #0a84ff; /* primary action — universal across all roles */
+  --color-blue-600: #0070eb; /* primary action hover */
+  --color-blue-700: #1e40af; /* text-on-tinted */
+  --color-green-50: #ecfdf5;
+  --color-green-500: #34c759;
+  --color-green-700: #15803d;
+  --color-orange-50: #fff7ed;
+  --color-orange-500: #ff9500;
+  --color-orange-700: #c2410c;
+  --color-red-50: #fef2f2;
+  --color-red-500: #ff3b30;
+  --color-red-700: #b91c1c;
+
+  /* ───── Course identity palette (8 slots — hash-derived, content-level) ───── */
+  --color-course-rose-500: #f56c7c;
+  --color-course-rose-50: #fef1f3;
+  --color-course-coral-500: #f58e6e;
+  --color-course-coral-50: #fef3ee;
+  --color-course-amber-500: #e8a646;
+  --color-course-amber-50: #fdf6e8;
+  --color-course-lime-500: #94c944;
+  --color-course-lime-50: #f2faea;
+  --color-course-teal-500: #3cb4ac;
+  --color-course-teal-50: #ebfaf8;
+  --color-course-sky-500: #5eaedb;
+  --color-course-sky-50: #eef7fc;
+  --color-course-indigo-500: #7a7ae5;
+  --color-course-indigo-50: #eff0fe;
+  --color-course-violet-500: #b574d6;
+  --color-course-violet-50: #f8eefb;
 
   /* ───── Fonts ───── */
   --font-sans: var(--font-anuphan), system-ui, sans-serif;
@@ -24,10 +60,23 @@
   --shadow-lift:
     0 4px 24px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.04);
   --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.06);
+  --shadow-inset: inset 0 1px 0 rgba(0, 0, 0, 0.04);
+
+  /* ───── Motion (iOS spring 3-tier — ADR-0028 § 6) ───── */
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+  --duration-spring-micro: 80ms;
+  --duration-spring-standard: 180ms;
+  --duration-spring-large: 280ms;
+
+  /* ───── Glass (frosted, scope-limited — ADR-0028 § 5) ───── */
+  --glass-blur-desktop: blur(20px) saturate(180%);
+  --glass-blur-mobile: blur(12px) saturate(150%);
+  --glass-bg: rgba(242, 242, 247, 0.72);
+  --glass-fallback: rgba(255, 255, 255, 0.95);
 
   /* ───── Animations ───── */
-  --animate-fade-in: fade-in 200ms ease-out both;
-  --animate-slide-up: slide-up 280ms ease-out both;
+  --animate-fade-in: fade-in 180ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  --animate-slide-up: slide-up 280ms cubic-bezier(0.32, 0.72, 0, 1) both;
 
   /* ───── Keyframes ───── */
   @keyframes fade-in {
@@ -50,6 +99,14 @@
       transform: translateY(0);
     }
   }
+  @keyframes sheet-slide-up {
+    0% {
+      transform: translateY(100%);
+    }
+    100% {
+      transform: translateY(0);
+    }
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -68,345 +125,25 @@
     text-rendering: optimizeLegibility;
   }
 
-  /* Black focus ring — replaces gold from Ink+Gold */
+  /* Blue focus ring — replaces the black ring from ADR-0014. */
   :focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.4);
     border-radius: 12px;
   }
 
   ::selection {
-    background: rgba(0, 0, 0, 0.12);
+    background: rgba(10, 132, 255, 0.16);
   }
 
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
     *::after {
-      animation-duration: 0.01ms !important;
+      animation-duration: 100ms !important;
       animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
+      transition-duration: 100ms !important;
+      transition-timing-function: ease-out !important;
     }
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════
-   Components — Calm Ledger
-   ═══════════════════════════════════════════════════════════ */
-
-@layer components {
-  /* ───── Card ───── */
-  .card,
-  .card-flat {
-    @apply rounded-2xl bg-white;
-  }
-  .card {
-    @apply transition-shadow duration-200 ease-out;
-  }
-  .card:hover {
-    box-shadow: var(--shadow-lift);
-  }
-  .card-featured {
-    @apply rounded-3xl bg-white;
-    box-shadow: var(--shadow-card);
-  }
-  .card-dark {
-    @apply rounded-2xl p-7 text-white;
-    background: var(--color-accent);
-  }
-
-  /* ───── Input ───── */
-  .input {
-    @apply w-full rounded-xl border-0 bg-white px-4 py-2.5 text-base;
-    @apply text-ink placeholder:text-black/40;
-    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
-    @apply transition-shadow duration-150 ease-out;
-  }
-  .input:hover {
-    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
-  }
-  .input:focus {
-    @apply outline-none;
-    box-shadow: inset 0 0 0 2px #000000;
-  }
-
-  /* ───── Buttons (shared base via multi-selector) ───── */
-  .btn,
-  .btn-primary,
-  .btn-secondary,
-  .btn-ghost,
-  .btn-danger {
-    @apply inline-flex items-center justify-center gap-2;
-    @apply rounded-full px-7 py-2.5 text-base font-medium;
-    @apply transition-colors duration-200 ease-out;
-    @apply disabled:cursor-not-allowed disabled:opacity-50;
-  }
-
-  /* Primary — true black pill */
-  .btn-primary {
-    @apply bg-black text-white;
-  }
-  .btn-primary:hover {
-    background: #1f1f1f;
-  }
-
-  /* Secondary — white pill with hairline ring */
-  .btn-secondary {
-    @apply bg-white text-black;
-    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
-  }
-  .btn-secondary:hover {
-    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
-  }
-
-  /* Ghost — text only */
-  .btn-ghost {
-    @apply text-black/70;
-  }
-  .btn-ghost:hover {
-    @apply bg-black/5 text-black;
-  }
-
-  /* Danger — rose */
-  .btn-danger {
-    @apply bg-rose-600 text-white;
-  }
-  .btn-danger:hover {
-    @apply bg-rose-700;
-  }
-
-  .btn-sm {
-    @apply px-5 py-1.5 text-sm;
-  }
-
-  /* ───── Badges — neutral grayscale (no saturated role colours per ADR-0014) ───── */
-  .badge,
-  .badge-admin,
-  .badge-teacher,
-  .badge-student {
-    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
-    @apply text-ink;
-    background: rgba(0, 0, 0, 0.05);
-    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
-  }
-
-  /* ───── Table ───── */
-  .table {
-    @apply w-full overflow-hidden rounded-2xl bg-white text-sm;
-  }
-  .table thead {
-    @apply text-left text-xs font-medium text-black/50;
-  }
-  .table thead th {
-    @apply px-4 py-3;
-  }
-  .table tbody tr {
-    @apply transition-colors duration-150;
-    border-top: 1px solid rgba(0, 0, 0, 0.05);
-  }
-  .table tbody tr:hover {
-    background: rgba(0, 0, 0, 0.02);
-  }
-  .table tbody td {
-    @apply px-4 py-3;
-  }
-
-  /* ───── Stat / KPI card ───── */
-  .stat {
-    @apply rounded-2xl bg-white p-6;
-    @apply transition-shadow duration-200 ease-out;
-  }
-  .stat:hover {
-    box-shadow: var(--shadow-lift);
-  }
-  .stat-label {
-    @apply text-xs font-medium text-black/60;
-  }
-  .stat-value {
-    @apply mt-2 text-4xl font-medium tracking-tight text-black;
-    letter-spacing: -0.02em;
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════
-   cmdk Command Menu (ClassPicker, etc.)
-   ═══════════════════════════════════════════════════════════ */
-
-[cmdk-group-heading] {
-  @apply px-3 py-1.5 text-xs font-medium text-black/50;
-}
-
-[cmdk-item] {
-  @apply flex cursor-pointer items-center justify-between gap-2 rounded-xl px-3 py-2 text-sm;
-  @apply transition-colors;
-}
-
-[cmdk-item][data-selected="true"] {
-  background: rgba(0, 0, 0, 0.05);
-  @apply text-ink;
-}
-
-[cmdk-item]:hover {
-  background: rgba(0, 0, 0, 0.025);
-}
-
-[cmdk-item][data-disabled="true"] {
-  @apply cursor-not-allowed opacity-40;
-}
-
-[cmdk-empty] {
-  @apply px-3 py-6 text-center text-sm text-black/50;
-}
-
-[cmdk-group]:not(:last-child) {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  @apply pb-1;
-}
-
-[cmdk-group] + [cmdk-group] {
-  @apply pt-1;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   Compat shims — Ink+Gold orphan classes still referenced by
-   dashboard, privacy, teacher/courses, components/class-code-card.
-   These render as safe no-ops in the Calm Ledger theme so pages
-   don't show broken artifacts before per-surface touch-up.
-   Remove when each surface is migrated.
-   ═══════════════════════════════════════════════════════════ */
-
-.mesh-bg {
-  background: var(--color-bg);
-}
-
-.blob {
-  display: none !important;
-}
-
-.sheen {
-  position: relative;
-  overflow: hidden;
-}
-
-.glass {
-  background: var(--color-surface);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.text-gradient-gold,
-.text-gradient-ink {
-  color: var(--color-ink);
-  background: none;
-  -webkit-background-clip: initial;
-  background-clip: initial;
-  -webkit-text-fill-color: currentColor;
-}
-
-.tilt-card {
-  transform: none !important;
-}
-
-.perspective-1000,
-.perspective-1500,
-.preserve-3d {
-  perspective: none;
-  transform-style: flat;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   Print (A4 transcript) — kept from Ink+Gold, color recalibrated
-   ═══════════════════════════════════════════════════════════ */
-
-@media print {
-  @page {
-    size: A4;
-    margin: 12mm;
-  }
-
-  html,
-  body {
-    background: #ffffff !important;
-    color: #000000 !important;
-  }
-
-  .print-hide,
-  header,
-  nav,
-  form,
-  dialog,
-  .btn,
-  .btn-primary,
-  .btn-secondary,
-  .btn-ghost,
-  .btn-danger {
-    display: none !important;
-  }
-
-  main {
-    max-width: none !important;
-    padding: 0 !important;
-  }
-
-  .card,
-  .card-flat,
-  .card-featured,
-  .stat,
-  table {
-    box-shadow: none !important;
-    break-inside: avoid;
-  }
-
-  .table,
-  table {
-    width: 100% !important;
-    border-collapse: collapse !important;
-    font-size: 11px !important;
-  }
-
-  th,
-  td {
-    border: 1px solid #cbd5e1 !important;
-    padding: 6px 8px !important;
-  }
-
-  thead {
-    display: table-header-group;
-  }
-
-  tr,
-  img,
-  pre {
-    break-inside: avoid;
-  }
-
-  input,
-  select {
-    border: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-  }
-
-  /* Phase 5 / P5-5c — Transcript print polish.
-     Tailwind print: variants in TermSummaryView do most of the work; these
-     rules cover anything the utility classes can't reach.
-
-     - Page-level: stop URL footers from cluttering the transcript.
-     - Tables: darker borders (slate-200 is too pale on paper) + slightly
-       larger font for the per-row values (the global 11px is fine for
-       data tables; transcript rows need 12px). */
-
-  /* Transcript headline letterspacing tightens up nicely on paper. */
-  h1,
-  h2,
-  h3 {
-    letter-spacing: -0.02em !important;
-    page-break-after: avoid;
-  }
-
-  /* Hide native focus rings (inherited from inputs that survived the hide). */
-  *:focus,
-  *:focus-visible {
-    outline: none !important;
   }
 }
