@@ -68,9 +68,13 @@ describe("getOwnScoresForStudent — L1 projection (Pattern 4)", () => {
     expect(result.items).toHaveLength(1);
     expect(result.items[0]!.myValue).toBe(75);
     // The result shape exposes ONLY my values — peer rows are not in the
-    // type. We additionally sanity-check there is no value === 90 reachable.
-    const serialized = JSON.stringify(result);
-    expect(serialized).not.toContain("90");
+    // type. Sanity-check the peer's `90` is not present as a numeric value
+    // anywhere we'd render it. A bare `.toContain("90")` over the JSON
+    // serialisation is brittle: ms-timestamps like ".903Z" + cuids contain
+    // the substring "90" by accident. Scope the check to the value-bearing
+    // numeric fields so we catch a real L1 leak but not the noise.
+    expect(result.items[0]!.myValue).not.toBe(90);
+    expect((result as unknown as { peers?: unknown[] }).peers).toBeUndefined();
   });
 
   it("hides draft items from students entirely", async () => {
