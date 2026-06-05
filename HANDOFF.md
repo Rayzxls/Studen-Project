@@ -3,7 +3,7 @@
 > เอกสารนี้ใช้สำหรับเริ่ม **session ใหม่** กับ AI assistant แล้วต่อยอดได้ทันที
 > อ่านไฟล์นี้ + `CLAUDE.md` + `CONTEXT.md` ก่อนเริ่มงาน
 
-อัพเดตล่าสุด: **2026-06-05** · 107+ commits · **Phase 0-8 ปิดครบ · พร้อมเริ่ม Phase 9 (E2E + Hardening + Deploy)**
+อัพเดตล่าสุด: **2026-06-05** · 111+ commits · **Phase 0-9 (P9-1..4) ปิดครบ · Phase 9 ต่อ (Hardening + Deploy) deferred**
 
 ---
 
@@ -331,6 +331,91 @@ All commits since `c46b7c4` have passed 3/3 jobs (Lint/Typecheck, Unit Tests, Bu
 | `pnpm exec dotenv -e .env.local -- tsx scripts/smoke-test.ts` | E2E HTTP smoke (~98 checks · live dev server required) | yes | ~70 s |
 
 **Total verifications post-Phase 6:** 299 unit + 135 integration + ~98 smoke = **~532**.
+
+### Phase 9 (P9-1..4) — CLOSED (2026-06-05 · `1a96338` → `b6da021`)
+
+Phase 9 split into two halves by user choice (Q1 = (3) "A + E"):
+**A — E2E tests + E — Polish carryover** land now; **B/C/D — security
+hardening · performance · deploy infra** defer to a follow-on phase
+so the feature surface stays nice and small.
+
+**P9-1 — Notification payload enrichment (`1a96338`)**
+
+`SubmissionGradedPayload` + `SubmissionReturnedPayload` gain
+`assignmentId`. `CommentRepliedPayload` gains `entityOwnerId` (for
+SUBMISSION = parent Assignment id; for the others = ownerId verbatim).
+`lib/notification/navigation` consumes the new ids to deep-link
+SUBMISSION_GRADED / RETURNED to assignment detail and
+COMMENT_REPLIED to the commented entity. Also lights up
+MATERIAL_POSTED / ANNOUNCEMENT_POSTED → student detail routes that
+P7-8 shipped (was a course-root fallback). +6 unit tests
+(395 → 401).
+
+**P9-2 — PRIVATE composer on Submission (`5bfc6ec`)**
+
+`<CommentsThread>` grows a `revalidatePath?` override so SUBMISSION
+threads can point the post-action revalidate at the page they
+actually sit on (the assignment id can't be reconstructed from
+ownerType + ownerId alone). Student Submission detail drops the
+Phase-6 read-only PRIVATE comment card and mounts the real thread
++ composer. A new teacher per-submission page at
+`/teacher/courses/[id]/assignments/[aid]/submissions/[sid]` hosts
+the same thread, plus a read-only version-history card. The
+assignment grid gains a "ดูข้อความ →" link per row to reach it.
+
+**P9-3 — Playwright E2E (`b6da021`)**
+
+Suite at `tests/e2e/` with 2 critical-flow specs:
+- **01 announcement → feed → reply** — teacher posts an
+  Announcement; student sees it in the dashboard User Feed; clicks
+  through to the detail page (P7-8 student detail); posts a
+  CLASS_WIDE reply that lands in the thread.
+- **02 material → bell → deep-link** — teacher posts a Material;
+  student's bell popover surfaces the row; clicking deep-links to
+  the student Material detail (the P9-1 navigation upgrade).
+
+Helpers anchor on Thai text ("ออกจากระบบ") because the bell popover
+also renders a submit button inside the navbar form. Config keeps
+the suite serial (shared Neon dev DB) and reuses the dev server
+the developer is already running.
+
+`pnpm test:e2e` is the entry point (uses `dotenv -e .env.local`).
+
+Drive-by: `lib/feed/navigation.ts` flipped MATERIAL / ANNOUNCEMENT
+from course-root fallback → entity detail URL (same gap P9-1 fixed
+in `lib/notification/navigation.ts`). 2 existing unit cases flipped
+expectations; no net unit-count change.
+
+**Phase 9 (P9-1..4) sub-task SHAs:**
+
+| Sub-task | SHA |
+|---|---|
+| P9-1 enrich notification payloads + nav deep-links + 6 unit tests | `1a96338` |
+| P9-2 PRIVATE composer on Submission + teacher per-submission page | `5bfc6ec` |
+| P9-3 Playwright config + 2 critical-flow specs + lib/feed nav follow-up | `b6da021` |
+| P9-4 close-out — HANDOFF + phase table | this commit |
+
+**Verifications post-Phase 9 (P9-1..4):** 401 unit + 171 integration +
+~133 smoke + 2 E2E = ~707 total checks.
+
+**Deferred to a future hardening phase (was Phase 9 B/C/D + remaining
+polish):**
+
+- **B — Security hardening:** gitleaks pre-commit hook · Sentry
+  error tracking · OWASP-style sanity sweep · file-upload AV (the
+  `FILE_INFECTED_BLOCKED` audit event is reserved but no scanner is
+  wired)
+- **C — Performance hardening:** Lighthouse / axe-core audit · bundle
+  size budget · Upstash Redis rate-limit migration (currently in-DB
+  `RateLimitBucket`) · cross-browser Playwright projects (Firefox +
+  WebKit)
+- **D — Deploy infra:** Vercel project config · env var wiring · R2
+  bucket / IAM · branch protection on main · observability hooks
+- **E (residual):** Admin dashboard tier-count widgets (carried
+  from Phase 8) · enrich Notification with `(tier, timestamp DESC)`
+  schema index once row count crosses ~1M
+
+---
 
 ### Phase 8 — CLOSED (2026-06-05 · `ff492b1` + `4a1a82f`)
 
@@ -921,7 +1006,7 @@ Recommend grilling Q1 + Q2 + Q4 first (highest blast radius). Q3 + Q5 + Q6 can b
 | **6** | Assignment + Submission + Comments + R2 file upload | ✅ DONE (P6-1..9 all complete · 299 unit + 135 integration + 98 smoke pass · 3 ADRs locked) |
 | **7** | Feed + Notifications + Bell + Class-wide Comments | ✅ DONE (P7-0..10 all complete · 384 unit + 171 integration + ~124 smoke pass · 2 ADRs locked) |
 | **8** | Admin Audit Tools (tier badges · drill-down · CSV export) | ✅ DONE (P8-1 + P8-2 · 395 unit + 171 integration + ~133 smoke pass · 11 new smoke checks) |
-| **9** | E2E tests + Hardening + Deploy | ⏳ TODO |
+| **9 (partial)** | E2E + polish (P9-1..4: payload enrich · PRIVATE composer · Playwright · close-out) | ✅ DONE (B+C+D hardening + deploy deferred to Phase 10) |
 
 ---
 
