@@ -8,6 +8,8 @@ import {
   listTeacherCourses,
 } from "@/lib/course/enrollment";
 import { TopNav } from "@/components/layout/top-nav";
+import { DueSoonWidget } from "@/components/feed/due-soon-widget";
+import { UserFeed } from "@/components/feed/user-feed";
 
 // Auth-gated DB-fetching page — skip static prerender.
 export const dynamic = "force-dynamic";
@@ -156,6 +158,13 @@ export default async function DashboardPage() {
           </section>
         )}
 
+        {/* STUDENT — Due Soon (above feed per Q2 = A) */}
+        {user.role === "STUDENT" && (
+          <div className="mt-10">
+            <DueSoonWidget studentUserId={session.user.id} />
+          </div>
+        )}
+
         {/* STUDENT */}
         {user.role === "STUDENT" && studentCourses && (
           <section className="mt-10">
@@ -214,6 +223,13 @@ export default async function DashboardPage() {
               </div>
             )}
           </section>
+        )}
+
+        {/* STUDENT — User Feed (Q3 = B: student-only) */}
+        {user.role === "STUDENT" && (
+          <div className="mt-10">
+            <UserFeed session={session} />
+          </div>
         )}
 
         {/* ADMIN */}

@@ -1391,6 +1391,76 @@ async function testPhase7Bell() {
   );
 }
 
+async function testPhase7DashboardFeed() {
+  console.log("\n📰 Phase 7 / P7-6: dashboard User Feed + Due Soon Widget");
+
+  // Pre-empt cascade lockout (same posture as the bell section).
+  await db.rateLimitBucket.deleteMany({
+    where: { id: { startsWith: "login:" } },
+  });
+
+  const FEED_HEADER = "กิจกรรมล่าสุด";
+  const DUE_SOON_HEADER = "ใกล้ส่ง — ภายใน 24 ชั่วโมง";
+
+  // Student dashboard → User Feed section present
+  const studentCookie = await signin("60001", "Student1234");
+  if (!studentCookie) {
+    fail("Student login (Phase 7 dashboard feed)", "no cookie");
+    return;
+  }
+  const sDash = await fetch(`${BASE}/dashboard`, {
+    headers: { cookie: studentCookie },
+  });
+  const sBody = await sDash.text();
+  await expect(
+    "Student dashboard renders User Feed section",
+    sBody.includes(FEED_HEADER),
+    `"${FEED_HEADER}" not found`
+  );
+
+  // Teacher dashboard → User Feed NOT present (Q3 = B lock)
+  const teacherCookie = await signin("teacher@studennnn.local", "Teacher1234!");
+  if (!teacherCookie) {
+    fail("Teacher login (Phase 7 dashboard feed)", "no cookie");
+    return;
+  }
+  const tDash = await fetch(`${BASE}/dashboard`, {
+    headers: { cookie: teacherCookie },
+  });
+  const tBody = await tDash.text();
+  await expect(
+    "Teacher dashboard does NOT render User Feed (creator role)",
+    !tBody.includes(FEED_HEADER),
+    `feed unexpectedly present in teacher response`
+  );
+  await expect(
+    "Teacher dashboard does NOT render Due Soon Widget (student-only)",
+    !tBody.includes(DUE_SOON_HEADER),
+    `due-soon unexpectedly present in teacher response`
+  );
+
+  // Admin dashboard → neither
+  const adminCookie = await signin("admin@studennnn.local", "Admin1234!");
+  if (!adminCookie) {
+    fail("Admin login (Phase 7 dashboard feed)", "no cookie");
+    return;
+  }
+  const aDash = await fetch(`${BASE}/dashboard`, {
+    headers: { cookie: adminCookie },
+  });
+  const aBody = await aDash.text();
+  await expect(
+    "Admin dashboard does NOT render User Feed",
+    !aBody.includes(FEED_HEADER),
+    `feed unexpectedly present in admin response`
+  );
+  await expect(
+    "Admin dashboard does NOT render Due Soon Widget",
+    !aBody.includes(DUE_SOON_HEADER),
+    `due-soon unexpectedly present in admin response`
+  );
+}
+
 async function testAuditLog() {
   console.log("\n📝 Audit log verification");
 
@@ -1463,6 +1533,7 @@ async function main() {
   await testPhase6Assignments();
   await testPhase7StorageRoutes();
   await testPhase7Bell();
+  await testPhase7DashboardFeed();
   await testAuditLog();
 
   console.log(`\n╭───────────────────────────────────╮`);
