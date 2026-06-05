@@ -3,13 +3,85 @@
 > เอกสารนี้ใช้สำหรับเริ่ม **session ใหม่** กับ AI assistant แล้วต่อยอดได้ทันที
 > อ่านไฟล์นี้ + `CLAUDE.md` + `CONTEXT.md` ก่อนเริ่มงาน
 
-อัพเดตล่าสุด: **2026-06-05** · 118+ commits · **Phase 0-9 + 10A ปิดครบ · Phase 9 ต่อ (Hardening + Deploy) deferred · Phase 10B/C/11/11D/12 in queue**
+อัพเดตล่าสุด: **2026-06-05** · 128+ commits · **Phase 0-9 + 10A + 10B + 10C ปิดครบ · Phase 9 ต่อ (Hardening + Deploy) deferred · Phase 11/11D/12 in queue**
 
 ---
 
-## ⚠️ START HERE — Phase 10A · Foundation ปิดแล้ว (2026-06-05 · branch `phase-10`)
+## ⚠️ START HERE — Phase 10 ปิดครบทั้ง 3 sub-phase (2026-06-05 · branch `phase-10`)
 
-**Branch:** `phase-10` (pushed to origin) — 7 new commits on top of `main`'s `15f31a9` (Phase 9 P9-4 close-out)
+**Branch:** `phase-10` (pushed to origin) — 18 commits on top of `main`'s `15f31a9` (Phase 9 P9-4 close-out)
+
+### Phase 10A · Foundation (8 commits)
+
+7 commits documented in this section's earlier revision (ADR-0024 sum-based scoring · ADR-0027 audit rendering · schema cutover · lib/scoring + lib/audit + lib/dashboard). Verifications: 413 unit + 172 integration passing post-cutover.
+
+### Phase 10B · Admin surface (8 commits)
+
+| SHA | Commit |
+|-----|--------|
+| `c9067ca` | docs(adr): ADR-0025 Course Feed tab + ADR-0026 admin user drill-down |
+| `8b8d879` | feat(auth): temp-password.ts pure generator for Admin reset flow |
+| `128a7e0` | feat(admin): setup CRUD lib + teacher single-add + reset-password lib |
+| `e1eb6d4` | feat(admin): /admin/setup × 4 tabs (Year/Term/Class/Teacher single-add) |
+| `5ce69bc` | feat(admin): /admin/users/[id] drill-down + reset-password (ADR-0026) |
+| `d49e796` | feat(admin): /admin/audit verbose Thai sentence rendering (Q9 + ADR-0027) |
+| `f1c8057` | feat(admin): dashboard Class Cards + /admin/classes/[id] drill-down (Q3/Q6) |
+
+**What shipped:**
+- **`/admin/setup` × 4 tabs** — AcademicYear / Term / Class / single-Teacher CRUD with delete-block policy (Q8c) + reveal-once temp-password for the teacher add path.
+- **`/admin/users/[id]`** — full non-secret profile drill-down (identity / auth meta / relationships / last 50 audits) + reset-password reveal-once UI per ADR-0026 § 2. passwordHash is in DB but never on the wire. Self-reset is blocked for attribution.
+- **`/admin/audit`** — list page now renders the **verbose Thai sentence** per row (ADR-0027 + Q9 lock) via the Phase 10A `renderAuditLog` helper. Actor name resolved through Teacher/Student/Admin sub-rows. Technical enum literal accessible on hover for ops.
+- **`/admin/dashboard`** — Class Cards grid (Q6 lock: Card = Class, not CourseOffering). KPI row uses `lib/dashboard/queries.getAdminStats` (Phase 10A shared module); Critical-audits-last-7d gets a rose ring when count > 0.
+- **`/admin/classes/[id]`** — per-class drill-down with course list + roster (links to `/admin/users/[id]` for both teachers and students). Per-class analytics (rankings + CSV export) deferred to task #8 — non-blocking.
+
+**Admin sidebar** gains "ตั้งค่าโครงสร้าง" nav item between "ภาพรวม" and "ครู". Teacher/Student list pages link names → `/admin/users/[id]` drill-down.
+
+### Phase 10C · Course Feed redesign (1 commit · multi-feature)
+
+| SHA | Commit |
+|-----|--------|
+| `ab06cca` | feat(course): Phase 10C — Course Feed tabs + unified composer (ADR-0025) |
+
+**What shipped:**
+- **Tab nav reshape** per ADR-0025: teacher 8→6 tabs, student 7→5 tabs. การบ้าน / เอกสาร / ประกาศ list tabs dropped from nav; detail routes survive. **"ฟีด" is the new first tab (default landing)**.
+- **`/(teacher|student)/courses/[id]/feed`** — chronological stream with type-chip filter row (ทั้งหมด · ประกาศ · การบ้าน · เอกสาร · คะแนนที่เผยแพร่). Server-rendered chips via `?type=` URL param (no client filter state). Insta-style FeedCard with kind-colored icon tile + Buddhist-short due dates for Assignment rows.
+- **`lib/feed/getCourseFeed`** — new function that reuses the Phase 7 multi-query union scoped to one course + optional FeedKind filter. The cross-course `getUserFeed` (dashboard) is unaffected; both delegate to a shared `aggregateFeed` helper.
+- **`lib/feed/resolveCourseFeedHref`** — role-aware variant of the Phase 7 navigation resolver. Teacher feed rows link to `/teacher/...`, student rows to `/student/...`.
+- **`<UnifiedComposer>`** Pattern-7 dialog (teacher only) with content-type chip selector — ประกาศ / การบ้าน / เอกสาร. Each sub-form posts to its own Server Action (composeAnnouncementAction / composeAssignmentAction / composeMaterialAction); the chip choice just routes the submit. Assignment form has the isScored toggle that reveals the fullScore field (ADR-0024 — no weight input ever again).
+
+**Deferred follow-ups (non-blocking, in next session):**
+- Multi-image carousel attachment in the composer (presign + commit form-state wiring — ADR-0021 unchanged; the slot is reserved in the dialog).
+- Inline grade input on per-submission view (replaces the Phase 6 grade modal — UX upgrade, not semantic change).
+- 301 redirect from old `/courses/[id]/assignments` (etc.) list landings → `/feed?type=assignment`. Current behaviour: the URL still resolves to the legacy list page which is still wired to lib reads — harmless co-existence during the transition.
+
+### Phase 10 verifications
+
+- `pnpm typecheck` = **0 errors**
+- `pnpm test` (unit) = **419 passed** (+6 temp-password cases on top of the 413 post-Phase-10A baseline)
+- `pnpm lint` = 0 errors (256 pre-existing warnings)
+- `pnpm test:integration` (live Neon) = **172 passed** post-deflake (Phase 10A run)
+- Schema applied to Neon dev DB via `prisma db push` (Phase 10A weight drop + targetLabel add)
+
+### What's queued next
+
+| Task | Status | Notes |
+|------|--------|-------|
+| Phase 10A — Foundation | ✅ done | — |
+| Phase 10A follow-up — Test rewrite | ✅ done | — |
+| Phase 10B — Admin surface | ✅ done | — |
+| Phase 10B follow-up — Per-class analytics + Audit CSV Thai column | ⏸ pending | Non-blocking; lib helpers in place |
+| Phase 10C — Course Feed redesign | ✅ done | Composer multi-image + inline grade deferred per commit body |
+| Phase 11 — Theme migration iOS+Win11 (`/impeccable` grill first) | ⏸ pending | Now ready to start |
+| Phase 11D — Dashboards on new theme | ⏸ pending | Blocked by 11 |
+| Phase 12 — Landing Page (post-theme) | ⏸ pending | Blocked by 11D |
+
+---
+
+### Phase 10A · Foundation — original commit table
+
+(retained below — the Phase 10A ADR-0024/0027 cutover details still authoritative)
+
+**Branch:** `phase-10` (pushed to origin) — Phase 10A initial 8 commits on top of `main`'s `15f31a9` (Phase 9 P9-4 close-out)
 
 | SHA | Commit |
 |-----|--------|
