@@ -47,11 +47,13 @@ export interface ScoreEntryEditedPayload extends BasePayload {
 }
 
 export interface SubmissionGradedPayload extends BasePayload {
+  assignmentId: string;
   assignmentTitle: string;
   graderName: string;
 }
 
 export interface SubmissionReturnedPayload extends BasePayload {
+  assignmentId: string;
   assignmentTitle: string;
   commentExcerpt: string;
   teacherName: string;
@@ -61,6 +63,13 @@ export interface SubmissionReturnedPayload extends BasePayload {
 
 export interface CommentRepliedPayload extends BasePayload {
   entityKind: "ASSIGNMENT" | "MATERIAL" | "ANNOUNCEMENT" | "SUBMISSION";
+  /**
+   * Identifier of the entity the comment was posted under — drives the
+   * bell's deep-link URL (Phase 9 P9-1). For SUBMISSION this is the
+   * Submission's parent `Assignment.id` so the bell lands on the
+   * assignment detail rather than the bare submissions list.
+   */
+  entityOwnerId: string;
   entityTitle: string | null;
   commenterName: string;
   commentExcerpt: string;

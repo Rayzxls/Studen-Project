@@ -370,6 +370,7 @@ export async function returnSubmission(
         enrollment: { select: { studentId: true } },
         assignment: {
           select: {
+            id: true,
             title: true,
             course: { select: { id: true, name: true } },
           },
@@ -389,6 +390,7 @@ export async function returnSubmission(
       payload: {
         courseId: enriched.assignment.course.id,
         courseName: enriched.assignment.course.name,
+        assignmentId: enriched.assignment.id,
         assignmentTitle: enriched.assignment.title,
         teacherName: `${teacher.firstName} ${teacher.lastName}`,
         commentExcerpt: clipExcerpt(parsed.comment),
@@ -562,6 +564,7 @@ export async function gradeSubmission(
           enrollment: { select: { studentId: true } },
           assignment: {
             select: {
+              id: true,
               title: true,
               course: { select: { id: true, name: true } },
             },
@@ -581,10 +584,13 @@ export async function gradeSubmission(
         payload: {
           courseId: enriched.assignment.course.id,
           courseName: enriched.assignment.course.name,
+          assignmentId: enriched.assignment.id,
           assignmentTitle: enriched.assignment.title,
           graderName: `${grader.firstName} ${grader.lastName}`,
         },
       });
+      // entityKind selector path for gradeSubmission's enriched select
+      // also needs `assignment.id`; the same SELECT shape is reused.
     }
   }, TX_OPTS);
 }

@@ -59,15 +59,22 @@ export function resolveNotificationHref(
       case "CLASS_CODE_JOINED":
         return `/teacher/courses/${courseOfferingId}/members`;
       case "COMMENT_REPLIED": {
-        // Teacher comments on own/classmate threads — fall back to course root.
-        // entityKind in payload could route deeper once Material/Announcement
-        // UI lands (P7-7/8).
+        // P9-1: payload now carries `entityOwnerId`. Teacher branches
+        // deep-link to the teacher-side detail page for each entity.
         const entityKind = payloadString(args.payload, "entityKind");
-        if (entityKind === "ASSIGNMENT") {
-          // We do NOT have the assignment id in the payload yet.
-          return `/teacher/courses/${courseOfferingId}`;
+        const entityOwnerId = payloadString(args.payload, "entityOwnerId");
+        if (!entityOwnerId) return `/teacher/courses/${courseOfferingId}`;
+        switch (entityKind) {
+          case "ASSIGNMENT":
+          case "SUBMISSION":
+            return `/teacher/courses/${courseOfferingId}/assignments/${entityOwnerId}`;
+          case "MATERIAL":
+            return `/teacher/courses/${courseOfferingId}/materials/${entityOwnerId}`;
+          case "ANNOUNCEMENT":
+            return `/teacher/courses/${courseOfferingId}/announcements/${entityOwnerId}`;
+          default:
+            return `/teacher/courses/${courseOfferingId}`;
         }
-        return `/teacher/courses/${courseOfferingId}`;
       }
       default:
         return `/teacher/courses/${courseOfferingId}`;
@@ -86,18 +93,44 @@ export function resolveNotificationHref(
       return `/student/courses/${courseOfferingId}/assignments/${sourceEntityId}`;
 
     case "SUBMISSION_GRADED":
-    case "SUBMISSION_RETURNED":
-      // sourceEntityId is the submission id — we lack the assignment id
-      // to deep-link. Land on the assignments list inside the course.
-      return `/student/courses/${courseOfferingId}/assignments`;
+    case "SUBMISSION_RETURNED": {
+      // P9-1: payload now carries the parent `assignmentId`. Deep-link
+      // to assignment detail; fall back to the assignments list for
+      // legacy rows that pre-date the enrichment.
+      const aid = payloadString(args.payload, "assignmentId");
+      return aid
+        ? `/student/courses/${courseOfferingId}/assignments/${aid}`
+        : `/student/courses/${courseOfferingId}/assignments`;
+    }
 
-    case "MATERIAL_POSTED":
-    case "ANNOUNCEMENT_POSTED":
-      // No UI route yet — P7-7 / P7-8 will land these.
-      return `/student/courses/${courseOfferingId}`;
+    case "MATERIAL_POSTED": {
+      // P7-8 student Material detail route is live now.
+      return `/student/courses/${courseOfferingId}/materials/${sourceEntityId}`;
+    }
 
-    case "COMMENT_REPLIED":
-      return `/student/courses/${courseOfferingId}`;
+    case "ANNOUNCEMENT_POSTED": {
+      return `/student/courses/${courseOfferingId}/announcements/${sourceEntityId}`;
+    }
+
+    case "COMMENT_REPLIED": {
+      // P9-1: payload now carries `entityOwnerId` so we can route to the
+      // commented entity. For SUBMISSION this is the parent
+      // Assignment.id (set in lib/assignment/comment.ts).
+      const entityKind = payloadString(args.payload, "entityKind");
+      const entityOwnerId = payloadString(args.payload, "entityOwnerId");
+      if (!entityOwnerId) return `/student/courses/${courseOfferingId}`;
+      switch (entityKind) {
+        case "ASSIGNMENT":
+        case "SUBMISSION":
+          return `/student/courses/${courseOfferingId}/assignments/${entityOwnerId}`;
+        case "MATERIAL":
+          return `/student/courses/${courseOfferingId}/materials/${entityOwnerId}`;
+        case "ANNOUNCEMENT":
+          return `/student/courses/${courseOfferingId}/announcements/${entityOwnerId}`;
+        default:
+          return `/student/courses/${courseOfferingId}`;
+      }
+    }
 
     case "CLASS_CODE_JOINED":
       // Shouldn't reach a student recipient, but stay safe.
