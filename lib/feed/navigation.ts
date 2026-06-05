@@ -33,3 +33,27 @@ export function resolveFeedHref(args: {
       return `/student/courses/${courseOfferingId}/announcements/${itemId}`;
   }
 }
+
+/**
+ * Role-aware variant — Phase 10C · ADR-0025 Course Feed needs both
+ * `/teacher/...` and `/student/...` URL families.
+ */
+export function resolveCourseFeedHref(args: {
+  kind: FeedKind;
+  courseOfferingId: string;
+  itemId: string;
+  role: "TEACHER" | "STUDENT";
+}): string {
+  const { kind, courseOfferingId, itemId, role } = args;
+  const prefix = role === "TEACHER" ? "/teacher" : "/student";
+  switch (kind) {
+    case "ASSIGNMENT":
+      return `${prefix}/courses/${courseOfferingId}/assignments/${itemId}`;
+    case "SCORE_PUBLISHED":
+      return `${prefix}/courses/${courseOfferingId}/scores`;
+    case "MATERIAL":
+      return `${prefix}/courses/${courseOfferingId}/materials/${itemId}`;
+    case "ANNOUNCEMENT":
+      return `${prefix}/courses/${courseOfferingId}/announcements/${itemId}`;
+  }
+}

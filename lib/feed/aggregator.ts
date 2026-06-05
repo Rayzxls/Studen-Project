@@ -57,6 +57,34 @@ export async function getUserFeed(
   if (courseIds.length === 0) {
     return { items: [], nextCursor: null };
   }
+  return aggregateFeed(courseIds, cursor);
+}
+
+/**
+ * Per-CourseOffering Feed — Phase 10C · ADR-0025.
+ *
+ * Reuses the same multi-query union as getUserFeed but scoped to a
+ * single course. The caller is responsible for authorization (e.g.
+ * teacher owns the course, student has an active enrollment). The
+ * aggregator does not re-check.
+ *
+ * @param kindFilter optional whitelist of FeedKind — when set, only
+ *   those kinds are fetched. Empty/undefined = all 4 kinds.
+ */
+export async function getCourseFeed(
+  courseId: string,
+  cursor?: FeedCursor,
+  kindFilter?: ReadonlySet<FeedKind>
+): Promise<FeedPage> {
+  return aggregateFeed([courseId], cursor, kindFilter);
+}
+
+async function aggregateFeed(
+  courseIds: string[],
+  cursor: FeedCursor | undefined,
+  kindFilter?: ReadonlySet<FeedKind>
+): Promise<FeedPage> {
+  const includeKind = (k: FeedKind) => !kindFilter || kindFilter.has(k);
 
   // The composite cursor: (sortAt, id). For descending order, the next
   // page returns rows STRICTLY before the cursor — `sortAt < cursor.sortAt`
@@ -72,91 +100,101 @@ export async function getUserFeed(
   void cursorPredicate; // Each branch composes its own; this is documentation.
 
   const courseInFilter = { in: courseIds };
+  const emptyResult: never[] = [];
 
   const [assignments, materials, announcements, scoreItems] = await Promise.all(
     [
-      db.assignment.findMany({
-        where: {
-          courseOfferingId: courseInFilter,
-          ...(cursor && {
-            OR: [
-              { createdAt: { lt: cursor.sortAt } },
-              { createdAt: cursor.sortAt, id: { lt: cursor.id } },
-            ],
-          }),
-        },
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        take: PAGE_SIZE,
-        select: {
-          id: true,
-          courseOfferingId: true,
-          title: true,
-          dueAt: true,
-          createdAt: true,
-        },
-      }),
-      db.material.findMany({
-        where: {
-          courseOfferingId: courseInFilter,
-          deletedAt: null,
-          ...(cursor && {
-            OR: [
-              { postedAt: { lt: cursor.sortAt } },
-              { postedAt: cursor.sortAt, id: { lt: cursor.id } },
-            ],
-          }),
-        },
-        orderBy: [{ postedAt: "desc" }, { id: "desc" }],
-        take: PAGE_SIZE,
-        select: {
-          id: true,
-          courseOfferingId: true,
-          title: true,
-          postedAt: true,
-        },
-      }),
-      db.announcement.findMany({
-        where: {
-          courseOfferingId: courseInFilter,
-          deletedAt: null,
-          ...(cursor && {
-            OR: [
-              { postedAt: { lt: cursor.sortAt } },
-              { postedAt: cursor.sortAt, id: { lt: cursor.id } },
-            ],
-          }),
-        },
-        orderBy: [{ postedAt: "desc" }, { id: "desc" }],
-        take: PAGE_SIZE,
-        select: {
-          id: true,
-          courseOfferingId: true,
-          title: true,
-          postedAt: true,
-        },
-      }),
-      db.scoreItem.findMany({
-        where: {
-          courseOfferingId: courseInFilter,
-          publishedAt: { not: null },
-          ...(cursor && {
-            OR: [
-              { publishedAt: { lt: cursor.sortAt } },
-              { publishedAt: cursor.sortAt, id: { lt: cursor.id } },
-            ],
-          }),
-        },
-        orderBy: [{ publishedAt: "desc" }, { id: "desc" }],
-        take: PAGE_SIZE,
-        // Strict L1: no weight, no fullScore, no entries — those are
-        // Scores-tab concerns. Feed only surfaces "this item is live".
-        select: {
-          id: true,
-          courseOfferingId: true,
-          name: true,
-          publishedAt: true,
-        },
-      }),
+      includeKind("ASSIGNMENT")
+        ? db.assignment.findMany({
+            where: {
+              courseOfferingId: courseInFilter,
+              ...(cursor && {
+                OR: [
+                  { createdAt: { lt: cursor.sortAt } },
+                  { createdAt: cursor.sortAt, id: { lt: cursor.id } },
+                ],
+              }),
+            },
+            orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+            take: PAGE_SIZE,
+            select: {
+              id: true,
+              courseOfferingId: true,
+              title: true,
+              dueAt: true,
+              createdAt: true,
+            },
+          })
+        : Promise.resolve(emptyResult),
+      includeKind("MATERIAL")
+        ? db.material.findMany({
+            where: {
+              courseOfferingId: courseInFilter,
+              deletedAt: null,
+              ...(cursor && {
+                OR: [
+                  { postedAt: { lt: cursor.sortAt } },
+                  { postedAt: cursor.sortAt, id: { lt: cursor.id } },
+                ],
+              }),
+            },
+            orderBy: [{ postedAt: "desc" }, { id: "desc" }],
+            take: PAGE_SIZE,
+            select: {
+              id: true,
+              courseOfferingId: true,
+              title: true,
+              postedAt: true,
+            },
+          })
+        : Promise.resolve(emptyResult),
+      includeKind("ANNOUNCEMENT")
+        ? db.announcement.findMany({
+            where: {
+              courseOfferingId: courseInFilter,
+              deletedAt: null,
+              ...(cursor && {
+                OR: [
+                  { postedAt: { lt: cursor.sortAt } },
+                  { postedAt: cursor.sortAt, id: { lt: cursor.id } },
+                ],
+              }),
+            },
+            orderBy: [{ postedAt: "desc" }, { id: "desc" }],
+            take: PAGE_SIZE,
+            select: {
+              id: true,
+              courseOfferingId: true,
+              title: true,
+              postedAt: true,
+            },
+          })
+        : Promise.resolve(emptyResult),
+      includeKind("SCORE_PUBLISHED")
+        ? db.scoreItem.findMany({
+            where: {
+              courseOfferingId: courseInFilter,
+              publishedAt: { not: null },
+              ...(cursor && {
+                OR: [
+                  { publishedAt: { lt: cursor.sortAt } },
+                  { publishedAt: cursor.sortAt, id: { lt: cursor.id } },
+                ],
+              }),
+            },
+            orderBy: [{ publishedAt: "desc" }, { id: "desc" }],
+            take: PAGE_SIZE,
+            // Strict L1: no fullScore, no entries — those are Scores-tab
+            // concerns. Feed only surfaces "this item is live" (ADR-0024
+            // sum-based formula doesn't change this L1 boundary).
+            select: {
+              id: true,
+              courseOfferingId: true,
+              name: true,
+              publishedAt: true,
+            },
+          })
+        : Promise.resolve(emptyResult),
     ]
   );
 

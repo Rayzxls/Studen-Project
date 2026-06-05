@@ -1,21 +1,21 @@
 import type { CourseTab } from "@/components/course/tab-nav";
 
 /**
- * Shared tabs list for the teacher CourseOffering shell (Phase 3).
+ * Teacher CourseOffering tab list — Phase 10C reshape per ADR-0025.
  *
- * Each tab page imports this rather than re-declaring its own list so that
- * adding a tab is a single-file change. Grows commit-by-commit through P3-5:
- *   commit 1: Overview only
- *   commit 2: + Members
- *   commit 3: + Settings
+ * The three content-type list tabs (การบ้าน / เอกสาร / ประกาศ) are removed
+ * from the nav; the Feed tab becomes the new default landing and surfaces
+ * those activities chronologically with a type-chip filter. The detail
+ * routes (assignments/[aid], materials/[mid], announcements/[aid])
+ * survive intact and are reached via Feed cards.
+ *
+ * 8 tabs → 6 tabs.
  */
 export const teacherCourseTabs = (courseId: string): CourseTab[] => [
+  { label: "ฟีด", href: `/teacher/courses/${courseId}/feed` },
   { label: "ภาพรวม", href: `/teacher/courses/${courseId}` },
   { label: "สมาชิก", href: `/teacher/courses/${courseId}/members` },
   { label: "เช็คชื่อ", href: `/teacher/courses/${courseId}/attendance` },
   { label: "คะแนน", href: `/teacher/courses/${courseId}/scores` },
-  { label: "การบ้าน", href: `/teacher/courses/${courseId}/assignments` },
-  { label: "เอกสาร", href: `/teacher/courses/${courseId}/materials` },
-  { label: "ประกาศ", href: `/teacher/courses/${courseId}/announcements` },
   { label: "ตั้งค่า", href: `/teacher/courses/${courseId}/settings` },
 ];
