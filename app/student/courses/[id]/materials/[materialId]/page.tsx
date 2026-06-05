@@ -1,26 +1,22 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ChevronLeft, Link as LinkIcon } from "lucide-react";
-import { requireRole } from "@/lib/auth/guards";
-import { getCourseOfferingForTeacher } from "@/lib/course/queries";
+import { assert } from "@/lib/auth/guards";
+import { getCourseOfferingForStudent } from "@/lib/course/queries";
 import { db } from "@/lib/db/client";
 import { formatThaiDateShort } from "@/lib/attendance/format";
 import { CourseShell } from "@/components/course/course-shell";
-import { EditMaterialDialog } from "@/components/material/edit-material-dialog";
-import { DeleteMaterialDialog } from "@/components/material/delete-material-dialog";
 import { CommentsThread } from "@/components/comment/comments-thread";
-import { teacherCourseTabs } from "../../_tabs";
+import { studentCourseTabs } from "../../_tabs";
 
 /**
- * Teacher Material detail — Phase 7 · P7-7.
+ * Student Material detail — Phase 7 · P7-8.
  *
- * Shows title + body + linkUrls + attachments + edit/delete affordances.
- * Comments thread deferred to P7-8 (Q3 = B lock — ship CRUD here, hook
- * up class-wide thread when the student UI lands).
+ * Read-only mirror of teacher Material detail. L1 boundary via
+ * `assert.isActiveCourseMember`. Soft-deleted Materials 404.
  *
- * Soft-deleted Materials 404 (deletedAt filter inline). The hard rule
- * "course owner only" lives in the Material lib mutations; this page
- * does the owner check up-front for a clean 404 vs 403 split.
+ * Hosts the CLASS_WIDE comments thread (Q1/Q2 = A lock — thread is
+ * the same one teacher sees on /teacher/courses/.../materials/[mid]).
  */
 
 export const dynamic = "force-dynamic";
@@ -29,16 +25,17 @@ interface PageProps {
   params: Promise<{ id: string; materialId: string }>;
 }
 
-export default async function TeacherMaterialDetailPage({ params }: PageProps) {
-  let session;
+export default async function StudentMaterialDetailPage({ params }: PageProps) {
+  const { id, materialId } = await params;
+
+  let guard;
   try {
-    session = await requireRole(["TEACHER"]);
+    guard = await assert.isActiveCourseMember(id);
   } catch {
     redirect("/dashboard");
   }
 
-  const { id, materialId } = await params;
-  const course = await getCourseOfferingForTeacher(id, session.user.id);
+  const course = await getCourseOfferingForStudent(id, guard.session.user.id);
   if (!course) notFound();
 
   const material = await db.material.findFirst({
@@ -52,10 +49,11 @@ export default async function TeacherMaterialDetailPage({ params }: PageProps) {
       title: true,
       body: true,
       linkUrls: true,
-      fileAttachmentIds: true,
       postedAt: true,
       postedBy: {
-        select: { teacher: { select: { firstName: true, lastName: true } } },
+        select: {
+          teacher: { select: { firstName: true, lastName: true } },
+        },
       },
     },
   });
@@ -71,15 +69,15 @@ export default async function TeacherMaterialDetailPage({ params }: PageProps) {
 
   return (
     <CourseShell
-      session={session}
+      session={guard.session}
       course={course}
-      eyebrow="รายวิชาที่สอน"
-      backHref="/teacher/courses"
-      tabs={teacherCourseTabs(id)}
+      eyebrow="ห้องเรียน"
+      backHref="/dashboard"
+      tabs={studentCourseTabs(id)}
     >
       <div className="space-y-4">
         <Link
-          href={`/teacher/courses/${id}/materials`}
+          href={`/student/courses/${id}/materials`}
           className="inline-flex items-center gap-1 text-xs text-black/60 hover:text-black"
         >
           <ChevronLeft className="h-3.5 w-3.5" />
@@ -87,33 +85,19 @@ export default async function TeacherMaterialDetailPage({ params }: PageProps) {
         </Link>
 
         <div className="card p-6">
-          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h1
-                className="text-2xl font-medium text-black md:text-3xl"
-                style={{ letterSpacing: "-0.02em" }}
-              >
-                {material.title}
-              </h1>
-              <p className="mt-1 text-xs text-black/50">
-                โดย {posterName} · โพสต์เมื่อ{" "}
-                {formatThaiDateShort(material.postedAt)}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <EditMaterialDialog
-                courseId={id}
-                materialId={material.id}
-                initialTitle={material.title}
-                initialBody={material.body}
-                initialLinkUrls={linkUrls}
-              />
-              <DeleteMaterialDialog courseId={id} materialId={material.id} />
-            </div>
-          </div>
+          <h1
+            className="text-2xl font-medium text-black md:text-3xl"
+            style={{ letterSpacing: "-0.02em" }}
+          >
+            {material.title}
+          </h1>
+          <p className="mt-1 text-xs text-black/50">
+            โดย {posterName} · โพสต์เมื่อ{" "}
+            {formatThaiDateShort(material.postedAt)}
+          </p>
 
           {material.body && (
-            <div className="prose prose-sm mt-2 max-w-none whitespace-pre-wrap text-sm text-black/80">
+            <div className="prose prose-sm mt-4 max-w-none whitespace-pre-wrap text-sm text-black/80">
               {material.body}
             </div>
           )}
@@ -148,7 +132,7 @@ export default async function TeacherMaterialDetailPage({ params }: PageProps) {
           ownerId={material.id}
           courseOfferingId={id}
           scope="CLASS_WIDE"
-          session={session}
+          session={guard.session}
         />
       </div>
     </CourseShell>

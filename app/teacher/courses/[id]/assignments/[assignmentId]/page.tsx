@@ -5,6 +5,7 @@ import { assert } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { GradeSubmissionDialog } from "@/components/assignment/grade-submission-dialog";
 import { ReturnSubmissionDialog } from "@/components/assignment/return-submission-dialog";
+import { CommentsThread } from "@/components/comment/comments-thread";
 
 /**
  * Teacher Assignment detail page — Phase 6 · P6-5b.
@@ -42,9 +43,11 @@ export default async function AssignmentDetailPage({ params }: PageProps) {
   const { id: courseId, assignmentId } = await params;
 
   let assignment;
+  let session;
   try {
     const result = await assert.canMutateAssignment(assignmentId);
     assignment = result.assignment;
+    session = result.session;
   } catch {
     redirect("/dashboard");
   }
@@ -269,6 +272,16 @@ export default async function AssignmentDetailPage({ params }: PageProps) {
             })}
           </ul>
         )}
+      </div>
+
+      <div className="mt-4">
+        <CommentsThread
+          ownerType="ASSIGNMENT"
+          ownerId={fullAssignment.id}
+          courseOfferingId={courseId}
+          scope="CLASS_WIDE"
+          session={session}
+        />
       </div>
     </div>
   );

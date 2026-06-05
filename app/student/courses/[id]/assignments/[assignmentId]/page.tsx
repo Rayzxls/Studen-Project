@@ -4,6 +4,7 @@ import { ChevronLeft } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { SubmitVersionForm } from "@/components/assignment/submit-version-form";
+import { CommentsThread } from "@/components/comment/comments-thread";
 
 /**
  * Student Assignment detail page — Phase 6 · P6-6.
@@ -310,6 +311,16 @@ export default async function StudentAssignmentDetailPage({
           </ul>
         </div>
       )}
+
+      <div className="mt-4">
+        <CommentsThread
+          ownerType="ASSIGNMENT"
+          ownerId={assignmentId}
+          courseOfferingId={courseId}
+          scope="CLASS_WIDE"
+          session={session}
+        />
+      </div>
     </div>
   );
 }
