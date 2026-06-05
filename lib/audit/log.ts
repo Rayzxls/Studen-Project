@@ -60,7 +60,9 @@ export type AuditEvent =
   | "FILE_DELETED" // Important · owner removal or moderator delete
   | "FILE_INFECTED_BLOCKED" // Critical · enum reserved, no fire site in Phase 6 (AV deferred to Phase 9)
   // Admin
-  | "ADMIN_VIEW_STUDENT_DATA";
+  | "ADMIN_VIEW_STUDENT_DATA"
+  // Phase 8 — read-side admin audit tools
+  | "ADMIN_AUDIT_EXPORTED";
 
 export interface AuditPayload {
   actorId?: string | null;
