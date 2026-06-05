@@ -3,7 +3,7 @@
 > เอกสารนี้ใช้สำหรับเริ่ม **session ใหม่** กับ AI assistant แล้วต่อยอดได้ทันที
 > อ่านไฟล์นี้ + `CLAUDE.md` + `CONTEXT.md` ก่อนเริ่มงาน
 
-อัพเดตล่าสุด: **2026-06-04** · 95+ commits · **Phase 0-6 ปิดครบ · Phase 7 ถึง P7-5 (Bell UI ในนำทาง)**
+อัพเดตล่าสุด: **2026-06-05** · 97+ commits · **Phase 0-6 ปิดครบ · Phase 7 ถึง P7-6 (Bell + Dashboard Feed)**
 
 ---
 
@@ -332,7 +332,7 @@ All commits since `c46b7c4` have passed 3/3 jobs (Lint/Typecheck, Unit Tests, Bu
 
 **Total verifications post-Phase 6:** 299 unit + 135 integration + ~98 smoke = **~532**.
 
-### Phase 7 progress — paused at P7-5 (2026-06-04 · `996532c`)
+### Phase 7 progress — paused at P7-6 (2026-06-05 · `ca23943`)
 
 | Sub-task | Status | SHA |
 |---|---|---|
@@ -346,13 +346,13 @@ All commits since `c46b7c4` have passed 3/3 jobs (Lint/Typecheck, Unit Tests, Bu
 | P7-3 lib/material + lib/announcement + CommentOwnerType plug-in | ✅ | `73a7684` |
 | P7-4 notification read routes + lib/feed/aggregator + scope query | ✅ | `b64a786` |
 | P7-5 Bell UI navbar + dropdown (lib helpers · bell components · shared TopNav · migrate 6 surfaces) | ✅ | `a2615ed` · `9d82121` · `996532c` |
-| P7-6 Dashboard User Feed section + Due Soon widget | ⏳ TODO | — |
+| P7-6 Dashboard User Feed + Due Soon Widget (student-only) | ✅ | `4ab67af` · `ca23943` |
 | P7-7 Teacher Material + Announcement UI | ⏳ TODO | — |
 | P7-8 Student Material + Announcement UI | ⏳ TODO | — |
 | P7-9 Integration tests (broader fan-out coverage) | ⏳ TODO | — |
 | P7-10 Smoke + HANDOFF close-out | ⏳ TODO | — |
 
-**Verifications post-P7-5:** 372 unit (+42) + 148 integration + ~103 smoke (+5) = ~623 checks
+**Verifications post-P7-6:** 384 unit (+12) + 148 integration + ~108 smoke (+5) = ~640 checks
 
 **Lib layer essentially done.** All 9 NotificationKinds have wired event sources end-to-end:
 
@@ -436,8 +436,47 @@ helper (missing `mustResetPwd`); fixed forward in commit `a2615ed`.
   `db.rateLimitBucket.deleteMany({where:{id:{startsWith:"login:"}}})`
   at its top; the same pattern would unbreak the other sections.
 
-**Next session resume point — P7-6:** Dashboard User Feed section +
-Due Soon widget.
+**P7-6 — what shipped (2026-06-05 · `ca23943`)**
+
+Student dashboard now surfaces two state-derived sections above the
+existing "ห้องเรียนของฉัน" grid (3-question mini-grill before code:
+Q1 = A cap 20 no load-more · Q2 = A vertical stack Due Soon top · Q3 =
+B student-only feed).
+
+- **Due Soon Widget** — amber-tinted card listing Assignments due
+  within 24 h whose own Submission status is NOT_SUBMITTED or DRAFT,
+  sorted dueAt ASC, max 5. Hides itself when empty (an empty "ใกล้ส่ง"
+  card next to a populated feed is more confusing than no card).
+- **User Feed** — illustrated empty state or up to 20 rows merged
+  across Assignment / Material / Announcement / ScoreItem(published)
+  via the P7-4 aggregator. Reuses the bell's `NotificationIcon` +
+  `RelativeTime` so both surfaces share one icon map + one Pattern-12
+  time helper. Per-row href + preview resolved server-side via
+  `lib/feed/{navigation,preview}`.
+
+Teacher dashboard intentionally has neither (creator role; bell
+already covers CLASS_CODE_JOINED + COMMENT_REPLIED). Admin dashboard
+unchanged (no NotificationKind targets ADMIN).
+
+**New files (`4ab67af`):** `lib/feed/{navigation,preview}.ts` pure
+helpers + `lib/assignment/due-soon.ts` DB query. 12 new unit tests
+(372 → 384). Due-Soon DB query covered by smoke + P7-9 integration.
+
+**New files / changes (`ca23943`):**
+`components/feed/{due-soon-widget,user-feed}.tsx` Server Components
++ `app/dashboard/page.tsx` integration + 5 smoke checks.
+
+**Known follow-ups for P7-7+:**
+- `nextCursor` from `getUserFeed` is unused — future `/feed` full-page
+  route can pick it up if 20 isn't enough.
+- After P7-7 / P7-8 land Material + Announcement UI, the feed's
+  navigation resolver's `MATERIAL` / `ANNOUNCEMENT` cases switch from
+  course-root fallback to entity detail URL.
+- The "อยู่ระหว่างพัฒนา" footer card on dashboard still says "Phase
+  ปัจจุบัน: 5" — cosmetic; will update wholesale at P7-10 close-out.
+
+**Next session resume point — P7-7:** Teacher Material + Announcement
+post UI (create dialog, list, edit/soft-delete, comments thread).
 
 Phase 6 carryover (now historical):
 
