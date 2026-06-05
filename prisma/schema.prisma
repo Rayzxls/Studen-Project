@@ -106,19 +106,20 @@ model UserSession {
 // ═══════════════════════════════════════════════════════════
 
 model AuditLog {
-  id         String   @id @default(cuid())
-  timestamp  DateTime @default(now())
-  actorId    String?
-  actor      User?    @relation("ActorLogs", fields: [actorId], references: [id], onDelete: SetNull)
-  actorRole  Role?
-  action     String // SCORE_EDIT_AFTER_PUBLISH | LOGIN_SUCCESS | LOGIN_FAILED | ...
-  targetType String?
-  targetId   String?
-  before     Json?
-  after      Json?
-  reason     String?
-  ipAddress  String?
-  userAgent  String?
+  id          String   @id @default(cuid())
+  timestamp   DateTime @default(now())
+  actorId     String?
+  actor       User?    @relation("ActorLogs", fields: [actorId], references: [id], onDelete: SetNull)
+  actorRole   Role?
+  action      String // SCORE_EDIT_AFTER_PUBLISH | LOGIN_SUCCESS | LOGIN_FAILED | ...
+  targetType  String?
+  targetId    String?
+  targetLabel String? // human-readable snapshot of the target — captured at fire time (ADR-0027 / Phase 10 Q9d). Null for legacy rows; null on render → "—".
+  before      Json?
+  after       Json?
+  reason      String?
+  ipAddress   String?
+  userAgent   String?
 
   @@index([actorId, timestamp])
   @@index([action, timestamp])
