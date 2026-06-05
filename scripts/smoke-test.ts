@@ -1658,6 +1658,103 @@ async function testPhase7StudentPostUI() {
   // and covered by P3 integration tests).
 }
 
+async function testPhase8AdminAuditTools() {
+  console.log("\n🛡️  Phase 8: admin audit tools");
+
+  await db.rateLimitBucket.deleteMany({
+    where: { id: { startsWith: "login:" } },
+  });
+
+  const adminCookie = await signin("admin@studennnn.local", "Admin1234!");
+  if (!adminCookie) {
+    fail("Admin login (Phase 8)", "no cookie");
+    return;
+  }
+
+  const auditList = await fetch(`${BASE}/admin/audit`, {
+    headers: { cookie: adminCookie },
+  });
+  const auditBody = await auditList.text();
+  await expect(
+    "Admin audit viewer renders → 200",
+    auditList.status === 200,
+    `got ${auditList.status}`
+  );
+  await expect(
+    "Audit viewer shows tier filter",
+    auditBody.includes("ระดับ (Tier)"),
+    "tier filter missing"
+  );
+  await expect(
+    "Audit viewer shows date range filter",
+    auditBody.includes('name="from"') && auditBody.includes('name="to"'),
+    "date range inputs missing"
+  );
+  await expect(
+    "Audit viewer shows CSV export button",
+    auditBody.includes("ดาวน์โหลด CSV"),
+    "CSV export button missing"
+  );
+  await expect(
+    "Audit viewer shows tier badges (Critical / Important / Verbose)",
+    /CRITICAL|IMPORTANT|VERBOSE/.test(auditBody),
+    "no tier badge found"
+  );
+
+  // CSV export → 200 + correct content-type
+  const csv = await fetch(`${BASE}/admin/audit/export?tier=CRITICAL`, {
+    headers: { cookie: adminCookie },
+  });
+  await expect(
+    "CSV export returns 200",
+    csv.status === 200,
+    `got ${csv.status}`
+  );
+  await expect(
+    "CSV export uses text/csv content-type",
+    (csv.headers.get("content-type") ?? "").includes("text/csv"),
+    `got ${csv.headers.get("content-type")}`
+  );
+  await expect(
+    "CSV export is an attachment download",
+    (csv.headers.get("content-disposition") ?? "").includes("attachment"),
+    `got ${csv.headers.get("content-disposition")}`
+  );
+  await expect(
+    "CSV export sets X-Audit-Row-Count header",
+    csv.headers.get("x-audit-row-count") !== null,
+    "header missing"
+  );
+
+  // L1 — non-admin cannot export
+  const teacherCookie = await signin("teacher@studennnn.local", "Teacher1234!");
+  if (teacherCookie) {
+    const forbidden = await fetch(`${BASE}/admin/audit/export`, {
+      headers: { cookie: teacherCookie },
+      redirect: "manual",
+    });
+    await expect(
+      "Teacher → /admin/audit/export blocked (403 or redirect)",
+      forbidden.status === 403 ||
+        forbidden.status === 302 ||
+        forbidden.status === 307,
+      `got ${forbidden.status}`
+    );
+  }
+
+  // ADMIN_AUDIT_EXPORTED audit row was written
+  const exported = await db.auditLog.findFirst({
+    where: { action: "ADMIN_AUDIT_EXPORTED" },
+    orderBy: { timestamp: "desc" },
+    select: { id: true, actorRole: true },
+  });
+  await expect(
+    "ADMIN_AUDIT_EXPORTED audit row written",
+    exported !== null && exported.actorRole === "ADMIN",
+    `last export audit: ${JSON.stringify(exported)}`
+  );
+}
+
 async function testAuditLog() {
   console.log("\n📝 Audit log verification");
 
@@ -1733,6 +1830,7 @@ async function main() {
   await testPhase7DashboardFeed();
   await testPhase7TeacherPostUI();
   await testPhase7StudentPostUI();
+  await testPhase8AdminAuditTools();
   await testAuditLog();
 
   console.log(`\n╭───────────────────────────────────╮`);
