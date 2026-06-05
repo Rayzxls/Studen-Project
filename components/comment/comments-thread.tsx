@@ -33,12 +33,20 @@ export async function CommentsThread({
   courseOfferingId,
   scope,
   session,
+  revalidatePath: revalidateOverride,
 }: {
   ownerType: CommentOwnerType;
   ownerId: string;
   courseOfferingId: string;
   scope: CommentScope;
   session: Session;
+  /**
+   * Optional override for the path the actions revalidate after a
+   * mutation. SUBMISSION threads pass this because the per-submission
+   * URL depends on the parent Assignment id that the thread does not
+   * know on its own (P9-2).
+   */
+  revalidatePath?: string;
 }) {
   // Resolve which path the parent page lives at so server actions can
   // revalidate it. We reconstruct from ownerType + ids rather than
@@ -46,12 +54,9 @@ export async function CommentsThread({
   // way and the role split is fixed (teacher vs student).
   const role = session.user.role;
   const rolePrefix = role === "TEACHER" ? "teacher" : "student";
-  const revalidate = ownerTypeToPath(
-    rolePrefix,
-    courseOfferingId,
-    ownerType,
-    ownerId
-  );
+  const revalidate =
+    revalidateOverride ??
+    ownerTypeToPath(rolePrefix, courseOfferingId, ownerType, ownerId);
 
   const [comments, courseTeacherIdRow] = await Promise.all([
     db.comment.findMany({
@@ -87,7 +92,7 @@ export async function CommentsThread({
 
   // Server time once for the "is row still within edit window?" check.
   // Pattern 12 doesn't apply (server-side captured at request time).
-   
+
   const now = new Date();
   const aliveCount = comments.filter((c) => c.deletedAt === null).length;
 

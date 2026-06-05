@@ -243,7 +243,13 @@ export default async function AssignmentDetailPage({ params }: PageProps) {
                     </span>
                   )}
                   {submission ? (
-                    <div className="flex gap-1">
+                    <div className="flex items-center gap-1">
+                      <Link
+                        href={`/teacher/courses/${courseId}/assignments/${assignmentId}/submissions/${submission.id}`}
+                        className="text-xs text-black/60 hover:text-black hover:underline"
+                      >
+                        ดูข้อความ →
+                      </Link>
                       <GradeSubmissionDialog
                         courseId={courseId}
                         assignmentId={assignmentId}

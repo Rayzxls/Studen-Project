@@ -129,23 +129,7 @@ export default async function StudentAssignmentDetailPage({
       })
     : null;
 
-  // PRIVATE comments scoped to this Submission (student sees own + teacher's).
-  const comments = submission
-    ? await db.comment.findMany({
-        where: {
-          ownerType: "SUBMISSION",
-          ownerId: submission.id,
-          deletedAt: null,
-        },
-        select: {
-          id: true,
-          body: true,
-          createdAt: true,
-          authorId: true,
-        },
-        orderBy: { createdAt: "asc" },
-      })
-    : [];
+  // PRIVATE comments are surfaced by <CommentsThread /> below (P9-2).
 
   const dueLabel = assignment.dueAt
     ? new Intl.DateTimeFormat("th-TH-u-ca-buddhist", {
@@ -199,28 +183,20 @@ export default async function StudentAssignmentDetailPage({
         </div>
       )}
 
-      {comments.length > 0 && (
-        <div className="card mt-4 p-4">
-          <h3 className="text-sm font-medium text-black">ข้อความจากครู</h3>
-          <ul className="mt-3 space-y-2">
-            {comments.map((c) => (
-              <li
-                key={c.id}
-                className="rounded-md bg-black/[0.03] p-2 text-xs text-black/80"
-              >
-                <p className="whitespace-pre-wrap">{c.body}</p>
-                <p className="mt-1 text-[10px] text-black/40">
-                  {new Intl.DateTimeFormat("th-TH-u-ca-buddhist", {
-                    timeZone: "Asia/Bangkok",
-                    day: "numeric",
-                    month: "short",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  }).format(c.createdAt)}
-                </p>
-              </li>
-            ))}
-          </ul>
+      {/* PRIVATE thread between this student and the teacher — replaces
+          the Phase-6 read-only display (P9-2). Only mounted after the
+          student has a Submission row; first-time visitors see it
+          appear after the first submit. */}
+      {submission && (
+        <div className="mt-4">
+          <CommentsThread
+            ownerType="SUBMISSION"
+            ownerId={submission.id}
+            courseOfferingId={courseId}
+            scope="PRIVATE"
+            session={session}
+            revalidatePath={`/student/courses/${courseId}/assignments/${assignmentId}`}
+          />
         </div>
       )}
 
