@@ -2,11 +2,7 @@ import Link from "next/link";
 import { ChevronDown, Award } from "lucide-react";
 import { termGpa } from "@/lib/scoring/term-gpa";
 import { deriveTermStatus } from "@/lib/scoring/term-status";
-import {
-  gradeForCourseOffering,
-  type WeightedItem,
-  type WeightedEntry,
-} from "@/lib/scoring/calc";
+import { gradeForCourseOffering } from "@/lib/scoring/calc";
 import { formatGpa, formatPercent } from "@/lib/scoring/format";
 import {
   DEFAULT_GRADE_THRESHOLDS,

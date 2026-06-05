@@ -3,11 +3,81 @@
 > เอกสารนี้ใช้สำหรับเริ่ม **session ใหม่** กับ AI assistant แล้วต่อยอดได้ทันที
 > อ่านไฟล์นี้ + `CLAUDE.md` + `CONTEXT.md` ก่อนเริ่มงาน
 
-อัพเดตล่าสุด: **2026-06-05** · 111+ commits · **Phase 0-9 (P9-1..4) ปิดครบ · Phase 9 ต่อ (Hardening + Deploy) deferred**
+อัพเดตล่าสุด: **2026-06-05** · 118+ commits · **Phase 0-9 + 10A ปิดครบ · Phase 9 ต่อ (Hardening + Deploy) deferred · Phase 10B/C/11/11D/12 in queue**
 
 ---
 
-## ⚠️ START HERE — Latest Session State (2026-06-04 · post-Phase-6)
+## ⚠️ START HERE — Phase 10A · Foundation ปิดแล้ว (2026-06-05 · branch `phase-10`)
+
+**Branch:** `phase-10` (pushed to origin) — 7 new commits on top of `main`'s `15f31a9` (Phase 9 P9-4 close-out)
+
+| SHA | Commit |
+|-----|--------|
+| `d435ef8` | docs(adr): ADR-0024 sum-based scoring supersedes weight invariant |
+| `0e5b060` | docs(adr): mark 0017 superseded + 0018 partially superseded by 0024 |
+| `686eb68` | docs(context): rewrite Scoring § for sum-based formula |
+| `33aa2e9` | refactor(scoring): cutover to sum-based scoring (29 files, –386 LoC net) |
+| `d0634f7` | chore(prisma,audit): add AuditLog.targetLabel + 13 Phase 10 audit events |
+| `9b27977` | feat(audit): label.ts + render.ts helpers + ADR-0027 |
+| `e38d352` | feat(dashboard): lib/dashboard/queries.ts shared role KPI module |
+
+**What changed (foundation only — no UI yet):**
+
+- **ADR-0024** — Sum-based scoring formally supersedes ADR-0017 weight invariant. `weight` column dropped from `ScoreItem`. Course grade = `Σscore / ΣfullScore × 100`. `fullScore` alone encodes per-item influence (Quiz fullScore=10 vs Midterm fullScore=50 → Midterm carries 5× the weight automatically). ADR-0018's field-class B narrows to `{fullScore}` only; class A and C unchanged.
+- **ADR-0027** — Audit log gains `AuditLog.targetLabel String?` denormalised snapshot column captured at fire time (per emitter). Verbose Thai sentence renderer in `lib/audit/render.ts` + per-event noun map in `lib/audit/label.ts`. ADR-0025 (Course Feed tab) and ADR-0026 (admin user drill-down) deferred to their respective phase entries per "natural editing path" convention.
+- **13 new audit events added to `AuditEvent` union** for Phase 10B Admin CRUD surface + analytics export: `ACADEMIC_YEAR_{CREATED,UPDATED,DELETED}`, `TERM_{CREATED,UPDATED,DELETED}`, `CLASS_{CREATED,UPDATED,DELETED}`, `HOMEROOM_ASSIGNED`, `TEACHER_CREATED_SINGLE`, `PASSWORD_RESET_BY_ADMIN`, `CLASS_ANALYTICS_EXPORTED`. No fire sites yet — they land with Phase 10B.
+- **`lib/dashboard/queries.ts`** — Shared KPI module: `currentTerm()`, `getTeacherStats`, `getStudentStats`, `getAdminStats`. Phase 10A ships lib only; UI consumers land in Phase 11D once the iOS+Win11 theme migration provides final visual tokens (Phase 11).
+
+### Phase 10A grill summary (Phase 10 plan covers 10A + 10B + 10C)
+
+Phase 10 origin = Q1-Q11 grill (~2h conversation). Top locked decisions:
+1. **Admin password viewing** = NEVER — bcrypt-only. Admin drill-down + password-reset-with-temp-reveal flow lands in 10B.
+2. **Weight removed** — sum-based scoring per ADR-0024 (this phase, ✅)
+3. **Father reference** = `C:\Users\Rayz\Father` (external project, not in repo)
+4. **Course Feed tab** = unified Feed landing for `/(teacher|student)/courses/[id]` with type-chip composer (announcement/assignment/material) + multi-image carousel. Replaces 3 separate tabs. ADR-0025 lands at 10C entry.
+5. **No GIF uploads** — kept ADR-0021 blocklist intact, multi-image carousel covers Insta-style feel
+6. **Admin Class Cards dashboard** — Card = Class (homeroom), not CourseOffering. Drill-down per-Class → per-CourseOffering score rankings + class-level aggregate attendance. CSV export of analytics audited (`CLASS_ANALYTICS_EXPORTED`)
+7. **Audit log** — denormalised `targetLabel` snapshot + verbose Thai sentence rendering (ADR-0027, this phase ✅)
+8. **`/admin/setup` × 4 tabs** for AcademicYear/Term/Class/single-Teacher CRUD (lands in 10B)
+9. **Dashboards Father-style** — hero + 4 stats + today's schedule (teacher) + Due Soon + Feed + Course grid (student). NO GPAX. Lands in Phase 11D after theme migration.
+10. **Revised order from Q-revised:** 10A → 10B → 10C → 11 (theme) → 11D (dashboards on new theme) → 12 (Landing Page). User decision because: Landing Page needs real screenshots; theme migration changes visual tokens before dashboard polish makes sense.
+
+### Phase 10A verifications
+
+- `pnpm typecheck` = **0 errors**
+- `pnpm test` = **413 passed** (was 384 + 13 new audit-render + 8 new dashboard slot-minute + restructured 8 scoring-calc + restructured scoring-format)
+- `pnpm lint` = 0 errors · 256 pre-existing warnings (vendor + .github/skills/* + a few unused-imports in legacy tests)
+- Schema applied to Neon dev DB via `prisma db push --accept-data-loss` (3 dev `ScoreItem.weight` values dropped, pre-launch per Q11b)
+
+### Phase 10A follow-up (task #7 — in_progress as of this commit)
+
+Integration tests `tests/integration/permissions/{score-item-lifecycle, assignment-coupling}.test.ts` rewritten for sum-based shape — test names + bodies + audit-payload assertions now reflect ADR-0024 instead of weight-based invariant. `scoring-l1-and-gpa.test.ts`, `score-entry.test.ts`, `submission-flow.test.ts` were already semantically correct after the mechanical weight strip — comments updated where misleading.
+
+Test count on live Neon will land at ~135 integration cases (same as Phase 9 — re-shaped, not added).
+
+### What's blocked / next
+
+| Task | Status | Blocks |
+|------|--------|--------|
+| Phase 10A — Foundation | ✅ done | — |
+| Phase 10A follow-up (test rewrite) | 🚧 in_progress | 10B, 10C |
+| Phase 10B — Admin surface | ⏸ pending | 11 |
+| Phase 10C — Course Feed redesign | ⏸ pending | 11 |
+| Phase 11 — Theme migration iOS+Win11 (`/impeccable` grill first) | ⏸ pending | 11D |
+| Phase 11D — Dashboards on new theme | ⏸ pending | 12 |
+| Phase 12 — Landing Page (real screenshots, post-theme) | ⏸ pending | — |
+
+### Pre-Phase-10 baseline (everything below is still authoritative)
+
+Phase 1-2-3-4-5-6-7-8-9 closure tables, hot-fix history, and Pattern catalogue (Patterns 1-14) follow below — Phase 10A's rules of engagement deliberately stay aligned with them:
+- Pattern 2 (authz inside `$transaction`)
+- Pattern 3 (TX_OPTS on every transaction)
+- Pattern 4 (DB-layer L1 projection)
+- Pattern 6 (no `.bind()` on Server Actions; hidden form fields for context ids)
+- Pattern 7 (native `<dialog>` deferred-close)
+- Pattern 8 (`"use server"` async exports only)
+- Pattern 10 (audit events past-tense)
+- Pattern 14 (active ∪ ever-marked grid union)
 
 ### Phase 1-2-3-4-5-6 — ปิดครบ ✅
 

@@ -1,13 +1,14 @@
 /**
- * Integration — Assignment ↔ ScoreItem coupling (Phase 6 · ADR-0019)
+ * Integration — Assignment ↔ ScoreItem coupling (Phase 6 · ADR-0019
+ * post-ADR-0024 update: weight channel removed, fullScore alone)
  *
  * Exercises the synchronous atomic coupling + the toggle 3-state matrix
  * against the real Neon dev DB:
  *   - createAssignment(isScored=true) → ScoreItem materialised in same tx
- *   - flip false→true → coupling at flip-time
+ *   - flip false→true → coupling at flip-time (fullScore required)
  *   - flip true→false → draft+0 atomic delete · draft+N block · published block
- *   - non-toggle field edits — class A passes, weight/fullScore rejected
- *     (those route through lib/scoring.updateScoreItem)
+ *   - non-toggle field edits — class A passes, fullScore rejected
+ *     (it routes through lib/scoring.updateScoreItem with ADR-0018 reason gate)
  */
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -207,7 +208,7 @@ describe("updateAssignment — toggle dispatch (ADR-0019 § 5)", () => {
     ).rejects.toBeInstanceOf(Conflict);
   });
 
-  it("non-toggle update rejects weight/fullScore in patch (route through lib/scoring)", async () => {
+  it("non-toggle update rejects fullScore in patch (route through lib/scoring per ADR-0024)", async () => {
     const a = await createAssignment(
       {
         courseOfferingId: ctx.courseOfferingId,
@@ -222,15 +223,19 @@ describe("updateAssignment — toggle dispatch (ADR-0019 § 5)", () => {
       { actorUserId: ctx.teacherUserId }
     );
     await expect(
-      updateAssignment(a.id, {}, { actorUserId: ctx.teacherUserId })
+      updateAssignment(
+        a.id,
+        { fullScore: 60 },
+        { actorUserId: ctx.teacherUserId }
+      )
     ).rejects.toBeInstanceOf(ValidationError);
   });
 
-  it("flip on requires weight + fullScore — missing weight throws ValidationError", async () => {
+  it("flip on requires fullScore — missing fullScore throws ValidationError", async () => {
     const a = await createAssignment(
       {
         courseOfferingId: ctx.courseOfferingId,
-        title: "Missing weight",
+        title: "Missing fullScore",
         description: "",
         allowText: true,
         allowFile: false,
@@ -242,10 +247,35 @@ describe("updateAssignment — toggle dispatch (ADR-0019 § 5)", () => {
     await expect(
       updateAssignment(
         a.id,
-        { isScored: true, fullScore: 10 },
+        { isScored: true },
         { actorUserId: ctx.teacherUserId }
       )
     ).rejects.toBeInstanceOf(ValidationError);
+  });
+
+  it("flip on creates ScoreItem with source=ASSIGNMENT_LINKED + fullScore", async () => {
+    const a = await createAssignment(
+      {
+        courseOfferingId: ctx.courseOfferingId,
+        title: "Flip success",
+        description: "",
+        allowText: true,
+        allowFile: false,
+        allowLink: false,
+        isScored: false,
+      },
+      { actorUserId: ctx.teacherUserId }
+    );
+    const flipped = await updateAssignment(
+      a.id,
+      { isScored: true, fullScore: 30 },
+      { actorUserId: ctx.teacherUserId }
+    );
+    const si = await db.scoreItem.findUnique({
+      where: { id: flipped.scoreItemId! },
+      select: { source: true, fullScore: true },
+    });
+    expect(si).toEqual({ source: "ASSIGNMENT_LINKED", fullScore: 30 });
   });
 });
 

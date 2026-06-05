@@ -193,9 +193,8 @@ describe("getStudentTermSnapshot + termGpa — end-to-end pipeline", () => {
     expect(gpa.value).toBeNull();
 
     // Now publish B + enter score, GPA should compute.
-    // A: 40/50 = 80% × 0.5 = 40
-    // B: 35/50 = 70% × 0.5 = 35
-    // Total: 75% → grade 3.5
+    // ADR-0024 sum-based: Σscore/ΣfullScore × 100 = (40+35)/(50+50) × 100 = 75%
+    // → grade 3.5 (same outcome as old weighted formula for these equal-fullScore items)
     await publishScoreItem(b.id, { actorUserId: ctx.teacherUserId });
     await bulkUpsertScoreEntries({
       scoreItemId: b.id,
