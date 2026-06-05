@@ -3,6 +3,8 @@ import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db/client";
 import { PaginationLinks } from "@/components/pagination";
 import { actionsForTier, tierForRow, type AuditTier } from "@/lib/audit/tier";
+import { actionLabel } from "@/lib/audit/label";
+import { renderAuditLog } from "@/lib/audit/render";
 
 /**
  * Admin Audit viewer — Phase 8 · Q1 = A (pure-helper tier dispatch)
@@ -140,10 +142,18 @@ export default async function AdminAuditPage({ searchParams }: PageProps) {
         actorRole: true,
         targetType: true,
         targetId: true,
+        targetLabel: true,
         ipAddress: true,
         reason: true,
         before: true,
-        actor: { select: { identifier: true } },
+        actor: {
+          select: {
+            identifier: true,
+            teacher: { select: { firstName: true, lastName: true } },
+            student: { select: { firstName: true, lastName: true } },
+            admin: { select: { firstName: true, lastName: true } },
+          },
+        },
       },
     }),
     db.auditLog.groupBy({
@@ -285,11 +295,10 @@ export default async function AdminAuditPage({ searchParams }: PageProps) {
             <tr>
               <th className="whitespace-nowrap">เวลา</th>
               <th>Tier</th>
-              <th>Event</th>
+              <th>เหตุการณ์</th>
               <th>ผู้กระทำ</th>
-              <th>Target</th>
+              <th>เกิดอะไรขึ้น</th>
               <th>IP</th>
-              <th>Reason</th>
               <th />
             </tr>
           </thead>
@@ -297,7 +306,7 @@ export default async function AdminAuditPage({ searchParams }: PageProps) {
             {items.length === 0 ? (
               <tr>
                 <td
-                  colSpan={8}
+                  colSpan={7}
                   className="py-10 text-center text-sm text-ink-soft"
                 >
                   ไม่มีรายการตาม filter
@@ -318,6 +327,14 @@ export default async function AdminAuditPage({ searchParams }: PageProps) {
                   actorRole: it.actorRole,
                   beforeScope,
                 });
+                const actorName = it.actor?.teacher
+                  ? `${it.actor.teacher.firstName} ${it.actor.teacher.lastName}`
+                  : it.actor?.student
+                    ? `${it.actor.student.firstName} ${it.actor.student.lastName}`
+                    : it.actor?.admin
+                      ? `${it.actor.admin.firstName} ${it.actor.admin.lastName}`
+                      : (it.actor?.identifier ?? null);
+                const sentence = renderAuditLog(it, actorName);
                 return (
                   <tr key={it.id}>
                     <td className="whitespace-nowrap text-xs text-ink-soft">
@@ -331,26 +348,28 @@ export default async function AdminAuditPage({ searchParams }: PageProps) {
                       </span>
                     </td>
                     <td>
-                      <code className="text-xs">{it.action}</code>
+                      <span
+                        className="text-xs"
+                        title={it.action /* technical name on hover */}
+                      >
+                        {actionLabel(
+                          it.action as Parameters<typeof actionLabel>[0]
+                        )}
+                      </span>
                     </td>
                     <td className="text-sm">
-                      {it.actor?.identifier ?? "—"}
+                      {actorName ?? "—"}
                       {it.actorRole && (
                         <div className="text-[10px] text-ink-soft">
                           {it.actorRole}
                         </div>
                       )}
                     </td>
-                    <td className="font-mono text-xs text-ink-soft">
-                      {it.targetType
-                        ? `${it.targetType}:${it.targetId ?? "—"}`
-                        : "—"}
+                    <td className="max-w-[420px] text-xs text-black/80">
+                      {sentence}
                     </td>
                     <td className="font-mono text-xs text-ink-soft">
                       {it.ipAddress ?? "—"}
-                    </td>
-                    <td className="max-w-[200px] truncate text-xs text-ink-soft">
-                      {it.reason ?? "—"}
                     </td>
                     <td className="text-right">
                       <Link
