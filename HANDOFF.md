@@ -3,7 +3,7 @@
 > เอกสารนี้ใช้สำหรับเริ่ม **session ใหม่** กับ AI assistant แล้วต่อยอดได้ทันที
 > อ่านไฟล์นี้ + `CLAUDE.md` + `CONTEXT.md` ก่อนเริ่มงาน
 
-อัพเดตล่าสุด: **2026-06-05** · 105+ commits · **Phase 0-7 ปิดครบ · พร้อมเริ่ม Phase 8 (Admin Audit Tools)**
+อัพเดตล่าสุด: **2026-06-05** · 107+ commits · **Phase 0-8 ปิดครบ · พร้อมเริ่ม Phase 9 (E2E + Hardening + Deploy)**
 
 ---
 
@@ -331,6 +331,62 @@ All commits since `c46b7c4` have passed 3/3 jobs (Lint/Typecheck, Unit Tests, Bu
 | `pnpm exec dotenv -e .env.local -- tsx scripts/smoke-test.ts` | E2E HTTP smoke (~98 checks · live dev server required) | yes | ~70 s |
 
 **Total verifications post-Phase 6:** 299 unit + 135 integration + ~98 smoke = **~532**.
+
+### Phase 8 — CLOSED (2026-06-05 · `ff492b1` + `4a1a82f`)
+
+Phase 8 ships the **admin-facing read surface for the audit log**
+accumulated since Phase 1. 3-question mini-grill locked design
+before code:
+
+- Q1 = A: pure-helper `lib/audit/tier.ts` for tier dispatch — no
+  schema migration, no DB column. `tierFor(action)` for the per-
+  action default; `tierForRow({action, actorRole, beforeScope})`
+  applies the CONTEXT § Comment Moderation Q5 escalation (Admin ×
+  PRIVATE × COMMENT_MODERATED → CRITICAL).
+- Q2 = A: shareable URL drill-down at `/admin/audit/[id]` — browser
+  back works, bookmarkable for forensic. Per-event detail page
+  shows tier badge + timestamp + actor + target + IP/UA + reason
+  + side-by-side before/after JSON.
+- Q3 = C: core (tier + filter + drill-down) + CSV export ship in
+  Phase 8; dashboard summary widgets dropped to Phase 9 polish.
+
+**Viewer upgrade (`app/admin/audit/page.tsx`):** Tier column with
+Critical/Important/Verbose badge, 3 new filters (Tier dropdown ·
+Actor identifier substring · Target type/id substring), Bangkok-
+local datetime-range filter (from / to) converted to UTC at the
+edge, "ดู →" link per row, "ดาวน์โหลด CSV" button forwarding the
+filter querystring.
+
+**Drill-down (`app/admin/audit/[id]/page.tsx`):** Read-only forensic
+surface. No delete affordance (Security.md § 7 — Admin
+ไม่สามารถลบ audit log ผ่าน UI).
+
+**CSV export (`app/admin/audit/export/route.ts`):** GET handler
+returns RFC-4180-compliant CSV (UTF-8 + CRLF + double-quote-escape),
+capped at 50 000 rows, with `Content-Disposition: attachment` +
+`X-Audit-Row-Count` / `X-Audit-Truncated` headers. Each export
+writes one `ADMIN_AUDIT_EXPORTED` Important audit row capturing the
+filter snapshot — audit of the audit reader.
+
+**Verifications post-Phase 8:** 395 unit (+11) + 171 integration +
+~133 smoke (+11) = ~699 total.
+
+**Phase 8 sub-task SHAs:**
+
+| Sub-task | SHAs |
+|---|---|
+| P8-1 lib/audit/tier.ts pure helper + 11 unit tests + ADMIN_AUDIT_EXPORTED event | `ff492b1` |
+| P8-2 viewer upgrade + drill-down detail + CSV export route + 11 smoke checks | `4a1a82f` |
+| P8-3 close-out + HANDOFF | this commit |
+
+**Deferred to Phase 9:**
+- Dashboard summary widgets — count cards "Critical last 7 days",
+  "Important last 7 days" on `/admin/dashboard`
+- Optional `tier` column in the AuditLog schema (Phase 9 hardening
+  sweep — index on `(tier, timestamp DESC)` would speed the viewer
+  WHERE clause once row count crosses ~1M)
+
+---
 
 ### Phase 7 — CLOSED (2026-06-05 · final `757f4ad` + P7-10 close-out)
 
@@ -864,7 +920,7 @@ Recommend grilling Q1 + Q2 + Q4 first (highest blast radius). Q3 + Q5 + Q6 can b
 | **5** | Scoring + Term GPA + Print transcript (ADR-0017 + ADR-0018) | ✅ DONE (P5-1..9 all complete · 156 unit + 116 integration + 88 smoke pass · ScoreItemTemplate deferred) |
 | **6** | Assignment + Submission + Comments + R2 file upload | ✅ DONE (P6-1..9 all complete · 299 unit + 135 integration + 98 smoke pass · 3 ADRs locked) |
 | **7** | Feed + Notifications + Bell + Class-wide Comments | ✅ DONE (P7-0..10 all complete · 384 unit + 171 integration + ~124 smoke pass · 2 ADRs locked) |
-| **8** | Admin polish (more audit tools) | ⏳ TODO |
+| **8** | Admin Audit Tools (tier badges · drill-down · CSV export) | ✅ DONE (P8-1 + P8-2 · 395 unit + 171 integration + ~133 smoke pass · 11 new smoke checks) |
 | **9** | E2E tests + Hardening + Deploy | ⏳ TODO |
 
 ---
