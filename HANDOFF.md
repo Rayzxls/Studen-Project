@@ -3,7 +3,7 @@
 > เอกสารนี้ใช้สำหรับเริ่ม **session ใหม่** กับ AI assistant แล้วต่อยอดได้ทันที
 > อ่านไฟล์นี้ + `CLAUDE.md` + `CONTEXT.md` ก่อนเริ่มงาน
 
-อัพเดตล่าสุด: **2026-06-05** · 102+ commits · **Phase 0-6 ปิดครบ · Phase 7 ถึง P7-8 (Bell + Feed + Posts + Comments)**
+อัพเดตล่าสุด: **2026-06-05** · 103+ commits · **Phase 0-6 ปิดครบ · Phase 7 ถึง P7-9 (+integration tests)**
 
 ---
 
@@ -332,7 +332,7 @@ All commits since `c46b7c4` have passed 3/3 jobs (Lint/Typecheck, Unit Tests, Bu
 
 **Total verifications post-Phase 6:** 299 unit + 135 integration + ~98 smoke = **~532**.
 
-### Phase 7 progress — paused at P7-8 (2026-06-05 · `e2eb851`)
+### Phase 7 progress — paused at P7-9 (2026-06-05 · `ffd7b89`)
 
 | Sub-task | Status | SHA |
 |---|---|---|
@@ -349,10 +349,10 @@ All commits since `c46b7c4` have passed 3/3 jobs (Lint/Typecheck, Unit Tests, Bu
 | P7-6 Dashboard User Feed + Due Soon Widget (student-only) | ✅ | `4ab67af` · `ca23943` |
 | P7-7 Teacher Material + Announcement UI (tabs · CRUD · Pattern-7 dialogs) | ✅ | `0eb99a5` |
 | P7-8 Student M+A views + shared CommentsThread on 6 detail pages | ✅ | `af91dde` · `e2eb851` |
-| P7-9 Integration tests (broader fan-out coverage) | ⏳ TODO | — |
+| P7-9 Integration tests — fan-out + suppress + comment moderation | ✅ | `ffd7b89` |
 | P7-10 Smoke + HANDOFF close-out | ⏳ TODO | — |
 
-**Verifications post-P7-8:** 384 unit + 148 integration + ~124 smoke (+9) = ~656 checks
+**Verifications post-P7-9:** 384 unit + 171 integration (+23) + ~124 smoke = ~679 checks
 
 **Lib layer essentially done.** All 9 NotificationKinds have wired event sources end-to-end:
 
@@ -568,10 +568,54 @@ the P7-7 placeholder (conditional on existing demo Material).
 - "อยู่ระหว่างพัฒนา" footer card on dashboard still says "Phase
   ปัจจุบัน: 5" — wholesale update at P7-10 close-out
 
-**Next session resume point — P7-9:** Broader integration tests for
-the Phase-7 fan-out semantics (multi-recipient COMMENT_REPLIED,
-moderator-delete cascade, suppress-on-deleted-entity), PRIVATE
-composer on Submission, and any remaining L1 boundary coverage.
+**P7-9 — what shipped (2026-06-05 · `ffd7b89`)**
+
+Three new integration test files lock the Phase-7 lib seams against a
+real Neon DB; integration tests 148 → 171 (+23).
+
+- **`notification-comment-fan-out.test.ts`** (+15 cases) — CLASS_WIDE
+  thread rule (prior commenters ∪ entity author − self) on ASSIGNMENT
+  + MATERIAL · PRIVATE on SUBMISSION = "other party" only · scope ↔
+  ownerType invariant rejects PRIVATE×ASSIGNMENT and CLASS_WIDE×
+  SUBMISSION · 5-min self-edit window (backdate `createdAt` 6 min
+  → Conflict) · non-author edit rejected · self-delete works past
+  the window and is Verbose · teacher moderate-delete writes
+  COMMENT_MODERATED Important with `actorRole=TEACHER` + reason ·
+  foreign teacher rejected · reason < 5 chars rejected · ANNOUNCEMENT
+  thread smoke-check (drain broadcast row first, then assert
+  COMMENT_REPLIED targets the author).
+
+- **`notification-material-announcement.test.ts`** (+5 cases) —
+  MATERIAL_POSTED / ANNOUNCEMENT_POSTED broadcasts cover active
+  enrollments only (removed students excluded · author excluded ·
+  partial unique index honored — re-inserting same `(recipient,kind,
+  source)` is a no-op) · softDeleteMaterial / softDeleteAnnouncement
+  cascade-suppress the matching notification rows (rows preserved,
+  `suppressedAt` set) + write *_DELETED Important audit with reason.
+
+- **`notification-enrollment-suppress.test.ts`** (+3 cases) — `removeMember`
+  marks every Notification of (removed student × this course) as
+  suppressed in the same tx · other students' rows in the same
+  course untouched · re-joining via the same class code calls
+  `restoreByRejoin` → un-suppresses (`suppressedAt = null`) those
+  rows so bell history comes back alive.
+
+**Drive-by:** `_fixtures.ts` cleanup already drained Notification by
+`courseOfferingId` (added in P7-2), so no fixture change needed.
+
+**Known follow-ups for P7-10 close-out:**
+- "อยู่ระหว่างพัฒนา" footer card on dashboard still says "Phase
+  ปัจจุบัน: 5" — cosmetic; update at P7-10.
+- PRIVATE composer on Submission detail (teacher reply + student
+  reply on returned submissions) — deferred from P7-8, may land
+  in Phase 8 or as a P7-10 stretch.
+- Enrich SubmissionGraded/Returned/CommentReplied snapshot payloads
+  with `assignmentId` / `entityOwnerId` so bell + feed can deep-link
+  instead of falling back to course root.
+
+**Next session resume point — P7-10:** Phase 7 close-out — smoke
+sweep, dashboard "Phase ปัจจุบัน" footer refresh, and the final
+HANDOFF roll-up of every P7 SHA + ADR.
 
 Phase 6 carryover (now historical):
 
