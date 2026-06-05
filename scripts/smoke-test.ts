@@ -1461,6 +1461,89 @@ async function testPhase7DashboardFeed() {
   );
 }
 
+async function testPhase7TeacherPostUI() {
+  console.log("\n📋 Phase 7 / P7-7: teacher Material + Announcement UI");
+
+  await db.rateLimitBucket.deleteMany({
+    where: { id: { startsWith: "login:" } },
+  });
+
+  const teacherCookie = await signin("teacher@studennnn.local", "Teacher1234!");
+  if (!teacherCookie) {
+    fail("Teacher login (Phase 7 post UI)", "no cookie");
+    return;
+  }
+
+  const demoCode = "MATH4A-DEMO1";
+  const course = await db.courseOffering.findUnique({
+    where: { classCode: demoCode },
+    select: { id: true },
+  });
+  if (!course) {
+    fail("Phase 7 post UI setup", `demo course "${demoCode}" missing`);
+    return;
+  }
+
+  // Materials list page
+  const mat = await fetch(`${BASE}/teacher/courses/${course.id}/materials`, {
+    headers: { cookie: teacherCookie },
+  });
+  const matBody = await mat.text();
+  await expect(
+    "Teacher Materials list page renders → 200",
+    mat.status === 200,
+    `got ${mat.status}`
+  );
+  await expect(
+    "Materials list shows section heading",
+    matBody.includes("เอกสารประกอบ"),
+    "heading not found"
+  );
+  await expect(
+    "Materials list shows create button",
+    matBody.includes("เพิ่มเอกสาร"),
+    "create button not found"
+  );
+
+  // Announcements list page
+  const ann = await fetch(
+    `${BASE}/teacher/courses/${course.id}/announcements`,
+    { headers: { cookie: teacherCookie } }
+  );
+  const annBody = await ann.text();
+  await expect(
+    "Teacher Announcements list page renders → 200",
+    ann.status === 200,
+    `got ${ann.status}`
+  );
+  await expect(
+    "Announcements list shows create button",
+    annBody.includes("เพิ่มประกาศ"),
+    "create button not found"
+  );
+
+  // Both new tabs appear in the course tab nav
+  await expect(
+    "Course tab nav lists เอกสาร + ประกาศ tabs",
+    matBody.includes("เอกสาร") && matBody.includes("ประกาศ"),
+    "one or both tabs missing"
+  );
+
+  // L1 boundary — student must be redirected from teacher routes
+  const studentCookie = await signin("60001", "Student1234");
+  if (studentCookie) {
+    const sMat = await fetch(`${BASE}/teacher/courses/${course.id}/materials`, {
+      headers: { cookie: studentCookie },
+      redirect: "manual",
+    });
+    await expect(
+      "Student → /teacher/.../materials redirected away (L1)",
+      sMat.status === 302 || sMat.status === 307,
+      `got ${sMat.status}`
+    );
+  }
+}
+
 async function testAuditLog() {
   console.log("\n📝 Audit log verification");
 
@@ -1534,6 +1617,7 @@ async function main() {
   await testPhase7StorageRoutes();
   await testPhase7Bell();
   await testPhase7DashboardFeed();
+  await testPhase7TeacherPostUI();
   await testAuditLog();
 
   console.log(`\n╭───────────────────────────────────╮`);

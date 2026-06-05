@@ -3,7 +3,7 @@
 > เอกสารนี้ใช้สำหรับเริ่ม **session ใหม่** กับ AI assistant แล้วต่อยอดได้ทันที
 > อ่านไฟล์นี้ + `CLAUDE.md` + `CONTEXT.md` ก่อนเริ่มงาน
 
-อัพเดตล่าสุด: **2026-06-05** · 97+ commits · **Phase 0-6 ปิดครบ · Phase 7 ถึง P7-6 (Bell + Dashboard Feed)**
+อัพเดตล่าสุด: **2026-06-05** · 99+ commits · **Phase 0-6 ปิดครบ · Phase 7 ถึง P7-7 (Bell + Dashboard Feed + Teacher Post UI)**
 
 ---
 
@@ -332,7 +332,7 @@ All commits since `c46b7c4` have passed 3/3 jobs (Lint/Typecheck, Unit Tests, Bu
 
 **Total verifications post-Phase 6:** 299 unit + 135 integration + ~98 smoke = **~532**.
 
-### Phase 7 progress — paused at P7-6 (2026-06-05 · `ca23943`)
+### Phase 7 progress — paused at P7-7 (2026-06-05 · `0eb99a5`)
 
 | Sub-task | Status | SHA |
 |---|---|---|
@@ -347,12 +347,12 @@ All commits since `c46b7c4` have passed 3/3 jobs (Lint/Typecheck, Unit Tests, Bu
 | P7-4 notification read routes + lib/feed/aggregator + scope query | ✅ | `b64a786` |
 | P7-5 Bell UI navbar + dropdown (lib helpers · bell components · shared TopNav · migrate 6 surfaces) | ✅ | `a2615ed` · `9d82121` · `996532c` |
 | P7-6 Dashboard User Feed + Due Soon Widget (student-only) | ✅ | `4ab67af` · `ca23943` |
-| P7-7 Teacher Material + Announcement UI | ⏳ TODO | — |
+| P7-7 Teacher Material + Announcement UI (tabs · CRUD · Pattern-7 dialogs) | ✅ | `0eb99a5` |
 | P7-8 Student Material + Announcement UI | ⏳ TODO | — |
 | P7-9 Integration tests (broader fan-out coverage) | ⏳ TODO | — |
 | P7-10 Smoke + HANDOFF close-out | ⏳ TODO | — |
 
-**Verifications post-P7-6:** 384 unit (+12) + 148 integration + ~108 smoke (+5) = ~640 checks
+**Verifications post-P7-7:** 384 unit + 148 integration + ~115 smoke (+7) = ~647 checks
 
 **Lib layer essentially done.** All 9 NotificationKinds have wired event sources end-to-end:
 
@@ -475,8 +475,48 @@ helpers + `lib/assignment/due-soon.ts` DB query. 12 new unit tests
 - The "อยู่ระหว่างพัฒนา" footer card on dashboard still says "Phase
   ปัจจุบัน: 5" — cosmetic; will update wholesale at P7-10 close-out.
 
-**Next session resume point — P7-7:** Teacher Material + Announcement
-post UI (create dialog, list, edit/soft-delete, comments thread).
+**P7-7 — what shipped (2026-06-05 · `0eb99a5`)**
+
+Teacher course detail gains 2 new tabs ("เอกสาร" + "ประกาศ") between
+"การบ้าน" and "ตั้งค่า" — 8 tabs total. 3-question mini-grill locked
+design before code:
+- Q1 = A: separate tabs per content-type (canonical per CONTEXT)
+- Q2 = A: list page + click-through to detail (matches Assignment shape)
+- Q3 = B: comments thread DEFERRED to P7-8 so it ships alongside the
+  student view + integration test in one cohesive landing
+
+**Material UI** (`/teacher/courses/[id]/materials/...`)
+- List page · Pattern-7 create dialog (title + body + linkUrls)
+- Detail page · edit/delete affordances · markdown-ish body render
+- `MATERIAL_DELETED` Important audit on soft-delete (lib cascade-
+  suppresses `MATERIAL_POSTED` notifications)
+- title REQUIRED, body OPTIONAL
+
+**Announcement UI** (`/teacher/courses/[id]/announcements/...`)
+- Mirrors Material shape with title flip: title OPTIONAL, body
+  REQUIRED. List page falls back to body excerpt as headline when
+  title is null; detail page renders "ประกาศไม่มีหัวข้อ" placeholder.
+- `ANNOUNCEMENT_DELETED` Important audit on soft-delete
+
+**Smoke (+7 checks):** materials list 200 + heading + create btn ·
+announcements list 200 + create btn · 8-tab nav contains เอกสาร +
+ประกาศ · L1 boundary (student → /teacher/.../materials → 302/307).
+
+**Known follow-ups for P7-8:**
+- Class-wide comments thread on Material/Announcement detail pages
+  (teacher composer + student view + L1 thread fan-out via
+  `COMMENT_REPLIED`)
+- Student view of Material/Announcement at `/student/courses/[id]/
+  materials` + `/student/courses/[id]/announcements` (after which the
+  bell + feed `MATERIAL_POSTED` / `ANNOUNCEMENT_POSTED` navigation can
+  switch from course-root fallback to entity detail URL)
+- "อยู่ระหว่างพัฒนา" footer card on dashboard still says "Phase
+  ปัจจุบัน: 5" — cosmetic; wholesale update at P7-10 close-out
+
+**Next session resume point — P7-8:** Student Material + Announcement
+views + class-wide comments thread on all four content types
+(Assignment + Material + Announcement + Submission), with the
+teacher composer landing in the same commit set.
 
 Phase 6 carryover (now historical):
 
