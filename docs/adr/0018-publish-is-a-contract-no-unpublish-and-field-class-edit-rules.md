@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted — 2026-06-04 (Phase 5 entry)
+Accepted — 2026-06-04 (Phase 5 entry). **Partially superseded by [ADR-0024](./0024-sum-based-scoring-supersedes-weight-invariant.md)** — 2026-06-05 (Phase 10 entry): the `weight` member of field-class B is removed (column dropped); class B now contains only `{fullScore}`. The publish-as-one-way-door rule, the audit events (`SCORE_EDIT_AFTER_PUBLISH`, `SCORE_DELETE_AFTER_PUBLISH`), class A (cosmetic, free edits), and class C (provenance, immutable) are **unchanged** and remain authoritative.
 
 ## Context
 
