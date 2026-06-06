@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Link2 as LinkIcon } from "lucide-react";
 import { assert } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { GradeSubmissionDialog } from "@/components/assignment/grade-submission-dialog";
@@ -92,6 +92,7 @@ export default async function AssignmentDetailPage({ params }: PageProps) {
           id: true,
           title: true,
           description: true,
+          linkUrls: true,
           dueAt: true,
           isScored: true,
           submissionClosed: true,
@@ -190,6 +191,29 @@ export default async function AssignmentDetailPage({ params }: PageProps) {
             {fullAssignment.description}
           </div>
         )}
+        {Array.isArray(fullAssignment.linkUrls) &&
+          fullAssignment.linkUrls.length > 0 && (
+            <div className="mt-4">
+              <p className="flex items-center gap-1.5 text-xs font-medium text-black/60">
+                <LinkIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                ลิงก์ประกอบงาน
+              </p>
+              <ul className="mt-1.5 space-y-1">
+                {(fullAssignment.linkUrls as string[]).map((href, i) => (
+                  <li key={i}>
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm text-blue-700 underline underline-offset-2 hover:text-blue-900"
+                    >
+                      {href}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
       </div>
 
       <div className="card mt-4 p-6">

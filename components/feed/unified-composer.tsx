@@ -314,11 +314,17 @@ function AssignmentForm({
         )}
       </div>
 
+      <LinksField
+        error={state.fieldErrors?.linkUrls}
+        idPrefix="asn"
+        label="ลิงก์ประกอบงาน"
+        hint="เว็บให้นักเรียนค้นคว้า · 1 บรรทัด = 1 ลิงก์"
+      />
       <p className="flex items-center gap-1.5 rounded-lg bg-black/[0.025] px-3 py-2 text-[11px] text-black/45">
         <ClipboardList className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
         นักเรียนส่งงานได้ทั้ง ข้อความ · ไฟล์/รูป · ลิงก์ ในหน้าการบ้าน
       </p>
-      <AttachSoon label="แนบไฟล์ / ลิงก์ประกอบงาน · เร็วๆ นี้" />
+      <AttachSoon />
       {state.error && <FormError error={state.error} />}
       <Actions close={close} label="โพสต์การบ้าน" />
     </form>
@@ -407,7 +413,17 @@ function Field({
 }
 
 /** Live link attachment — newline-separated URLs persisted to `linkUrls`. */
-function LinksField({ error, idPrefix }: { error?: string; idPrefix: string }) {
+function LinksField({
+  error,
+  idPrefix,
+  label = "ลิงก์แนบ",
+  hint = "1 บรรทัด = 1 ลิงก์ (สูงสุด 10)",
+}: {
+  error?: string;
+  idPrefix: string;
+  label?: string;
+  hint?: string;
+}) {
   return (
     <div>
       <label
@@ -415,10 +431,8 @@ function LinksField({ error, idPrefix }: { error?: string; idPrefix: string }) {
         className="flex items-center gap-1.5 text-xs font-medium text-black/60"
       >
         <Link2 className="h-3.5 w-3.5" aria-hidden="true" />
-        ลิงก์แนบ
-        <span className="font-normal text-black/35">
-          · 1 บรรทัด = 1 ลิงก์ (สูงสุด 5)
-        </span>
+        {label}
+        <span className="font-normal text-black/35">· {hint}</span>
       </label>
       <textarea
         id={`${idPrefix}-links`}

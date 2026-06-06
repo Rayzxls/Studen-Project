@@ -82,6 +82,7 @@ export async function createAssignment(
         submissionClosed: parsed.submissionClosed,
         autoCloseAtDue: parsed.autoCloseAtDue,
         isScored: parsed.isScored,
+        linkUrls: parsed.linkUrls as Prisma.InputJsonValue,
         createdById: ctx.actorUserId,
       },
     });

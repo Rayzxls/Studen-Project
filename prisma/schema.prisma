@@ -387,6 +387,12 @@ model Assignment {
   title       String // teacher-defined, ≤ 200 chars (validated at API boundary)
   description String // markdown subset, ≤ 10000 chars
 
+  // Teacher-attached reference links on the assignment brief — students open
+  // these to do the work (e.g. a website to research). Distinct from
+  // SubmissionVersion.links (the student's submitted answers) and from
+  // allowLink (whether students MAY submit links). JSON string[] of URLs.
+  linkUrls Json @default("[]")
+
   dueAt     DateTime? // UTC instant; null = "ส่งเมื่อพร้อม"
   allowText Boolean   @default(true)
   allowFile Boolean   @default(true)

@@ -87,6 +87,7 @@ export async function composeAssignmentAction(
   const dueAtStr = String(formData.get("dueAt") ?? "");
   const isScored = formData.get("isScored") === "on";
   const fullScoreRaw = String(formData.get("fullScore") ?? "");
+  const linkUrls = parseLinkUrls(String(formData.get("linkUrls") ?? ""));
   if (!courseId) return { error: "missing_course_id" };
   if (title.length === 0) {
     return { fieldErrors: { title: "ตั้งชื่อการบ้าน" } };
@@ -112,6 +113,7 @@ export async function composeAssignmentAction(
         autoCloseAtDue: false,
         isScored,
         fullScore,
+        linkUrls,
       },
       {
         actorUserId: session.user.id,

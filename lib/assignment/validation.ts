@@ -33,6 +33,29 @@ const FullScoreSchema = z
   .min(1, "คะแนนเต็มต้องมากกว่า 0");
 
 /**
+ * URL string — sanity-checked at the API boundary (`URL` parse + length
+ * cap). The lib layer does NOT fetch the URL or rewrite it; it stores
+ * exactly what the user typed. Shared by the teacher's assignment reference
+ * links and the student's submission links.
+ */
+const LinkUrlSchema = z
+  .string()
+  .trim()
+  .min(1, "ลิงก์ว่าง")
+  .max(LINK_URL_MAX, "ลิงก์ยาวเกินไป")
+  .refine(
+    (s) => {
+      try {
+        const u = new URL(s);
+        return u.protocol === "http:" || u.protocol === "https:";
+      } catch {
+        return false;
+      }
+    },
+    { message: "ลิงก์ไม่ถูกต้อง (ต้องขึ้นต้นด้วย http:// หรือ https://)" }
+  );
+
+/**
  * Create Assignment input.
  *
  * ADR-0019 (post-ADR-0024 update): when `isScored=true`, `fullScore` is
@@ -52,6 +75,11 @@ export const CreateAssignmentSchema = z
     autoCloseAtDue: z.boolean().optional().default(false),
     isScored: z.boolean(),
     fullScore: FullScoreSchema.optional(),
+    /** Teacher-attached reference links shown on the assignment brief. */
+    linkUrls: z
+      .array(LinkUrlSchema)
+      .max(MAX_LINKS_PER_VERSION, "ลิงก์เยอะเกินไป")
+      .default([]),
   })
   .refine((v) => v.allowText || v.allowFile || v.allowLink, {
     message: "ต้องอนุญาตอย่างน้อย 1 ช่องทาง (ข้อความ / ไฟล์ / ลิงก์)",
@@ -92,28 +120,6 @@ export type UpdateAssignmentInput = z.infer<typeof UpdateAssignmentSchema>;
 // ─────────────────────────────────────────────────────────────
 // SubmissionVersion
 // ─────────────────────────────────────────────────────────────
-
-/**
- * URL string — sanity-checked at the API boundary (`URL` parse + length
- * cap). The lib layer does NOT fetch the URL or rewrite it; it stores
- * exactly what the student typed.
- */
-const LinkUrlSchema = z
-  .string()
-  .trim()
-  .min(1, "ลิงก์ว่าง")
-  .max(LINK_URL_MAX, "ลิงก์ยาวเกินไป")
-  .refine(
-    (s) => {
-      try {
-        const u = new URL(s);
-        return u.protocol === "http:" || u.protocol === "https:";
-      } catch {
-        return false;
-      }
-    },
-    { message: "ลิงก์ไม่ถูกต้อง (ต้องขึ้นต้นด้วย http:// หรือ https://)" }
-  );
 
 /**
  * Submit a SubmissionVersion. At least one of textContent / files / links
