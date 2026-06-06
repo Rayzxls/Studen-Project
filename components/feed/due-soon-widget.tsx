@@ -28,11 +28,11 @@ export async function DueSoonWidget({
   if (items.length === 0) return null;
 
   return (
-    <section className="rounded-2xl border border-amber-200 bg-amber-50/60 p-5">
+    <section className="card-tinted card-tinted-orange p-5">
       <div className="mb-3 flex items-center gap-2">
-        <AlertCircle className="h-4 w-4 text-amber-700" aria-hidden="true" />
+        <AlertCircle className="h-4 w-4" aria-hidden="true" />
         <h2
-          className="text-sm font-medium text-amber-900"
+          className="text-sm font-medium"
           style={{ letterSpacing: "-0.01em" }}
         >
           ใกล้ส่ง — ภายใน 24 ชั่วโมง ({items.length})
@@ -44,6 +44,10 @@ export async function DueSoonWidget({
             <Link
               href={`/student/courses/${it.courseOfferingId}/assignments/${it.id}`}
               className="flex items-start justify-between gap-3 rounded-xl bg-white/70 px-3 py-2.5 transition-colors hover:bg-white hover:no-underline"
+              style={{
+                transitionDuration: "var(--duration-spring-standard)",
+                transitionTimingFunction: "var(--ease-spring)",
+              }}
             >
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-black">
@@ -58,7 +62,7 @@ export async function DueSoonWidget({
                   )}
                 </p>
               </div>
-              <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-amber-800">
+              <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium">
                 <Clock className="h-3 w-3" aria-hidden="true" />
                 {formatThaiDateShort(it.dueAt)}
               </span>

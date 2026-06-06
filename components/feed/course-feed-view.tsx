@@ -169,7 +169,7 @@ function FeedCard({
               {headline}
             </p>
             {item.detail && item.kind === "ASSIGNMENT" && (
-              <p className="mt-1 flex items-center gap-1 text-xs text-amber-700">
+              <p className="mt-1 flex items-center gap-1 text-xs text-orange-700">
                 <CalendarClock className="h-3 w-3" />
                 ส่งภายใน {fmtThaiDateShort(new Date(item.detail))}
               </p>
@@ -212,9 +212,9 @@ function kindDecor(kind: FeedKind): {
   switch (kind) {
     case "ANNOUNCEMENT":
       return {
-        icon: <Megaphone className="h-4 w-4 text-amber-700" />,
+        icon: <Megaphone className="h-4 w-4 text-orange-700" />,
         kindLabel: "ประกาศ",
-        accent: "bg-amber-50",
+        accent: "bg-orange-50",
       };
     case "ASSIGNMENT":
       return {
@@ -224,15 +224,15 @@ function kindDecor(kind: FeedKind): {
       };
     case "MATERIAL":
       return {
-        icon: <FileText className="h-4 w-4 text-emerald-700" />,
+        icon: <FileText className="h-4 w-4 text-green-700" />,
         kindLabel: "เอกสาร",
-        accent: "bg-emerald-50",
+        accent: "bg-green-50",
       };
     case "SCORE_PUBLISHED":
       return {
-        icon: <Sparkles className="h-4 w-4 text-purple-700" />,
+        icon: <Sparkles className="h-4 w-4 text-blue-700" />,
         kindLabel: "คะแนนเผยแพร่",
-        accent: "bg-purple-50",
+        accent: "bg-blue-50",
       };
   }
 }
