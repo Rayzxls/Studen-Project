@@ -3,7 +3,58 @@
 > เอกสารนี้ใช้สำหรับเริ่ม **session ใหม่** กับ AI assistant แล้วต่อยอดได้ทันที
 > อ่านไฟล์นี้ + `CLAUDE.md` + `CONTEXT.md` ก่อนเริ่มงาน
 
-อัพเดตล่าสุด: **2026-06-06** · 180+ commits · **Phase 0-9 + 10A + 10B + 10C + 11 + 11.5 + 11D + 11.6 + 11.7 + 11.8 + 11.9 ปิดครบ · Phase 9 ต่อ (Hardening + Deploy) deferred · Phase 12 in queue**
+อัพเดตล่าสุด: **2026-06-06** · 190+ commits · **Phase 0-12 ปิดครบ (รวม 11.x interactive + 12 landing) · Phase 9 ต่อ (Hardening + Deploy) deferred · global rename + photographic assets in queue**
+
+---
+
+## ⚠️ START HERE — Phase 12 Landing Page + Beagle Classroom rebrand (2026-06-06 · branch `phase-11`)
+
+**Branch:** `phase-11` (pushed) — Phase 12 = R3F landing + rebrand. App is being renamed **Studennnn → Beagle Classroom** (family: beagle lovers + ครู/ข้าราชการครู). Rebrand applied on the landing page; **global rename across all `Studennnn` strings is a pending follow-up** (not yet done — login/dashboard/nav/footer/emails still say Studennnn).
+
+### What Phase 12 ships
+
+**Real 3D (ADR-0029 T1 Showcase).** Installed `three` + `@react-three/fiber` + `@react-three/drei` (landing-only, lazy via `next/dynamic ssr:false`). No WebGL bundle on authenticated pages.
+
+- `components/landing/hero-scene.tsx` — R3F Canvas: floating glossy brand-coloured shapes (distorted icosahedron + sphere, rounded box, torus, dodecahedron) drifting via `<Float>`, leaning to the pointer, lit by an orbiting point light + city environment (liquid-glass read). Abstract, no model assets.
+- `components/landing/hero-canvas.tsx` — client wrapper: lazy-loads HeroScene, gates on `prefers-reduced-motion`, always paints a static brand-gradient fallback.
+- `components/landing/floating-cards.tsx` — ChronoTask-style product mini-cards (score 92%, attendance ring, due reminder, feed post, submissions 8/10) at varied depths, pointer-parallax + idle bob. Mobile-hidden, reduced-motion-off.
+- `components/landing/showcase-bento.tsx` — Apple-style bento (col-span 4/2/2/4/3/3) of live-styled mocks of real surfaces (gradebook bars, 88% attendance ring, feed posts, course-colour grid, audit copy, role KPIs). Tilt3D per tile. **Plain grid, not EntryStagger** (so each Tilt3D is the direct grid item and col-spans resolve — same wrapper lesson as the dashboard cards).
+- `components/landing/beagle-logo.tsx` — temporary SVG brand mark (beagle head + drop ears + graduation cap) + BeagleWordmark. **Swap for the AI-generated logo when ready** — API (className) stays the same. Logo prompt delivered in chat.
+- `app/page.tsx` — full landing rewrite: glass nav, hero (Section 1), bento (Section 2), 3-role strip, saturated-blue closing CTA, footer.
+
+### Bug fixed this phase (important pattern)
+
+**Tilt3D + inline anchor clip.** Wrapping a `.card` `<a>` in Tilt3D removed its grid-item auto-blockification → the anchor reverted to `display:inline` → fragmented background + content spill (product owner screenshotted it). Fixed by adding the `block` utility to the student dashboard card anchor. Verified in-browser via preview MCP (logged in as seeded student). **Lesson: any `.card` anchor that is NOT a direct grid item and lacks `flex`/`block` needs an explicit `block`.**
+
+Also: `@react-three/fiber` v9 augments global `JSX.IntrinsicElements` with three's elements, which made `React.ElementType` resolve `className` to `never` for dynamic `<Icon>` in setup-tabs + unified-composer. Fixed by typing those icon fields as `LucideIcon`.
+
+### Phase 12 verifications
+
+- `pnpm typecheck` = **0 errors** · `pnpm lint` = **0 errors** (254 warnings) · `pnpm test` = **429 passed**
+- Verified in browser (preview MCP): hero WebGL canvas + floating cards + headline render; bento resolves to varied layout; logged-out landing reachable.
+
+### Seed credentials (for browser verification)
+
+- Admin: `admin@studennnn.local` / `Admin1234!`
+- Teacher: `teacher@studennnn.local` / `Teacher1234!` (homeroom ม.4/2)
+- Student: `60001` / `Student1234` (in ม.4/2)
+
+### What's queued next
+
+| Task | Status | Notes |
+|------|--------|-------|
+| Phase 12 — Landing + R3F | ✅ done | Beagle Classroom hero + bento |
+| Global rename Studennnn → Beagle Classroom | ⏸ pending | Every remaining `Studennnn` string: login/dashboard/nav/footer/auth layout/emails/PRODUCT.md/seed |
+| Real logo swap | ⏸ pending | Replace BeagleLogo SVG with AI-generated mark |
+| Photographic banner assets | ⏸ pending | 8 course-slot WebP backgrounds for .card-hero (ADR-0028 follow-up) |
+| Phase 13 — schema customization | ⏸ pending | Class.colorSlot + Student.heroBgPreset |
+| Phase 9 cont. — Hardening + Deploy | ⏸ pending | — |
+
+### Tooling installed this session
+
+- `uipro-cli` (global) + `.claude/skills/ui-ux-pro-max/` skill — consulted for landing structure (bento showcase, product-demo patterns) + motion discipline
+- Python 3.12 (winget) — runs the skill's search CLI
+- `framer-motion` 12.40.0, `three` 0.184 + `@react-three/fiber` 9.6 + `@react-three/drei` 10.7 (+ `@types/three`)
 
 ---
 
