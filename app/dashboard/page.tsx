@@ -12,6 +12,7 @@ import { StudentBottomNav } from "@/components/layout/student-bottom-nav";
 import { DueSoonWidget } from "@/components/feed/due-soon-widget";
 import { UserFeed } from "@/components/feed/user-feed";
 import { CourseColorChip } from "@/components/course/course-color-chip";
+import { TeacherHero } from "@/components/dashboard/teacher-hero";
 
 // Auth-gated DB-fetching page — skip static prerender.
 export const dynamic = "force-dynamic";
@@ -137,15 +138,21 @@ export default async function DashboardPage() {
               </div>
             </div>
           </section>
+        ) : user.role === "TEACHER" ? (
+          <>
+            {user.teacher?.homeroomOf && (
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <span className="badge">
+                  ครูประจำชั้น {user.teacher.homeroomOf.name}
+                </span>
+              </div>
+            )}
+            <TeacherHero teacherUserId={session.user.id} name={name} />
+          </>
         ) : (
           <>
             <div className="mb-6 flex flex-wrap items-center gap-2">
               <span className="badge">{roleLabel[user.role]}</span>
-              {user.teacher?.homeroomOf && (
-                <span className="badge">
-                  ครูประจำชั้น {user.teacher.homeroomOf.name}
-                </span>
-              )}
             </div>
 
             <h1
