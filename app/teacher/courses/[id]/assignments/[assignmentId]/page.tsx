@@ -30,12 +30,12 @@ interface PageProps {
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   NOT_SUBMITTED: { label: "ยังไม่ส่ง", color: "bg-black/[0.05] text-black/60" },
   DRAFT: { label: "ร่าง", color: "bg-black/[0.05] text-black/60" },
-  SUBMITTED: { label: "ส่งแล้ว", color: "bg-emerald-50 text-emerald-700" },
+  SUBMITTED: { label: "ส่งแล้ว", color: "bg-green-50 text-green-700" },
   LATE_SUBMITTED: {
     label: "ส่งสาย",
-    color: "bg-amber-50 text-amber-700",
+    color: "bg-orange-50 text-orange-700",
   },
-  RETURNED: { label: "ส่งคืน", color: "bg-rose-50 text-rose-700" },
+  RETURNED: { label: "ส่งคืน", color: "bg-red-50 text-red-700" },
   GRADED: { label: "ตรวจแล้ว", color: "bg-blue-50 text-blue-700" },
 };
 
@@ -221,12 +221,12 @@ export default async function AssignmentDetailPage({ params }: PageProps) {
                     <p className="text-[10px] text-black/40">
                       {enr.student.studentId}
                       {isRemoved && (
-                        <span className="ml-2 rounded bg-rose-100 px-1 py-0.5 text-[9px] text-rose-700">
+                        <span className="ml-2 rounded bg-red-100 px-1 py-0.5 text-[9px] text-red-700">
                           นำออกจากห้อง
                         </span>
                       )}
                       {current?.isLate && (
-                        <span className="ml-2 rounded bg-amber-100 px-1 py-0.5 text-[9px] text-amber-800">
+                        <span className="ml-2 rounded bg-orange-100 px-1 py-0.5 text-[9px] text-orange-700">
                           ส่งสาย v{current.versionNumber}
                         </span>
                       )}

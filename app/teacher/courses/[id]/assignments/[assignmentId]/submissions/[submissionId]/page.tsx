@@ -109,7 +109,7 @@ export default async function TeacherSubmissionDetailPage({
                 key={v.id}
                 className={`rounded-lg border p-3 ${
                   v.isCurrent
-                    ? "border-emerald-200 bg-emerald-50/30"
+                    ? "border-green-200 bg-green-50/40"
                     : "border-black/10 bg-black/[0.02]"
                 }`}
               >
@@ -117,7 +117,7 @@ export default async function TeacherSubmissionDetailPage({
                   <p className="text-xs font-medium text-black">
                     เวอร์ชัน {v.versionNumber}
                     {v.isCurrent && (
-                      <span className="ml-2 text-[10px] text-emerald-700">
+                      <span className="ml-2 text-[10px] text-green-700">
                         (ปัจจุบัน)
                       </span>
                     )}
@@ -125,7 +125,7 @@ export default async function TeacherSubmissionDetailPage({
                   <p className="text-[10px] text-black/40">
                     {dateFmt.format(v.submittedAt)}
                     {v.isLate && (
-                      <span className="ml-2 rounded bg-amber-100 px-1 text-[9px] text-amber-800">
+                      <span className="ml-2 rounded bg-orange-100 px-1 text-[9px] text-orange-700">
                         ส่งสาย
                       </span>
                     )}
