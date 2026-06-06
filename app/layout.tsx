@@ -12,7 +12,7 @@ const anuphan = Anuphan({
 });
 
 export const metadata: Metadata = {
-  title: "Studennnn — ระบบจัดการห้องเรียน",
+  title: "Beagle Classroom — ระบบจัดการห้องเรียน",
   description:
     "ระบบจัดการห้องเรียน · เช็คชื่อ · กรอกคะแนน · สร้างการบ้าน · ผลการเรียน",
 };
