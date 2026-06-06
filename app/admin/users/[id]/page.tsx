@@ -5,6 +5,12 @@ import { requireRole } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { renderAuditLog } from "@/lib/audit/render";
 import { ResetPasswordCard } from "@/components/admin/reset-password-card";
+import { currentTerm, getStudentStats } from "@/lib/dashboard/queries";
+import { getStudentTermSnapshot } from "@/lib/scoring/queries";
+import { termGpa } from "@/lib/scoring/term-gpa";
+import { gradeForCourseOffering } from "@/lib/scoring/calc";
+import { DEFAULT_GRADE_THRESHOLDS } from "@/lib/scoring/constants";
+import { getAttendanceStatsForStudent } from "@/lib/attendance/queries";
 
 // Auth-gated DB-fetching page — skip static prerender.
 export const dynamic = "force-dynamic";
@@ -93,6 +99,77 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
     },
   });
   if (!user) notFound();
+
+  const term = await currentTerm();
+
+  let studentStats = null;
+  let gpaResult = null;
+  let courseDetailsList: {
+    courseId: string;
+    attendanceRate: number | null;
+    marked: number;
+    totalSessions: number;
+    grade: number | null;
+    percent: number | null;
+  }[] = [];
+
+  if (user.student && term) {
+    const [stats, snapshot] = await Promise.all([
+      getStudentStats(user.id),
+      getStudentTermSnapshot(user.id, term.id),
+    ]);
+    studentStats = stats;
+    gpaResult = termGpa(snapshot.bundles);
+
+    const detailsPromises = snapshot.rows.map(async (r, i) => {
+      const b = snapshot.bundles[i]!;
+      let thresholds = DEFAULT_GRADE_THRESHOLDS;
+      if (r.gradeRulesJson && Array.isArray(r.gradeRulesJson)) {
+        try {
+          const parsed = [];
+          for (const item of r.gradeRulesJson) {
+            if (
+              item &&
+              typeof item === "object" &&
+              "minPercent" in item &&
+              "grade" in item
+            ) {
+              parsed.push({
+                minPercent: Number(item.minPercent),
+                grade: Number(item.grade),
+              });
+            }
+          }
+          if (parsed.length > 0) {
+            thresholds = parsed.sort((a, b) => b.minPercent - a.minPercent);
+          }
+        } catch (_) {}
+      }
+
+      const res = gradeForCourseOffering(b.items, b.entries, thresholds);
+
+      const attStats = await getAttendanceStatsForStudent({
+        courseOfferingId: r.courseOfferingId,
+        studentUserId: user.id,
+      });
+
+      const attRate =
+        attStats && attStats.marked > 0
+          ? Math.round((attStats.counts.PRESENT / attStats.marked) * 100)
+          : null;
+
+      return {
+        courseId: r.courseOfferingId,
+        attendanceRate: attRate,
+        marked: attStats?.marked ?? 0,
+        totalSessions: attStats?.totalSessions ?? 0,
+        grade: res.grade,
+        percent: res.percent,
+      };
+    });
+
+    courseDetailsList = await Promise.all(detailsPromises);
+  }
 
   const audits = await db.auditLog.findMany({
     where: {
@@ -289,18 +366,100 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
             {user.student.anonymized && (
               <Row label="สถานะ" value="ลบข้อมูลแบบนิรนามแล้ว" />
             )}
+            {studentStats && (
+              <Row
+                label="อัตราการเข้าเรียนเฉลี่ย (เทอมนี้)"
+                value={
+                  studentStats.attendanceRate !== null
+                    ? `${studentStats.attendanceRate}%`
+                    : "—"
+                }
+              />
+            )}
+            {gpaResult && (
+              <Row
+                label="เกรดเฉลี่ย (GPA เทอมนี้)"
+                value={
+                  gpaResult.value !== null
+                    ? gpaResult.value.toFixed(2)
+                    : "ยังไม่คำนวณ (รอประกาศคะแนน)"
+                }
+              />
+            )}
           </dl>
+
           {user.student.enrollments.length > 0 && (
-            <ul className="mt-4 divide-y divide-black/[0.06]">
-              {user.student.enrollments.map((e) => (
-                <li key={e.id} className="py-2 text-xs">
-                  <p className="font-medium text-black">{e.course.name}</p>
-                  <p className="mt-0.5 text-black/50">
-                    ครู {e.course.teacher.firstName} {e.course.teacher.lastName}
-                  </p>
-                </li>
-              ))}
-            </ul>
+            <div className="mt-6 border-t border-black/[0.06] pt-4">
+              <h3 className="mb-2 text-xs font-semibold text-black/70">
+                รายละเอียดวิชาที่เรียน
+              </h3>
+              <ul className="divide-y divide-black/[0.06]">
+                {user.student.enrollments.map((e) => {
+                  const details = courseDetailsList.find(
+                    (d) => d.courseId === e.course.id
+                  );
+                  return (
+                    <li
+                      key={e.id}
+                      className="py-3 flex items-center justify-between gap-3 text-xs"
+                    >
+                      <div>
+                        <p className="font-medium text-black">
+                          {e.course.name}
+                        </p>
+                        <p className="mt-0.5 text-[11px] text-black/50">
+                          ครู {e.course.teacher.firstName}{" "}
+                          {e.course.teacher.lastName}
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1 shrink-0 text-right">
+                        {details && (
+                          <>
+                            <p className="font-medium text-black">
+                              เกรด:{" "}
+                              <span className="font-semibold text-blue-600">
+                                {details.grade !== null
+                                  ? details.grade.toFixed(1)
+                                  : "—"}
+                              </span>{" "}
+                              {details.percent !== null && (
+                                <span className="text-[10px] text-black/50">
+                                  ({Math.round(details.percent)}%)
+                                </span>
+                              )}
+                            </p>
+                            <p className="text-[10px] text-black/55">
+                              เข้าเรียน:{" "}
+                              <span
+                                className={
+                                  details.attendanceRate !== null
+                                    ? details.attendanceRate >= 80
+                                      ? "text-green-600 font-medium"
+                                      : details.attendanceRate >= 50
+                                        ? "text-orange-500 font-medium"
+                                        : "text-red-500 font-medium"
+                                    : "text-black/55"
+                                }
+                              >
+                                {details.attendanceRate !== null
+                                  ? `${details.attendanceRate}%`
+                                  : "—"}
+                              </span>
+                              {details.attendanceRate !== null && (
+                                <span className="text-[9px] text-black/40">
+                                  {" "}
+                                  ({details.marked}/{details.totalSessions} คาบ)
+                                </span>
+                              )}
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           )}
         </section>
       )}
