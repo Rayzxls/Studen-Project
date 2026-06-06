@@ -14,6 +14,7 @@ import { UserFeed } from "@/components/feed/user-feed";
 import { CourseColorChip } from "@/components/course/course-color-chip";
 import { TeacherHero } from "@/components/dashboard/teacher-hero";
 import { StudentTodayPanel } from "@/components/dashboard/student-today-panel";
+import { AmbientBackground } from "@/components/motion/ambient-background";
 
 // Auth-gated DB-fetching page — skip static prerender.
 export const dynamic = "force-dynamic";
@@ -86,6 +87,10 @@ export default async function DashboardPage() {
               minHeight: 200,
             }}
           >
+            {/* Ambient drifting blobs (ADR-0029 T2) add living depth
+                behind the saturated hero without hurting white-text
+                contrast — they sit under a darkening overlay. */}
+            <AmbientBackground tone="blue" intensity={0.55} />
             {/* Subtle radial highlight in the top-right adds the iOS
                 pressed-glass depth without changing the saturated read. */}
             <div
@@ -93,7 +98,7 @@ export default async function DashboardPage() {
               className="pointer-events-none absolute inset-0"
               style={{
                 background:
-                  "radial-gradient(circle at 90% 0%, rgba(255,255,255,0.18) 0%, transparent 55%)",
+                  "radial-gradient(circle at 90% 0%, rgba(255,255,255,0.22) 0%, transparent 55%), linear-gradient(180deg, rgba(10,132,255,0.0) 40%, rgba(10,132,255,0.35) 100%)",
               }}
             />
             <div className="relative z-10 flex h-full flex-col gap-6">

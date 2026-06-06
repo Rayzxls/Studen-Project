@@ -6,6 +6,7 @@ import {
 } from "@/lib/dashboard/queries";
 import { AnimatedStat } from "@/components/dashboard/animated-stat";
 import { CourseColorChip } from "@/components/course/course-color-chip";
+import { AmbientBackground } from "@/components/motion/ambient-background";
 
 /**
  * TeacherHero — Phase 11D · ADR-0028 § 8 (teacher = medium vibrancy).
@@ -34,14 +35,15 @@ export async function TeacherHero({
 
   return (
     <section className="card-hero">
-      {/* Banner zone — soft blue-tinted wash with a hint of motion. */}
+      {/* Banner zone — soft blue wash with ambient drifting blobs
+          (ADR-0029 T2). intensity kept low so it reads as calm
+          workspace, not a saturated student hero. */}
       <div
-        className="card-hero-banner"
-        style={{
-          background:
-            "radial-gradient(circle at 15% 20%, rgba(10,132,255,0.16) 0%, transparent 60%), radial-gradient(circle at 90% 30%, rgba(94,174,219,0.18) 0%, transparent 55%), #eff6ff",
-        }}
-      />
+        className="card-hero-banner overflow-hidden"
+        style={{ background: "#eff6ff" }}
+      >
+        <AmbientBackground tone="blue" intensity={0.4} />
+      </div>
 
       <div className="card-hero-content -mt-10">
         {/* Greeting card sits over the banner edge — the iOS profile-card
