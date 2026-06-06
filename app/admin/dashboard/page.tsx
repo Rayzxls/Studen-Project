@@ -14,6 +14,8 @@ import { actionLabel } from "@/lib/audit/label";
 import { renderAuditLog } from "@/lib/audit/render";
 import { getCourseGradientForClass } from "@/lib/theme/course-color";
 import { AnimatedStat } from "@/components/dashboard/animated-stat";
+import { EntryStagger } from "@/components/motion/entry-stagger";
+import { Tilt3D } from "@/components/motion/tilt-3d";
 
 // Auth-gated DB-fetching page — skip static prerender.
 export const dynamic = "force-dynamic";
@@ -183,7 +185,7 @@ export default async function AdminDashboardPage() {
         ) : classes.length === 0 ? (
           <EmptyClasses />
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <EntryStagger className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {classes.map((c) => {
               const teacherIds = new Set(c.courses.map((co) => co.teacherId));
               const studentSum = c.courses.reduce(
@@ -191,21 +193,22 @@ export default async function AdminDashboardPage() {
                 0
               );
               return (
-                <ClassCard
-                  key={c.id}
-                  id={c.id}
-                  name={c.name}
-                  gradeLevel={c.gradeLevel}
-                  yearName={c.academicYear.name}
-                  homeroom={c.homeroomTeacher}
-                  enrolledStudents={c._count.students}
-                  courseCount={c.courses.length}
-                  teacherCount={teacherIds.size}
-                  enrollmentSum={studentSum}
-                />
+                <Tilt3D key={c.id} maxDeg={6}>
+                  <ClassCard
+                    id={c.id}
+                    name={c.name}
+                    gradeLevel={c.gradeLevel}
+                    yearName={c.academicYear.name}
+                    homeroom={c.homeroomTeacher}
+                    enrolledStudents={c._count.students}
+                    courseCount={c.courses.length}
+                    teacherCount={teacherIds.size}
+                    enrollmentSum={studentSum}
+                  />
+                </Tilt3D>
               );
             })}
-          </div>
+          </EntryStagger>
         )}
       </section>
 
