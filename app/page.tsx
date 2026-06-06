@@ -3,9 +3,9 @@ import { redirect } from "next/navigation";
 import { ArrowRight, GraduationCap, ShieldCheck, Sparkles } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { BeagleLogo, BeagleWordmark } from "@/components/landing/beagle-logo";
-import { HeroCanvas } from "@/components/landing/hero-canvas";
 import { FloatingCards } from "@/components/landing/floating-cards";
 import { ShowcaseBento } from "@/components/landing/showcase-bento";
+import { Immersive3D } from "@/components/landing/immersive-3d";
 
 /**
  * Beagle Classroom — landing page (Phase 12).
@@ -56,9 +56,33 @@ export default async function HomePage() {
         </div>
       </nav>
 
-      {/* ── Section 1 — Hero ────────────────────────────────────── */}
+      {/* ── Section 1 — Hero (ChronoTask style: floating cards on a
+          light dotted canvas; the heavy 3D lives in its own section
+          below). ─────────────────────────────────────────────────── */}
       <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 pt-24 pb-16">
-        <HeroCanvas />
+        {/* Dotted grid texture */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle, rgba(0,0,0,0.05) 1px, transparent 1px)",
+            backgroundSize: "22px 22px",
+            maskImage:
+              "radial-gradient(ellipse 80% 70% at 50% 45%, #000 40%, transparent 100%)",
+            WebkitMaskImage:
+              "radial-gradient(ellipse 80% 70% at 50% 45%, #000 40%, transparent 100%)",
+          }}
+        />
+        {/* Soft brand glow (no heavy 3D here) */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(50% 45% at 50% 38%, rgba(10,132,255,0.10) 0%, transparent 70%)",
+          }}
+        />
         <FloatingCards />
 
         <div className="relative z-10 mx-auto max-w-3xl text-center">
@@ -104,6 +128,9 @@ export default async function HomePage() {
 
       {/* ── Section 2 — Showcase bento ──────────────────────────── */}
       <ShowcaseBento />
+
+      {/* ── Immersive 3D moment (the heavy R3F scene lives here) ─── */}
+      <Immersive3D />
 
       {/* ── Roles strip ─────────────────────────────────────────── */}
       <section id="roles" className="px-6 py-20">

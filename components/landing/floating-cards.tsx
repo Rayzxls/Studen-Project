@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import {
   CalendarCheck2,
+  Check,
   ClipboardList,
   Megaphone,
   TrendingUp,
@@ -60,8 +61,17 @@ export function FloatingCards() {
         } as React.CSSProperties
       }
     >
-      {/* Score card — top-left, deep */}
-      <FloatCard depth={28} className="left-[4%] top-[16%]">
+      {/* Sticky note — top-left, deep (ChronoTask signature) */}
+      <FloatNote depth={24} className="left-[3%] top-[8%]">
+        จดโน้ตการบ้าน
+        <br />
+        ไม่ให้พลาดเดดไลน์
+        <br />
+        ของทุกวิชา
+      </FloatNote>
+
+      {/* Score card — left, mid */}
+      <FloatCard depth={32} className="left-[6%] top-[40%]">
         <div className="flex items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-green-50 text-green-700">
             <TrendingUp className="h-4 w-4" />
@@ -163,6 +173,72 @@ export function FloatingCards() {
           </div>
         </div>
       </FloatCard>
+
+      {/* Checkbox task — top-center-left, shallow (ChronoTask signature) */}
+      <FloatCard depth={56} className="left-[24%] top-[10%]">
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-5 w-5 items-center justify-center rounded-md bg-blue-500 text-white">
+            <Check className="h-3 w-3" strokeWidth={3} />
+          </span>
+          <span className="text-xs font-medium text-black/70 line-through decoration-black/30">
+            เช็คชื่อคาบเช้า
+          </span>
+        </div>
+      </FloatCard>
+
+      {/* Integrations — bottom-right, mid */}
+      <FloatCard depth={46} className="bottom-[14%] right-[6%]">
+        <p className="mb-2 text-[10px] text-black/45">ใช้ได้ทุกอุปกรณ์</p>
+        <div className="flex items-center gap-1.5">
+          {["#0a84ff", "#34c759", "#ff9500", "#7a7ae5"].map((c) => (
+            <span
+              key={c}
+              className="h-6 w-6 rounded-lg"
+              style={{ background: c, opacity: 0.85 }}
+            />
+          ))}
+        </div>
+      </FloatCard>
+    </div>
+  );
+}
+
+function FloatNote({
+  children,
+  className,
+  depth,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  depth: number;
+}) {
+  const bobDelay = (depth % 7) * 0.4;
+  const bobDur = 5 + (depth % 5);
+  return (
+    <div
+      className={"absolute " + (className ?? "")}
+      style={
+        {
+          transform:
+            "translate3d(calc(var(--px) * " +
+            depth +
+            "px), calc(var(--py) * " +
+            depth +
+            "px), 0) rotate(-5deg)",
+          transition: "transform 300ms cubic-bezier(0.32,0.72,0,1)",
+        } as React.CSSProperties
+      }
+    >
+      <div
+        className="max-w-[11rem] rounded-sm px-4 py-3 text-[12px] leading-relaxed text-black/70 shadow-card"
+        style={{
+          background: "#FEF3C7",
+          fontFamily: "var(--font-anuphan), sans-serif",
+          animation: `float-card-bob ${bobDur}s ease-in-out ${bobDelay}s infinite`,
+        }}
+      >
+        {children}
+      </div>
     </div>
   );
 }
