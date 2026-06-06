@@ -123,7 +123,7 @@ export default async function DashboardPage() {
                   สวัสดี, {name}
                 </h1>
                 <p className="mt-2 text-base text-white/80">
-                  ยินดีต้อนรับเข้าสู่ระบบจัดการห้องเรียน Studennnn
+                  ยินดีต้อนรับเข้าสู่ระบบจัดการห้องเรียน Beagle Classroom
                 </p>
               </div>
 
@@ -170,7 +170,7 @@ export default async function DashboardPage() {
               สวัสดี, {name}
             </h1>
             <p className="mt-2 text-base text-black/60">
-              ยินดีต้อนรับเข้าสู่ระบบจัดการห้องเรียน Studennnn
+              ยินดีต้อนรับเข้าสู่ระบบจัดการห้องเรียน Beagle Classroom
             </p>
           </>
         )}

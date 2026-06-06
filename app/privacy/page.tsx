@@ -1,17 +1,5 @@
 import Link from "next/link";
-
-function LogoMark({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 256 256"
-      className={className}
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <path d="M 128.005 191.173 C 128.448 156.208 156.93 128 192 128 L 192 64 L 128 64 C 128 99.346 99.346 128 64 128 L 64 192 L 128 192 Z M 192 256 L 64 256 C 28.654 256 0 227.346 0 192 L 0 64 L 64 64 L 64 0 L 192 0 C 227.346 0 256 28.654 256 64 L 256 192 L 192 192 Z" />
-    </svg>
-  );
-}
+import { BeagleLogo } from "@/components/landing/beagle-logo";
 
 export default function PrivacyPage() {
   return (
@@ -19,12 +7,12 @@ export default function PrivacyPage() {
       <header className="border-b border-black/[0.06] bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
           <Link href="/" className="inline-flex items-center gap-2">
-            <LogoMark className="h-6 w-6 text-black" />
+            <BeagleLogo className="h-7 w-7 object-contain" />
             <span
-              className="text-lg font-medium text-black"
-              style={{ letterSpacing: "-0.02em" }}
+              className="text-lg font-semibold text-black"
+              style={{ letterSpacing: "-0.03em" }}
             >
-              Studennnn
+              Beagle <span className="text-blue-600">Classroom</span>
             </span>
           </Link>
         </div>

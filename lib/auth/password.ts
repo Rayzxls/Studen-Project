@@ -59,6 +59,8 @@ const COMMON_PASSWORDS = new Set([
   "passw0rd",
   "studennnn",
   "student",
+  "beagle",
+  "beagleclassroom",
 ]);
 
 export async function hashPassword(plain: string): Promise<string> {
