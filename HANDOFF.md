@@ -3,7 +3,56 @@
 > เอกสารนี้ใช้สำหรับเริ่ม **session ใหม่** กับ AI assistant แล้วต่อยอดได้ทันที
 > อ่านไฟล์นี้ + `CLAUDE.md` + `CONTEXT.md` ก่อนเริ่มงาน
 
-อัพเดตล่าสุด: **2026-06-06** · 170+ commits · **Phase 0-9 + 10A + 10B + 10C + 11 + 11.5 + 11D + 11.6 + 11.7 ปิดครบ · Phase 9 ต่อ (Hardening + Deploy) deferred · Phase 12 in queue**
+อัพเดตล่าสุด: **2026-06-06** · 180+ commits · **Phase 0-9 + 10A + 10B + 10C + 11 + 11.5 + 11D + 11.6 + 11.7 + 11.8 + 11.9 ปิดครบ · Phase 9 ต่อ (Hardening + Deploy) deferred · Phase 12 in queue**
+
+---
+
+## ⚠️ START HERE — Phase 11.8 + 11.9 World-class interactive ปิดครบ (2026-06-06 · branch `phase-11`)
+
+**Branch:** `phase-11` (pushed to origin) — 12 commits on top of Phase 11.7
+
+### Why these phases exist
+
+Product owner pushback after Phase 11.7: (1) the course feed *"เหมือน Gmail ไม่ใช่ Instagram"*, and (2) the whole system *"ดูไม่มีอะไรเลย ไม่มีลูกเล่น Animation"* — wants *"ดูว้าว ดูหรู เป็น OS"* with 2D+3D interactivity from world-class sites. The product owner also asked to install `uipro-cli` (UI/UX Pro Max design-intelligence skill) which was done and consulted.
+
+### Phase 11.8 — Instagram feed (1 commit)
+
+| SHA | Commit |
+|-----|--------|
+| `0760659` | feat(feed): Instagram-style FeedCard with author header + day grouping |
+
+FeedItem widened (bodyPreview / authorName / attachmentCount, all optional). FeedCard became a social post: avatar with Thai initials + author + relative time, ring-tinted type chip, 18px title + body preview, score-published blue callout, due/attachment meta chips, role-aware footer CTA. Day-bucket dividers (วันนี้/เมื่อวาน/weekday/Buddhist date). Filter row = iOS segmented control.
+
+### Phase 11.9 — Interactive 2D/3D motion (11 commits)
+
+| SHA | Commit |
+|-----|--------|
+| `90f6520` | docs(adr): ADR-0029 task-modulated 2D/3D motion budget |
+| `…` | feat(motion): framer-motion + 3 primitives (Tilt3D, EntryStagger, AmbientBackground) |
+| `…` | feat(dashboard): ambient blobs on student + teacher heroes |
+| `…` | feat(dashboard): Tilt3D + EntryStagger on all course/class grids |
+| `…` | feat(auth): ambient blob bg + spring card entry |
+| `…` | feat(feed): EntryStagger reveal on feed posts |
+
+**ADR-0029** — task-modulated motion budget extending ADR-0028. 4 tiers: T1 Showcase (landing, real 3D — deferred Phase 12), T2 Interactive (dashboards/shells/lists/feed/auth — CSS tilt + blobs + stagger), T3 Responsive (content detail — stagger + spring, no tilt), T4 Calm (grade entry/attendance/audit/forms — ADR-0028 unchanged). **Data-Entry-Is-Sacred Rule**: wow lives where users arrive, never where they work.
+
+**Motion primitives** (`components/motion/`):
+- `Tilt3D` — CSS 3D pointer-parallax, max 8°, touch-disabled, reduced-motion-safe, no JS lib
+- `EntryStagger` — framer-motion fade-up reveal, 40ms stagger capped at 12, useReducedMotion-aware
+- `AmbientBackground` — 3 drifting radial-gradient blobs (CSS @keyframes 22-30s), server component, system-colour tones
+
+**Applied:** student hero + teacher hero ambient blobs; Tilt3D + EntryStagger on /admin/dashboard class grid, /dashboard teacher+student course grids, /teacher/courses list; auth layout blob bg + slide-up card; feed post stagger.
+
+**Library:** framer-motion 12.40.0 (lazy, T2/T3 islands). `three`/R3F deferred to Phase 12 landing (no WebGL on authenticated pages).
+
+### Phase 11.8+11.9 verifications
+
+- `pnpm typecheck` = **0 errors** · `pnpm lint` = **0 errors** (254 warnings) · `pnpm test` = **429 passed**
+- No schema migration. framer-motion added to client islands only — initial bundle budget (<250KB) respected.
+
+### Tooling installed this session
+
+- `uipro-cli` (global npm) + `.claude/skills/ui-ux-pro-max/` skill — consulted for motion discipline (reduced-motion High severity, parallax nausea, animate-1-2-elements-max). Python 3.12 installed (winget) to run its search CLI.
 
 ---
 
