@@ -23,6 +23,16 @@ interface BaseState {
   ok?: boolean;
 }
 
+/** Newline-separated link textarea → trimmed non-empty list (mirrors the
+ *  announcement/material list-page composers). URL shape is validated in
+ *  the create lib's Zod schema (LinkUrlSchema). */
+function parseLinkUrls(raw: string): string[] {
+  return raw
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 export type ComposeAnnouncementState = BaseState;
 
 export async function composeAnnouncementAction(
@@ -34,6 +44,7 @@ export async function composeAnnouncementAction(
   const courseId = String(formData.get("courseId") ?? "");
   const title = String(formData.get("title") ?? "").trim();
   const body = String(formData.get("body") ?? "").trim();
+  const linkUrls = parseLinkUrls(String(formData.get("linkUrls") ?? ""));
   if (!courseId) return { error: "missing_course_id" };
   if (body.length === 0) {
     return { fieldErrors: { body: "ระบุเนื้อหาประกาศ" } };
@@ -44,7 +55,7 @@ export async function composeAnnouncementAction(
         courseOfferingId: courseId,
         title: title.length === 0 ? null : title,
         body,
-        linkUrls: [],
+        linkUrls,
         fileAttachmentIds: [],
       },
       {
@@ -128,6 +139,7 @@ export async function composeMaterialAction(
   const courseId = String(formData.get("courseId") ?? "");
   const title = String(formData.get("title") ?? "").trim();
   const body = String(formData.get("body") ?? "").trim();
+  const linkUrls = parseLinkUrls(String(formData.get("linkUrls") ?? ""));
   if (!courseId) return { error: "missing_course_id" };
   if (title.length === 0) {
     return { fieldErrors: { title: "ตั้งชื่อเอกสาร" } };
@@ -138,7 +150,7 @@ export async function composeMaterialAction(
         courseOfferingId: courseId,
         title,
         body,
-        linkUrls: [],
+        linkUrls,
         fileAttachmentIds: [],
       },
       {
