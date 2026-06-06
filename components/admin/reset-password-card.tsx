@@ -46,7 +46,7 @@ export function ResetPasswordCard({
             <input type="hidden" name="userId" value={userId} />
             <ResetButton />
             {state.error && (
-              <p className="mt-2 text-xs text-rose-600">
+              <p className="mt-2 text-xs text-red-700">
                 {translateError(state.error)}
               </p>
             )}
@@ -55,12 +55,12 @@ export function ResetPasswordCard({
       )}
 
       {state.ok && state.tempPassword && (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
-          <div className="mb-2 flex items-center gap-2 text-sm font-medium text-emerald-900">
+        <div className="rounded-xl border border-green-200 bg-green-50/60 p-4">
+          <div className="mb-2 flex items-center gap-2 text-sm font-medium text-green-700">
             <CheckCircle2 className="h-4 w-4" />
             รีเซ็ตรหัสผ่านของ {state.targetDisplayName} สำเร็จ
           </div>
-          <p className="text-xs text-emerald-900/70">
+          <p className="text-xs text-green-700/80">
             รหัสผ่านชั่วคราว (แสดงครั้งเดียว — รีเฟรชแล้วจะหาย):
           </p>
           <div className="mt-2 flex items-center gap-2">
@@ -70,7 +70,7 @@ export function ResetPasswordCard({
             <button
               type="button"
               onClick={copy}
-              className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-medium text-white hover:bg-emerald-700"
+              className="rounded-lg bg-green-600 px-3 py-2 text-xs font-medium text-white hover:bg-green-700"
             >
               {copied ? (
                 "คัดลอกแล้ว"
@@ -81,7 +81,7 @@ export function ResetPasswordCard({
               )}
             </button>
           </div>
-          <p className="mt-2 flex items-start gap-1 text-xs text-amber-800">
+          <p className="mt-2 flex items-start gap-1 text-xs text-orange-700">
             <AlertCircle className="mt-0.5 h-3 w-3 shrink-0" />
             เก็บไว้แจ้งผู้ใช้ตอนนี้ — หน้านี้รีเฟรชแล้วรหัสผ่านจะหายไป (จะต้อง
             reset ใหม่ถ้าลืม)

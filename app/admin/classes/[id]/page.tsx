@@ -9,6 +9,7 @@ import {
 import { requireRole } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { currentTerm } from "@/lib/dashboard/queries";
+import { getCourseGradientForClass } from "@/lib/theme/course-color";
 
 // Auth-gated DB-fetching page — skip static prerender.
 export const dynamic = "force-dynamic";
@@ -93,14 +94,20 @@ export default async function AdminClassDetailPage({ params }: PageProps) {
         กลับไปหน้าภาพรวม
       </Link>
 
-      <header className="card overflow-hidden">
-        <div className="h-24 bg-gradient-to-br from-amber-100 to-amber-50" />
-        <div className="p-6 -mt-12 relative">
+      <header className="card-hero">
+        {/* Banner zone — course slot gradient mesh, same hash input as
+            /admin/dashboard so this drill-down inherits the colour from
+            the gallery card the admin clicked. */}
+        <div
+          className="card-hero-banner"
+          style={{ background: getCourseGradientForClass(cls.id) }}
+        />
+        <div className="card-hero-content -mt-12 relative">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-soft">
-                  <School2 className="h-5 w-5 text-amber-700" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-card">
+                  <School2 className="h-5 w-5 text-black/70" />
                 </div>
                 <div>
                   <h1
@@ -152,7 +159,7 @@ export default async function AdminClassDetailPage({ params }: PageProps) {
           วิชาที่เปิดในเทอมนี้ ({courses.length})
         </h2>
         {!term ? (
-          <p className="text-xs text-amber-700">
+          <p className="text-xs text-orange-700">
             ยังไม่ได้ตั้งภาคเรียนปัจจุบัน
           </p>
         ) : courses.length === 0 ? (

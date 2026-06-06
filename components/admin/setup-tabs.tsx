@@ -182,12 +182,12 @@ function YearsTab({ years }: { years: SetupData["years"] }) {
           </label>
           <SubmitBtn label="เพิ่ม" />
           {state.fieldErrors?.name && (
-            <p className="basis-full text-xs text-rose-600">
+            <p className="basis-full text-xs text-red-700">
               {state.fieldErrors.name}
             </p>
           )}
           {state.error && (
-            <p className="basis-full text-xs text-rose-600">
+            <p className="basis-full text-xs text-red-700">
               {translateError(state.error)}
             </p>
           )}
@@ -211,7 +211,7 @@ function YearsTab({ years }: { years: SetupData["years"] }) {
                   <p className="text-sm font-medium text-black">
                     ปี {y.name}
                     {y.isActive && (
-                      <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] text-emerald-700">
+                      <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-[10px] text-green-700">
                         ปีปัจจุบัน
                       </span>
                     )}
@@ -224,7 +224,7 @@ function YearsTab({ years }: { years: SetupData["years"] }) {
                   <input type="hidden" name="id" value={y.id} />
                   <button
                     type="submit"
-                    className="rounded-lg p-2 text-black/40 hover:bg-rose-50 hover:text-rose-600"
+                    className="rounded-lg p-2 text-black/40 hover:bg-red-50 hover:text-red-700"
                     title="ลบปีการศึกษานี้"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -235,7 +235,7 @@ function YearsTab({ years }: { years: SetupData["years"] }) {
           </ul>
         )}
         {delState.error && (
-          <p className="mt-3 text-xs text-rose-600">
+          <p className="mt-3 text-xs text-red-700">
             {translateError(delState.error)}
           </p>
         )}
@@ -273,7 +273,7 @@ function TermsTab({
           เพิ่มภาคเรียน
         </h2>
         {years.length === 0 ? (
-          <p className="text-xs text-amber-700">
+          <p className="text-xs text-orange-700">
             ต้องเพิ่มปีการศึกษาก่อน — ไปที่แท็บ &ldquo;ปีการศึกษา&rdquo;
           </p>
         ) : (
@@ -321,17 +321,17 @@ function TermsTab({
               <SubmitBtn label="เพิ่มภาคเรียน" />
             </div>
             {state.fieldErrors?.endDate && (
-              <p className="col-span-2 text-xs text-rose-600">
+              <p className="col-span-2 text-xs text-red-700">
                 {state.fieldErrors.endDate}
               </p>
             )}
             {state.fieldErrors?.number && (
-              <p className="col-span-2 text-xs text-rose-600">
+              <p className="col-span-2 text-xs text-red-700">
                 {state.fieldErrors.number}
               </p>
             )}
             {state.error && (
-              <p className="col-span-2 text-xs text-rose-600">
+              <p className="col-span-2 text-xs text-red-700">
                 {translateError(state.error)}
               </p>
             )}
@@ -356,7 +356,7 @@ function TermsTab({
                   <p className="text-sm font-medium text-black">
                     {t.name}
                     {t.isActive && (
-                      <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] text-emerald-700">
+                      <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-[10px] text-green-700">
                         ภาคเรียนปัจจุบัน
                       </span>
                     )}
@@ -370,7 +370,7 @@ function TermsTab({
                   <input type="hidden" name="id" value={t.id} />
                   <button
                     type="submit"
-                    className="rounded-lg p-2 text-black/40 hover:bg-rose-50 hover:text-rose-600"
+                    className="rounded-lg p-2 text-black/40 hover:bg-red-50 hover:text-red-700"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -380,7 +380,7 @@ function TermsTab({
           </ul>
         )}
         {delState.error && (
-          <p className="mt-3 text-xs text-rose-600">
+          <p className="mt-3 text-xs text-red-700">
             {translateError(delState.error)}
           </p>
         )}
@@ -422,7 +422,7 @@ function ClassesTab({
           เพิ่มห้องเรียน
         </h2>
         {years.length === 0 ? (
-          <p className="text-xs text-amber-700">ต้องเพิ่มปีการศึกษาก่อน</p>
+          <p className="text-xs text-orange-700">ต้องเพิ่มปีการศึกษาก่อน</p>
         ) : (
           <form
             ref={formRef}
@@ -481,12 +481,12 @@ function ClassesTab({
               <SubmitBtn label="เพิ่มห้องเรียน" />
             </div>
             {state.fieldErrors?.name && (
-              <p className="col-span-2 text-xs text-rose-600">
+              <p className="col-span-2 text-xs text-red-700">
                 {state.fieldErrors.name}
               </p>
             )}
             {state.error && (
-              <p className="col-span-2 text-xs text-rose-600">
+              <p className="col-span-2 text-xs text-red-700">
                 {translateError(state.error)}
               </p>
             )}
@@ -525,7 +525,7 @@ function ClassesTab({
                   <input type="hidden" name="id" value={c.id} />
                   <button
                     type="submit"
-                    className="rounded-lg p-2 text-black/40 hover:bg-rose-50 hover:text-rose-600"
+                    className="rounded-lg p-2 text-black/40 hover:bg-red-50 hover:text-red-700"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -535,7 +535,7 @@ function ClassesTab({
           </ul>
         )}
         {delState.error && (
-          <p className="mt-3 text-xs text-rose-600">
+          <p className="mt-3 text-xs text-red-700">
             {translateError(delState.error)}
           </p>
         )}
@@ -592,7 +592,7 @@ function TeachersTab({ teachers }: { teachers: SetupData["teachers"] }) {
               className="input"
             />
             {state.fieldErrors?.email && (
-              <p className="mt-1 text-xs text-rose-600">
+              <p className="mt-1 text-xs text-red-700">
                 {state.fieldErrors.email}
               </p>
             )}
@@ -611,19 +611,19 @@ function TeachersTab({ teachers }: { teachers: SetupData["teachers"] }) {
             <SubmitBtn label="เพิ่มครู" />
           </div>
           {state.error && (
-            <p className="col-span-2 text-xs text-rose-600">
+            <p className="col-span-2 text-xs text-red-700">
               {translateError(state.error)}
             </p>
           )}
         </form>
 
         {state.ok && state.tempPassword && (
-          <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
-            <div className="mb-2 flex items-center gap-2 text-sm font-medium text-emerald-900">
+          <div className="mt-4 rounded-xl border border-green-200 bg-green-50/60 p-4">
+            <div className="mb-2 flex items-center gap-2 text-sm font-medium text-green-700">
               <CheckCircle2 className="h-4 w-4" />
               เพิ่มครู {state.displayName} สำเร็จ
             </div>
-            <p className="text-xs text-emerald-900/70">
+            <p className="text-xs text-green-700/80">
               รหัสผ่านชั่วคราว (แสดงครั้งเดียว — รีเฟรชแล้วจะหาย):
             </p>
             <div className="mt-2 flex items-center gap-2">
@@ -633,7 +633,7 @@ function TeachersTab({ teachers }: { teachers: SetupData["teachers"] }) {
               <button
                 type="button"
                 onClick={copy}
-                className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-medium text-white hover:bg-emerald-700"
+                className="rounded-lg bg-green-600 px-3 py-2 text-xs font-medium text-white hover:bg-green-700"
               >
                 {copied ? (
                   "คัดลอกแล้ว"
@@ -644,7 +644,7 @@ function TeachersTab({ teachers }: { teachers: SetupData["teachers"] }) {
                 )}
               </button>
             </div>
-            <p className="mt-2 flex items-start gap-1 text-xs text-amber-800">
+            <p className="mt-2 flex items-start gap-1 text-xs text-orange-700">
               <AlertCircle className="mt-0.5 h-3 w-3 shrink-0" />
               เก็บไว้แจ้งครูตอนนี้ —
               ครูจะต้องเปลี่ยนรหัสผ่านในการเข้าระบบครั้งแรก
@@ -669,7 +669,7 @@ function TeachersTab({ teachers }: { teachers: SetupData["teachers"] }) {
                 <p className="mt-0.5 text-xs text-black/50">
                   {t.email}
                   {t.homeroomOf && (
-                    <span className="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] text-amber-700">
+                    <span className="ml-2 rounded-full bg-orange-50 px-2 py-0.5 text-[10px] text-orange-700">
                       ครูประจำชั้น {t.homeroomOf.name}
                     </span>
                   )}

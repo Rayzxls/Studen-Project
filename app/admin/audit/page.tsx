@@ -68,10 +68,9 @@ function bangkokLocalToUtc(raw: string | undefined): Date | null {
 }
 
 function tierBadgeClass(tier: AuditTier): string {
-  if (tier === "CRITICAL")
-    return "bg-rose-50 text-rose-700 ring-1 ring-rose-200";
+  if (tier === "CRITICAL") return "bg-red-50 text-red-700 ring-1 ring-red-200";
   if (tier === "IMPORTANT")
-    return "bg-amber-50 text-amber-700 ring-1 ring-amber-200";
+    return "bg-orange-50 text-orange-700 ring-1 ring-orange-200";
   return "bg-black/[0.04] text-black/60";
 }
 

@@ -175,7 +175,7 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
           <div className="flex flex-wrap gap-2">
             <RoleBadge role={user.role} />
             {user.isActive ? (
-              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] text-emerald-700">
+              <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] text-green-700">
                 ใช้งาน
               </span>
             ) : (
@@ -184,12 +184,12 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
               </span>
             )}
             {user.mustResetPwd && (
-              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] text-amber-800">
+              <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] text-orange-700">
                 ต้องตั้งรหัสผ่านใหม่ตอนเข้าใช้
               </span>
             )}
             {user.deletedAt && (
-              <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] text-rose-700">
+              <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] text-red-700">
                 ลบแล้ว
               </span>
             )}
@@ -359,17 +359,18 @@ function Row({
 }
 
 function RoleBadge({ role }: { role: string }) {
-  const map: Record<string, { label: string; cls: string }> = {
-    ADMIN: { label: "Admin", cls: "bg-purple-100 text-purple-800" },
-    TEACHER: { label: "ครู", cls: "bg-blue-100 text-blue-800" },
-    STUDENT: { label: "นักเรียน", cls: "bg-amber-100 text-amber-800" },
-  };
-  const m = map[role] ?? { label: role, cls: "bg-slate-100 text-slate-800" };
-  return (
-    <span className={`rounded-full px-2 py-0.5 text-[10px] ${m.cls}`}>
-      {m.label}
-    </span>
-  );
+  // ADR-0028 § 2: role badges remain neutral grayscale. Saturated semantic
+  // colours are reserved for state (system colours) and content category
+  // (course slot colours); role differentiation is via label + placement.
+  const label =
+    role === "ADMIN"
+      ? "Admin"
+      : role === "TEACHER"
+        ? "ครู"
+        : role === "STUDENT"
+          ? "นักเรียน"
+          : role;
+  return <span className="badge">{label}</span>;
 }
 
 function fmtDateTime(d: Date): string {
