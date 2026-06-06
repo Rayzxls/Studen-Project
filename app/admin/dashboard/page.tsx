@@ -12,6 +12,7 @@ import { db } from "@/lib/db/client";
 import { getAdminStats, currentTerm } from "@/lib/dashboard/queries";
 import { actionLabel } from "@/lib/audit/label";
 import { renderAuditLog } from "@/lib/audit/render";
+import { getCourseGradientForClass } from "@/lib/theme/course-color";
 
 // Auth-gated DB-fetching page — skip static prerender.
 export const dynamic = "force-dynamic";
@@ -254,22 +255,24 @@ function KpiCard({
 }) {
   const inner = (
     <div
-      className={
-        "stat " + (critical ? "ring-2 ring-rose-200 bg-rose-50/30" : "")
-      }
+      className={"stat " + (critical ? "ring-2 ring-red-200 bg-red-50/40" : "")}
     >
       <div className="flex items-center gap-2">
         <div
           className={
-            "flex h-9 w-9 items-center justify-center rounded-xl text-ink-soft " +
-            (critical ? "bg-rose-100 text-rose-700" : "bg-black/[0.05]")
+            "flex h-9 w-9 items-center justify-center rounded-xl " +
+            (critical
+              ? "bg-red-100 text-red-700"
+              : "bg-black/[0.05] text-ink-soft")
           }
         >
           {icon}
         </div>
         <div className="stat-label">{label}</div>
       </div>
-      <div className="stat-value mt-3">{value.toLocaleString("th-TH")}</div>
+      <div className={"stat-value mt-3 " + (critical ? "text-red-700" : "")}>
+        {value.toLocaleString("th-TH")}
+      </div>
     </div>
   );
   return href ? (
@@ -302,37 +305,53 @@ function ClassCard({
   teacherCount: number;
   enrollmentSum: number;
 }) {
+  // ADR-0028 § 8 Gallery Exception — admin /admin/dashboard class cards
+  // get full .card-hero treatment regardless of admin's default low-vibrancy
+  // setting, because the task here is visual scanning across 30-40 classes.
+  const gradient = getCourseGradientForClass(id);
   return (
     <Link
       href={`/admin/classes/${id}`}
-      className="card group relative overflow-hidden p-5 transition-all hover:shadow-lift hover:-translate-y-0.5"
+      className="card-hero group block focus-visible:outline-none"
+      aria-label={`เปิดข้อมูล ${name}`}
     >
-      {/* Cover */}
-      <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-br from-amber-100 to-amber-50" />
-      <div className="absolute right-3 top-3 rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-medium text-black/60 backdrop-blur">
-        ปี {yearName}
+      {/* Banner zone — course slot gradient mesh (Phase 11 stand-in for
+          photographic asset; Phase 11D may upgrade per ADR-0028 § 2). */}
+      <div className="card-hero-banner" style={{ background: gradient }}>
+        {/* Frosted year chip — opts in to .glass-nav scope (hero info bar
+            per ADR-0028 § 5). */}
+        <span className="glass-nav absolute right-3 top-3 inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium text-black/70">
+          ปี {yearName}
+        </span>
+        {/* Avatar-overlap circle matching the product owner's reference. */}
+        <span className="absolute left-6 -bottom-7 inline-flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-card">
+          <School2 className="h-6 w-6 text-black/70" />
+        </span>
       </div>
-      <div className="relative z-10 mt-12">
-        <div className="flex items-center gap-2">
-          <School2 className="h-5 w-5 text-amber-700" />
-          <h3 className="text-lg font-medium text-black">{name}</h3>
-        </div>
+
+      <div className="card-hero-content pt-10">
+        <h3
+          className="text-xl font-semibold text-black"
+          style={{ letterSpacing: "-0.02em" }}
+        >
+          {name}
+        </h3>
         <p className="mt-0.5 text-xs text-black/40">{gradeLevel}</p>
 
-        <div className="mt-3 rounded-xl bg-black/[0.03] p-3">
-          {homeroom ? (
-            <p className="text-xs text-black/70">
-              <span className="text-black/40">ครูประจำชั้น:</span>{" "}
-              <span className="font-medium text-black">
-                {homeroom.firstName} {homeroom.lastName}
-              </span>
-            </p>
-          ) : (
-            <p className="text-xs text-amber-700">— ยังไม่มีครูประจำชั้น</p>
-          )}
-        </div>
+        {homeroom ? (
+          <p className="mt-3 text-xs text-black/70">
+            <span className="text-black/40">ครูประจำชั้น:</span>{" "}
+            <span className="font-medium text-black">
+              {homeroom.firstName} {homeroom.lastName}
+            </span>
+          </p>
+        ) : (
+          <p className="mt-3 text-xs text-orange-700">ยังไม่มีครูประจำชั้น</p>
+        )}
 
-        <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
+        {/* Inset stats strip — subordinate surface inside the parent card.
+            Matches the bottom KPI strip in the product owner's reference. */}
+        <dl className="panel-inset mt-4 grid grid-cols-3 gap-0 text-center">
           <Stat label="นักเรียน" value={enrolledStudents} />
           <Stat label="วิชา" value={courseCount} />
           <Stat label="ครู" value={teacherCount} />
@@ -343,7 +362,7 @@ function ClassCard({
           </p>
         )}
 
-        <p className="mt-3 text-right text-xs text-black/40 group-hover:text-black/70">
+        <p className="mt-4 text-right text-xs text-black/40 transition-colors group-hover:text-blue-600">
           ดูข้อมูล →
         </p>
       </div>
@@ -354,17 +373,22 @@ function ClassCard({
 function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div>
-      <p className="text-base font-medium text-black">{value}</p>
-      <p className="text-[10px] text-black/40">{label}</p>
+      <p
+        className="text-xl font-semibold text-black"
+        style={{ letterSpacing: "-0.02em" }}
+      >
+        {value}
+      </p>
+      <p className="mt-0.5 text-[11px] text-black/50">{label}</p>
     </div>
   );
 }
 
 function EmptyTerm() {
   return (
-    <div className="card-flat p-8 text-center">
-      <p className="text-sm text-amber-700">ยังไม่ได้ตั้งภาคเรียนปัจจุบัน</p>
-      <p className="mt-1 text-xs text-black/40">
+    <div className="card-tinted card-tinted-orange p-8 text-center">
+      <p className="text-sm font-medium">ยังไม่ได้ตั้งภาคเรียนปัจจุบัน</p>
+      <p className="mt-1 text-xs opacity-70">
         ไปที่ &ldquo;ตั้งค่าโครงสร้าง&rdquo; เพื่อสร้างปี/ภาคเรียน
       </p>
       <Link href="/admin/setup" className="btn-primary btn-sm mt-3 inline-flex">
