@@ -5,6 +5,7 @@ import { ArrowRight, GraduationCap, ShieldCheck, Sparkles } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { BeagleLogo, BeagleWordmark } from "@/components/landing/beagle-logo";
 import { FloatingCards } from "@/components/landing/floating-cards";
+import { ProductMockup } from "@/components/landing/product-mockup";
 import { ShowcaseBento } from "@/components/landing/showcase-bento";
 
 /**
@@ -110,13 +111,31 @@ export default async function HomePage() {
           </p>
         </div>
 
-        <div className="mx-auto mt-10 max-w-6xl">
+        {/* Desktop: feature cards illustration with the live product
+            mockup filling the empty centre. */}
+        <div className="relative mx-auto mt-10 hidden max-w-6xl md:block">
           <Image
             src="/landing/hero-cards.webp"
             alt="ตัวอย่างการ์ดในระบบ Beagle Classroom — สรุปการสอบ ตารางเรียน อัตรามาเรียน และการแจ้งเตือน"
             width={1672}
             height={941}
             className="h-auto w-full select-none"
+          />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <ProductMockup className="w-[34%] min-w-[18rem]" />
+          </div>
+        </div>
+
+        {/* Mobile: the product mockup leads; the dense card illustration
+            sits below at full width. */}
+        <div className="md:hidden">
+          <ProductMockup className="mx-auto mt-8 max-w-sm" />
+          <Image
+            src="/landing/hero-cards.webp"
+            alt="ตัวอย่างการ์ดในระบบ Beagle Classroom"
+            width={1672}
+            height={941}
+            className="mt-8 h-auto w-full select-none"
           />
         </div>
       </section>
