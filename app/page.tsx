@@ -1,9 +1,9 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight, GraduationCap, ShieldCheck, Sparkles } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { BeagleLogo, BeagleWordmark } from "@/components/landing/beagle-logo";
-import { FloatingCards } from "@/components/landing/floating-cards";
 import { ShowcaseBento } from "@/components/landing/showcase-bento";
 import { Immersive3D } from "@/components/landing/immersive-3d";
 
@@ -56,72 +56,49 @@ export default async function HomePage() {
         </div>
       </nav>
 
-      {/* ── Section 1 — Hero (ChronoTask style: floating cards on a
-          light dotted canvas; the heavy 3D lives in its own section
-          below). ─────────────────────────────────────────────────── */}
-      <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 pt-24 pb-16">
-        {/* Dotted grid texture */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle, rgba(0,0,0,0.05) 1px, transparent 1px)",
-            backgroundSize: "22px 22px",
-            maskImage:
-              "radial-gradient(ellipse 80% 70% at 50% 45%, #000 40%, transparent 100%)",
-            WebkitMaskImage:
-              "radial-gradient(ellipse 80% 70% at 50% 45%, #000 40%, transparent 100%)",
-          }}
-        />
-        {/* Soft brand glow (no heavy 3D here) */}
+      {/* ── Section 1 — Hero (ChronoTask-style illustration: floating
+          product cards + beagle, headline overlaid in the empty centre
+          on desktop, stacked above the image on mobile). ───────────── */}
+      <section className="relative overflow-hidden px-6 pt-28 pb-12">
+        {/* Soft brand glow behind the illustration */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              "radial-gradient(50% 45% at 50% 38%, rgba(10,132,255,0.10) 0%, transparent 70%)",
+              "radial-gradient(45% 40% at 50% 35%, rgba(10,132,255,0.10) 0%, transparent 70%)",
           }}
         />
-        <FloatingCards />
 
-        <div className="relative z-10 mx-auto max-w-3xl text-center">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-black/[0.08] bg-white/70 px-3.5 py-1.5 text-xs font-medium text-black/70 backdrop-blur-sm">
-            <Sparkles className="h-3.5 w-3.5 text-blue-600" />
-            ระบบจัดการห้องเรียนสำหรับโรงเรียนไทย
-          </span>
+        <div className="relative mx-auto max-w-6xl">
+          {/* Desktop: illustration with the headline overlaid in the centre. */}
+          <div className="relative hidden md:block">
+            <Image
+              src="/landing/hero-cards.webp"
+              alt="ตัวอย่างการ์ดในระบบ Beagle Classroom — สรุปการสอบ ตารางเรียน อัตรามาเรียน และการแจ้งเตือน"
+              width={1672}
+              height={941}
+              priority
+              className="h-auto w-full select-none"
+            />
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+              <HeroCopy />
+            </div>
+          </div>
 
-          <h1
-            className="mt-6 text-balance text-5xl font-semibold text-black md:text-7xl"
-            style={{ letterSpacing: "-0.045em", lineHeight: 1.02 }}
-          >
-            คิด วางแผน ติดตาม
-            <br />
-            <span className="text-blue-600">ครบในที่เดียว</span>
-          </h1>
-
-          <p className="mx-auto mt-6 max-w-xl text-balance text-base leading-relaxed text-black/65 md:text-lg">
-            Beagle Classroom รวมเช็คชื่อ คะแนน ส่งงาน ฟีดประกาศ และผลการเรียน
-            ไว้ในแอปเดียว ครูทำงานน้อยลง นักเรียนหาข้อมูลของตัวเองได้ทันที
-          </p>
-
-          <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-            <Link
-              href="/login"
-              className="group inline-flex items-center gap-2 rounded-full bg-blue-500 py-2.5 pl-6 pr-2.5 text-base font-medium text-white shadow-card transition-transform hover:scale-[0.98]"
-              style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.18)" }}
-            >
-              เริ่มใช้งานฟรี
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white">
-                <ArrowRight className="h-4 w-4 text-blue-600 transition-transform group-hover:translate-x-0.5" />
-              </span>
-            </Link>
-            <a
-              href="#features"
-              className="rounded-full bg-white/70 px-6 py-2.5 text-base font-medium text-black/70 backdrop-blur-sm transition-colors hover:text-black"
-            >
-              ดูฟีเจอร์
-            </a>
+          {/* Mobile: headline first, illustration below. */}
+          <div className="md:hidden">
+            <div className="flex flex-col items-center text-center">
+              <HeroCopy />
+            </div>
+            <Image
+              src="/landing/hero-cards.webp"
+              alt="ตัวอย่างการ์ดในระบบ Beagle Classroom"
+              width={1672}
+              height={941}
+              priority
+              className="mt-10 h-auto w-full select-none"
+            />
           </div>
         </div>
       </section>
@@ -215,6 +192,50 @@ export default async function HomePage() {
         </div>
       </footer>
     </main>
+  );
+}
+
+function HeroCopy() {
+  return (
+    <>
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-black/[0.08] bg-white/80 px-3.5 py-1.5 text-xs font-medium text-black/70 backdrop-blur-sm">
+        <Sparkles className="h-3.5 w-3.5 text-blue-600" />
+        ระบบจัดการห้องเรียนสำหรับโรงเรียนไทย
+      </span>
+
+      <h1
+        className="mt-5 text-balance text-5xl font-semibold text-black md:text-6xl lg:text-7xl"
+        style={{ letterSpacing: "-0.045em", lineHeight: 1.02 }}
+      >
+        คิด วางแผน ติดตาม
+        <br />
+        <span className="text-blue-600">ครบในที่เดียว</span>
+      </h1>
+
+      <p className="mx-auto mt-5 max-w-md text-balance text-sm leading-relaxed text-black/65 md:text-base">
+        Beagle Classroom รวมเช็คชื่อ คะแนน ส่งงาน ฟีดประกาศ และผลการเรียน
+        ไว้ในแอปเดียว
+      </p>
+
+      <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+        <Link
+          href="/login"
+          className="group inline-flex items-center gap-2 rounded-full bg-blue-500 py-2.5 pl-6 pr-2.5 text-base font-medium text-white shadow-card transition-transform hover:scale-[0.98]"
+          style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.18)" }}
+        >
+          เริ่มใช้งานฟรี
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white">
+            <ArrowRight className="h-4 w-4 text-blue-600 transition-transform group-hover:translate-x-0.5" />
+          </span>
+        </Link>
+        <a
+          href="#features"
+          className="rounded-full bg-white/80 px-6 py-2.5 text-base font-medium text-black/70 backdrop-blur-sm transition-colors hover:text-black"
+        >
+          ดูฟีเจอร์
+        </a>
+      </div>
+    </>
   );
 }
 
