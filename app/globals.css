@@ -138,6 +138,19 @@
       transform: translate(6%, -8%) scale(1.15);
     }
   }
+
+  /* Gentle idle bob for the landing hero floating cards. The inner card
+     wrapper bobs; the outer wrapper carries the pointer-parallax
+     transform (so the two transforms don't fight). */
+  @keyframes float-card-bob {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════
