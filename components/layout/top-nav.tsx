@@ -59,7 +59,7 @@ export async function TopNav({
   const showBellResolved = showBell && Boolean(session);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-black/[0.06] bg-white/80 backdrop-blur print:hidden">
+    <header className="glass-nav sticky top-0 z-30 border-b border-black/[0.06] print:hidden">
       <div
         className={`mx-auto flex ${maxWidth} items-center justify-between px-4 py-3 md:px-6`}
       >
