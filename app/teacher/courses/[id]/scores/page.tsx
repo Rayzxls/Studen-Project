@@ -90,7 +90,7 @@ export default async function ScoresListPage({ params }: PageProps) {
             Σ คะแนนเต็ม = {fullScoreSum}
           </span>
           {allPublished && (
-            <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
+            <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700 ring-1 ring-green-200">
               <CheckCircle2 className="h-3.5 w-3.5" />
               เผยแพร่ครบทุกรายการ
             </span>
@@ -114,7 +114,7 @@ export default async function ScoresListPage({ params }: PageProps) {
                         <FileText className="h-4 w-4 shrink-0 text-black/30" />
                         {it.name}
                         {published ? (
-                          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] text-emerald-700">
+                          <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] text-green-700">
                             เผยแพร่แล้ว
                           </span>
                         ) : (

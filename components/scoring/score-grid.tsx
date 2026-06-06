@@ -190,7 +190,7 @@ export function ScoreGrid({
       </div>
 
       {isPublished && (
-        <div className="mb-3 flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-900 ring-1 ring-amber-200">
+        <div className="mb-3 flex items-start gap-2 rounded-xl bg-orange-50 px-3 py-2 text-xs text-orange-700 ring-1 ring-orange-200">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <div>
             <p className="font-medium">รายการคะแนนนี้เผยแพร่แล้ว</p>
@@ -267,7 +267,7 @@ export function ScoreGrid({
             <span
               className={
                 reasonLen > 0 && reasonLen < REASON_MIN
-                  ? "text-rose-600"
+                  ? "text-red-700"
                   : "text-black/40"
               }
             >
@@ -278,7 +278,7 @@ export function ScoreGrid({
             <span
               className={
                 reasonLen > REASON_MAX
-                  ? "font-medium text-rose-600"
+                  ? "font-medium text-red-700"
                   : "text-black/40"
               }
             >
@@ -286,7 +286,7 @@ export function ScoreGrid({
             </span>
           </div>
           {state.fieldErrors?.reason && (
-            <p className="mt-1 text-xs text-rose-600">
+            <p className="mt-1 text-xs text-red-700">
               {state.fieldErrors.reason}
             </p>
           )}
@@ -296,12 +296,12 @@ export function ScoreGrid({
       {!reasonRequired && <input type="hidden" name="reason" value="" />}
 
       {state.error && (
-        <p className="mt-3 rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-700">
+        <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">
           {state.error === "no_changes" ? "ไม่มีคะแนนที่กรอก" : state.error}
         </p>
       )}
       {state.ok && (
-        <p className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+        <p className="mt-3 rounded-xl bg-green-50 px-3 py-2 text-xs text-green-700">
           บันทึกแล้ว ({state.upserted} คน
           {state.audited ? " · บันทึก audit" : ""})
         </p>
@@ -342,7 +342,7 @@ function ValueInput({
         className="input h-11 w-24 text-right disabled:opacity-60"
         aria-invalid={fieldError ? "true" : undefined}
       />
-      {fieldError && <p className="mt-1 text-xs text-rose-600">{fieldError}</p>}
+      {fieldError && <p className="mt-1 text-xs text-red-700">{fieldError}</p>}
     </div>
   );
 }
@@ -372,7 +372,7 @@ function StudentCard({
           <p className="truncate text-sm font-medium text-black">
             {row.studentName}
             {row.removed && (
-              <span className="ml-2 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] text-rose-700">
+              <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-[10px] text-red-700">
                 ถูกนำออกแล้ว
               </span>
             )}
@@ -431,7 +431,7 @@ function StudentRow({
         <p className="text-sm font-medium text-black">
           {row.studentName}
           {row.removed && (
-            <span className="ml-2 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] text-rose-700">
+            <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-[10px] text-red-700">
               ถูกนำออกแล้ว
             </span>
           )}
