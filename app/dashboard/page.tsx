@@ -8,6 +8,7 @@ import {
   listTeacherCourses,
 } from "@/lib/course/enrollment";
 import { TopNav } from "@/components/layout/top-nav";
+import { StudentBottomNav } from "@/components/layout/student-bottom-nav";
 import { DueSoonWidget } from "@/components/feed/due-soon-widget";
 import { UserFeed } from "@/components/feed/user-feed";
 import { CourseColorChip } from "@/components/course/course-color-chip";
@@ -330,7 +331,14 @@ export default async function DashboardPage() {
             </p>
           </section>
         )}
+
+        {/* Bottom-padding spacer so the last card clears the mobile
+            glass bottom nav (only mounted for STUDENT). */}
+        {user.role === "STUDENT" && <div className="h-20 md:hidden" />}
       </main>
+
+      {/* Student mobile glass bottom nav — ADR-0028 § 5. */}
+      {user.role === "STUDENT" && <StudentBottomNav />}
     </div>
   );
 }
