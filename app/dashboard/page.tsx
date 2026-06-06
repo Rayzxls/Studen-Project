@@ -10,6 +10,7 @@ import {
 import { TopNav } from "@/components/layout/top-nav";
 import { DueSoonWidget } from "@/components/feed/due-soon-widget";
 import { UserFeed } from "@/components/feed/user-feed";
+import { CourseColorChip } from "@/components/course/course-color-chip";
 
 // Auth-gated DB-fetching page — skip static prerender.
 export const dynamic = "force-dynamic";
@@ -187,25 +188,33 @@ export default async function DashboardPage() {
                   <Link
                     key={c.id}
                     href={`/teacher/courses/${c.id}`}
-                    className="card p-5 hover:no-underline"
+                    className="card group relative flex p-5 hover:no-underline"
                   >
-                    <h3
-                      className="font-medium text-black"
-                      style={{ letterSpacing: "-0.01em" }}
-                    >
-                      {c.name}
-                    </h3>
-                    <p className="mt-0.5 text-sm text-black/60">
-                      ห้อง {c.class.name} · {c.term.name}
-                    </p>
-                    <div className="mt-3 flex items-center justify-between border-t border-black/[0.06] pt-3 text-xs">
-                      <span className="font-mono text-black/60">
-                        {c.classCode}
-                      </span>
-                      <span className="inline-flex items-center gap-1 text-black/60">
-                        <Users className="h-3.5 w-3.5" />
-                        {c._count.enrollments}
-                      </span>
+                    {/* Teacher view — 4px course colour marker per ADR-0028 § 8. */}
+                    <CourseColorChip
+                      classId={c.class.id}
+                      variant="marker"
+                      className="mr-4"
+                    />
+                    <div className="flex-1">
+                      <h3
+                        className="font-medium text-black"
+                        style={{ letterSpacing: "-0.01em" }}
+                      >
+                        {c.name}
+                      </h3>
+                      <p className="mt-0.5 text-sm text-black/60">
+                        ห้อง {c.class.name} · {c.term.name}
+                      </p>
+                      <div className="mt-3 flex items-center justify-between border-t border-black/[0.06] pt-3 text-xs">
+                        <span className="font-mono text-black/60">
+                          {c.classCode}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-black/60">
+                          <Users className="h-3.5 w-3.5" />
+                          {c._count.enrollments}
+                        </span>
+                      </div>
                     </div>
                   </Link>
                 ))}
@@ -270,6 +279,13 @@ export default async function DashboardPage() {
                     href={`/student/courses/${e.course.id}`}
                     className="card p-5 hover:no-underline"
                   >
+                    {/* Student view — full course colour chip per ADR-0028 § 8. */}
+                    <CourseColorChip
+                      classId={e.course.class.id}
+                      variant="chip"
+                      label={e.course.class.name}
+                      className="mb-3"
+                    />
                     <h3
                       className="font-medium text-black"
                       style={{ letterSpacing: "-0.01em" }}
@@ -277,7 +293,7 @@ export default async function DashboardPage() {
                       {e.course.name}
                     </h3>
                     <p className="mt-0.5 text-sm text-black/60">
-                      ห้อง {e.course.class.name} · {e.course.term.name}
+                      {e.course.term.name}
                     </p>
                     <div className="mt-3 border-t border-black/[0.06] pt-3 text-xs text-black/60">
                       ครู {e.course.teacher.firstName}{" "}
