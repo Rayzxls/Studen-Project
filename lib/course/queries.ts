@@ -88,7 +88,7 @@ export async function getCourseOfferingForTeacher(
       codeActive: true,
       codeExpiresAt: true,
       createdAt: true,
-      class: { select: { name: true } },
+      class: { select: { id: true, name: true } },
       term: { select: { name: true } },
       teacher: { select: { firstName: true, lastName: true } },
       enrollments: {
@@ -138,7 +138,7 @@ export async function getCourseOfferingForStudent(
       gradeLevel: true,
       creditHours: true,
       createdAt: true,
-      class: { select: { name: true } },
+      class: { select: { id: true, name: true } },
       term: { select: { name: true } },
       teacher: { select: { firstName: true, lastName: true } },
     },

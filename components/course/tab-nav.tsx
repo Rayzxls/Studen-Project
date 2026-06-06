@@ -9,18 +9,17 @@ export type CourseTab = {
 };
 
 /**
- * Secondary navigation for the CourseOffering shell (Phase 3).
+ * Secondary navigation for the CourseOffering shell — Phase 11.7 redesign.
  *
- * Active-state rule — quiet pill (Calm Ledger): `bg-black/[0.05] text-black`.
- * Intentionally lighter than the primary admin sidebar (`bg-black text-white`)
- * because tabs are SECONDARY nav inside a single page — a bold solid pill
- * would compete with the course-header card for attention. See HANDOFF Q8.
+ * iOS-style **segmented control** look (ADR-0028 § 5 + § 6):
+ *   - the whole bar sits in a tinted track (bg-black/[0.04])
+ *   - the active tab is a white pill with --shadow-lift (sits "above" the
+ *     track surface)
+ *   - inactive tabs are text-on-track, no chrome
+ *   - 180ms spring transition on the active slide via colour/shadow
  *
- * Active detection: longest matching href wins. This lets the "Overview"
- * tab (bare `/teacher/courses/[id]`) stay correctly inactive when a more
- * specific sub-route like `/teacher/courses/[id]/members` is open, while
- * still highlighting "Members" for deeper paths like
- * `/teacher/courses/[id]/members/...`.
+ * Active detection — longest matching href wins so that nested sub-routes
+ * still highlight the right top-level tab.
  */
 export function TabNav({ tabs }: { tabs: CourseTab[] }) {
   const pathname = usePathname();
@@ -30,20 +29,33 @@ export function TabNav({ tabs }: { tabs: CourseTab[] }) {
     .sort((a, b) => b.href.length - a.href.length)[0]?.href;
 
   return (
-    <nav className="flex gap-1 border-b border-black/[0.06] pb-3">
+    <nav
+      role="tablist"
+      aria-label="Course sections"
+      className="inline-flex w-full max-w-full gap-1 overflow-x-auto rounded-2xl bg-black/[0.04] p-1"
+      style={{
+        scrollbarWidth: "none",
+      }}
+    >
       {tabs.map((tab) => {
         const active = tab.href === activeHref;
         return (
           <Link
             key={tab.href}
             href={tab.href}
+            role="tab"
+            aria-selected={active}
             aria-current={active ? "page" : undefined}
             className={
-              "rounded-full px-4 py-1.5 text-sm transition-colors " +
+              "shrink-0 rounded-xl px-4 py-1.5 text-sm font-medium " +
               (active
-                ? "bg-black/[0.05] text-black"
-                : "text-black/60 hover:bg-black/[0.03] hover:text-black")
+                ? "bg-white text-black shadow-lift"
+                : "text-black/60 hover:text-black")
             }
+            style={{
+              transition:
+                "background-color var(--duration-spring-standard) var(--ease-spring), box-shadow var(--duration-spring-standard) var(--ease-spring), color var(--duration-spring-standard) var(--ease-spring)",
+            }}
           >
             {tab.label}
           </Link>
