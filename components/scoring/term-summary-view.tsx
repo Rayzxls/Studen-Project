@@ -14,6 +14,7 @@ import type {
 } from "@/lib/scoring/queries";
 import type { TermCourseBundle } from "@/lib/scoring/term-gpa";
 import { PrintButton } from "./print-button";
+import { AnimatedStat } from "@/components/dashboard/animated-stat";
 
 /**
  * Shared transcript-style view for `/student/terms` + `/student/terms/[termId]`.
@@ -98,12 +99,24 @@ export function TermSummaryView({
             <p
               className={
                 "mt-1 text-4xl font-bold tracking-tight " +
-                (gpaResult.value !== null
-                  ? "text-emerald-700"
-                  : "text-black/30")
+                (gpaResult.value !== null ? "text-green-700" : "text-black/30")
               }
             >
-              {formatGpa(gpaResult.value)}
+              {gpaResult.value !== null ? (
+                /* AnimatedStat with decimals=2 — counts up from 0 on
+                   mount, snaps to target on prefers-reduced-motion.
+                   Print path keeps the static formatGpa fallback below. */
+                <span className="print:hidden">
+                  <AnimatedStat value={gpaResult.value} decimals={2} />
+                </span>
+              ) : (
+                formatGpa(gpaResult.value)
+              )}
+              {gpaResult.value !== null && (
+                <span className="hidden print:inline">
+                  {formatGpa(gpaResult.value)}
+                </span>
+              )}
             </p>
             <StatusBadge status={status} />
           </div>
@@ -112,7 +125,7 @@ export function TermSummaryView({
               <p className="text-xs text-black/50">ความคืบหน้าการเผยแพร่</p>
               <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-100">
                 <div
-                  className="h-full bg-emerald-500 transition-[width]"
+                  className="h-full bg-green-500 transition-[width]"
                   style={{ width: `${progressPct}%` }}
                 />
               </div>
@@ -247,7 +260,7 @@ function TermPicker({
               >
                 {t.name}
                 {t.isActive && (
-                  <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] text-emerald-700">
+                  <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-[10px] text-green-700">
                     ปัจจุบัน
                   </span>
                 )}
@@ -267,14 +280,14 @@ function StatusBadge({
 }) {
   if (status === "COMPLETED") {
     return (
-      <p className="mt-1 inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700 print:bg-transparent print:text-black">
+      <p className="mt-1 inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700 print:bg-transparent print:text-black">
         จบเทอมแล้ว
       </p>
     );
   }
   if (status === "IN_PROGRESS") {
     return (
-      <p className="mt-1 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800 print:bg-transparent print:text-black">
+      <p className="mt-1 inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-xs text-orange-700 print:bg-transparent print:text-black">
         ยังไม่จบเทอม
       </p>
     );

@@ -3,32 +3,40 @@
 import { useCountUp, formatCountUp } from "@/lib/hooks/use-count-up";
 
 /**
- * AnimatedStat — renders an integer KPI value that counts up from 0 on
- * mount via the useCountUp rAF hook. Respects prefers-reduced-motion
- * (snaps to target) and SSR (returns target immediately on first paint).
+ * AnimatedStat — renders a KPI value that counts up from 0 on mount via
+ * the useCountUp rAF hook. Respects prefers-reduced-motion (snaps to
+ * target) and SSR (returns target immediately on first paint).
  *
  * Pairs with .stat-value or any heading where the static number used to
  * appear. The wrapping element controls font size + colour; this client
  * leaf is just the text.
+ *
+ * Default = integer rendering with th-TH locale grouping. Pass `decimals`
+ * to render a fixed-precision decimal (e.g. GPA at decimals=2).
  */
 export interface AnimatedStatProps {
-  /** Final integer value to count up to. */
+  /** Final value to count up to. */
   value: number;
   /** Animation duration. Defaults to 600ms per ADR-0028 § 6 spring-large. */
   duration?: number;
   /** Optional suffix rendered after the formatted number ("%", "นาที"). */
   suffix?: string;
+  /** Number of decimals to render. Default 0 (integer with locale grouping). */
+  decimals?: number;
 }
 
 export function AnimatedStat({
   value,
   duration = 600,
   suffix,
+  decimals = 0,
 }: AnimatedStatProps) {
   const current = useCountUp(value, { duration });
+  const formatted =
+    decimals === 0 ? formatCountUp(current) : current.toFixed(decimals);
   return (
     <>
-      {formatCountUp(current)}
+      {formatted}
       {suffix ? <span className="ml-1">{suffix}</span> : null}
     </>
   );
