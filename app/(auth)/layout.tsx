@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { AmbientBackground } from "@/components/motion/ambient-background";
 
 /**
- * Auth layout — Calm Ledger
- * Stripped of Ink+Gold mesh-bg + blob decorations (ADR-0014 supersession).
+ * Auth layout — Calm Ledger v2 + ADR-0029 ambient interactivity.
+ * Full-page drifting gradient blobs sit behind the centered auth card
+ * (the public surface is where the app gets to be most expressive).
  */
 function LogoMark({ className }: { className?: string }) {
   return (
@@ -23,22 +25,28 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative min-h-screen bg-bg">
-      <header className="mx-auto max-w-5xl px-6 py-6">
-        <Link href="/" className="inline-flex items-center gap-2">
-          <LogoMark className="h-7 w-7 text-black" />
-          <span
-            className="text-xl font-medium text-black"
-            style={{ letterSpacing: "-0.02em" }}
-          >
-            Studennnn
-          </span>
-        </Link>
-      </header>
+    <div className="relative min-h-screen overflow-hidden bg-bg">
+      {/* Ambient drifting blobs behind the whole auth surface (ADR-0029
+          T2). intensity kept low so form text stays high-contrast. */}
+      <AmbientBackground tone="blue" intensity={0.35} />
 
-      <main className="mx-auto max-w-md animate-fade-in px-6 py-8">
-        {children}
-      </main>
+      <div className="relative z-10">
+        <header className="mx-auto max-w-5xl px-6 py-6">
+          <Link href="/" className="inline-flex items-center gap-2">
+            <LogoMark className="h-7 w-7 text-black" />
+            <span
+              className="text-xl font-medium text-black"
+              style={{ letterSpacing: "-0.02em" }}
+            >
+              Studennnn
+            </span>
+          </Link>
+        </header>
+
+        <main className="mx-auto max-w-md animate-slide-up px-6 py-8">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
