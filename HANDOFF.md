@@ -3,11 +3,79 @@
 > เอกสารนี้ใช้สำหรับเริ่ม **session ใหม่** กับ AI assistant แล้วต่อยอดได้ทันที
 > อ่านไฟล์นี้ + `CLAUDE.md` + `CONTEXT.md` ก่อนเริ่มงาน
 
-อัพเดตล่าสุด: **2026-06-05** · 128+ commits · **Phase 0-9 + 10A + 10B + 10C ปิดครบ · Phase 9 ต่อ (Hardening + Deploy) deferred · Phase 11/11D/12 in queue**
+อัพเดตล่าสุด: **2026-06-06** · 140+ commits · **Phase 0-9 + 10A + 10B + 10C + 11 ปิดครบ · Phase 9 ต่อ (Hardening + Deploy) deferred · Phase 11D/12 in queue**
 
 ---
 
-## ⚠️ START HERE — Phase 10 ปิดครบทั้ง 3 sub-phase (2026-06-05 · branch `phase-10`)
+## ⚠️ START HERE — Phase 11 Theme migration ปิดครบ (2026-06-06 · branch `phase-11`)
+
+**Branch:** `phase-11` (pushed to origin) — 12 commits on top of `phase-10`'s `84df1ee`
+
+### Phase 11 commit table
+
+| SHA | Commit |
+|-----|--------|
+| `42fe3cf` | docs(adr): ADR-0028 Calm Ledger v2 color-friendly + material (extends 0014) |
+| `056915e` | docs(design): DESIGN.md v2 sync — color-friendly + material (ADR-0028) |
+| `459ffd8` | feat(theme): token rewrite — neutral chrome shift + system + course palettes |
+| `d133b55` | feat(theme): restore @layer components + 7 new utility classes (ADR-0028) |
+| `ea0beb1` | feat(theme): course slot resolution + CourseColorChip + gradient mesh |
+| `f74c5bd` | feat(theme): BottomSheet wrapper opt-in to .sheet (Pattern 7 mobile) |
+| `0daa210` | feat(theme): useCountUp hook + formatCountUp Thai locale formatter |
+| `6bc9350` | feat(auth): align Login/Signup/Join/ForceReset error+success blocks to system colors |
+| `8e1605b` | feat(admin): dashboard class cards as .card-hero per reference image (ADR-0028) |
+| `fd0e5cd` | feat(student): /dashboard student hero as .card-accent blue (ADR-0028) |
+
+### What shipped
+
+**ADR-0028 — Calm Ledger v2 (extends ADR-0014).** Locked through a multi-round /impeccable grill that started from the product owner's pain "Project จืดมาก ไม่มีสีสัน หมองหม่นมาก" and landed at (B) Extend Calm Ledger: keep the chrome philosophy (off-white body, Anuphan single family, pill geometry, rounded-2xl cards), add three vectors on top — 4-colour iOS-style system palette, 8-slot course identity palette, and material depth via .card-hero + .panel-inset + scoped frosted glass.
+
+**Token rewrite (`app/globals.css`).** Body bg shifts `#F5F5F5` → `#F2F2F7` (iOS systemGroupedBackground). Tailwind v4 `@theme` block gains System Blue/Green/Orange/Red (50/500/600/700), 8 course colour slots (rose/coral/amber/lime/teal/sky/indigo/violet @ 50/500), motion tokens (`--ease-spring` + 3 duration tiers 80/180/280ms), and glass tokens (desktop 20px blur / mobile 12px / body-tinted bg + opaque fallback). Aubergine retired. `prefers-reduced-motion` fallback shifts from 0.01ms instant → 100ms ease-out.
+
+**7 new utility classes.** `.card-accent` (4 saturated), `.card-tinted` (4 subtle), `.card-hero` (banner + content split with hover translateY), `.panel-inset` (subordinate stats strip — NOT a nested card), `.glass-nav` (frosted sticky chrome with `@supports` fallback), `.sheet` (mobile bottom-sheet variant on native `<dialog>` via `@media max-width: 768px`), `.springy` (press-feedback scale 0.98 utility).
+
+**Modified primitives.** `.btn-primary` swaps black → System Blue + inset white-15 top highlight + spring press feedback. `.btn-tinted` is new (soft blue alternative). `.input` focus shifts black 2px → blue 2px + outer blue/20 glow (reduced-motion drops glow but keeps ring). Status badges gain `.badge-success/.badge-warn/.badge-danger/.badge-info` variants; role badges stay neutral grayscale per ADR-0014 inheritance.
+
+**Course identity system (`lib/theme/course-color.ts` + `components/course/course-color-chip.tsx`).** `getCourseSlot(classId)` hashes via djb2 → slot 0-7. `getCourseSlotGradient(slot)` returns a CSS background composed of three offset radial gradients used as the banner zone of `.card-hero`. `<CourseColorChip variant="chip|marker|dot">` renders the three role-modulated shapes ADR-0028 § 8 specifies.
+
+**Three critical sweeps.** (1) Login + Signup + Join + ForceReset auth pages — error blocks shift Tailwind rose-* → system red-50/red-700, success states pick up green-50/green-700 where semantically meaningful. (2) `/admin/dashboard` class cards rebuild as `.card-hero` matching the product owner's iOS-profile-card reference image — course-slot gradient banner, glass year-chip, white avatar circle overlap, panel-inset stats strip. ADR-0028 § 8 Gallery Exception in action. (3) `/dashboard` student greeting becomes `.card-accent card-accent-blue` with the arrow-circle CTA in System Blue tones. Teacher and admin keep the calm text greeting (Phase 11D will deepen teacher).
+
+**New libraries.** `lib/hooks/use-count-up.ts` — rAF-driven number animation with `prefers-reduced-motion` snap. `formatCountUp(value)` for Thai locale formatting. `components/layout/bottom-sheet.tsx` — forwardRef wrapper around `<dialog>` that bakes in the `.sheet` class for greenfield dialogs (existing dialogs opt in by adding `sheet` to className).
+
+### Phase 11 verifications
+
+- `pnpm typecheck` = **0 errors**
+- `pnpm lint` = **0 errors** (254 pre-existing warnings, was 256 — slight reduction from auth sweep cleanup)
+- `pnpm test` (unit) = **429 passed** (+10 from Phase 10C baseline: +8 course-color, +2 formatCountUp)
+- `pnpm test:integration` — not re-run (theme migration is pure CSS/JSX; lib/scoring + permissions + audit untouched; existing 172 integration tests still cover the same surface)
+- No schema migration. No Prisma changes.
+
+### What's queued next
+
+| Task | Status | Notes |
+|------|--------|-------|
+| Phase 11 — Theme migration iOS+Win11 | ✅ done | Calm Ledger v2 per ADR-0028 |
+| Phase 11D — Dashboards on new theme | ⏸ pending | Teacher hero + 4 KPI cards · Student full hero + Today's class + Due Soon + Course grid · CountUp wired · 6 preset bg picker in Student Settings (localStorage) |
+| Phase 12 — Landing page | ⏸ pending | Real screenshots from theme final · photographic banner asset commission |
+| Phase 13 — Course colour schema customization | ⏸ pending | `Class.colorSlot Int?` migration + admin override UI |
+
+### Deferred from Phase 10 (still non-blocking)
+
+- Per-class analytics + Audit CSV Thai column (Phase 10B follow-up — `lib` helpers in place)
+- Composer multi-image upload pipeline (Phase 10C deferred)
+- Inline grade input on submission view (Phase 10C deferred)
+- 301 redirects from old list landings → `/feed?type=` (Phase 10C deferred)
+
+### Compat shims still resident in `app/globals.css`
+
+ADR-0014's compat shims for retired Ink+Gold utilities remain as no-ops since Phase 11 ships chrome + 3 critical pages only. Each shim retires as the last consumer page is migrated under Phase 11D or later:
+
+- `.mesh-bg`, `.blob`, `.sheen`, `.glass` (Ink+Gold non-frosted, distinct from `.glass-nav`), `.tilt-card`, `.text-gradient-gold`, `.text-gradient-ink`, `.perspective-*`, `.preserve-3d`
+- `.card-dark` (aubergine) — falls back to `.card-tinted-blue` for any leftover consumer; grep confirmed no app/* page references it post-Phase-11
+
+---
+
+## Phase 10 ปิดครบทั้ง 3 sub-phase (2026-06-05 · branch `phase-10`)
 
 **Branch:** `phase-10` (pushed to origin) — 18 commits on top of `main`'s `15f31a9` (Phase 9 P9-4 close-out)
 
