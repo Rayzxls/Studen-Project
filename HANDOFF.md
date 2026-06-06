@@ -3,13 +3,73 @@
 > เอกสารนี้ใช้สำหรับเริ่ม **session ใหม่** กับ AI assistant แล้วต่อยอดได้ทันที
 > อ่านไฟล์นี้ + `CLAUDE.md` + `CONTEXT.md` ก่อนเริ่มงาน
 
-อัพเดตล่าสุด: **2026-06-06** · 140+ commits · **Phase 0-9 + 10A + 10B + 10C + 11 ปิดครบ · Phase 9 ต่อ (Hardening + Deploy) deferred · Phase 11D/12 in queue**
+อัพเดตล่าสุด: **2026-06-06** · 150+ commits · **Phase 0-9 + 10A + 10B + 10C + 11 + 11.5 ปิดครบ · Phase 9 ต่อ (Hardening + Deploy) deferred · Phase 11D/12 in queue**
 
 ---
 
-## ⚠️ START HERE — Phase 11 Theme migration ปิดครบ (2026-06-06 · branch `phase-11`)
+## ⚠️ START HERE — Phase 11.5 System-wide chrome sweep ปิดครบ (2026-06-06 · branch `phase-11`)
 
-**Branch:** `phase-11` (pushed to origin) — 12 commits on top of `phase-10`'s `84df1ee`
+**Branch:** `phase-11` (pushed to origin) — 18 commits on top of `phase-10`'s `84df1ee` (12 Phase 11 + 6 Phase 11.5)
+
+### Phase 11.5 commit table (system-wide sweep)
+
+| SHA | Commit |
+|-----|--------|
+| `bb2525e` | feat(theme): TopNav opts in to .glass-nav frosted chrome |
+| `1cb2bdd` | feat(admin): AdminSidebar blue active state + iOS soft indicator |
+| `953f0b1` | feat(theme): course colour chips on /dashboard course lists |
+| `d955b28` | feat(teacher): course colour markers + status badge on /teacher/courses |
+| `690253b` | feat(feed): align feed surfaces to ADR-0028 status colour system |
+| `514ce84` | feat(student): mobile glass-nav bottom navigation |
+
+### What Phase 11.5 ships (chrome reaches every page)
+
+**TopNav** opts in to `.glass-nav` — every authenticated page now shows scrolled content blurring under a frosted top bar instead of a flat strip. Single-line change because the heavy lifting moved into globals.css when the utility landed in Phase 11.
+
+**AdminSidebar** swaps the legacy black-fill active item for the iOS Settings.app pattern: `bg-blue-50 + text-blue-700` plus a 2px blue-500 vertical bar on the left edge. Hover for inactive items shifts to `bg-black/[0.03]` (lighter). All transitions rebind to the system spring tokens. Affects every admin surface (8+ pages — /dashboard, /setup, /teachers, /students, /import, /audit, /classes/[id], /users/[id], plus future admin routes).
+
+**CourseColorChip integration** rolls out to four list contexts via role-modulated rendering:
+- Teacher `/dashboard` course grid + `/teacher/courses` overview — `variant="marker"` (4px coloured left bar)
+- Student `/dashboard` course grid — `variant="chip"` (full coloured pill with class name)
+- `class.id` is the hash input, so every CourseOffering of the same homeroom shares a colour — keeps "วิทยาศาสตร์ ม.4 = teal" stable across all sections
+
+`lib/course/enrollment.ts` — `listTeacherCourses` + `listStudentCourses` now select `class.id` alongside `class.name`. No schema change; just a wider select.
+
+**Feed surfaces** align to ADR-0028 status colours:
+- DueSoonWidget urgency callout becomes `.card-tinted card-tinted-orange` (replaces amber-200/amber-50 inline border)
+- CourseFeedView feed-row icon decor: ANNOUNCEMENT amber → orange, MATERIAL emerald → green, SCORE_PUBLISHED purple → blue (Purple is not part of the 4-colour system per ADR-0028 Q2.a), ASSIGNMENT keeps blue
+- `ส่งภายใน` due-date strip switches amber-700 → orange-700
+- UnifiedComposer FormError + field error blocks swap rose → red tokens
+
+**StudentBottomNav** (new) — fixed-bottom 4-item glass nav for STUDENT role on mobile only. Items: ฟีด / ห้องเรียน / ผลการเรียน / แจ้งเตือน. Active state shifts to `text-blue-700` + heavier icon stroke (iOS HIG pattern). Includes `env(safe-area-inset-bottom)` for iOS notched devices. Mounts inside `/dashboard` page with a 20px md:hidden spacer below the last section so the trailing card clears the bar.
+
+### Phase 11.5 verifications
+
+- `pnpm typecheck` = **0 errors**
+- `pnpm lint` = **0 errors** (254 pre-existing warnings)
+- `pnpm test` (unit) = **429 passed**
+- No schema migration. No Prisma changes.
+
+### Visual debt — what still looks legacy
+
+Per-page polish that ADR-0028 deliberately deferred to Phase 11D / 11.6:
+
+- Teacher gradebook entry grid (`/teacher/courses/[id]/scores`) — still uses Tailwind defaults inline
+- Attendance grid (`/teacher/courses/[id]/attendance`) — same
+- Submission view (`/teacher/courses/[id]/assignments/[id]/submissions/[id]`) — status colours still inline rose/emerald
+- Score item create / publish dialogs — form errors not yet shifted to red-* tokens
+- Admin audit detail (`/admin/audit/[id]`) — tier badges still rose/amber inline
+- Admin user drill-down + setup tabs — partial sweep (reset-password card has rose; setup tabs have amber)
+- Per-class drill-down (`/admin/classes/[id]`) — still uses pre-ADR-0028 chrome
+- Student term summary (`/student/courses/[id]/scores` + `/student/terms`) — GPA rendering still pre-CountUp
+
+These all WORK with the new tokens (auto-shift on `.card / .btn-primary / .input / .badge`) but the inline `bg-rose-*` / `bg-amber-*` / `bg-emerald-*` / `bg-purple-*` are still Tailwind defaults rather than the system palette.
+
+---
+
+## Phase 11 Theme migration foundation (2026-06-06 · branch `phase-11`)
+
+**Branch:** `phase-11` (pushed to origin) — Phase 11 initial 12 commits on top of `phase-10`'s `84df1ee`
 
 ### Phase 11 commit table
 
