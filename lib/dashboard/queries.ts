@@ -212,6 +212,121 @@ export async function getStudentStats(
 }
 
 // ─────────────────────────────────────────────────────────────
+// Today's schedule (Phase 11D — Dashboard hero supporting reads)
+// ─────────────────────────────────────────────────────────────
+
+export interface TodayClass {
+  /** CourseOffering id — link target for the row. */
+  courseId: string;
+  /** Class id — drives course identity colour via getCourseSlot(). */
+  classId: string;
+  /** Display name of the CourseOffering ("คณิตศาสตร์"). */
+  courseName: string;
+  /** Display name of the homeroom ("ม.4/2"). */
+  className: string;
+  /** "HH:mm" start. */
+  startTime: string;
+  /** "HH:mm" end. */
+  endTime: string;
+  /** Room / location free text. Optional. */
+  location: string | null;
+}
+
+/**
+ * Today's timetable rows for a teacher's CourseOfferings in the active
+ * Term. Reads TimetableSlot only (no Session materialization required) —
+ * the dashboard hero just shows the planned timetable for today regardless
+ * of whether the teacher has opened a Session yet.
+ *
+ * Returns [] when there's no current Term or no slots today.
+ */
+export async function getTeacherTodaySchedule(
+  teacherUserId: string,
+  now: Date = new Date()
+): Promise<TodayClass[]> {
+  const term = await currentTerm();
+  if (!term) return [];
+  const dayOfWeek = now.getDay();
+
+  const slots = await db.timetableSlot.findMany({
+    where: {
+      dayOfWeek,
+      course: { teacherId: teacherUserId, termId: term.id },
+    },
+    orderBy: { startTime: "asc" },
+    select: {
+      startTime: true,
+      endTime: true,
+      location: true,
+      course: {
+        select: {
+          id: true,
+          name: true,
+          class: { select: { id: true, name: true } },
+        },
+      },
+    },
+  });
+
+  return slots.map((s) => ({
+    courseId: s.course.id,
+    classId: s.course.class.id,
+    courseName: s.course.name,
+    className: s.course.class.name,
+    startTime: s.startTime,
+    endTime: s.endTime,
+    location: s.location,
+  }));
+}
+
+/**
+ * Today's timetable rows for a student's active enrollments in the active
+ * Term — same shape as the teacher variant so the UI consumer doesn't
+ * branch on role.
+ */
+export async function getStudentTodaySchedule(
+  studentUserId: string,
+  now: Date = new Date()
+): Promise<TodayClass[]> {
+  const term = await currentTerm();
+  if (!term) return [];
+  const dayOfWeek = now.getDay();
+
+  const slots = await db.timetableSlot.findMany({
+    where: {
+      dayOfWeek,
+      course: {
+        termId: term.id,
+        enrollments: { some: { studentId: studentUserId, removedAt: null } },
+      },
+    },
+    orderBy: { startTime: "asc" },
+    select: {
+      startTime: true,
+      endTime: true,
+      location: true,
+      course: {
+        select: {
+          id: true,
+          name: true,
+          class: { select: { id: true, name: true } },
+        },
+      },
+    },
+  });
+
+  return slots.map((s) => ({
+    courseId: s.course.id,
+    classId: s.course.class.id,
+    courseName: s.course.name,
+    className: s.course.class.name,
+    startTime: s.startTime,
+    endTime: s.endTime,
+    location: s.location,
+  }));
+}
+
+// ─────────────────────────────────────────────────────────────
 // Admin dashboard KPIs
 // ─────────────────────────────────────────────────────────────
 
