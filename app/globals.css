@@ -151,6 +151,19 @@
       transform: translateY(-8px);
     }
   }
+
+  /* Class-card avatar idle float — gentle bob + slight tilt so the (3D)
+     avatar feels alive. Suppressed under prefers-reduced-motion by the
+     global base block. */
+  @keyframes avatar-float {
+    0%,
+    100% {
+      transform: translateY(0) rotate(-2deg);
+    }
+    50% {
+      transform: translateY(-5px) rotate(2deg);
+    }
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════

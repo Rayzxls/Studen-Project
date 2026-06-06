@@ -333,11 +333,16 @@ function ClassCard({
         </span>
       </div>
 
-      {/* Avatar — centred, overlapping the banner, with a gradient ring. */}
+      {/* Avatar — centred, overlapping the banner, with a gradient ring
+          and a gentle idle float (swap the inner icon for the 3D beagle
+          avatar image at /brand/beagle-avatar.png when it ships). */}
       <div className="relative z-10 -mt-11 flex justify-center">
         <span
           className="inline-flex rounded-full p-[3px] shadow-card"
-          style={{ background: ring }}
+          style={{
+            background: ring,
+            animation: "avatar-float 5s ease-in-out infinite",
+          }}
         >
           <span className="inline-flex h-[68px] w-[68px] items-center justify-center rounded-full bg-white">
             <School2 className="h-7 w-7 text-black/70" />
