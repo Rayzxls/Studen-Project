@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight, Plus, LogIn, BookOpen, Users } from "lucide-react";
@@ -103,46 +104,62 @@ export default async function DashboardPage() {
                   "radial-gradient(circle at 90% 0%, rgba(255,255,255,0.22) 0%, transparent 55%), linear-gradient(180deg, rgba(10,132,255,0.0) 40%, rgba(10,132,255,0.35) 100%)",
               }}
             />
-            <div className="relative z-10 flex h-full flex-col gap-6">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium text-white">
-                  {roleLabel[user.role]}
-                </span>
-                {user.student?.class && (
+            {/* Split layout: text on left, mascot image on right */}
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="flex flex-col gap-6 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium text-white">
-                    {user.student.class.name}
+                    {roleLabel[user.role]}
                   </span>
-                )}
+                  {user.student?.class && (
+                    <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium text-white">
+                      {user.student.class.name}
+                    </span>
+                  )}
+                </div>
+
+                <div>
+                  <h1
+                    className="text-3xl font-semibold text-white md:text-4xl"
+                    style={{ letterSpacing: "-0.03em" }}
+                  >
+                    สวัสดี, {name}
+                  </h1>
+                  <p className="mt-2 text-base text-white/80">
+                    ยินดีต้อนรับเข้าสู่ระบบจัดการห้องเรียน Beagle Classroom
+                  </p>
+                </div>
+
+                <div className="mt-auto flex flex-wrap items-center gap-2">
+                  <Link
+                    href="/join"
+                    className="inline-flex items-center gap-2 rounded-full bg-white py-2 pl-5 pr-2 text-sm font-medium text-blue-700 transition-transform hover:scale-[0.99]"
+                  >
+                    เข้าร่วมห้องเรียน
+                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-50 text-blue-700">
+                      <ArrowRight className="h-4 w-4" />
+                    </span>
+                  </Link>
+                  <Link
+                    href="/student/terms"
+                    className="rounded-full bg-white/15 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-white/25"
+                  >
+                    ผลการเรียน
+                  </Link>
+                </div>
               </div>
 
-              <div>
-                <h1
-                  className="text-3xl font-semibold text-white md:text-4xl"
-                  style={{ letterSpacing: "-0.03em" }}
-                >
-                  สวัสดี, {name}
-                </h1>
-                <p className="mt-2 text-base text-white/80">
-                  ยินดีต้อนรับเข้าสู่ระบบจัดการห้องเรียน Beagle Classroom
-                </p>
-              </div>
-
-              <div className="mt-auto flex flex-wrap items-center gap-2">
-                <Link
-                  href="/join"
-                  className="inline-flex items-center gap-2 rounded-full bg-white py-2 pl-5 pr-2 text-sm font-medium text-blue-700 transition-transform hover:scale-[0.99]"
-                >
-                  เข้าร่วมห้องเรียน
-                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-50 text-blue-700">
-                    <ArrowRight className="h-4 w-4" />
-                  </span>
-                </Link>
-                <Link
-                  href="/student/terms"
-                  className="rounded-full bg-white/15 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-white/25"
-                >
-                  ผลการเรียน
-                </Link>
+              {/* Right column: 3D student mascot — transparent cut-out so it
+                  blends seamlessly into the blue hero (no white box). */}
+              <div className="relative hidden md:flex items-end justify-center w-52 h-52 shrink-0 self-stretch">
+                <Image
+                  src="/brand/student-mascot-transparent.webp"
+                  alt="Student Mascot"
+                  fill
+                  priority
+                  sizes="208px"
+                  className="object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,0.25)]"
+                />
               </div>
             </div>
           </section>

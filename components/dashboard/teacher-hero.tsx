@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { BookOpen, Users, ClipboardCheck, Clock3 } from "lucide-react";
 import {
   getTeacherStats,
@@ -6,7 +7,6 @@ import {
 } from "@/lib/dashboard/queries";
 import { AnimatedStat } from "@/components/dashboard/animated-stat";
 import { CourseColorChip } from "@/components/course/course-color-chip";
-import { AmbientBackground } from "@/components/motion/ambient-background";
 
 /**
  * TeacherHero — Phase 11D · ADR-0028 § 8 (teacher = medium vibrancy).
@@ -38,11 +38,23 @@ export async function TeacherHero({
       {/* Banner zone — soft blue wash with ambient drifting blobs
           (ADR-0029 T2). intensity kept low so it reads as calm
           workspace, not a saturated student hero. */}
-      <div
-        className="card-hero-banner overflow-hidden"
-        style={{ background: "#eff6ff" }}
-      >
-        <AmbientBackground tone="blue" intensity={0.4} />
+      <div className="card-hero-banner relative overflow-hidden">
+        <Image
+          src="/brand/classroom-bg.webp"
+          alt=""
+          fill
+          priority
+          sizes="(max-width: 768px) 100vw, 1024px"
+          className="object-cover opacity-80"
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(to top, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.3) 70%, transparent 100%)",
+          }}
+        />
       </div>
 
       <div className="card-hero-content -mt-10">

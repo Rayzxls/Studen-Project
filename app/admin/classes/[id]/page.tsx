@@ -9,7 +9,7 @@ import {
 import { requireRole } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { currentTerm } from "@/lib/dashboard/queries";
-import { getCourseGradientForClass } from "@/lib/theme/course-color";
+
 import { getStudentTermSnapshot } from "@/lib/scoring/queries";
 import { termGpa } from "@/lib/scoring/term-gpa";
 import { gradeForCourseOffering } from "@/lib/scoring/calc";
@@ -210,48 +210,98 @@ export default async function AdminClassDetailPage({
         กลับไปหน้าภาพรวม
       </Link>
 
-      <header className="card-hero">
-        {/* Banner zone — course slot gradient mesh, same hash input as
-            /admin/dashboard so this drill-down inherits the colour from
-            the gallery card the admin clicked. */}
-        <div
-          className="card-hero-banner"
-          style={{ background: getCourseGradientForClass(cls.id) }}
-        />
-        <div className="card-hero-content -mt-12 relative">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-2">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-card">
+      <header
+        className="relative overflow-hidden rounded-3xl bg-white"
+        style={{ boxShadow: "var(--shadow-card)" }}
+      >
+        {/* ═══ Immersive Classroom Banner ═══ */}
+        <div className="relative" style={{ minHeight: "220px" }}>
+          {/* 3D Classroom Background — full-bleed */}
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: "url(/brand/classroom-bg.webp)",
+              backgroundSize: "cover",
+              backgroundPosition: "center 40%",
+              filter: "brightness(0.85) saturate(1.2)",
+            }}
+          />
+          {/* Gradient overlay for text readability */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 50%, transparent 100%)",
+            }}
+          />
+          {/* Bottom fade for seamless blend into white card */}
+          <div
+            className="absolute inset-x-0 bottom-0 h-24"
+            style={{
+              background:
+                "linear-gradient(to top, rgba(255,255,255,1) 0%, rgba(255,255,255,0.8) 40%, transparent 100%)",
+            }}
+          />
+
+          {/* Content row: text left, mascot right */}
+          <div
+            className="relative z-10 flex items-end justify-between px-6 pt-6 pb-0"
+            style={{ minHeight: "180px" }}
+          >
+            {/* Left: class info */}
+            <div className="flex-1 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/90 shadow-card backdrop-blur">
                   <School2 className="h-5 w-5 text-black/70" />
                 </div>
                 <div>
                   <h1
-                    className="text-2xl font-medium text-black"
-                    style={{ letterSpacing: "-0.02em" }}
+                    className="text-2xl font-semibold text-white drop-shadow-lg"
+                    style={{
+                      letterSpacing: "-0.02em",
+                      textShadow: "0 2px 12px rgba(0,0,0,0.4)",
+                    }}
                   >
                     {cls.name}
                   </h1>
-                  <p className="mt-0.5 text-xs text-black/50">
+                  <p className="mt-0.5 text-xs text-white/80 drop-shadow">
                     {cls.gradeLevel} · ปีการศึกษา {cls.academicYear.name}
                   </p>
                 </div>
               </div>
-            </div>
-            <div className="flex gap-2">
               {cls.homeroomTeacher && (
-                <Link
-                  href={`/admin/users/${cls.homeroomTeacher.userId}`}
-                  className="btn-secondary btn-sm"
-                >
-                  ดูครูประจำชั้น →
-                </Link>
+                <div className="mt-3">
+                  <Link
+                    href={`/admin/users/${cls.homeroomTeacher.userId}`}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-white/90 px-3 py-1.5 text-xs font-medium text-black/80 shadow-lift backdrop-blur transition-all hover:bg-white hover:shadow-card"
+                  >
+                    ดูครูประจำชั้น →
+                  </Link>
+                </div>
               )}
             </div>
-          </div>
 
-          {/* Stats */}
-          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {/* Right: 3D Student Mascot — blended with the classroom scene */}
+            <div
+              className="hidden sm:block flex-shrink-0 -mb-1"
+              style={{ width: "160px", marginRight: "-8px" }}
+            >
+              <img
+                src="/brand/student-mascot-transparent.webp"
+                alt="Student Mascot"
+                className="w-full h-auto"
+                style={{
+                  filter: "drop-shadow(0 4px 24px rgba(0,0,0,0.3))",
+                  transform: "translateY(4px)",
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Stats row — sits inside the white zone */}
+        <div className="px-6 pb-5 -mt-2">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Stat label="นักเรียน" value={cls.students.length} />
             <Stat label="วิชาที่เปิดในเทอมนี้" value={courses.length} />
             <Stat label="ครูที่สอนวิชา" value={teacherCount} />

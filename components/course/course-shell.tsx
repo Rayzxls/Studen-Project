@@ -1,9 +1,9 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, BookOpen } from "lucide-react";
 import type { Role } from "@prisma/client";
 import { TopNav } from "@/components/layout/top-nav";
 import { TabNav, type CourseTab } from "./tab-nav";
-import { getCourseGradientForClass } from "@/lib/theme/course-color";
 
 /**
  * Layout shell shared by teacher (P3-5) and student (P3-6) CourseOffering
@@ -50,7 +50,6 @@ export function CourseShell({
   session,
   children,
 }: CourseShellProps) {
-  const gradient = getCourseGradientForClass(course.class.id);
   return (
     <div className="min-h-screen bg-bg">
       <TopNav session={session} maxWidth="max-w-5xl" />
@@ -70,14 +69,33 @@ export function CourseShell({
             segmented tab nav sitting on the card edge. ADR-0028 § 4 +
             § 5. */}
         <section className="card-hero">
-          {/* Banner zone — course slot gradient mesh, hash-derived. */}
+          {/* Banner zone — immersive 3D classroom scene (teacher teaching),
+              shared by both teacher and student course shells. */}
           <div
-            className="card-hero-banner"
-            style={{ background: gradient }}
+            className="card-hero-banner overflow-hidden"
+            style={{ height: 180 }}
             aria-hidden="true"
           >
+            <Image
+              src="/brand/classroom-teaching.webp"
+              alt=""
+              fill
+              priority
+              sizes="(max-width: 768px) 100vw, 1024px"
+              className="object-cover"
+              style={{ objectPosition: "center 18%" }}
+            />
+            {/* Bottom white fade — blends the photo into the white content
+                card that overlaps above. */}
+            <div
+              className="absolute inset-x-0 bottom-0 h-12"
+              style={{
+                background:
+                  "linear-gradient(to top, rgba(255,255,255,0.95) 0%, transparent 100%)",
+              }}
+            />
             {/* Eyebrow chip floats on the banner — translucent on glass. */}
-            <span className="glass-nav absolute left-6 top-4 inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium text-black/70">
+            <span className="glass-nav absolute left-6 top-4 z-10 inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium text-black/70">
               {eyebrow}
             </span>
           </div>
