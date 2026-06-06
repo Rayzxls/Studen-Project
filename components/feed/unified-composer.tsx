@@ -2,7 +2,14 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { ClipboardList, FileText, Megaphone, Plus, X } from "lucide-react";
+import {
+  ClipboardList,
+  FileText,
+  Megaphone,
+  Plus,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import {
   composeAnnouncementAction,
   composeAssignmentAction,
@@ -31,7 +38,7 @@ import {
 
 type ChipKey = "announcement" | "assignment" | "material";
 
-const CHIPS: { key: ChipKey; label: string; icon: React.ElementType }[] = [
+const CHIPS: { key: ChipKey; label: string; icon: LucideIcon }[] = [
   { key: "announcement", label: "ประกาศ", icon: Megaphone },
   { key: "assignment", label: "การบ้าน", icon: ClipboardList },
   { key: "material", label: "เอกสาร", icon: FileText },

@@ -14,6 +14,7 @@ import {
   Trash2,
   UserPlus,
   X,
+  type LucideIcon,
 } from "lucide-react";
 import {
   createAcademicYearAction,
@@ -76,7 +77,7 @@ export interface SetupData {
 
 type TabKey = "years" | "terms" | "classes" | "teachers";
 
-const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
+const TABS: { key: TabKey; label: string; icon: LucideIcon }[] = [
   { key: "years", label: "ปีการศึกษา", icon: Calendar },
   { key: "terms", label: "ภาคเรียน", icon: Layers },
   { key: "classes", label: "ห้องเรียน", icon: GraduationCap },
