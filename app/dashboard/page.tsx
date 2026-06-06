@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Plus, LogIn, BookOpen, Users } from "lucide-react";
+import { ArrowRight, Plus, LogIn, BookOpen, Users } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db/client";
 import {
@@ -71,27 +71,92 @@ export default async function DashboardPage() {
       <TopNav session={session} />
 
       <main className="mx-auto max-w-6xl animate-fade-in px-6 py-10">
-        <div className="mb-6 flex flex-wrap items-center gap-2">
-          <span className="badge">{roleLabel[user.role]}</span>
-          {user.teacher?.homeroomOf && (
-            <span className="badge">
-              ครูประจำชั้น {user.teacher.homeroomOf.name}
-            </span>
-          )}
-          {user.student?.class && (
-            <span className="badge">{user.student.class.name}</span>
-          )}
-        </div>
+        {/* Student gets the .card-hero blue saturated greeting — the
+            third critical sweep per ADR-0028 § 4. Teacher and admin
+            keep the calm text greeting (Phase 11D will deepen teacher). */}
+        {user.role === "STUDENT" ? (
+          <section
+            className="card-accent card-accent-blue relative overflow-hidden rounded-3xl"
+            style={{
+              padding: "32px",
+              minHeight: 200,
+            }}
+          >
+            {/* Subtle radial highlight in the top-right adds the iOS
+                pressed-glass depth without changing the saturated read. */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0"
+              style={{
+                background:
+                  "radial-gradient(circle at 90% 0%, rgba(255,255,255,0.18) 0%, transparent 55%)",
+              }}
+            />
+            <div className="relative z-10 flex h-full flex-col gap-6">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium text-white">
+                  {roleLabel[user.role]}
+                </span>
+                {user.student?.class && (
+                  <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium text-white">
+                    {user.student.class.name}
+                  </span>
+                )}
+              </div>
 
-        <h1
-          className="text-3xl font-medium text-black md:text-4xl"
-          style={{ letterSpacing: "-0.03em" }}
-        >
-          สวัสดี, {name}
-        </h1>
-        <p className="mt-2 text-base text-black/60">
-          ยินดีต้อนรับเข้าสู่ระบบจัดการห้องเรียน Studennnn
-        </p>
+              <div>
+                <h1
+                  className="text-3xl font-semibold text-white md:text-4xl"
+                  style={{ letterSpacing: "-0.03em" }}
+                >
+                  สวัสดี, {name}
+                </h1>
+                <p className="mt-2 text-base text-white/80">
+                  ยินดีต้อนรับเข้าสู่ระบบจัดการห้องเรียน Studennnn
+                </p>
+              </div>
+
+              <div className="mt-auto flex flex-wrap items-center gap-2">
+                <Link
+                  href="/join"
+                  className="inline-flex items-center gap-2 rounded-full bg-white py-2 pl-5 pr-2 text-sm font-medium text-blue-700 transition-transform hover:scale-[0.99]"
+                >
+                  เข้าร่วมห้องเรียน
+                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-50 text-blue-700">
+                    <ArrowRight className="h-4 w-4" />
+                  </span>
+                </Link>
+                <Link
+                  href="/student/terms"
+                  className="rounded-full bg-white/15 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-white/25"
+                >
+                  ผลการเรียน
+                </Link>
+              </div>
+            </div>
+          </section>
+        ) : (
+          <>
+            <div className="mb-6 flex flex-wrap items-center gap-2">
+              <span className="badge">{roleLabel[user.role]}</span>
+              {user.teacher?.homeroomOf && (
+                <span className="badge">
+                  ครูประจำชั้น {user.teacher.homeroomOf.name}
+                </span>
+              )}
+            </div>
+
+            <h1
+              className="text-3xl font-medium text-black md:text-4xl"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              สวัสดี, {name}
+            </h1>
+            <p className="mt-2 text-base text-black/60">
+              ยินดีต้อนรับเข้าสู่ระบบจัดการห้องเรียน Studennnn
+            </p>
+          </>
+        )}
 
         {/* TEACHER */}
         {user.role === "TEACHER" && teacherCourses && (
@@ -249,60 +314,6 @@ export default async function DashboardPage() {
             </p>
           </section>
         )}
-
-        {/* Status footer */}
-        <section className="card mt-12 p-6">
-          <h2
-            className="font-medium text-black"
-            style={{ letterSpacing: "-0.02em" }}
-          >
-            อยู่ระหว่างพัฒนา
-          </h2>
-          <p className="mt-2 text-sm text-black/60">
-            <span className="font-medium text-black">Phase ปัจจุบัน:</span> 8 —
-            Admin Audit Tools
-          </p>
-          <ul className="mt-3 list-inside list-disc space-y-1 text-sm text-black/60">
-            <li>
-              <span className="text-black/40 line-through">
-                Phase 2 — Academic Data + Class Code + Join
-              </span>{" "}
-              ✓
-            </li>
-            <li>
-              <span className="text-black/40 line-through">
-                Phase 3 — สมาชิกห้อง (ละเอียดขึ้น)
-              </span>{" "}
-              ✓
-            </li>
-            <li>
-              <span className="text-black/40 line-through">
-                Phase 4 — เช็คชื่อ
-              </span>{" "}
-              ✓
-            </li>
-            <li>
-              <span className="text-black/40 line-through">
-                Phase 5 — คะแนน + Term Summary
-              </span>{" "}
-              ✓
-            </li>
-            <li>
-              <span className="text-black/40 line-through">
-                Phase 6 — การบ้าน + Comments
-              </span>{" "}
-              ✓
-            </li>
-            <li>
-              <span className="text-black/40 line-through">
-                Phase 7 — Feed + Notifications
-              </span>{" "}
-              ✓
-            </li>
-            <li>Phase 8 — Admin Audit Tools</li>
-            <li>Phase 9 — Polish + Hardening</li>
-          </ul>
-        </section>
       </main>
     </div>
   );
