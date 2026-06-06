@@ -12,7 +12,10 @@ import { db } from "@/lib/db/client";
 import { getAdminStats, currentTerm } from "@/lib/dashboard/queries";
 import { actionLabel } from "@/lib/audit/label";
 import { renderAuditLog } from "@/lib/audit/render";
-import { getCourseGradientForClass } from "@/lib/theme/course-color";
+import {
+  getCourseGradientForClass,
+  getCourseSlotColors,
+} from "@/lib/theme/course-color";
 import { AnimatedStat } from "@/components/dashboard/animated-stat";
 import { EntryStagger } from "@/components/motion/entry-stagger";
 import { Tilt3D } from "@/components/motion/tilt-3d";
@@ -309,31 +312,40 @@ function ClassCard({
   teacherCount: number;
   enrollmentSum: number;
 }) {
-  // ADR-0028 § 8 Gallery Exception — admin /admin/dashboard class cards
-  // get full .card-hero treatment regardless of admin's default low-vibrancy
-  // setting, because the task here is visual scanning across 30-40 classes.
+  // ADR-0028 § 8 Gallery Exception — admin /admin/dashboard class cards get
+  // the full vibrant treatment because the task is visual scanning across
+  // 30-40 classes. Phase 12 redesign mirrors the reference profile card:
+  // centred avatar with a course-colour gradient ring, divider-separated
+  // inset stats, soft hover lift.
   const gradient = getCourseGradientForClass(id);
+  const c = getCourseSlotColors(id);
+  const ring = `conic-gradient(from 140deg, ${c.bg}, #0a84ff, #7a7ae5, ${c.bg})`;
   return (
     <Link
       href={`/admin/classes/${id}`}
-      className="card-hero group block focus-visible:outline-none"
+      className="card-hero group block text-center focus-visible:outline-none"
       aria-label={`เปิดข้อมูล ${name}`}
     >
-      {/* Banner zone — course slot gradient mesh (Phase 11 stand-in for
-          photographic asset; Phase 11D may upgrade per ADR-0028 § 2). */}
+      {/* Banner — course slot gradient mesh + frosted year chip. */}
       <div className="card-hero-banner" style={{ background: gradient }}>
-        {/* Frosted year chip — opts in to .glass-nav scope (hero info bar
-            per ADR-0028 § 5). */}
         <span className="glass-nav absolute right-3 top-3 inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium text-black/70">
           ปี {yearName}
         </span>
-        {/* Avatar-overlap circle matching the product owner's reference. */}
-        <span className="absolute left-6 -bottom-7 inline-flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-card">
-          <School2 className="h-6 w-6 text-black/70" />
+      </div>
+
+      {/* Avatar — centred, overlapping the banner, with a gradient ring. */}
+      <div className="relative z-10 -mt-11 flex justify-center">
+        <span
+          className="inline-flex rounded-full p-[3px] shadow-card"
+          style={{ background: ring }}
+        >
+          <span className="inline-flex h-[68px] w-[68px] items-center justify-center rounded-full bg-white">
+            <School2 className="h-7 w-7 text-black/70" />
+          </span>
         </span>
       </div>
 
-      <div className="card-hero-content pt-10">
+      <div className="px-6 pb-6 pt-3">
         <h3
           className="text-xl font-semibold text-black"
           style={{ letterSpacing: "-0.02em" }}
@@ -343,31 +355,36 @@ function ClassCard({
         <p className="mt-0.5 text-xs text-black/40">{gradeLevel}</p>
 
         {homeroom ? (
-          <p className="mt-3 text-xs text-black/70">
-            <span className="text-black/40">ครูประจำชั้น:</span>{" "}
+          <p className="mt-2 text-xs text-black/60">
+            ครูประจำชั้น{" "}
             <span className="font-medium text-black">
               {homeroom.firstName} {homeroom.lastName}
             </span>
           </p>
         ) : (
-          <p className="mt-3 text-xs text-orange-700">ยังไม่มีครูประจำชั้น</p>
+          <p className="mt-2 text-xs text-orange-700">ยังไม่มีครูประจำชั้น</p>
         )}
 
-        {/* Inset stats strip — subordinate surface inside the parent card.
-            Matches the bottom KPI strip in the product owner's reference. */}
-        <dl className="panel-inset mt-4 grid grid-cols-3 gap-0 text-center">
+        {/* Inset stats — divider-separated, like the reference card. */}
+        <dl className="panel-inset mt-4 grid grid-cols-3 divide-x divide-black/[0.06]">
           <Stat label="นักเรียน" value={enrolledStudents} />
           <Stat label="วิชา" value={courseCount} />
           <Stat label="ครู" value={teacherCount} />
         </dl>
         {enrollmentSum > 0 && (
-          <p className="mt-2 text-center text-[10px] text-black/40">
+          <p className="mt-2 text-[10px] text-black/40">
             รวม {enrollmentSum} การลงทะเบียน
           </p>
         )}
 
-        <p className="mt-4 text-right text-xs text-black/40 transition-colors group-hover:text-blue-600">
-          ดูข้อมูล →
+        <p className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-black/45 transition-colors group-hover:text-blue-600">
+          ดูข้อมูล
+          <span
+            aria-hidden
+            className="transition-transform group-hover:translate-x-0.5"
+          >
+            →
+          </span>
         </p>
       </div>
     </Link>
@@ -376,7 +393,7 @@ function ClassCard({
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div>
+    <div className="px-1">
       <p
         className="text-xl font-semibold text-black"
         style={{ letterSpacing: "-0.02em" }}
