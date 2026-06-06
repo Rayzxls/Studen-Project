@@ -295,7 +295,7 @@ export default async function DashboardPage() {
                   <Tilt3D key={e.id} maxDeg={7}>
                     <Link
                       href={`/student/courses/${e.course.id}`}
-                      className="card p-5 hover:no-underline"
+                      className="card block p-5 hover:no-underline"
                     >
                       {/* Student view — full course colour chip per ADR-0028 § 8. */}
                       <CourseColorChip
