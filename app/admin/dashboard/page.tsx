@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   Users,
@@ -6,16 +7,12 @@ import {
   ScrollText,
   Upload,
   Settings2,
-  School2,
 } from "lucide-react";
 import { db } from "@/lib/db/client";
 import { getAdminStats, currentTerm } from "@/lib/dashboard/queries";
 import { actionLabel } from "@/lib/audit/label";
 import { renderAuditLog } from "@/lib/audit/render";
-import {
-  getCourseGradientForClass,
-  getCourseSlotColors,
-} from "@/lib/theme/course-color";
+import { getCourseSlotColors } from "@/lib/theme/course-color";
 import { AnimatedStat } from "@/components/dashboard/animated-stat";
 import { EntryStagger } from "@/components/motion/entry-stagger";
 import { Tilt3D } from "@/components/motion/tilt-3d";
@@ -317,7 +314,6 @@ function ClassCard({
   // 30-40 classes. Phase 12 redesign mirrors the reference profile card:
   // centred avatar with a course-colour gradient ring, divider-separated
   // inset stats, soft hover lift.
-  const gradient = getCourseGradientForClass(id);
   const c = getCourseSlotColors(id);
   const ring = `conic-gradient(from 140deg, ${c.bg}, #0a84ff, #7a7ae5, ${c.bg})`;
   return (
@@ -326,16 +322,30 @@ function ClassCard({
       className="card-hero group block text-center focus-visible:outline-none"
       aria-label={`เปิดข้อมูล ${name}`}
     >
-      {/* Banner — course slot gradient mesh + frosted year chip. */}
-      <div className="card-hero-banner" style={{ background: gradient }}>
-        <span className="glass-nav absolute right-3 top-3 inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium text-black/70">
+      {/* Banner — soft cloud sky photo with a course-colour tint overlay
+          (so each class keeps its identity) + frosted year chip. */}
+      <div className="card-hero-banner relative overflow-hidden">
+        <Image
+          src="/brand/cloud-banner.webp"
+          alt=""
+          fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          className="object-cover"
+        />
+        <span
+          aria-hidden
+          className="absolute inset-0"
+          style={{
+            background: `linear-gradient(135deg, ${c.bg}55 0%, transparent 70%)`,
+          }}
+        />
+        <span className="glass-nav absolute right-3 top-3 z-10 inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium text-black/70">
           ปี {yearName}
         </span>
       </div>
 
-      {/* Avatar — centred, overlapping the banner, with a gradient ring
-          and a gentle idle float (swap the inner icon for the 3D beagle
-          avatar image at /brand/beagle-avatar.png when it ships). */}
+      {/* Avatar — the 3D beagle mascot, centred, overlapping the banner,
+          inside a course-colour gradient ring with a gentle idle float. */}
       <div className="relative z-10 -mt-11 flex justify-center">
         <span
           className="inline-flex rounded-full p-[3px] shadow-card"
@@ -344,8 +354,14 @@ function ClassCard({
             animation: "avatar-float 5s ease-in-out infinite",
           }}
         >
-          <span className="inline-flex h-[68px] w-[68px] items-center justify-center rounded-full bg-white">
-            <School2 className="h-7 w-7 text-black/70" />
+          <span className="relative inline-flex h-[68px] w-[68px] items-center justify-center overflow-hidden rounded-full bg-white">
+            <Image
+              src="/brand/beagle-avatar.webp"
+              alt="ตราสัญลักษณ์ห้องเรียน"
+              width={68}
+              height={68}
+              className="h-full w-full scale-110 object-cover object-top"
+            />
           </span>
         </span>
       </div>
