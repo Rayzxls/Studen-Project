@@ -3,13 +3,77 @@
 > เอกสารนี้ใช้สำหรับเริ่ม **session ใหม่** กับ AI assistant แล้วต่อยอดได้ทันที
 > อ่านไฟล์นี้ + `CLAUDE.md` + `CONTEXT.md` ก่อนเริ่มงาน
 
-อัพเดตล่าสุด: **2026-06-06** · 150+ commits · **Phase 0-9 + 10A + 10B + 10C + 11 + 11.5 ปิดครบ · Phase 9 ต่อ (Hardening + Deploy) deferred · Phase 11D/12 in queue**
+อัพเดตล่าสุด: **2026-06-06** · 155+ commits · **Phase 0-9 + 10A + 10B + 10C + 11 + 11.5 + 11D ปิดครบ · Phase 9 ต่อ (Hardening + Deploy) deferred · Phase 12 in queue**
 
 ---
 
-## ⚠️ START HERE — Phase 11.5 System-wide chrome sweep ปิดครบ (2026-06-06 · branch `phase-11`)
+## ⚠️ START HERE — Phase 11D Dashboards on new theme ปิดครบ (2026-06-06 · branch `phase-11`)
 
-**Branch:** `phase-11` (pushed to origin) — 18 commits on top of `phase-10`'s `84df1ee` (12 Phase 11 + 6 Phase 11.5)
+**Branch:** `phase-11` (pushed to origin) — 23 commits on top of `phase-10`'s `84df1ee` (12 Phase 11 + 6 Phase 11.5 + 5 Phase 11D)
+
+### Phase 11D commit table
+
+| SHA | Commit |
+|-----|--------|
+| `114fad7` | feat(dashboard): getTeacherTodaySchedule + getStudentTodaySchedule helpers |
+| `1373420` | feat(teacher): /dashboard hero with 4 KPI tiles + today schedule |
+| `0e141a4` | feat(admin): wire AnimatedStat to dashboard KPI values |
+| `c995375` | feat(student): today's class panel above DueSoon |
+
+### What Phase 11D ships (dashboards reach full polish)
+
+**`lib/dashboard/queries.ts`** gains `getTeacherTodaySchedule` + `getStudentTodaySchedule` — read TimetableSlot rows for the current `dayOfWeek` + active Term, scoped to a teacher's CourseOfferings or a student's active enrollments. Returns the same `TodayClass` shape from both so UI doesn't branch on role. `classId` included for CourseColorChip marker integration. No Session materialization required — planned timetable, not the materialised reality.
+
+**`components/dashboard/animated-stat.tsx`** — small client leaf that wraps an integer KPI with `useCountUp` + `formatCountUp`. Single component reusable across all three role dashboards. Respects `prefers-reduced-motion` (snaps to target) and SSR (renders target instantly on first paint).
+
+**`components/dashboard/teacher-hero.tsx`** — server component matching ADR-0028 § 8 medium vibrancy for teachers:
+- `.card-hero` outer with soft blue-tinted radial banner (NOT saturated `.card-accent` — that's student-only)
+- "พื้นที่ทำงานของคุณ" pill chip sitting over the banner edge in the iOS profile-card avatar-overlap pattern
+- Semibold 3xl greeting + body subtitle summarising today's first slot
+- KPI strip uses `.panel-inset` with 4 tiles: วิชาที่สอน / นักเรียนทั้งหมด / งานรอตรวจ / คาบ-สัปดาห์
+- งานรอตรวจ flips to `text-orange-700` when > 0 (system warning)
+- AnimatedStat counts every value up from 0 on initial paint
+- ตารางวันนี้ list with CourseColorChip marker per row
+
+**`components/dashboard/student-today-panel.tsx`** — compact "วันนี้" panel above `DueSoonWidget`. Renders nothing when no slots today. Same row shape as TeacherHero's ScheduleRow (marker + course name + room + monospace time range). Colour identity carries through from the dashboard course grid chips.
+
+**`/admin/dashboard`** — 4 `KpiCard` values (ครู / นักเรียน / ห้องเรียน / Critical Audit 7d) animate via AnimatedStat on hydration. SSR renders the final number for crawlers; rAF animation only runs after hydration.
+
+### Phase 11D verifications
+
+- `pnpm typecheck` = **0 errors**
+- `pnpm lint` = **0 errors** (254 pre-existing warnings)
+- `pnpm test` (unit) = **429 passed**
+- No schema migration. No new test cases (KPI presentation only — business logic unchanged).
+
+### What's queued next
+
+| Task | Status | Notes |
+|------|--------|-------|
+| Phase 11D — Dashboards on new theme | ✅ done | Teacher hero + KPI + today schedule · Admin CountUp · Student today panel |
+| Phase 11.6 — per-page polish sweep | ⏸ pending | Teacher gradebook + attendance grid + submission view + score dialogs + admin audit detail + classes drill-down + student term summary — see Visual debt below |
+| Phase 12 — Landing page | ⏸ pending | Real screenshots from theme final · photographic banner asset commission |
+| Phase 13 — Course colour schema customization | ⏸ pending | `Class.colorSlot Int?` migration + admin override UI · `Student.heroBgPreset Int?` for hero bg picker |
+
+### Visual debt (Phase 11.6 sweep targets)
+
+Surfaces that still ship inline Tailwind defaults instead of the system palette — work as-is via token auto-shift, but lack ADR-0028 polish:
+
+- Teacher gradebook entry grid (`/teacher/courses/[id]/scores`)
+- Attendance grid (`/teacher/courses/[id]/attendance`)
+- Submission view (`/teacher/courses/[id]/assignments/[id]/submissions/[id]`)
+- Score item create/publish dialogs
+- Admin audit detail (`/admin/audit/[id]`)
+- Admin user drill-down (rose tokens in reset-password card)
+- Admin setup tabs (amber tokens)
+- Per-class drill-down (`/admin/classes/[id]`)
+- Student term summary (`/student/courses/[id]/scores`, `/student/terms`) — GPA card pre-CountUp
+
+---
+
+## Phase 11.5 System-wide chrome sweep (2026-06-06 · branch `phase-11`)
+
+**Branch:** `phase-11` (pushed to origin) — Phase 11.5 initial 6 commits on top of Phase 11's foundation
 
 ### Phase 11.5 commit table (system-wide sweep)
 
