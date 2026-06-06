@@ -13,6 +13,7 @@ import { DueSoonWidget } from "@/components/feed/due-soon-widget";
 import { UserFeed } from "@/components/feed/user-feed";
 import { CourseColorChip } from "@/components/course/course-color-chip";
 import { TeacherHero } from "@/components/dashboard/teacher-hero";
+import { StudentTodayPanel } from "@/components/dashboard/student-today-panel";
 
 // Auth-gated DB-fetching page — skip static prerender.
 export const dynamic = "force-dynamic";
@@ -240,9 +241,10 @@ export default async function DashboardPage() {
           </section>
         )}
 
-        {/* STUDENT — Due Soon (above feed per Q2 = A) */}
+        {/* STUDENT — Today's class panel (Phase 11D) + Due Soon. */}
         {user.role === "STUDENT" && (
-          <div className="mt-10">
+          <div className="mt-10 space-y-4">
+            <StudentTodayPanel studentUserId={session.user.id} />
             <DueSoonWidget studentUserId={session.user.id} />
           </div>
         )}
