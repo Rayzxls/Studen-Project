@@ -39,7 +39,7 @@ export function ModerateDeleteCommentDialog({
     <>
       <button
         type="button"
-        className="rounded p-1 text-black/40 hover:bg-amber-50 hover:text-amber-700"
+        className="rounded p-1 text-black/40 hover:bg-orange-50 hover:text-orange-700"
         title="ลบในฐานะผู้ดูแลห้องเรียน"
         onClick={() => dialogRef.current?.showModal()}
       >
@@ -60,7 +60,7 @@ export function ModerateDeleteCommentDialog({
           </p>
           <div className="mt-3">
             <label className="block text-xs font-medium text-black/70">
-              เหตุผล <span className="text-rose-500">*</span>{" "}
+              เหตุผล <span className="text-red-500">*</span>{" "}
               <span className="text-black/40">(อย่างน้อย 5 ตัวอักษร)</span>
             </label>
             <textarea
@@ -73,12 +73,12 @@ export function ModerateDeleteCommentDialog({
               placeholder="เช่น เนื้อหาไม่เหมาะสม"
             />
             {state.fieldErrors?.reason && (
-              <p className="mt-1 text-xs text-rose-600">
+              <p className="mt-1 text-xs text-red-700">
                 {state.fieldErrors.reason}
               </p>
             )}
             {state.error && (
-              <p className="mt-1 text-xs text-rose-600">{state.error}</p>
+              <p className="mt-1 text-xs text-red-700">{state.error}</p>
             )}
           </div>
           <div className="mt-4 flex items-center justify-end gap-2">

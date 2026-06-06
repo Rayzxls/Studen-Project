@@ -74,7 +74,7 @@ export function EditAnnouncementDialog({
 
             <div>
               <label className="block text-xs font-medium text-black/70">
-                ข้อความประกาศ <span className="text-rose-500">*</span>
+                ข้อความประกาศ <span className="text-red-500">*</span>
               </label>
               <textarea
                 name="body"
@@ -85,7 +85,7 @@ export function EditAnnouncementDialog({
                 className="input mt-1"
               />
               {state.fieldErrors?.body && (
-                <p className="mt-1 text-xs text-rose-600">
+                <p className="mt-1 text-xs text-red-700">
                   {state.fieldErrors.body}
                 </p>
               )}
@@ -102,7 +102,7 @@ export function EditAnnouncementDialog({
                 className="input mt-1 font-mono text-xs"
               />
               {state.fieldErrors?.linkUrls && (
-                <p className="mt-1 text-xs text-rose-600">
+                <p className="mt-1 text-xs text-red-700">
                   {state.fieldErrors.linkUrls}
                 </p>
               )}
@@ -110,7 +110,7 @@ export function EditAnnouncementDialog({
           </div>
 
           {state.error && (
-            <p className="mt-3 rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">
+            <p className="mt-3 rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">
               {state.error}
             </p>
           )}

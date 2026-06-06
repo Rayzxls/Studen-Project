@@ -28,11 +28,11 @@ const STATUS_CHIP: Record<
 > = {
   PRESENT: {
     label: "มา",
-    className: "bg-emerald-100 text-emerald-800 ring-emerald-300",
+    className: "bg-green-100 text-green-700 ring-green-300",
   },
   LATE: {
     label: "สาย",
-    className: "bg-amber-100 text-amber-800 ring-amber-300",
+    className: "bg-orange-100 text-orange-700 ring-orange-300",
   },
   EXCUSED: {
     label: "ลา",
@@ -40,7 +40,7 @@ const STATUS_CHIP: Record<
   },
   ABSENT: {
     label: "ขาด",
-    className: "bg-rose-100 text-rose-800 ring-rose-300",
+    className: "bg-red-100 text-red-700 ring-red-300",
   },
   PENDING: {
     label: "ยังไม่เช็ค",
@@ -48,7 +48,7 @@ const STATUS_CHIP: Record<
   },
   CANCELLED: {
     label: "ยกเลิก",
-    className: "bg-rose-50 text-rose-600 ring-rose-200",
+    className: "bg-red-50 text-red-700 ring-red-200",
   },
 };
 
@@ -108,13 +108,13 @@ export function StudentAttendanceStatsView({ stats, sessions }: Props) {
 
         <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
           <CountTile
-            icon={<Check className="h-4 w-4 text-emerald-600" />}
+            icon={<Check className="h-4 w-4 text-green-700" />}
             label="มา"
             value={stats.counts.PRESENT}
             tone="emerald"
           />
           <CountTile
-            icon={<Clock className="h-4 w-4 text-amber-600" />}
+            icon={<Clock className="h-4 w-4 text-orange-700" />}
             label="สาย"
             value={stats.counts.LATE}
             tone="amber"
@@ -126,7 +126,7 @@ export function StudentAttendanceStatsView({ stats, sessions }: Props) {
             tone="blue"
           />
           <CountTile
-            icon={<XIcon className="h-4 w-4 text-rose-600" />}
+            icon={<XIcon className="h-4 w-4 text-red-700" />}
             label="ขาด"
             value={stats.counts.ABSENT}
             tone="rose"
@@ -171,7 +171,7 @@ export function StudentAttendanceStatsView({ stats, sessions }: Props) {
                       </p>
                     )}
                     {cancelled && s.cancelledReason && (
-                      <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-rose-700/70">
+                      <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-red-700/70">
                         <Ban className="h-3 w-3" />
                         {s.cancelledReason}
                       </p>
@@ -205,10 +205,10 @@ function CountTile({
   tone: "emerald" | "amber" | "blue" | "rose";
 }) {
   const toneRing: Record<typeof tone, string> = {
-    emerald: "ring-emerald-200",
-    amber: "ring-amber-200",
+    emerald: "ring-green-200",
+    amber: "ring-orange-200",
     blue: "ring-blue-200",
-    rose: "ring-rose-200",
+    rose: "ring-red-200",
   };
   return (
     <div className={"rounded-xl bg-white px-3 py-2.5 ring-1 " + toneRing[tone]}>

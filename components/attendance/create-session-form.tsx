@@ -172,7 +172,7 @@ export function CreateSessionForm({ courseId, slots, defaultDate }: Props) {
                 </p>
               )}
               {state.fieldErrors?.date && (
-                <p className="mt-1 text-xs text-rose-600">
+                <p className="mt-1 text-xs text-red-700">
                   {state.fieldErrors.date}
                 </p>
               )}
@@ -249,7 +249,7 @@ export function CreateSessionForm({ courseId, slots, defaultDate }: Props) {
                   className="input"
                 />
                 {state.fieldErrors?.startTime && (
-                  <p className="mt-1 text-xs text-rose-600">
+                  <p className="mt-1 text-xs text-red-700">
                     {state.fieldErrors.startTime}
                   </p>
                 )}
@@ -272,7 +272,7 @@ export function CreateSessionForm({ courseId, slots, defaultDate }: Props) {
                   aria-invalid={timeInvalid || undefined}
                 />
                 {(state.fieldErrors?.endTime || timeInvalid) && (
-                  <p className="mt-1 text-xs text-rose-600">
+                  <p className="mt-1 text-xs text-red-700">
                     {state.fieldErrors?.endTime ??
                       "เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่ม"}
                   </p>
@@ -300,7 +300,7 @@ export function CreateSessionForm({ courseId, slots, defaultDate }: Props) {
             </div>
 
             {state.error && (
-              <p className="rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-700">
+              <p className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">
                 {state.error === "session_already_exists"
                   ? "มีคาบที่เวลานี้อยู่แล้ว"
                   : state.error}

@@ -62,7 +62,7 @@ export function EditMaterialDialog({
           <div className="mt-5 space-y-4">
             <div>
               <label className="block text-xs font-medium text-black/70">
-                ชื่อเอกสาร <span className="text-rose-500">*</span>
+                ชื่อเอกสาร <span className="text-red-500">*</span>
               </label>
               <input
                 name="title"
@@ -72,7 +72,7 @@ export function EditMaterialDialog({
                 className="input mt-1"
               />
               {state.fieldErrors?.title && (
-                <p className="mt-1 text-xs text-rose-600">
+                <p className="mt-1 text-xs text-red-700">
                   {state.fieldErrors.title}
                 </p>
               )}
@@ -102,7 +102,7 @@ export function EditMaterialDialog({
                 className="input mt-1 font-mono text-xs"
               />
               {state.fieldErrors?.linkUrls && (
-                <p className="mt-1 text-xs text-rose-600">
+                <p className="mt-1 text-xs text-red-700">
                   {state.fieldErrors.linkUrls}
                 </p>
               )}
@@ -110,7 +110,7 @@ export function EditMaterialDialog({
           </div>
 
           {state.error && (
-            <p className="mt-3 rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">
+            <p className="mt-3 rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">
               {state.error}
             </p>
           )}

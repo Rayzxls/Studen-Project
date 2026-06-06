@@ -43,7 +43,7 @@ export function DeleteMaterialDialog({
     <>
       <button
         type="button"
-        className="btn-ghost btn-sm text-rose-600 hover:bg-rose-50"
+        className="btn-ghost btn-sm text-red-700 hover:bg-red-50"
         onClick={() => dialogRef.current?.showModal()}
       >
         <Trash2 className="h-3.5 w-3.5" /> ลบ
@@ -64,7 +64,7 @@ export function DeleteMaterialDialog({
 
           <div className="mt-4">
             <label className="block text-xs font-medium text-black/70">
-              เหตุผล <span className="text-rose-500">*</span>{" "}
+              เหตุผล <span className="text-red-500">*</span>{" "}
               <span className="text-black/40">(อย่างน้อย 5 ตัวอักษร)</span>
             </label>
             <textarea
@@ -77,14 +77,14 @@ export function DeleteMaterialDialog({
               placeholder="เช่น โพสต์ผิดวิชา"
             />
             {state.fieldErrors?.reason && (
-              <p className="mt-1 text-xs text-rose-600">
+              <p className="mt-1 text-xs text-red-700">
                 {state.fieldErrors.reason}
               </p>
             )}
           </div>
 
           {state.error && (
-            <p className="mt-3 rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">
+            <p className="mt-3 rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">
               {state.error}
             </p>
           )}

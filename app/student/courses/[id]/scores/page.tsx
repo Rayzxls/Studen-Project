@@ -78,7 +78,7 @@ export default async function StudentScoresPage({ params }: PageProps) {
                 {formatPercent(percent)}
               </p>
               {!isComplete && (
-                <p className="mt-1 text-xs text-amber-700">
+                <p className="mt-1 text-xs text-orange-700">
                   ยังเผยแพร่ไม่ครบ ({publishedItems}/{totalItems} รายการ) —
                   เกรดวิชาจะแสดงเมื่อครูเผยแพร่ครบทุกรายการ
                 </p>
@@ -89,7 +89,7 @@ export default async function StudentScoresPage({ params }: PageProps) {
               <p
                 className={
                   "mt-1 text-3xl font-bold tracking-tight " +
-                  (grade !== null ? "text-emerald-700" : "text-black/30")
+                  (grade !== null ? "text-green-700" : "text-black/30")
                 }
               >
                 {grade !== null ? formatGpa(grade) : "—"}

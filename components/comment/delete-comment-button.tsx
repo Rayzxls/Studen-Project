@@ -27,7 +27,7 @@ export function SelfDeleteCommentButton({
       <input type="hidden" name="revalidate" value={revalidate} />
       <button
         type="submit"
-        className="rounded p-1 text-black/40 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
+        className="rounded p-1 text-black/40 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
         title="ลบความคิดเห็นของฉัน"
         disabled={isPending}
       >

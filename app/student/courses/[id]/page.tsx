@@ -306,7 +306,7 @@ export default async function StudentCourseOverviewPage({ params }: PageProps) {
             </p>
             <p className="mt-2 text-3xl font-medium text-black">
               {pendingAssignmentCount === 0 ? (
-                <span className="text-emerald-700">0</span>
+                <span className="text-green-700">0</span>
               ) : (
                 pendingAssignmentCount
               )}

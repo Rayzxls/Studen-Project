@@ -53,7 +53,7 @@ export function CreateMaterialDialog({ courseId }: { courseId: string }) {
           <div className="mt-5 space-y-4">
             <div>
               <label className="block text-xs font-medium text-black/70">
-                ชื่อเอกสาร <span className="text-rose-500">*</span>
+                ชื่อเอกสาร <span className="text-red-500">*</span>
               </label>
               <input
                 name="title"
@@ -63,7 +63,7 @@ export function CreateMaterialDialog({ courseId }: { courseId: string }) {
                 placeholder="เช่น สรุปบทที่ 3"
               />
               {state.fieldErrors?.title && (
-                <p className="mt-1 text-xs text-rose-600">
+                <p className="mt-1 text-xs text-red-700">
                   {state.fieldErrors.title}
                 </p>
               )}
@@ -81,7 +81,7 @@ export function CreateMaterialDialog({ courseId }: { courseId: string }) {
                 placeholder="ใส่เนื้อหา หมายเหตุ หรือคำอธิบาย (ไม่บังคับ · รองรับ markdown)"
               />
               {state.fieldErrors?.body && (
-                <p className="mt-1 text-xs text-rose-600">
+                <p className="mt-1 text-xs text-red-700">
                   {state.fieldErrors.body}
                 </p>
               )}
@@ -98,7 +98,7 @@ export function CreateMaterialDialog({ courseId }: { courseId: string }) {
                 placeholder="https://example.com/sheet"
               />
               {state.fieldErrors?.linkUrls && (
-                <p className="mt-1 text-xs text-rose-600">
+                <p className="mt-1 text-xs text-red-700">
                   {state.fieldErrors.linkUrls}
                 </p>
               )}
@@ -106,7 +106,7 @@ export function CreateMaterialDialog({ courseId }: { courseId: string }) {
           </div>
 
           {state.error && (
-            <p className="mt-3 rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">
+            <p className="mt-3 rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">
               {state.error}
             </p>
           )}

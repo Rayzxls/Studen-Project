@@ -291,7 +291,7 @@ function Field({
     <div>
       <label className="text-xs font-medium text-black/60">{label}</label>
       <div className="mt-1">{children}</div>
-      {error && <p className="mt-1 text-xs text-rose-600">{error}</p>}
+      {error && <p className="mt-1 text-xs text-red-700">{error}</p>}
     </div>
   );
 }

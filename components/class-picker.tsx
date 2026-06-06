@@ -142,7 +142,7 @@ export function ClassPicker({
                       onSelect={() => handleSelect(c.id)}
                     >
                       <span className="inline-flex items-center gap-2">
-                        <Star className="h-3.5 w-3.5 text-amber-500" />
+                        <Star className="h-3.5 w-3.5 text-orange-500" />
                         {c.name}
                       </span>
                       {value === c.id && (
@@ -167,7 +167,7 @@ export function ClassPicker({
                         <span className="inline-flex items-center gap-2">
                           {c.name}
                           {c.id === homeroomClassId && (
-                            <span className="inline-flex items-center gap-0.5 rounded bg-accent-soft px-1.5 py-0.5 text-[10px] font-medium text-amber-800">
+                            <span className="inline-flex items-center gap-0.5 rounded bg-accent-soft px-1.5 py-0.5 text-[10px] font-medium text-orange-700">
                               <Home className="h-2.5 w-2.5" />
                               ประจำชั้น
                             </span>

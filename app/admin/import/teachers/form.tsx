@@ -127,9 +127,9 @@ export function TeacherImportForm() {
   // ───── Stage 3: Done ─────
   if (stage === "done") {
     return (
-      <div className="card p-6 border-emerald-300">
+      <div className="card p-6 border-green-300">
         <div className="flex items-center gap-3">
-          <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+          <CheckCircle2 className="h-8 w-8 text-green-700" />
           <div>
             <h2 className="font-semibold tracking-tight">นำเข้าสำเร็จ</h2>
             <p className="text-sm text-ink-soft">
@@ -179,7 +179,7 @@ export function TeacherImportForm() {
           </table>
         </div>
 
-        <div className="mt-3 rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
+        <div className="mt-3 rounded-lg bg-orange-50 border border-orange-200 p-3 text-xs text-orange-700">
           ⚠️ เก็บไฟล์รหัสผ่านนี้ไว้ในที่ปลอดภัย —
           ครูจะถูกบังคับให้เปลี่ยนรหัสตอน login ครั้งแรก
         </div>
@@ -242,7 +242,7 @@ export function TeacherImportForm() {
                       {r.parsed ? (
                         <span className="badge">พร้อม</span>
                       ) : (
-                        <div className="text-xs text-rose-700">
+                        <div className="text-xs text-red-700">
                           <AlertCircle className="inline h-3 w-3 mr-1" />
                           {r.errors?.[0] ?? "ผิดพลาด"}
                         </div>
@@ -256,7 +256,7 @@ export function TeacherImportForm() {
         </div>
 
         {error && (
-          <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
             {error.message}
           </div>
         )}
@@ -308,7 +308,7 @@ export function TeacherImportForm() {
       </label>
 
       {error && (
-        <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           <div className="font-medium">{error.message}</div>
           {error.detail && <div className="mt-0.5 text-xs">{error.detail}</div>}
         </div>
@@ -336,11 +336,11 @@ function Stat({
 }) {
   const colorClass =
     tone === "emerald"
-      ? "text-emerald-700"
+      ? "text-green-700"
       : tone === "rose"
-        ? "text-rose-700"
+        ? "text-red-700"
         : tone === "amber"
-          ? "text-amber-700"
+          ? "text-orange-700"
           : "text-ink";
   return (
     <div className="rounded-xl bg-black/[0.04] p-3">

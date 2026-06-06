@@ -173,11 +173,11 @@ export default async function StudentAssignmentDetailPage({
       </div>
 
       {submission?.status === "RETURNED" && (
-        <div className="card mt-4 border-rose-200 bg-rose-50/50 p-4">
-          <h3 className="text-sm font-medium text-rose-900">
+        <div className="card mt-4 border-red-200 bg-red-50/50 p-4">
+          <h3 className="text-sm font-medium text-red-700">
             ครูส่งคืน — รอแก้ไขและส่งใหม่
           </h3>
-          <p className="mt-1 text-xs text-rose-800/70">
+          <p className="mt-1 text-xs text-red-700/70">
             อ่าน comment ของครูในหัวข้อ &quot;ข้อความ&quot; ด้านล่าง
           </p>
         </div>
@@ -203,7 +203,7 @@ export default async function StudentAssignmentDetailPage({
       <div className="card mt-4 p-6">
         <h3 className="text-sm font-medium text-black">ส่งงาน</h3>
         {assignment.submissionClosed ? (
-          <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">
+          <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
             ครูปิดการส่งแล้ว
           </p>
         ) : submission ? (
@@ -235,7 +235,7 @@ export default async function StudentAssignmentDetailPage({
                 key={v.id}
                 className={`rounded-lg border p-3 ${
                   v.isCurrent
-                    ? "border-emerald-200 bg-emerald-50/30"
+                    ? "border-green-200 bg-green-50/30"
                     : "border-black/10 bg-black/[0.02]"
                 }`}
               >
@@ -243,7 +243,7 @@ export default async function StudentAssignmentDetailPage({
                   <p className="text-xs font-medium text-black">
                     เวอร์ชัน {v.versionNumber}
                     {v.isCurrent && (
-                      <span className="ml-2 text-[10px] text-emerald-700">
+                      <span className="ml-2 text-[10px] text-green-700">
                         (ปัจจุบัน)
                       </span>
                     )}
@@ -257,7 +257,7 @@ export default async function StudentAssignmentDetailPage({
                       minute: "2-digit",
                     }).format(v.submittedAt)}
                     {v.isLate && (
-                      <span className="ml-2 rounded bg-amber-100 px-1 text-[9px] text-amber-800">
+                      <span className="ml-2 rounded bg-orange-100 px-1 text-[9px] text-orange-700">
                         ส่งสาย
                       </span>
                     )}

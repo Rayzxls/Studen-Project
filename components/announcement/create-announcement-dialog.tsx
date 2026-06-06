@@ -63,7 +63,7 @@ export function CreateAnnouncementDialog({ courseId }: { courseId: string }) {
                 placeholder="เช่น ปิดเรียนวันศุกร์"
               />
               {state.fieldErrors?.title && (
-                <p className="mt-1 text-xs text-rose-600">
+                <p className="mt-1 text-xs text-red-700">
                   {state.fieldErrors.title}
                 </p>
               )}
@@ -71,7 +71,7 @@ export function CreateAnnouncementDialog({ courseId }: { courseId: string }) {
 
             <div>
               <label className="block text-xs font-medium text-black/70">
-                ข้อความประกาศ <span className="text-rose-500">*</span>
+                ข้อความประกาศ <span className="text-red-500">*</span>
               </label>
               <textarea
                 name="body"
@@ -82,7 +82,7 @@ export function CreateAnnouncementDialog({ courseId }: { courseId: string }) {
                 placeholder="พิมพ์ข้อความที่ต้องการประกาศ (รองรับ markdown)"
               />
               {state.fieldErrors?.body && (
-                <p className="mt-1 text-xs text-rose-600">
+                <p className="mt-1 text-xs text-red-700">
                   {state.fieldErrors.body}
                 </p>
               )}
@@ -99,7 +99,7 @@ export function CreateAnnouncementDialog({ courseId }: { courseId: string }) {
                 placeholder="https://example.com"
               />
               {state.fieldErrors?.linkUrls && (
-                <p className="mt-1 text-xs text-rose-600">
+                <p className="mt-1 text-xs text-red-700">
                   {state.fieldErrors.linkUrls}
                 </p>
               )}
@@ -107,7 +107,7 @@ export function CreateAnnouncementDialog({ courseId }: { courseId: string }) {
           </div>
 
           {state.error && (
-            <p className="mt-3 rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">
+            <p className="mt-3 rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">
               {state.error}
             </p>
           )}

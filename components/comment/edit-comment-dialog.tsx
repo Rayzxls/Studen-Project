@@ -65,12 +65,12 @@ export function EditCommentDialog({
             className="input mt-3"
           />
           {state.fieldErrors?.body && (
-            <p className="mt-1 text-xs text-rose-600">
+            <p className="mt-1 text-xs text-red-700">
               {state.fieldErrors.body}
             </p>
           )}
           {state.error && (
-            <p className="mt-1 text-xs text-rose-600">{state.error}</p>
+            <p className="mt-1 text-xs text-red-700">{state.error}</p>
           )}
           <div className="mt-4 flex items-center justify-end gap-2">
             <button

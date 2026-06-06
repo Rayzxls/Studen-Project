@@ -49,9 +49,9 @@ export function CommentComposer({
         placeholder={placeholder ?? "เขียนความคิดเห็น…"}
       />
       {state.fieldErrors?.body && (
-        <p className="text-xs text-rose-600">{state.fieldErrors.body}</p>
+        <p className="text-xs text-red-700">{state.fieldErrors.body}</p>
       )}
-      {state.error && <p className="text-xs text-rose-600">{state.error}</p>}
+      {state.error && <p className="text-xs text-red-700">{state.error}</p>}
       <div className="flex justify-end">
         <button
           type="submit"

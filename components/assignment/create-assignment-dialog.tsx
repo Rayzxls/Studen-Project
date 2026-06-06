@@ -61,7 +61,7 @@ export function CreateAssignmentDialog({ courseId }: { courseId: string }) {
           <div className="mt-5 space-y-4">
             <div>
               <label className="block text-xs font-medium text-black/70">
-                ชื่อการบ้าน <span className="text-rose-500">*</span>
+                ชื่อการบ้าน <span className="text-red-500">*</span>
               </label>
               <input
                 name="title"
@@ -71,7 +71,7 @@ export function CreateAssignmentDialog({ courseId }: { courseId: string }) {
                 placeholder="เช่น แบบฝึกหัดบทที่ 3"
               />
               {state.fieldErrors?.title && (
-                <p className="mt-1 text-xs text-rose-600">
+                <p className="mt-1 text-xs text-red-700">
                   {state.fieldErrors.title}
                 </p>
               )}
@@ -158,9 +158,9 @@ export function CreateAssignmentDialog({ courseId }: { courseId: string }) {
             </label>
 
             {isScored && (
-              <div className="rounded-lg bg-amber-50/50 p-3">
+              <div className="rounded-lg bg-orange-50/50 p-3">
                 <label className="block text-xs font-medium text-black/70">
-                  คะแนนเต็ม <span className="text-rose-500">*</span>
+                  คะแนนเต็ม <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number"
@@ -175,7 +175,7 @@ export function CreateAssignmentDialog({ courseId }: { courseId: string }) {
                   (ADR-0024)
                 </p>
                 {state.fieldErrors?.fullScore && (
-                  <p className="mt-1 text-xs text-rose-600">
+                  <p className="mt-1 text-xs text-red-700">
                     {state.fieldErrors.fullScore}
                   </p>
                 )}
@@ -184,7 +184,7 @@ export function CreateAssignmentDialog({ courseId }: { courseId: string }) {
           </div>
 
           {state.error && (
-            <p className="mt-3 text-xs text-rose-600">{state.error}</p>
+            <p className="mt-3 text-xs text-red-700">{state.error}</p>
           )}
 
           <div className="mt-6 flex justify-end gap-2">
