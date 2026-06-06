@@ -3,13 +3,87 @@
 > เอกสารนี้ใช้สำหรับเริ่ม **session ใหม่** กับ AI assistant แล้วต่อยอดได้ทันที
 > อ่านไฟล์นี้ + `CLAUDE.md` + `CONTEXT.md` ก่อนเริ่มงาน
 
-อัพเดตล่าสุด: **2026-06-06** · 165+ commits · **Phase 0-9 + 10A + 10B + 10C + 11 + 11.5 + 11D + 11.6 ปิดครบ · Phase 9 ต่อ (Hardening + Deploy) deferred · Phase 12 in queue**
+อัพเดตล่าสุด: **2026-06-06** · 170+ commits · **Phase 0-9 + 10A + 10B + 10C + 11 + 11.5 + 11D + 11.6 + 11.7 ปิดครบ · Phase 9 ต่อ (Hardening + Deploy) deferred · Phase 12 in queue**
 
 ---
 
-## ⚠️ START HERE — Phase 11.6 Per-page polish sweep ปิดครบ (2026-06-06 · branch `phase-11`)
+## ⚠️ START HERE — Phase 11.7 Course shell redesign ปิดครบ (2026-06-06 · branch `phase-11`)
 
-**Branch:** `phase-11` (pushed to origin) — 32 commits on top of `phase-10`'s `84df1ee` (12 Phase 11 + 6 Phase 11.5 + 5 Phase 11D + 9 Phase 11.6)
+**Branch:** `phase-11` (pushed to origin) — 36 commits on top of `phase-10`'s `84df1ee` (12 Phase 11 + 6 Phase 11.5 + 5 Phase 11D + 9 Phase 11.6 + 4 Phase 11.7)
+
+### Phase 11.7 commit table
+
+| SHA | Commit |
+|-----|--------|
+| `78be1cd` | feat(course): CourseShell as .card-hero + iOS segmented TabNav |
+| `c8018d6` | feat(student): course overview KPI tiles as .card-tinted variants |
+| `acc5a39` | feat(teacher): course overview KPI strip + ClassCodeCard below |
+
+### Why Phase 11.7 exists
+
+The product owner opened `/student/courses/[id]` after Phase 11.6 landed and pushed back: *"เหมือนคุณเปลี่ยนแค่นิดเดียวเอง... หลายหน้ายังเหมือนเดิม."* The screenshot showed a plain badge + h1 + subtitle header, an underline tab nav, and three flat white KPI cards — none of which carried the course identity or the iOS+Win11 vocabulary the earlier phases established. Phase 11.5 / 11.6 had migrated tokens and dashboards but never touched the **CourseShell**, which is the highest-traffic surface in the system (every teacher + student click into a course goes through it).
+
+### What Phase 11.7 ships
+
+**`components/course/course-shell.tsx`** — the plain `badge → h1 → subtitle` header is replaced with a `.card-hero` surface:
+
+- Banner zone (120px) renders the course-slot gradient mesh from `getCourseGradientForClass(course.class.id)`. Same hash as `/admin/dashboard` ClassCard + `/dashboard` course lists + `/admin/classes/[id]` drill-down → every surface that shows the course shares the identity colour
+- Eyebrow chip (`ห้องเรียน` / `รายวิชาที่สอน`) floats on the banner as a frosted `.glass-nav` pill (ADR-0028 § 5 hero info-bar glass scope)
+- `BookOpen` icon avatar (white rounded-2xl + `shadow-card`) overlaps the banner edge — the iOS profile-card pattern recurring across the system
+- Course name = weight-600 2xl/3xl semibold, tracking -0.03em
+- TabNav sits along the bottom edge of the same card surface
+
+The sticky context bar (back link + term name) opts in to `.glass-nav` so scrolled content blurs underneath the chrome.
+
+**`components/course/tab-nav.tsx`** — the quiet Calm Ledger underline pill becomes an iOS-style **segmented control**:
+
+- Whole nav sits inside a tinted track (`bg-black/[0.04] + p-1`)
+- Active tab is a white rounded-xl pill with `--shadow-lift`, appearing to sit "above" the track surface
+- Inactive tabs are text-on-track, no chrome
+- 180ms `--spring-standard` transition on bg + shadow + colour
+- Horizontal scroll on narrow viewports
+
+**`lib/course/queries.ts`** — `getCourseOfferingForTeacher` + `getCourseOfferingForStudent` widen `class` select to include `id`. Plus `app/student/courses/[id]/assignments/page.tsx` (inline DB read) gets the same widening.
+
+**`app/student/courses/[id]/page.tsx`** — three flat `.card` KPI tiles become `.card-tinted` variants tinted by status:
+
+- **อัตรามาเรียน** — rate ≥ 85% = green tile, 70-84% = orange, < 70% = red. The card literally turns colour to telegraph attendance health at a glance.
+- **คะแนนรวม (เผยแพร่)** — blue tinted when published items exist, neutral card when none.
+- **การบ้านที่ต้องทำ** — green when 0 (with `CheckCircle2` + "ส่งครบแล้ว"), orange when > 0.
+
+Every leading number wraps in `<AnimatedStat>` (counts up from 0 on mount, snaps under reduced-motion). Each tile gains a 14px lucide icon in the eyebrow row + a semibold 3xl figure with -0.02em tracking + a soft `opacity-60` unit suffix.
+
+The `ตารางเรียน` card title gains a small rounded-lg blue-tinted icon chip in place of the bare lucide icon — matches the soft icon-pill pattern from the dashboard hero KPIs.
+
+**`app/teacher/courses/[id]/page.tsx`** — the single "สมาชิก N คน" link card becomes a 3-tile KPI strip matching the student overview shape:
+
+- **สมาชิก** — blue tinted (info), AnimatedStat for active member count
+- **งานรอตรวจ** — orange tinted when > 0 (action needed), neutral `.card` when 0. The tile colour itself telegraphs whether there's something to do.
+- **การบ้านในห้อง** — blue tinted (info), AnimatedStat for total assignment count
+
+ClassCodeCard moves below the KPI strip — the QR/code surface is a teacher tool not a status indicator, so it sits below the at-a-glance status row. Adds `db.submission.count` + `db.assignment.count` to the existing `Promise.all` so the page still server-renders in one Server Component pass.
+
+### Phase 11.7 verifications
+
+- `pnpm typecheck` = **0 errors**
+- `pnpm lint` = **0 errors** (254 pre-existing warnings)
+- `pnpm test` (unit) = **429 passed**
+- No schema migration. CourseShell prop widens but every caller compiles unchanged because they spread course directly from the now-widened query return.
+
+### What's queued next
+
+| Task | Status | Notes |
+|------|--------|-------|
+| Phase 11.7 — Course shell redesign | ✅ done | Every course tab on teacher + student now lands on .card-hero + segmented TabNav |
+| Phase 12 — Landing page | ⏸ pending | Now ready — theme is final, dashboards + course shell + admin all consistent |
+| Phase 13 — Course colour schema customization | ⏸ pending | `Class.colorSlot Int?` migration + admin override UI · `Student.heroBgPreset Int?` for hero bg picker |
+| Phase 10 deferred follow-ups | ⏸ pending | Per-class analytics + Audit CSV Thai column · Composer multi-image · Inline grade · 301 redirects |
+
+---
+
+## Phase 11.6 Per-page polish sweep (2026-06-06 · branch `phase-11`)
+
+**Branch:** `phase-11` (pushed to origin) — Phase 11.6 initial 9 commits on top of Phase 11D
 
 ### Phase 11.6 commit table
 
