@@ -13,6 +13,7 @@ import { getAdminStats, currentTerm } from "@/lib/dashboard/queries";
 import { actionLabel } from "@/lib/audit/label";
 import { renderAuditLog } from "@/lib/audit/render";
 import { getCourseGradientForClass } from "@/lib/theme/course-color";
+import { AnimatedStat } from "@/components/dashboard/animated-stat";
 
 // Auth-gated DB-fetching page — skip static prerender.
 export const dynamic = "force-dynamic";
@@ -271,7 +272,7 @@ function KpiCard({
         <div className="stat-label">{label}</div>
       </div>
       <div className={"stat-value mt-3 " + (critical ? "text-red-700" : "")}>
-        {value.toLocaleString("th-TH")}
+        <AnimatedStat value={value} />
       </div>
     </div>
   );
