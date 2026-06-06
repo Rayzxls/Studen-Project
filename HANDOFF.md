@@ -3,11 +3,67 @@
 > เอกสารนี้ใช้สำหรับเริ่ม **session ใหม่** กับ AI assistant แล้วต่อยอดได้ทันที
 > อ่านไฟล์นี้ + `CLAUDE.md` + `CONTEXT.md` ก่อนเริ่มงาน
 
-อัพเดตล่าสุด: **2026-06-06** · 190+ commits · **Phase 0-12 ปิดครบ (รวม 11.x interactive + 12 landing) · Phase 9 ต่อ (Hardening + Deploy) deferred · global rename + photographic assets in queue**
+อัพเดตล่าสุด: **2026-06-06** · branch `phase-11` = 59 commits บน `phase-10` · **Phase 0-12 + brand/3D polish ปิดครบ · Phase 9 ต่อ (Hardening + Deploy) deferred**
 
 ---
 
-## ⚠️ START HERE — Phase 12 Landing Page + Beagle Classroom rebrand (2026-06-06 · branch `phase-11`)
+## ⚠️ START HERE — Session resume point (2026-06-06 · branch `phase-11`, HEAD `f63b448`)
+
+ทั้งหมดอยู่บน branch **`phase-11`** (pushed to origin, 59 commits ยังไม่ merge เข้า `main`). typecheck 0 · lint 0 (254 pre-existing warnings) · tests 429 passing. ยังไม่มี schema migration ใน Phase 11/12.
+
+### สถานะล่าสุด — Beagle Classroom rebrand + landing + 3D polish
+
+แอปถูก rebrand **Studennnn → Beagle Classroom** (UI surfaces ครบ; seed emails `@studennnn.local` ยังเป็น DB key เดิม โดยตั้งใจ).
+
+**Brand assets** (`public/brand/`):
+- `beagle-mark.png` — logo mark โปร่งใส (nav/footer ทุกหน้าผ่าน `BeagleLogo`)
+- `icon.png` — squircle (favicon: `app/icon.png` 512 + `app/apple-icon.png` 180 + `app/favicon.ico`)
+- `cloud-banner.webp` (25KB) — เมฆพาสเทล ใช้เป็น banner ของ admin class cards
+- `beagle-avatar.webp` (164KB, โปร่งใส) — 3D beagle avatar ใน class cards
+- `mark-512.png`, `wordmark.png` — เก็บไว้ (wordmark ไม่ได้ใช้; เรา typeset เอง)
+- ไฟล์ `.tmp-logo-crop.py`/source PNGs ลบแล้ว
+
+**Landing (`app/page.tsx` = Beagle Classroom):**
+1. Hero = FloatingCards (CSS การ์ดลอย parallax + dotted bg + glow) — `components/landing/floating-cards.tsx`
+2. `#overview` = รูป ChronoTask (`/landing/hero-cards.webp`) + `ProductMockup` กลาง — `components/landing/product-mockup.tsx`
+3. `#features` = bento — `components/landing/showcase-bento.tsx`
+4. Immersive 3D = R3F glass crystal + sparkles บนพื้นเข้ม — `components/landing/immersive-3d.tsx` + `hero-scene.tsx`
+5. Roles · CTA · Footer
+
+**Admin dashboard class cards** (`app/admin/dashboard/page.tsx` → `ClassCard`): profile-card style เหมือน reference — cloud banner + course-color tint, **3D beagle avatar** ใน gradient ring + float animation, divider stats, tilt + stagger.
+
+### Logo prompts (ถ้าจะ regen) — อยู่ใน chat session นี้; Midjourney/DALL·E
+
+### ⏭️ NEXT — ทำต่อได้เลย (ยังไม่ทำ)
+
+| งาน | รายละเอียด |
+|------|-----------|
+| **Class detail header consistency** | `/admin/classes/[id]` header ยังเป็น gradient + house icon เก่า — ยังไม่ได้อัปเป็น cloud + beagle avatar ให้ตรงกับ dashboard card (ผู้ใช้ค้างถามว่าจะอัปไหม) |
+| **Beagle avatar + cloud → student/teacher dashboard hero** | เอา mascot + เมฆ ไปใช้ที่ hero ของ /dashboard ให้ brand consistent |
+| **Merge `phase-11` → `main`** | 59 commits ผ่าน PR + CI (ยังไม่ merge) |
+| **Phase 9 cont.** | Hardening + Deploy (deferred) |
+| **Phase 13** | `Class.colorSlot Int?` + `Student.heroBgPreset Int?` schema migration |
+| **Phase 10 deferred** | per-class analytics + Audit CSV Thai column · composer multi-image · inline grade · 301 redirects |
+
+### Tooling ติดตั้งใน session นี้ (เครื่อง dev)
+- `uipro-cli` (global) + skill `.claude/skills/ui-ux-pro-max/` (search CLI ใช้ Python)
+- Python 3.12 (winget) + Pillow + numpy (สำหรับ crop logo/แปลง webp)
+- deps: `framer-motion` 12.40, `three` 0.184 + `@react-three/fiber` 9.6 + `@react-three/drei` 10.7 + `@types/three`
+
+### Seed credentials (verify ในเบราว์เซอร์)
+- Admin: `admin@studennnn.local` / `Admin1234!`
+- Teacher: `teacher@studennnn.local` / `Teacher1234!` (homeroom ม.4/2)
+- Student: `60001` / `Student1234`
+
+### Motion system ที่ต้องรู้ (ADR-0028 + ADR-0029)
+- Primitives: `components/motion/` = `Tilt3D` (CSS 3D, ห้ามใช้ใน data-entry/ห้ามใส่ใน grid item ที่เป็น inline `<a>` — ต้อง `block`), `EntryStagger` (framer), `AmbientBackground` (CSS blobs), `.springy`
+- **บทเรียนสำคัญ:** `.card` บน `<a>` ที่ไม่ใช่ direct grid item + ไม่มี `flex`/`block` → จะกลายเป็น `display:inline` แล้วพื้นหลังแตก (ต้องใส่ `block`)
+- R3F = landing เท่านั้น (lazy, ssr:false). อย่าใส่ WebGL หลาย canvas ในหน้าเดียว (limit ~16 + GPU)
+- ทุก effect ต้อง respect `prefers-reduced-motion`
+
+---
+
+## Phase 12 Landing Page + Beagle Classroom rebrand (2026-06-06 · branch `phase-11`)
 
 **Branch:** `phase-11` (pushed) — Phase 12 = R3F landing + rebrand. App is being renamed **Studennnn → Beagle Classroom** (family: beagle lovers + ครู/ข้าราชการครู). Rebrand applied on the landing page; **global rename across all `Studennnn` strings is a pending follow-up** (not yet done — login/dashboard/nav/footer/emails still say Studennnn).
 
