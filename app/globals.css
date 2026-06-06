@@ -107,6 +107,37 @@
       transform: translateY(0);
     }
   }
+
+  /* Ambient blob drift — ADR-0029 AmbientBackground. Three offset slow
+     orbits; each blob travels a small loop so the hero bg feels alive
+     without scroll-jacking. */
+  @keyframes blob-drift-a {
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1);
+    }
+    50% {
+      transform: translate(8%, 6%) scale(1.12);
+    }
+  }
+  @keyframes blob-drift-b {
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1);
+    }
+    50% {
+      transform: translate(-7%, 9%) scale(1.08);
+    }
+  }
+  @keyframes blob-drift-c {
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1);
+    }
+    50% {
+      transform: translate(6%, -8%) scale(1.15);
+    }
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -346,6 +377,35 @@
   }
   .springy:active {
     transform: scale(0.98);
+  }
+
+  /* Ambient blobs — ADR-0029 AmbientBackground decoration layer. */
+  .ambient-blob {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(48px);
+    will-change: transform;
+  }
+  .ambient-blob-a {
+    top: -20%;
+    left: -10%;
+    width: 55%;
+    height: 70%;
+    animation: blob-drift-a 22s ease-in-out infinite;
+  }
+  .ambient-blob-b {
+    top: -10%;
+    right: -15%;
+    width: 50%;
+    height: 65%;
+    animation: blob-drift-b 26s ease-in-out infinite;
+  }
+  .ambient-blob-c {
+    bottom: -30%;
+    left: 25%;
+    width: 45%;
+    height: 60%;
+    animation: blob-drift-c 30s ease-in-out infinite;
   }
 
   /* ───── Badges — neutral default + status colour variants ───── */
