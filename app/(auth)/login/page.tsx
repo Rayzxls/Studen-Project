@@ -27,7 +27,7 @@ function LoginForm() {
       </div>
 
       {resetSuccess && (
-        <div className="mb-4 rounded-xl bg-black/[0.04] px-3 py-2 text-sm text-black">
+        <div className="mb-4 rounded-xl bg-green-50 px-3 py-2 text-sm text-green-700">
           เปลี่ยนรหัสผ่านสำเร็จ — กรุณาเข้าสู่ระบบด้วยรหัสใหม่
         </div>
       )}
@@ -75,7 +75,7 @@ function LoginForm() {
         </div>
 
         {state.error && (
-          <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+          <div className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">
             {state.error}
           </div>
         )}

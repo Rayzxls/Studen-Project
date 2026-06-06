@@ -101,7 +101,7 @@ export default function SignupPage() {
             onChange={(e) => setStudentId(e.target.value)}
           />
           {errors.studentId && (
-            <p className="mt-1 text-xs text-rose-600">{errors.studentId}</p>
+            <p className="mt-1 text-xs text-red-700">{errors.studentId}</p>
           )}
         </div>
 
@@ -123,7 +123,7 @@ export default function SignupPage() {
               onChange={(e) => setFirstName(e.target.value)}
             />
             {errors.firstName && (
-              <p className="mt-1 text-xs text-rose-600">{errors.firstName}</p>
+              <p className="mt-1 text-xs text-red-700">{errors.firstName}</p>
             )}
           </div>
           <div>
@@ -143,7 +143,7 @@ export default function SignupPage() {
               onChange={(e) => setLastName(e.target.value)}
             />
             {errors.lastName && (
-              <p className="mt-1 text-xs text-rose-600">{errors.lastName}</p>
+              <p className="mt-1 text-xs text-red-700">{errors.lastName}</p>
             )}
           </div>
         </div>
@@ -167,7 +167,7 @@ export default function SignupPage() {
             onChange={(e) => setPassword(e.target.value)}
           />
           {errors.password && (
-            <p className="mt-1 text-xs text-rose-600">{errors.password}</p>
+            <p className="mt-1 text-xs text-red-700">{errors.password}</p>
           )}
         </div>
 
@@ -188,7 +188,7 @@ export default function SignupPage() {
             onChange={(e) => setConfirmPassword(e.target.value)}
           />
           {errors.confirmPassword && (
-            <p className="mt-1 text-xs text-rose-600">
+            <p className="mt-1 text-xs text-red-700">
               {errors.confirmPassword}
             </p>
           )}
@@ -213,7 +213,7 @@ export default function SignupPage() {
           </span>
         </label>
         {errors.consent && (
-          <p className="text-xs text-rose-600">{errors.consent}</p>
+          <p className="text-xs text-red-700">{errors.consent}</p>
         )}
 
         {TURNSTILE_SITE_KEY && (
@@ -224,7 +224,7 @@ export default function SignupPage() {
               onError={() => setTurnstileToken("")}
             />
             {errors.turnstileToken && (
-              <p className="mt-1 text-xs text-rose-600">
+              <p className="mt-1 text-xs text-red-700">
                 {errors.turnstileToken}
               </p>
             )}
@@ -232,7 +232,7 @@ export default function SignupPage() {
         )}
 
         {errors._form && (
-          <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+          <div className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">
             {errors._form}
           </div>
         )}
