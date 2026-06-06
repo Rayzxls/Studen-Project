@@ -4,8 +4,8 @@ import { redirect } from "next/navigation";
 import { ArrowRight, GraduationCap, ShieldCheck, Sparkles } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { BeagleLogo, BeagleWordmark } from "@/components/landing/beagle-logo";
+import { HeroCanvas } from "@/components/landing/hero-canvas";
 import { ShowcaseBento } from "@/components/landing/showcase-bento";
-import { Immersive3D } from "@/components/landing/immersive-3d";
 
 /**
  * Beagle Classroom — landing page (Phase 12).
@@ -56,58 +56,48 @@ export default async function HomePage() {
         </div>
       </nav>
 
-      {/* ── Section 1 — Hero (ChronoTask-style illustration: floating
-          product cards + beagle, headline overlaid in the empty centre
-          on desktop, stacked above the image on mobile). ───────────── */}
-      <section className="relative overflow-hidden px-6 pt-28 pb-12">
-        {/* Soft brand glow behind the illustration */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(45% 40% at 50% 35%, rgba(10,132,255,0.10) 0%, transparent 70%)",
-          }}
-        />
-
-        <div className="relative mx-auto max-w-6xl">
-          {/* Desktop: illustration with the headline overlaid in the centre. */}
-          <div className="relative hidden md:block">
-            <Image
-              src="/landing/hero-cards.webp"
-              alt="ตัวอย่างการ์ดในระบบ Beagle Classroom — สรุปการสอบ ตารางเรียน อัตรามาเรียน และการแจ้งเตือน"
-              width={1672}
-              height={941}
-              priority
-              className="h-auto w-full select-none"
-            />
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-              <HeroCopy />
-            </div>
-          </div>
-
-          {/* Mobile: headline first, illustration below. */}
-          <div className="md:hidden">
-            <div className="flex flex-col items-center text-center">
-              <HeroCopy />
-            </div>
-            <Image
-              src="/landing/hero-cards.webp"
-              alt="ตัวอย่างการ์ดในระบบ Beagle Classroom"
-              width={1672}
-              height={941}
-              priority
-              className="mt-10 h-auto w-full select-none"
-            />
-          </div>
+      {/* ── Section 1 — Hero (R3F 3D animation backdrop + headline) ── */}
+      <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 pt-24 pb-16">
+        <HeroCanvas />
+        <div className="relative z-10 mx-auto max-w-3xl text-center">
+          <HeroCopy />
         </div>
       </section>
 
-      {/* ── Section 2 — Showcase bento ──────────────────────────── */}
-      <ShowcaseBento />
+      {/* ── Section 2 — Product illustration (ChronoTask-style cards) ── */}
+      <section id="overview" className="relative overflow-hidden px-6 py-20">
+        <div className="mx-auto max-w-2xl text-center">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+            <Sparkles className="h-3.5 w-3.5" />
+            ดีไซน์ที่คิดมาเพื่อห้องเรียน
+          </span>
+          <h2
+            className="mt-4 text-4xl font-semibold text-black md:text-5xl"
+            style={{ letterSpacing: "-0.03em", lineHeight: 1.1 }}
+          >
+            ทุกข้อมูลของห้องเรียน
+            <br />
+            อยู่ตรงหน้าในมุมเดียว
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-black/60">
+            สรุปการสอบ ตารางเรียนวันนี้ อัตราการเข้าเรียน การแจ้งเตือนงาน
+            และการเชื่อมต่อแอป — เห็นครบในหน้าจอเดียว
+          </p>
+        </div>
 
-      {/* ── Immersive 3D moment (the heavy R3F scene lives here) ─── */}
-      <Immersive3D />
+        <div className="mx-auto mt-10 max-w-6xl">
+          <Image
+            src="/landing/hero-cards.webp"
+            alt="ตัวอย่างการ์ดในระบบ Beagle Classroom — สรุปการสอบ ตารางเรียน อัตรามาเรียน และการแจ้งเตือน"
+            width={1672}
+            height={941}
+            className="h-auto w-full select-none"
+          />
+        </div>
+      </section>
+
+      {/* ── Section 3 — Feature bento ───────────────────────────── */}
+      <ShowcaseBento />
 
       {/* ── Roles strip ─────────────────────────────────────────── */}
       <section id="roles" className="px-6 py-20">
