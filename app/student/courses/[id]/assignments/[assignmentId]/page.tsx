@@ -5,6 +5,7 @@ import { requireRole } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { SubmitVersionForm } from "@/components/assignment/submit-version-form";
 import { CommentsThread } from "@/components/comment/comments-thread";
+import { ensureSubmission } from "@/lib/assignment/submission";
 
 /**
  * Student Assignment detail page — Phase 6 · P6-6.
@@ -85,6 +86,14 @@ export default async function StudentAssignmentDetailPage({
     },
   });
   if (!assignment || assignment.courseOfferingId !== courseId) notFound();
+
+  // Materialise the DRAFT Submission row on first visit (while the window is
+  // open) so the submit form + file-upload pipeline always have a stable
+  // submissionId. A version-less DRAFT reads as "ยังไม่ส่ง" on the teacher
+  // grid, so this never looks like a real submission.
+  if (!assignment.submissionClosed) {
+    await ensureSubmission(assignmentId, enrollment.id);
+  }
 
   // Own Submission (L1 — never join other students' rows).
   const submission = await db.submission.findUnique({

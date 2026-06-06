@@ -72,7 +72,10 @@ export default async function AssignmentDetailPage({ params }: PageProps) {
       db.enrollment.findMany({
         where: {
           courseOfferingId: courseId,
-          submissions: { some: { assignmentId } },
+          // Only enrollments with a real submitted version — a version-less
+          // DRAFT (auto-created when a student merely opens the assignment)
+          // does not count as "ever submitted".
+          submissions: { some: { assignmentId, versions: { some: {} } } },
         },
         select: {
           id: true,
@@ -203,8 +206,14 @@ export default async function AssignmentDetailPage({ params }: PageProps) {
             {enrollments.map((enr) => {
               const submission = submissionByEnrollment.get(enr.id);
               const current = submission?.versions[0];
+              // A submission only "counts" once it has a current version —
+              // a version-less DRAFT (student opened but never submitted)
+              // reads as ยังไม่ส่ง with no grade/return actions.
+              const hasSubmitted = !!current;
               const status: keyof typeof STATUS_LABEL =
-                submission?.status ?? "NOT_SUBMITTED";
+                hasSubmitted && submission
+                  ? submission.status
+                  : "NOT_SUBMITTED";
               const badge = STATUS_LABEL[status];
               const value = entryByEnrollment.get(enr.id) ?? null;
               const fullName = `${enr.student.firstName} ${enr.student.lastName}`;
@@ -242,7 +251,7 @@ export default async function AssignmentDetailPage({ params }: PageProps) {
                       {value}/{fullAssignment.scoreItem?.fullScore}
                     </span>
                   )}
-                  {submission ? (
+                  {hasSubmitted && submission ? (
                     <div className="flex items-center gap-1">
                       <Link
                         href={`/teacher/courses/${courseId}/assignments/${assignmentId}/submissions/${submission.id}`}

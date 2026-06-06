@@ -102,6 +102,27 @@ async function findOrCreateSubmission(
   }
 }
 
+/**
+ * Public wrapper around findOrCreateSubmission — materialises the DRAFT
+ * Submission row for an active student when they open an Assignment, so the
+ * submit form always has a stable submissionId on first visit (the file
+ * upload pipeline scopes presigned files to ownerId=submissionId, and the
+ * form cannot render its channels without one). Race-safe; idempotent.
+ *
+ * A version-less DRAFT created this way reads as "ยังไม่ส่ง" on the teacher
+ * grid (gated on the presence of a current SubmissionVersion), so opening an
+ * assignment never looks like a real submission.
+ */
+export async function ensureSubmission(
+  assignmentId: string,
+  enrollmentId: string
+): Promise<{ id: string; status: Submission["status"] }> {
+  return db.$transaction(
+    (tx) => findOrCreateSubmission(tx, assignmentId, enrollmentId),
+    TX_OPTS
+  );
+}
+
 // ─────────────────────────────────────────────────────────────
 // submitVersion — student-facing initial submit + voluntary resubmit
 // ─────────────────────────────────────────────────────────────
