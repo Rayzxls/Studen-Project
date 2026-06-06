@@ -35,6 +35,12 @@ export interface FeedItem {
   title: string | null;
   /** Optional second-line detail — Assignment.dueAt ISO string, etc. */
   detail?: string | null;
+  /** First ~280 chars of body/description for Instagram-style card body. */
+  bodyPreview?: string | null;
+  /** Display name of the teacher who posted ("ครูสมชาย ใจดี"). */
+  authorName?: string | null;
+  /** Total count of file attachments + link URLs on the source. */
+  attachmentCount?: number;
 }
 
 export interface FeedCursor {
@@ -121,8 +127,14 @@ async function aggregateFeed(
               id: true,
               courseOfferingId: true,
               title: true,
+              description: true,
               dueAt: true,
               createdAt: true,
+              course: {
+                select: {
+                  teacher: { select: { firstName: true, lastName: true } },
+                },
+              },
             },
           })
         : Promise.resolve(emptyResult),
@@ -144,7 +156,16 @@ async function aggregateFeed(
               id: true,
               courseOfferingId: true,
               title: true,
+              body: true,
+              fileAttachmentIds: true,
+              linkUrls: true,
               postedAt: true,
+              postedBy: {
+                select: {
+                  teacher: { select: { firstName: true, lastName: true } },
+                  admin: { select: { firstName: true, lastName: true } },
+                },
+              },
             },
           })
         : Promise.resolve(emptyResult),
@@ -166,7 +187,16 @@ async function aggregateFeed(
               id: true,
               courseOfferingId: true,
               title: true,
+              body: true,
+              fileAttachmentIds: true,
+              linkUrls: true,
               postedAt: true,
+              postedBy: {
+                select: {
+                  teacher: { select: { firstName: true, lastName: true } },
+                  admin: { select: { firstName: true, lastName: true } },
+                },
+              },
             },
           })
         : Promise.resolve(emptyResult),
@@ -192,6 +222,11 @@ async function aggregateFeed(
               courseOfferingId: true,
               name: true,
               publishedAt: true,
+              course: {
+                select: {
+                  teacher: { select: { firstName: true, lastName: true } },
+                },
+              },
             },
           })
         : Promise.resolve(emptyResult),
@@ -207,6 +242,9 @@ async function aggregateFeed(
         sortAt: a.createdAt,
         title: a.title,
         detail: a.dueAt ? a.dueAt.toISOString() : null,
+        bodyPreview: truncatePreview(a.description),
+        authorName: teacherFullName(a.course?.teacher),
+        attachmentCount: 0,
       })
     ),
     ...materials.map(
@@ -216,6 +254,12 @@ async function aggregateFeed(
         courseOfferingId: m.courseOfferingId,
         sortAt: m.postedAt,
         title: m.title,
+        bodyPreview: truncatePreview(m.body),
+        authorName:
+          teacherFullName(m.postedBy?.teacher) ??
+          adminFullName(m.postedBy?.admin),
+        attachmentCount:
+          jsonArrayLength(m.fileAttachmentIds) + jsonArrayLength(m.linkUrls),
       })
     ),
     ...announcements.map(
@@ -225,6 +269,12 @@ async function aggregateFeed(
         courseOfferingId: an.courseOfferingId,
         sortAt: an.postedAt,
         title: an.title,
+        bodyPreview: truncatePreview(an.body),
+        authorName:
+          teacherFullName(an.postedBy?.teacher) ??
+          adminFullName(an.postedBy?.admin),
+        attachmentCount:
+          jsonArrayLength(an.fileAttachmentIds) + jsonArrayLength(an.linkUrls),
       })
     ),
     ...scoreItems.map(
@@ -234,6 +284,9 @@ async function aggregateFeed(
         courseOfferingId: s.courseOfferingId,
         sortAt: s.publishedAt!,
         title: s.name,
+        bodyPreview: null,
+        authorName: teacherFullName(s.course?.teacher),
+        attachmentCount: 0,
       })
     ),
   ];
@@ -258,4 +311,42 @@ async function aggregateFeed(
     overflow && last ? { sortAt: last.sortAt, id: last.id } : null;
 
   return { items: page, nextCursor };
+}
+
+// ─────────────────────────────────────────────────────────────
+// Helpers — extract teacher/admin display name + attachment count
+// ─────────────────────────────────────────────────────────────
+
+function teacherFullName(
+  t: { firstName: string; lastName: string } | null | undefined
+): string | null {
+  if (!t) return null;
+  return `${t.firstName} ${t.lastName}`;
+}
+
+function adminFullName(
+  a: { firstName: string; lastName: string } | null | undefined
+): string | null {
+  if (!a) return null;
+  return `${a.firstName} ${a.lastName}`;
+}
+
+/**
+ * Truncate body text to ~280 chars at a word boundary so the feed card
+ * shows a clean preview. Returns null on empty input.
+ */
+function truncatePreview(body: string | null | undefined): string | null {
+  if (!body) return null;
+  const trimmed = body.trim();
+  if (trimmed.length === 0) return null;
+  if (trimmed.length <= 280) return trimmed;
+  // Cut at the last space before 280; fall back to a hard cut.
+  const slice = trimmed.slice(0, 280);
+  const lastSpace = slice.lastIndexOf(" ");
+  return (lastSpace > 200 ? slice.slice(0, lastSpace) : slice).trimEnd() + "…";
+}
+
+/** Count items inside Prisma Json column when it's an array. */
+function jsonArrayLength(v: unknown): number {
+  return Array.isArray(v) ? v.length : 0;
 }
