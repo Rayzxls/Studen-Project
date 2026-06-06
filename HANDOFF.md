@@ -3,13 +3,100 @@
 > เอกสารนี้ใช้สำหรับเริ่ม **session ใหม่** กับ AI assistant แล้วต่อยอดได้ทันที
 > อ่านไฟล์นี้ + `CLAUDE.md` + `CONTEXT.md` ก่อนเริ่มงาน
 
-อัพเดตล่าสุด: **2026-06-06** · 155+ commits · **Phase 0-9 + 10A + 10B + 10C + 11 + 11.5 + 11D ปิดครบ · Phase 9 ต่อ (Hardening + Deploy) deferred · Phase 12 in queue**
+อัพเดตล่าสุด: **2026-06-06** · 165+ commits · **Phase 0-9 + 10A + 10B + 10C + 11 + 11.5 + 11D + 11.6 ปิดครบ · Phase 9 ต่อ (Hardening + Deploy) deferred · Phase 12 in queue**
 
 ---
 
-## ⚠️ START HERE — Phase 11D Dashboards on new theme ปิดครบ (2026-06-06 · branch `phase-11`)
+## ⚠️ START HERE — Phase 11.6 Per-page polish sweep ปิดครบ (2026-06-06 · branch `phase-11`)
 
-**Branch:** `phase-11` (pushed to origin) — 23 commits on top of `phase-10`'s `84df1ee` (12 Phase 11 + 6 Phase 11.5 + 5 Phase 11D)
+**Branch:** `phase-11` (pushed to origin) — 32 commits on top of `phase-10`'s `84df1ee` (12 Phase 11 + 6 Phase 11.5 + 5 Phase 11D + 9 Phase 11.6)
+
+### Phase 11.6 commit table
+
+| SHA | Commit |
+|-----|--------|
+| `443171d` | feat(scoring): score-item dialogs sweep to ADR-0028 system palette |
+| `85526b4` | feat(teacher): gradebook + score entry pages sweep to system palette |
+| `3671cbc` | feat(teacher): attendance + assignment + submission sweep to system palette |
+| `5221d79` | feat(admin): user drilldown + setup tabs + audit + classes sweep |
+| `93bdddb` | feat(student): term-summary palette sweep + GPA CountUp animation |
+| `6e69e7d` | feat(theme): bulk system-palette sweep — all remaining dialogs + forms + course pages |
+
+### What Phase 11.6 ships (every surface in the system palette)
+
+Visual debt from Phase 11.5's checklist closes out. The sweep migrates every inline Tailwind `rose-` / `amber-` / `emerald-` colour call across **45 component + page files** to the ADR-0028 system palette:
+
+```
+rose-*     -> red-*       (destructive, danger, error)
+amber-*    -> orange-*    (warning, in-progress, near-deadline)
+emerald-*  -> green-*     (success, published, completed)
+```
+
+**Hand-written sweeps (6 commits, 14 files):**
+
+- `components/scoring/{publish-score-item-dialog,create-score-item-form,delete-score-item-dialog}.tsx` — destructive trigger, one-way warning, error/success blocks. Removes the `border-rose-200` stroke (ADR-0028 cards default to flat tinted), shifts validation hints.
+- `components/scoring/score-grid.tsx` — published warning, error/success callouts, late + retroactive-edit inline badges.
+- `app/teacher/courses/[id]/scores/{page,[scoreItemId]}.tsx` — published badge + per-row mini-badge migrate to green; section-level "เผยแพร่ครบ" chip.
+- `components/attendance/grid.tsx` — STATUS_ACTIVE map (PRESENT/LATE/EXCUSED/ABSENT) migrates emerald/amber/blue/rose → green/orange/blue/red, back-edit warning to orange, error/success blocks.
+- `app/teacher/courses/[id]/attendance/{page,[sessionId]}.tsx` — cancelled badge + reason text → red.
+- `app/teacher/courses/[id]/assignments/page.tsx` + `[assignmentId]/page.tsx` — STATUS_LABEL map for SUBMITTED/LATE_SUBMITTED/RETURNED migrates to green/orange/red.
+- `app/teacher/courses/[id]/assignments/[assignmentId]/submissions/[submissionId]/page.tsx` — current-version border + chip + ส่งสาย badge.
+- `components/admin/{setup-tabs,reset-password-card}.tsx` — every validation hint, delete-button hover, success callout (reveal-once temp password) migrates. The "เก็บไว้แจ้งผู้ใช้" hint shifts amber → orange.
+- `app/admin/{audit/page,audit/[id]/page,users/[id]/page,classes/[id]/page}.tsx` — tierBadgeClass helper rebinds CRITICAL/IMPORTANT to red/orange. RoleBadge collapses from saturated 3-colour map (purple/blue/amber) to the neutral `.badge` class per ADR-0028 § 2 No-Saturated-Role-Colour Rule. /admin/classes/[id] header replaces flat amber gradient with the `.card-hero` pattern matching /admin/dashboard — same course-slot gradient mesh so the drill-down inherits the colour.
+- `components/scoring/term-summary-view.tsx` — GPA value picks up AnimatedStat with `decimals=2` on the screen path; print path keeps static `formatGpa()`. Status chips (จบเทอมแล้ว / ปัจจุบัน / ยังไม่จบเทอม) and progress bar migrate.
+- `components/dashboard/animated-stat.tsx` — new `decimals` prop renders fixed-precision decimals via `.toFixed()` for GPA + percentage surfaces.
+
+**Bulk sweep (1 commit, 31 files):**
+
+One-shot Node script walked 31 remaining surfaces with a fixed mapping table (deleted post-sweep). The script produced 172 token replacements across:
+
+- 4 assignment dialogs (create + grade + return + submit-version)
+- 3 announcement dialogs (create + edit + delete)
+- 3 material dialogs (create + edit + delete)
+- 4 comment surfaces (composer + edit + moderate-delete + delete)
+- 4 attendance helpers (timetable-editor + student-stats + create-session-form + cancel-session-dialog)
+- 2 course shell dialogs (remove-member + class-code-controls)
+- class-picker recent-classes star (amber-500 → orange-500)
+- copy-button toast colours
+- feed unified-composer
+- 4 student course pages (overview / scores / assignments list + detail)
+- 2 admin import (page + form)
+- 1 teacher courses new form
+
+### Phase 11.6 verifications
+
+- `pnpm typecheck` = **0 errors**
+- `pnpm lint` = **0 errors** (254 pre-existing warnings)
+- `pnpm test` (unit) = **429 passed**
+- No schema migration. No new test cases.
+
+### Remaining inline matches (intentional)
+
+`grep -rln 'rose-|amber-|emerald-'` against app/ + components/ shows only:
+
+- `prose-sm` — Tailwind typography plugin class on material/announcement view pages (substring match on `rose-` is a false positive)
+- `--color-course-rose-{50,500}` + `--color-course-amber-{50,500}` in `globals.css` — ADR-0028 § 2 course slot tokens (intentional name; rose/amber here are course identity slots, not status colours)
+
+The system now contains zero unintended Tailwind-default rose/amber/emerald inline colour calls. Every status surface across teacher + student + admin reads through the ADR-0028 4-colour system palette.
+
+### What's queued next
+
+| Task | Status | Notes |
+|------|--------|-------|
+| Phase 11.6 — per-page polish sweep | ✅ done | 45 files migrated, 0 unintended Tailwind defaults remain |
+| Phase 12 — Landing page | ⏸ pending | Real screenshots from theme final · photographic banner asset commission |
+| Phase 13 — Course colour schema customization | ⏸ pending | `Class.colorSlot Int?` migration + admin override UI · `Student.heroBgPreset Int?` for hero bg picker |
+| Phase 10 deferred follow-ups | ⏸ pending | Per-class analytics + Audit CSV Thai column · Composer multi-image upload pipeline · Inline grade input on submission view · 301 redirects |
+
+### Compat shims still resident in `app/globals.css`
+
+ADR-0014's Ink+Gold orphan shims (`.mesh-bg`, `.blob`, `.sheen`, `.glass`, `.tilt-card`, `.text-gradient-*`, `.perspective-*`, `.preserve-3d`, `.card-dark` aubergine fallback) remain as no-ops. Each shim retires when the last consumer page is migrated; no page in app/ currently references them (last sweep verified via grep).
+
+---
+
+## Phase 11D Dashboards on new theme (2026-06-06 · branch `phase-11`)
+
+**Branch:** `phase-11` (pushed to origin) — Phase 11D initial 4 commits on top of Phase 11.5
 
 ### Phase 11D commit table
 
