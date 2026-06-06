@@ -112,7 +112,7 @@ export function PublishScoreItemDialog({
                 <dd className="font-medium text-black">
                   {entriesCount} / {activeMemberCount} คน
                   {entriesCount < activeMemberCount && (
-                    <span className="ml-1 text-amber-700">
+                    <span className="ml-1 text-orange-700">
                       (คนที่ยังไม่กรอกจะถูกนับเป็น 0)
                     </span>
                   )}
@@ -122,7 +122,7 @@ export function PublishScoreItemDialog({
           </div>
 
           {/* One-way warning */}
-          <div className="mb-4 flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-900 ring-1 ring-amber-200">
+          <div className="mb-4 flex items-start gap-2 rounded-xl bg-orange-50 px-3 py-2 text-xs text-orange-700 ring-1 ring-orange-200">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <div>
               <p className="font-medium">การเผยแพร่ทำได้ครั้งเดียว</p>
@@ -135,7 +135,7 @@ export function PublishScoreItemDialog({
           </div>
 
           {state.error && (
-            <p className="mb-3 rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-700">
+            <p className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">
               {state.error === "already_published"
                 ? "รายการนี้เผยแพร่ไปแล้ว"
                 : state.error}

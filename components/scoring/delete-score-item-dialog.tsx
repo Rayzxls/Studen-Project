@@ -66,7 +66,7 @@ export function DeleteScoreItemDialog({
       <button
         type="button"
         onClick={open}
-        className="btn-ghost btn-sm text-rose-700 hover:bg-rose-50"
+        className="btn-ghost btn-sm text-red-700 hover:bg-red-50"
         title="ลบรายการคะแนน"
       >
         <Trash2 className="h-3.5 w-3.5" />
@@ -106,7 +106,7 @@ export function DeleteScoreItemDialog({
           </div>
 
           {entriesCount > 0 && (
-            <p className="mb-3 rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-800">
+            <p className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">
               <Trash2 className="mr-1 inline h-3.5 w-3.5" />
               คะแนนที่กรอกไว้ {entriesCount} คนจะถูกลบไปด้วย —
               การกระทำนี้ย้อนกลับไม่ได้
@@ -114,7 +114,7 @@ export function DeleteScoreItemDialog({
           )}
 
           {isPublished && (
-            <div className="mb-4 flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-900 ring-1 ring-amber-200">
+            <div className="mb-4 flex items-start gap-2 rounded-xl bg-orange-50 px-3 py-2 text-xs text-orange-700 ring-1 ring-orange-200">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
               <div>
                 <p className="font-medium">รายการนี้เผยแพร่แล้ว</p>
@@ -148,7 +148,7 @@ export function DeleteScoreItemDialog({
                 <span
                   className={
                     reasonLen > 0 && reasonLen < REASON_MIN
-                      ? "text-rose-600"
+                      ? "text-red-700"
                       : "text-black/40"
                   }
                 >
@@ -159,7 +159,7 @@ export function DeleteScoreItemDialog({
                 <span
                   className={
                     reasonLen > REASON_MAX
-                      ? "font-medium text-rose-600"
+                      ? "font-medium text-red-700"
                       : "text-black/40"
                   }
                 >
@@ -167,7 +167,7 @@ export function DeleteScoreItemDialog({
                 </span>
               </div>
               {state.fieldErrors?.reason && (
-                <p className="mt-1 text-xs text-rose-600">
+                <p className="mt-1 text-xs text-red-700">
                   {state.fieldErrors.reason}
                 </p>
               )}
@@ -177,7 +177,7 @@ export function DeleteScoreItemDialog({
           {!isPublished && <input type="hidden" name="reason" value="" />}
 
           {state.error && (
-            <p className="mb-3 rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-700">
+            <p className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">
               {state.error}
             </p>
           )}
