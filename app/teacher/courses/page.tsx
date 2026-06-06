@@ -4,6 +4,7 @@ import { Plus, BookOpen, Users } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
 import { listTeacherCourses } from "@/lib/course/enrollment";
 import { TopNav } from "@/components/layout/top-nav";
+import { CourseColorChip } from "@/components/course/course-color-chip";
 
 // Auth-gated DB-fetching page — skip static prerender.
 export const dynamic = "force-dynamic";
@@ -65,31 +66,46 @@ export default async function TeacherCoursesPage() {
               <Link
                 key={c.id}
                 href={`/teacher/courses/${c.id}`}
-                className="card p-5 hover:no-underline"
+                className="card relative flex p-5 hover:no-underline"
               >
-                <div className="mb-3 flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h3
-                      className="font-medium text-black"
-                      style={{ letterSpacing: "-0.01em" }}
+                {/* Teacher list — 4px course colour marker (ADR-0028 § 8). */}
+                <CourseColorChip
+                  classId={c.class.id}
+                  variant="marker"
+                  className="mr-4"
+                />
+                <div className="flex-1">
+                  <div className="mb-3 flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3
+                        className="font-medium text-black"
+                        style={{ letterSpacing: "-0.01em" }}
+                      >
+                        {c.name}
+                      </h3>
+                      <p className="mt-0.5 text-sm text-black/60">
+                        ห้อง {c.class.name} · {c.term.name} · {c.creditHours}{" "}
+                        หน่วยกิต
+                      </p>
+                    </div>
+                    <span
+                      className={
+                        "shrink-0 " +
+                        (c.codeActive ? "badge-info badge" : "badge")
+                      }
                     >
-                      {c.name}
-                    </h3>
-                    <p className="mt-0.5 text-sm text-black/60">
-                      ห้อง {c.class.name} · {c.term.name} · {c.creditHours}{" "}
-                      หน่วยกิต
-                    </p>
+                      {c.codeActive ? "เปิดรับ" : "ปิดรับ"}
+                    </span>
                   </div>
-                  <span className="badge shrink-0">
-                    {c.codeActive ? "เปิดรับ" : "ปิดรับ"}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between border-t border-black/[0.06] pt-3 text-xs">
-                  <span className="font-mono text-black/60">{c.classCode}</span>
-                  <span className="inline-flex items-center gap-1 text-black/60">
-                    <Users className="h-3.5 w-3.5" />
-                    {c._count.enrollments} คน
-                  </span>
+                  <div className="flex items-center justify-between border-t border-black/[0.06] pt-3 text-xs">
+                    <span className="font-mono text-black/60">
+                      {c.classCode}
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-black/60">
+                      <Users className="h-3.5 w-3.5" />
+                      {c._count.enrollments} คน
+                    </span>
+                  </div>
                 </div>
               </Link>
             ))}
