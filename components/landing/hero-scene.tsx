@@ -4,8 +4,10 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import {
   Float,
   MeshDistortMaterial,
+  MeshTransmissionMaterial,
   Environment,
   RoundedBox,
+  Sparkles,
 } from "@react-three/drei";
 import { Suspense, useRef } from "react";
 import type { Group, Mesh } from "three";
@@ -45,15 +47,24 @@ function Shapes() {
 
   return (
     <group ref={group}>
-      <Float speed={1.6} rotationIntensity={0.7} floatIntensity={1.2}>
-        <mesh position={[-2.6, 0.6, 0]} castShadow>
-          <icosahedronGeometry args={[1.15, 4]} />
-          <MeshDistortMaterial
+      {/* Centre crystal — glass refraction (the showpiece) */}
+      <Float speed={1.4} rotationIntensity={0.8} floatIntensity={1.1}>
+        <mesh position={[-2.4, 0.5, 0]} castShadow>
+          <icosahedronGeometry args={[1.25, 6]} />
+          <MeshTransmissionMaterial
+            samples={8}
+            resolution={512}
+            transmission={1}
+            thickness={1.4}
+            roughness={0.08}
+            ior={1.5}
+            chromaticAberration={0.06}
+            anisotropy={0.2}
+            distortion={0.2}
+            distortionScale={0.4}
+            temporalDistortion={0.1}
             color={BRAND.blue}
-            roughness={0.15}
-            metalness={0.1}
-            distort={0.35}
-            speed={1.4}
+            background={undefined}
           />
         </mesh>
       </Float>
@@ -108,6 +119,16 @@ function Shapes() {
           />
         </mesh>
       </Float>
+
+      {/* Floating light dust for ambiance */}
+      <Sparkles
+        count={48}
+        scale={[11, 7, 6]}
+        size={2.4}
+        speed={0.35}
+        opacity={0.7}
+        color="#cfe4ff"
+      />
     </group>
   );
 }

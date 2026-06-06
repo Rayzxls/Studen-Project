@@ -7,6 +7,7 @@ import { BeagleLogo, BeagleWordmark } from "@/components/landing/beagle-logo";
 import { FloatingCards } from "@/components/landing/floating-cards";
 import { ProductMockup } from "@/components/landing/product-mockup";
 import { ShowcaseBento } from "@/components/landing/showcase-bento";
+import { Immersive3D } from "@/components/landing/immersive-3d";
 
 /**
  * Beagle Classroom — landing page (Phase 12).
@@ -142,6 +143,9 @@ export default async function HomePage() {
 
       {/* ── Section 3 — Feature bento ───────────────────────────── */}
       <ShowcaseBento />
+
+      {/* ── Section 4 — Immersive 3D (glass crystal + sparkles) ──── */}
+      <Immersive3D />
 
       {/* ── Roles strip ─────────────────────────────────────────── */}
       <section id="roles" className="px-6 py-20">
