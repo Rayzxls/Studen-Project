@@ -65,6 +65,17 @@ DATABASE_URL="<prod-neon-url>" pnpm prisma db push
 
 ## 4. สร้างข้อมูลจริง (แทน seed demo)
 
+> **เริ่มแบบ admin คนเดียว (แนะนำ):** ถ้าอยากให้ prod เริ่มสะอาด มีแค่ admin แล้ว
+> ค่อยสร้างปี/เทอม/ห้อง/ครู เองในหน้า `/admin/setup` ภายหลัง — ชี้ `DATABASE_URL`
+> ไป prod แล้วรัน (ปลอดภัย: ต้องมี `--yes`, รหัสมาจาก env ไม่ฝังในซอร์ส):
+> ```bash
+> ADMIN_IDENTIFIER=Rayzxls ADMIN_PASSWORD='your-password' pnpm db:reset-admin -- --yes
+> ```
+> สคริปต์นี้ **TRUNCATE ทุกตาราง** ของ DB ที่ต่ออยู่แล้วสร้าง admin คนเดียว
+> (บน DB ว่างก็ใช้ได้ = ได้ admin คนเดียว) ⚠️ ลบถาวร — อย่ารันใส่ dev โดยไม่ตั้งใจ
+>
+> หรือถ้าอยากสร้างโครงสร้างทั้งหมดทีเดียว ใช้ `bootstrap` ด้านล่างแทน:
+
 1. 🤖/🧑‍💻 แก้ `prisma/bootstrap.ts` ส่วน `CONFIG` ให้เป็นค่าจริง:
    - `admin` = บัญชีคุณ (identifier + รหัสผ่าน + ชื่อ)
    - `teachers` = พ่อ/แม่ (ตั้ง `mustResetPwd: true` ให้เขาตั้งรหัสเองตอน login แรก)
