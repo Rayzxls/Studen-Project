@@ -22,6 +22,7 @@
     "db:studio": "dotenv -e .env.local -- prisma studio",
     "db:push": "dotenv -e .env.local -- prisma db push",
     "db:seed": "dotenv -e .env.local -- tsx prisma/seed.ts",
+    "db:bootstrap": "dotenv -e .env.local -- tsx prisma/bootstrap.ts",
     "prepare": "husky",
     "postinstall": "prisma generate"
   },
