@@ -33,7 +33,10 @@ export const SignupStudentSchema = z
     consent: z.literal(true, {
       message: "ต้องยอมรับนโยบายความเป็นส่วนตัวก่อน",
     }),
-    turnstileToken: z.string().min(1, "กรุณายืนยันว่าไม่ใช่บอท"),
+    // Optional at the schema layer — enforcement happens in verifyTurnstile,
+    // which is skipped when TURNSTILE_SECRET_KEY is unset (small private
+    // deploys) and enforced when it is set.
+    turnstileToken: z.string().optional().default(""),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "รหัสผ่านสองช่องไม่ตรงกัน",
