@@ -41,7 +41,7 @@ function mkSession(
   identifier = "test@example"
 ) {
   return {
-    user: { id: userId, role, identifier },
+    user: { id: userId, role, identifier, mustResetPwd: false },
   } as const;
 }
 

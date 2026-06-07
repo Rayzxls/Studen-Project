@@ -35,6 +35,12 @@ export interface FeedItem {
   title: string | null;
   /** Optional second-line detail — Assignment.dueAt ISO string, etc. */
   detail?: string | null;
+  /** First ~280 chars of body/description for Instagram-style card body. */
+  bodyPreview?: string | null;
+  /** Display name of the teacher who posted ("ครูสมชาย ใจดี"). */
+  authorName?: string | null;
+  /** Total count of file attachments + link URLs on the source. */
+  attachmentCount?: number;
 }
 
 export interface FeedCursor {
@@ -57,6 +63,34 @@ export async function getUserFeed(
   if (courseIds.length === 0) {
     return { items: [], nextCursor: null };
   }
+  return aggregateFeed(courseIds, cursor);
+}
+
+/**
+ * Per-CourseOffering Feed — Phase 10C · ADR-0025.
+ *
+ * Reuses the same multi-query union as getUserFeed but scoped to a
+ * single course. The caller is responsible for authorization (e.g.
+ * teacher owns the course, student has an active enrollment). The
+ * aggregator does not re-check.
+ *
+ * @param kindFilter optional whitelist of FeedKind — when set, only
+ *   those kinds are fetched. Empty/undefined = all 4 kinds.
+ */
+export async function getCourseFeed(
+  courseId: string,
+  cursor?: FeedCursor,
+  kindFilter?: ReadonlySet<FeedKind>
+): Promise<FeedPage> {
+  return aggregateFeed([courseId], cursor, kindFilter);
+}
+
+async function aggregateFeed(
+  courseIds: string[],
+  cursor: FeedCursor | undefined,
+  kindFilter?: ReadonlySet<FeedKind>
+): Promise<FeedPage> {
+  const includeKind = (k: FeedKind) => !kindFilter || kindFilter.has(k);
 
   // The composite cursor: (sortAt, id). For descending order, the next
   // page returns rows STRICTLY before the cursor — `sortAt < cursor.sortAt`
@@ -72,91 +106,130 @@ export async function getUserFeed(
   void cursorPredicate; // Each branch composes its own; this is documentation.
 
   const courseInFilter = { in: courseIds };
+  const emptyResult: never[] = [];
 
   const [assignments, materials, announcements, scoreItems] = await Promise.all(
     [
-      db.assignment.findMany({
-        where: {
-          courseOfferingId: courseInFilter,
-          ...(cursor && {
-            OR: [
-              { createdAt: { lt: cursor.sortAt } },
-              { createdAt: cursor.sortAt, id: { lt: cursor.id } },
-            ],
-          }),
-        },
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        take: PAGE_SIZE,
-        select: {
-          id: true,
-          courseOfferingId: true,
-          title: true,
-          dueAt: true,
-          createdAt: true,
-        },
-      }),
-      db.material.findMany({
-        where: {
-          courseOfferingId: courseInFilter,
-          deletedAt: null,
-          ...(cursor && {
-            OR: [
-              { postedAt: { lt: cursor.sortAt } },
-              { postedAt: cursor.sortAt, id: { lt: cursor.id } },
-            ],
-          }),
-        },
-        orderBy: [{ postedAt: "desc" }, { id: "desc" }],
-        take: PAGE_SIZE,
-        select: {
-          id: true,
-          courseOfferingId: true,
-          title: true,
-          postedAt: true,
-        },
-      }),
-      db.announcement.findMany({
-        where: {
-          courseOfferingId: courseInFilter,
-          deletedAt: null,
-          ...(cursor && {
-            OR: [
-              { postedAt: { lt: cursor.sortAt } },
-              { postedAt: cursor.sortAt, id: { lt: cursor.id } },
-            ],
-          }),
-        },
-        orderBy: [{ postedAt: "desc" }, { id: "desc" }],
-        take: PAGE_SIZE,
-        select: {
-          id: true,
-          courseOfferingId: true,
-          title: true,
-          postedAt: true,
-        },
-      }),
-      db.scoreItem.findMany({
-        where: {
-          courseOfferingId: courseInFilter,
-          publishedAt: { not: null },
-          ...(cursor && {
-            OR: [
-              { publishedAt: { lt: cursor.sortAt } },
-              { publishedAt: cursor.sortAt, id: { lt: cursor.id } },
-            ],
-          }),
-        },
-        orderBy: [{ publishedAt: "desc" }, { id: "desc" }],
-        take: PAGE_SIZE,
-        // Strict L1: no weight, no fullScore, no entries — those are
-        // Scores-tab concerns. Feed only surfaces "this item is live".
-        select: {
-          id: true,
-          courseOfferingId: true,
-          name: true,
-          publishedAt: true,
-        },
-      }),
+      includeKind("ASSIGNMENT")
+        ? db.assignment.findMany({
+            where: {
+              courseOfferingId: courseInFilter,
+              ...(cursor && {
+                OR: [
+                  { createdAt: { lt: cursor.sortAt } },
+                  { createdAt: cursor.sortAt, id: { lt: cursor.id } },
+                ],
+              }),
+            },
+            orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+            take: PAGE_SIZE,
+            select: {
+              id: true,
+              courseOfferingId: true,
+              title: true,
+              description: true,
+              dueAt: true,
+              createdAt: true,
+              course: {
+                select: {
+                  teacher: { select: { firstName: true, lastName: true } },
+                },
+              },
+            },
+          })
+        : Promise.resolve(emptyResult),
+      includeKind("MATERIAL")
+        ? db.material.findMany({
+            where: {
+              courseOfferingId: courseInFilter,
+              deletedAt: null,
+              ...(cursor && {
+                OR: [
+                  { postedAt: { lt: cursor.sortAt } },
+                  { postedAt: cursor.sortAt, id: { lt: cursor.id } },
+                ],
+              }),
+            },
+            orderBy: [{ postedAt: "desc" }, { id: "desc" }],
+            take: PAGE_SIZE,
+            select: {
+              id: true,
+              courseOfferingId: true,
+              title: true,
+              body: true,
+              fileAttachmentIds: true,
+              linkUrls: true,
+              postedAt: true,
+              postedBy: {
+                select: {
+                  teacher: { select: { firstName: true, lastName: true } },
+                  admin: { select: { firstName: true, lastName: true } },
+                },
+              },
+            },
+          })
+        : Promise.resolve(emptyResult),
+      includeKind("ANNOUNCEMENT")
+        ? db.announcement.findMany({
+            where: {
+              courseOfferingId: courseInFilter,
+              deletedAt: null,
+              ...(cursor && {
+                OR: [
+                  { postedAt: { lt: cursor.sortAt } },
+                  { postedAt: cursor.sortAt, id: { lt: cursor.id } },
+                ],
+              }),
+            },
+            orderBy: [{ postedAt: "desc" }, { id: "desc" }],
+            take: PAGE_SIZE,
+            select: {
+              id: true,
+              courseOfferingId: true,
+              title: true,
+              body: true,
+              fileAttachmentIds: true,
+              linkUrls: true,
+              postedAt: true,
+              postedBy: {
+                select: {
+                  teacher: { select: { firstName: true, lastName: true } },
+                  admin: { select: { firstName: true, lastName: true } },
+                },
+              },
+            },
+          })
+        : Promise.resolve(emptyResult),
+      includeKind("SCORE_PUBLISHED")
+        ? db.scoreItem.findMany({
+            where: {
+              courseOfferingId: courseInFilter,
+              publishedAt: { not: null },
+              ...(cursor && {
+                OR: [
+                  { publishedAt: { lt: cursor.sortAt } },
+                  { publishedAt: cursor.sortAt, id: { lt: cursor.id } },
+                ],
+              }),
+            },
+            orderBy: [{ publishedAt: "desc" }, { id: "desc" }],
+            take: PAGE_SIZE,
+            // Strict L1: no fullScore, no entries — those are Scores-tab
+            // concerns. Feed only surfaces "this item is live" (ADR-0024
+            // sum-based formula doesn't change this L1 boundary).
+            select: {
+              id: true,
+              courseOfferingId: true,
+              name: true,
+              publishedAt: true,
+              course: {
+                select: {
+                  teacher: { select: { firstName: true, lastName: true } },
+                },
+              },
+            },
+          })
+        : Promise.resolve(emptyResult),
     ]
   );
 
@@ -169,6 +242,9 @@ export async function getUserFeed(
         sortAt: a.createdAt,
         title: a.title,
         detail: a.dueAt ? a.dueAt.toISOString() : null,
+        bodyPreview: truncatePreview(a.description),
+        authorName: teacherFullName(a.course?.teacher),
+        attachmentCount: 0,
       })
     ),
     ...materials.map(
@@ -178,6 +254,12 @@ export async function getUserFeed(
         courseOfferingId: m.courseOfferingId,
         sortAt: m.postedAt,
         title: m.title,
+        bodyPreview: truncatePreview(m.body),
+        authorName:
+          teacherFullName(m.postedBy?.teacher) ??
+          adminFullName(m.postedBy?.admin),
+        attachmentCount:
+          jsonArrayLength(m.fileAttachmentIds) + jsonArrayLength(m.linkUrls),
       })
     ),
     ...announcements.map(
@@ -187,6 +269,12 @@ export async function getUserFeed(
         courseOfferingId: an.courseOfferingId,
         sortAt: an.postedAt,
         title: an.title,
+        bodyPreview: truncatePreview(an.body),
+        authorName:
+          teacherFullName(an.postedBy?.teacher) ??
+          adminFullName(an.postedBy?.admin),
+        attachmentCount:
+          jsonArrayLength(an.fileAttachmentIds) + jsonArrayLength(an.linkUrls),
       })
     ),
     ...scoreItems.map(
@@ -196,6 +284,9 @@ export async function getUserFeed(
         courseOfferingId: s.courseOfferingId,
         sortAt: s.publishedAt!,
         title: s.name,
+        bodyPreview: null,
+        authorName: teacherFullName(s.course?.teacher),
+        attachmentCount: 0,
       })
     ),
   ];
@@ -220,4 +311,42 @@ export async function getUserFeed(
     overflow && last ? { sortAt: last.sortAt, id: last.id } : null;
 
   return { items: page, nextCursor };
+}
+
+// ─────────────────────────────────────────────────────────────
+// Helpers — extract teacher/admin display name + attachment count
+// ─────────────────────────────────────────────────────────────
+
+function teacherFullName(
+  t: { firstName: string; lastName: string } | null | undefined
+): string | null {
+  if (!t) return null;
+  return `${t.firstName} ${t.lastName}`;
+}
+
+function adminFullName(
+  a: { firstName: string; lastName: string } | null | undefined
+): string | null {
+  if (!a) return null;
+  return `${a.firstName} ${a.lastName}`;
+}
+
+/**
+ * Truncate body text to ~280 chars at a word boundary so the feed card
+ * shows a clean preview. Returns null on empty input.
+ */
+function truncatePreview(body: string | null | undefined): string | null {
+  if (!body) return null;
+  const trimmed = body.trim();
+  if (trimmed.length === 0) return null;
+  if (trimmed.length <= 280) return trimmed;
+  // Cut at the last space before 280; fall back to a hard cut.
+  const slice = trimmed.slice(0, 280);
+  const lastSpace = slice.lastIndexOf(" ");
+  return (lastSpace > 200 ? slice.slice(0, lastSpace) : slice).trimEnd() + "…";
+}
+
+/** Count items inside Prisma Json column when it's an array. */
+function jsonArrayLength(v: unknown): number {
+  return Array.isArray(v) ? v.length : 0;
 }

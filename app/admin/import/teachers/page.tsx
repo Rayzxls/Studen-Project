@@ -28,7 +28,7 @@ export default function TeacherImportPage() {
         </p>
       </div>
 
-      <div className="card p-5 bg-amber-50/40 border-amber-200">
+      <div className="card p-5 bg-orange-50/40 border-orange-200">
         <h2 className="font-semibold tracking-tight">รูปแบบไฟล์ที่รองรับ</h2>
         <p className="mt-1 text-sm text-ink-soft">
           UTF-8 CSV ที่มี header:{" "}

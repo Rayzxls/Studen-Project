@@ -1,6 +1,12 @@
 /**
- * Shared constants for `lib/scoring/*` — Phase 5
- * See: ADR-0017 (weight basis points + publish gate), ADR-0018 (publish one-way + field-class edit rules)
+ * Shared constants for `lib/scoring/*`.
+ *
+ * Phase 5 origin · Phase 10 cutover to sum-based scoring (ADR-0024)
+ * removed the weight invariant (`WEIGHT_SUM_BP`) — fullScore now
+ * expresses per-item influence directly.
+ *
+ * See: ADR-0018 (publish one-way + field-class A/C edit rules; class
+ * B narrowed to `{fullScore}`), ADR-0024 (sum-based scoring).
  */
 
 /**
@@ -23,17 +29,6 @@ export const TX_OPTS = { maxWait: 10_000, timeout: 15_000 } as const;
 export const REASON_MIN = 5;
 export const REASON_MAX = 500;
 
-/**
- * Weight invariant target — ADR-0017 § Decision 1.
- *
- * Weights are stored as integer basis points (1 bp = 0.01 %). The sum
- * across all ScoreItem rows of a CourseOffering must equal exactly
- * `WEIGHT_SUM_BP` (= 10000 = 100.00 %) before publish is allowed.
- *
- * No tolerance, no auto-distribute. Strict integer equality.
- */
-export const WEIGHT_SUM_BP = 10_000;
-
 /** ScoreItem.name and ScoreEntry.note length cap. */
 export const NAME_MAX = 200;
 export const NOTE_MAX = 200;
@@ -45,10 +40,9 @@ export const NOTE_MAX = 200;
  * DESC by `minPercent` so the linear walk in `gradeFor()` early-exits at
  * the highest matching tier.
  *
- * Phase 5 v1 ships default-only; per-CourseOffering override editor is
- * deferred to a later phase (the `CourseOffering.gradeRulesJson` schema
- * column is in place and the runtime resolution path reads it, but no
- * UI surfaces editing yet — see HANDOFF "Phase 5 entry point" / Q5).
+ * Per-CourseOffering override editor is deferred to a later phase (the
+ * `CourseOffering.gradeRulesJson` schema column is in place and the
+ * runtime resolution path reads it, but no UI surfaces editing yet).
  */
 export type GradeThreshold = Readonly<{ minPercent: number; grade: number }>;
 

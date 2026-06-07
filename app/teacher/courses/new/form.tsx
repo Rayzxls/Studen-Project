@@ -46,7 +46,7 @@ export function CreateCourseForm({
           ครู ตั้งชื่อตามที่ต้องการ — นักเรียนจะเห็นชื่อนี้
         </p>
         {state.fieldErrors?.name && (
-          <p className="mt-1 text-xs text-rose-600">{state.fieldErrors.name}</p>
+          <p className="mt-1 text-xs text-red-700">{state.fieldErrors.name}</p>
         )}
       </div>
 
@@ -65,7 +65,7 @@ export function CreateCourseForm({
             inputName="classId"
           />
           {state.fieldErrors?.classId && (
-            <p className="mt-1 text-xs text-rose-600">
+            <p className="mt-1 text-xs text-red-700">
               {state.fieldErrors.classId}
             </p>
           )}
@@ -92,7 +92,7 @@ export function CreateCourseForm({
             ))}
           </select>
           {state.fieldErrors?.termId && (
-            <p className="mt-1 text-xs text-rose-600">
+            <p className="mt-1 text-xs text-red-700">
               {state.fieldErrors.termId}
             </p>
           )}
@@ -123,7 +123,7 @@ export function CreateCourseForm({
             ใช้คำนวณเกรดเฉลี่ยรวมเทอม (ตามมาตรฐานโรงเรียน)
           </p>
           {state.fieldErrors?.creditHours && (
-            <p className="mt-1 text-xs text-rose-600">
+            <p className="mt-1 text-xs text-red-700">
               {state.fieldErrors.creditHours}
             </p>
           )}
@@ -148,7 +148,7 @@ export function CreateCourseForm({
             key={selectedClass?.gradeLevel}
           />
           {state.fieldErrors?.gradeLevel && (
-            <p className="mt-1 text-xs text-rose-600">
+            <p className="mt-1 text-xs text-red-700">
               {state.fieldErrors.gradeLevel}
             </p>
           )}
@@ -184,7 +184,7 @@ export function CreateCourseForm({
               สำหรับ transcript / รายงาน — กรอกถ้ามีรหัสมาตรฐานของโรงเรียน
             </p>
             {state.fieldErrors?.subjectCode && (
-              <p className="mt-1 text-xs text-rose-600">
+              <p className="mt-1 text-xs text-red-700">
                 {state.fieldErrors.subjectCode}
               </p>
             )}
@@ -193,7 +193,7 @@ export function CreateCourseForm({
       </div>
 
       {state.error && (
-        <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {state.error}
         </div>
       )}

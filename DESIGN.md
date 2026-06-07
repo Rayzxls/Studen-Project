@@ -1,16 +1,36 @@
 ---
 name: Studennnn
-description: ระบบจัดการห้องเรียนสำหรับโรงเรียนไทย — Calm Ledger theme (ADR-0014)
+description: ระบบจัดการห้องเรียนสำหรับโรงเรียนไทย — Calm Ledger v2 theme (ADR-0028 extends ADR-0014)
 colors:
-  bg: "#f5f5f5"
+  bg: "#f2f2f7"
   surface: "#ffffff"
   ink: "#000000"
-  ink-soft: "#4d4d4d"
-  ink-mute: "#808080"
-  accent: "#2b2644"
-  accent-text: "#ffffff"
-  border: "#ebebeb"
-  rose-danger: "#be123c"
+  ink-soft: "rgba(0,0,0,0.70)"
+  ink-mute: "rgba(0,0,0,0.50)"
+  ink-faint: "rgba(0,0,0,0.25)"
+  hairline: "rgba(0,0,0,0.08)"
+  hairline-strong: "rgba(0,0,0,0.16)"
+  blue-50: "#eff6ff"
+  blue-500: "#0a84ff"
+  blue-700: "#1e40af"
+  green-50: "#ecfdf5"
+  green-500: "#34c759"
+  green-700: "#15803d"
+  orange-50: "#fff7ed"
+  orange-500: "#ff9500"
+  orange-700: "#c2410c"
+  red-50: "#fef2f2"
+  red-500: "#ff3b30"
+  red-700: "#b91c1c"
+courseColors:
+  rose: { 500: "#f56c7c", 50: "#fef1f3" }
+  coral: { 500: "#f58e6e", 50: "#fef3ee" }
+  amber: { 500: "#e8a646", 50: "#fdf6e8" }
+  lime: { 500: "#94c944", 50: "#f2faea" }
+  teal: { 500: "#3cb4ac", 50: "#ebfaf8" }
+  sky: { 500: "#5eaedb", 50: "#eef7fc" }
+  indigo: { 500: "#7a7ae5", 50: "#eff0fe" }
+  violet: { 500: "#b574d6", 50: "#f8eefb" }
 typography:
   display:
     fontFamily: "var(--font-anuphan), system-ui, sans-serif"
@@ -52,18 +72,35 @@ spacing:
   lg: "24px"
   xl: "32px"
   "2xl": "48px"
+motion:
+  curve: "cubic-bezier(0.32, 0.72, 0, 1)"
+  micro: "80ms"
+  standard: "180ms"
+  large: "280ms"
+  reducedMotion: "100ms ease-out"
+glass:
+  blurDesktop: "blur(20px) saturate(180%)"
+  blurMobile: "blur(12px) saturate(150%)"
+  bg: "rgba(242,242,247,0.72)"
+  fallback: "rgba(255,255,255,0.95)"
 components:
   button-primary:
-    backgroundColor: "{colors.ink}"
+    backgroundColor: "{colors.blue-500}"
     textColor: "{colors.surface}"
     rounded: "{rounded.full}"
     padding: "10px 28px"
+    highlight: "inset 0 1px 0 rgba(255,255,255,0.15)"
   button-primary-hover:
-    backgroundColor: "#1f1f1f"
+    backgroundColor: "#0070EB"
     textColor: "{colors.surface}"
   button-secondary:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
+    rounded: "{rounded.full}"
+    padding: "10px 28px"
+  button-tinted:
+    backgroundColor: "{colors.blue-50}"
+    textColor: "{colors.blue-700}"
     rounded: "{rounded.full}"
     padding: "10px 28px"
   button-ghost:
@@ -72,7 +109,7 @@ components:
     rounded: "{rounded.full}"
     padding: "10px 24px"
   button-danger:
-    backgroundColor: "{colors.rose-danger}"
+    backgroundColor: "{colors.red-500}"
     textColor: "{colors.surface}"
     rounded: "{rounded.full}"
     padding: "10px 28px"
@@ -80,211 +117,346 @@ components:
     backgroundColor: "{colors.surface}"
     rounded: "{rounded.2xl}"
     padding: "28px"
-  card-dark:
-    backgroundColor: "{colors.accent}"
+  card-accent:
+    backgroundColor: "{colors.{blue|green|orange|red}-500}"
     textColor: "{colors.surface}"
     rounded: "{rounded.2xl}"
     padding: "28px"
+  card-tinted:
+    backgroundColor: "{colors.{blue|green|orange|red}-50}"
+    textColor: "{colors.{blue|green|orange|red}-700}"
+    rounded: "{rounded.2xl}"
+    padding: "28px"
+  card-hero:
+    bannerHeight: "120px"
+    bannerBackground: "course-slot gradient mesh"
+    contentBackground: "{colors.surface}"
+    rounded: "{rounded.3xl}"
+    shadow: "0 8px 32px rgba(0,0,0,0.06)"
+  panel-inset:
+    backgroundColor: "rgba(0,0,0,0.025)"
+    rounded: "{rounded.xl}"
+    padding: "16px"
+    shadow: "inset 0 1px 0 rgba(0,0,0,0.04)"
   input:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
     rounded: "{rounded.xl}"
     padding: "10px 16px"
+    focusRing: "ring-2 {colors.blue-500} + glow rgba(10,132,255,0.20)"
   badge:
-    backgroundColor: "#0000000d"
+    backgroundColor: "rgba(0,0,0,0.05)"
     textColor: "{colors.ink}"
     rounded: "{rounded.full}"
     padding: "2px 10px"
 ---
 
-# Design System: Studennnn — Calm Ledger
+# Design System: Studennnn — Calm Ledger v2
 
 ## 1. Overview
 
-**Creative North Star: "The Calm Ledger"**
+**Creative North Star: "Calm Ledger v2 — friendly, layered, smooth."**
 
-Studennnn looks and feels like a premium private-banking app stripped of any flourish, paired with a leather-bound family ledger left open on a quiet desk. Off-white surface, true black ink, one deep aubergine reserved for the moment of contrast. The interface holds itself with the discipline of a financial product, applied to the domain of a school's daily record-keeping.
+Studennnn keeps the discipline of a premium private-banking app — off-white body, true black ink, Anuphan single-family typography, pill geometry, rounded-2xl cards — and adds back the colour and material depth that ADR-0014 stripped out. The chrome stays calm; the content carries colour. The interaction layer borrows the iOS spring curve at three durations and the iOS frosted-glass vocabulary in four named places. Windows 11's contribution is the sense of smooth, layered depth, achieved by stacking subordinate surfaces rather than emulating Mica.
 
-The system explicitly rejects four neighbourhoods that PRODUCT.md calls out by name: government ERP (Bootstrap 3, Tahoma, desktop-only), Thai EdTech default (orange+blue+yellow, mascots, Cordia), Google Classroom Material (generic), and generic AI-SaaS landing slop (gradient hero, hero-metric template, eyebrow uppercase every section, isometric vectors). Premium fintech as a family — Halo, Linear, Stripe Sessions, well-crafted Sequoia portfolio — is the lane we live in, not the lane we avoid.
+The result reads as a system that an iOS-fluent Thai teenager opens without thinking "this is an old school portal" and a Thai homeroom teacher uses for fifty student grade entries without thinking "this is fighting me." The product owner's pain that ADR-0028 addresses, verbatim: *"ผมต้องการ Layout หรือ ธีมสีโดยรวมให้มันสดใสกว่านี้ เพราะตอนนี้ Project จืดมาก ไม่มีสีสัน."*
 
-This theme **supersedes** ADR-0011 Ink + Gold via ADR-0014.
+The system continues to reject four neighbourhoods PRODUCT.md calls out by name: government ERP (Bootstrap 3, Tahoma, desktop-only), Thai EdTech default (orange+blue+yellow loud + mascots + Cordia), Google Classroom Material (generic), and generic AI-SaaS landing slop. Premium fintech as a family — Halo, Linear, Stripe Sessions — remains the aesthetic lane. iOS Settings.app is the colour-and-interaction reference, not the chrome reference.
+
+This system **extends ADR-0014** via ADR-0028. It does NOT supersede.
 
 **Key Characteristics**
-- Quiet · Premium · Modern
-- Tri-tonal: off-white body, true black ink, deep aubergine reserved for contrast moments
-- Single typeface (Anuphan — Cadson Demak, Latin + Thai) at three weights
-- Tight negative letter-spacing on all display + headline (`-0.04em` to `-0.02em`)
-- Pill geometry for actions (`rounded-full`), 2xl for cards (`16px`), 3xl for featured surfaces (`24px`)
-- No gradient text, no shimmer, no float, no tilt, no glass — motion is colour transitions and gentle shadow only
-- Hero surfaces lean on full-bleed media (image/video) inside `rounded-2xl` cards, not CSS scenery
-- Mobile-first for student surfaces; desktop-first for teacher gradebook + admin audit
+- Off-white body (`#F2F2F7` — iOS systemGroupedBackground), true black ink, white card surfaces
+- **System Blue** (`#0A84FF`) as universal primary action across every role
+- 4-colour iOS-style system palette (Blue / Green / Orange / Red) for interaction state + status semantics
+- 8-slot course identity palette resolved by `hash(class.id)` — rose / coral / amber / lime / teal / sky / indigo / violet
+- Single typeface (Anuphan — Cadson Demak), weight 600 ceiling, negative letter-spacing on display/headline/title
+- Pill geometry for actions (`rounded-full`), 2xl for cards (`16px`), 3xl for `.card-hero` (`24px`)
+- Material depth via layered surfaces (`.card-hero` banner+content split, `.panel-inset` stats strip) — not heavy shadows
+- Frosted glass strictly scoped: top nav, mobile bottom nav, sheet backdrop, hero info bar
+- Motion = iOS spring curve at three duration tiers (80 / 180 / 280ms), form-focus instant, reduced-motion → 100ms ease-out
+- Role-modulated rendering: student maximum vibrancy / teacher 4px markers + status colours / admin neutral with gallery exception
 
-## 2. Colors: The Off-White Discipline
+## 2. Colors: System + Course + Off-White
 
-A three-step achromatic system anchored by one chromatic accent. Saturation is rare on purpose.
+The system layers in three parts:
 
-### Primary
-- **Off-White** (`#F5F5F5`): The body of every page and section. The default canvas. Not warm, not cool — neutral on purpose so the aubergine accent reads with maximum contrast.
-- **True Black** (`#000000`): Primary text, primary button surface, logo, navigation. No "almost-black" softening. The system commits to the corner.
+1. **Neutral chrome** — off-white body, white surfaces, true black ink, hairline borders — carries the calm
+2. **System colours** (4) — Blue, Green, Orange, Red — carry interaction state and status semantics
+3. **Course colours** (8 slots) — rose, coral, amber, lime, teal, sky, indigo, violet — carry per-class identity
 
-### Secondary
-- **Aubergine** (`#2B2644`): The single chromatic accent. Used as a **surface** (card background, dark hero panel) — never as a button colour, never as an icon tint outside of dark-mode mirrors of the primary button. Aubergine appears on 1-2 surfaces per page maximum.
+### Neutral chrome
 
-### Neutral
-- **70% Ink** (`#4D4D4D` solid, or `rgba(0,0,0,0.7)` over white): Default body text, paragraph content, supporting prose. Verify contrast on tinted backgrounds.
-- **50% Ink** (`#808080` solid, or `rgba(0,0,0,0.5)`): Eyebrows, captions, secondary metadata, marquee items.
-- **Surface White** (`#FFFFFF`): Card backgrounds, input fields, mobile-frame mockups. Never a full page background.
-- **Hairline** (`#EBEBEB`, or `rgba(0,0,0,0.08)`): Almost-invisible card borders, ring on inputs and ghost buttons. Default border weight is "barely there."
+| Token | Value | Use |
+|---|---|---|
+| `--bg` | `#F2F2F7` | Body background — iOS systemGroupedBackground (shifted from ADR-0014's `#F5F5F5`) |
+| `--surface` | `#FFFFFF` | Card backgrounds, inputs, sheet bg |
+| `--ink` | `#000000` | Primary text, headings, structural strokes |
+| `--ink-soft` | `rgba(0,0,0,0.70)` | Body paragraph text |
+| `--ink-mute` | `rgba(0,0,0,0.50)` | Captions, eyebrows, metadata |
+| `--ink-faint` | `rgba(0,0,0,0.25)` | Placeholder hints, disabled |
+| `--hairline` | `rgba(0,0,0,0.08)` | Invisible borders, ring on inputs |
+| `--hairline-strong` | `rgba(0,0,0,0.16)` | Hover ring, focus accent fallback |
 
-### Semantic (rare — error/destructive only)
-- **Danger Rose** (`#BE123C`): `btn-danger`, error messages, destructive action confirmation. Not used for role identity (role badges are neutral in this system).
+### System colours (4 — semantic only)
 
-### Named Rules
+Each colour has three weights: `-50` (tinted bg), `-500` (saturated surface or marker), `-700` (text on tinted bg).
 
-**The Aubergine-Is-Surface Rule.** Aubergine (`#2B2644`) is a *card background colour*. It is never a button, never an icon, never a chart series. When you reach for aubergine on a button, you're misreading the system — reach for true black instead. One or two aubergine cards per page is the ceiling.
+| Colour | Hex (500) | OKLCH | Hex (50) | Hex (700) | Role |
+|---|---|---|---|---|---|
+| **Blue** | `#0A84FF` | `oklch(0.62 0.20 250)` | `#EFF6FF` | `#1E40AF` | Primary action, link, focus, selection, published status |
+| **Green** | `#34C759` | `oklch(0.72 0.18 145)` | `#ECFDF5` | `#15803D` | Success, ส่งแล้ว, มาเรียน |
+| **Orange** | `#FF9500` | `oklch(0.74 0.18 65)` | `#FFF7ED` | `#C2410C` | Warning, ใกล้กำหนดส่ง, สาย |
+| **Red** | `#FF3B30` | `oklch(0.62 0.22 25)` | `#FEF2F2` | `#B91C1C` | Destructive, เลยกำหนด, ขาดเรียน, critical audit |
 
-**The True-Black Rule.** No `#1a1a1a`, no `#0f0f0f`, no `slate-900`. Primary text and primary button surface are `#000000` exactly. Almost-black softening reads as indecision in this aesthetic family.
+**Contrast verification (white text on -500):** Blue 4.8:1 ✅, Green 3.4:1 ⚠ (large text only), Orange 3.2:1 ⚠ (large text only), Red 4.6:1 ✅. **Body-size text on saturated Green or Orange must use `-700` against `-50` tinted background.**
 
-**The No-Saturated-Role-Colour Rule.** Admin / Teacher / Student badges are neutral grayscale, not rose/blue/emerald. Role differentiation moves to placement, label text, and surrounding metadata — not chroma. (Supersedes the Ink+Gold semantic colour scheme from ADR-0011.)
+### Course colours (8 slots — content identity)
+
+Each `Class.id` resolves deterministically to one slot via `hash(id) % 8`. Phase 11 ships hash-derived only; admin override defers to Phase 13.
+
+| Slot | Name | -500 Hex | -50 Hex |
+|---|---|---|---|
+| 0 | rose | `#F56C7C` | `#FEF1F3` |
+| 1 | coral | `#F58E6E` | `#FEF3EE` |
+| 2 | amber | `#E8A646` | `#FDF6E8` |
+| 3 | lime | `#94C944` | `#F2FAEA` |
+| 4 | teal | `#3CB4AC` | `#EBFAF8` |
+| 5 | sky | `#5EAEDB` | `#EEF7FC` |
+| 6 | indigo | `#7A7AE5` | `#EFF0FE` |
+| 7 | violet | `#B574D6` | `#F8EEFB` |
+
+Each slot also exposes a **gradient mesh** via `getCourseSlotGradient(slot)` — a CSS `radial-gradient` composition used as the banner zone of `.card-hero`. Phase 11 stand-in for photographic banner; Phase 11D may swap to curated WebP assets while keeping the slot API stable.
+
+### Named rules
+
+**The System-Blue-Is-Action Rule.** `#0A84FF` is the primary action surface across every role — admin, teacher, student. True black is reserved for text, headings, and structural strokes. Aubergine is retired.
+
+**The Course-Colour-Is-Content Rule.** Course colour appears on content (chips, hero banners, list markers), never on chrome (nav, sidebar, primary buttons, body background). A red `.card-accent` is a system-red status surface, not the "red course."
+
+**The Saturation-Distinguishes-Layer Rule.** System colours are higher chroma (`0.18-0.22`); course colours are medium chroma (`0.13-0.16`). A user reads a saturated chip as "state" and a softer chip as "content category" by saturation alone, without learning the palette.
+
+**The True-Black-For-Text Rule.** Primary text and headings stay `#000000` exact. No `slate-900`, no `#1a1a1a`. Almost-black softening reads as indecision.
+
+**The No-Saturated-Role-Colour Rule.** Admin / Teacher / Student badges remain neutral grayscale, unchanged from ADR-0014. Role differentiation moves to placement and labels; system colours are reserved for state, course colours for content category. (ADR-0028 keeps this rule from ADR-0014.)
 
 ## 3. Typography
 
-**Display / Headline / Title / Body / Label:** Anuphan (`var(--font-anuphan)`, fallback `system-ui, sans-serif`). One family. Latin and Thai script at uniform weight stress — Cadson Demak designed the pair, so วรรณยุกต์ stacking matches the cap-height rhythm without the fight Plex Thai used to lose.
+Unchanged from ADR-0014. Anuphan single family, weight 600 ceiling, negative letter-spacing on display/headline/title, body line-height ≥ 1.6.
 
+**Display / Headline / Title / Body / Label:** Anuphan (`var(--font-anuphan)`, fallback `system-ui, sans-serif`).
 **Mono:** `ui-monospace, SFMono-Regular` for student IDs and class codes only.
 
-**Character:** Tight modern fintech. Negative tracking, medium-weight ceiling (600 max), confident size jumps with `clamp()` on display. The Halo recipe's "tight tracking, modest weight" doctrine — applied to a system that has to hold Thai script convincingly at the same time.
-
 ### Hierarchy
-- **Display** (weight 600, `clamp(2.5rem, 5vw, 4rem)`, letter-spacing `-0.04em`, line-height 1.05): Hero h1 — "ห้องเรียนของคุณ" / "Studennnn"
-- **Headline** (weight 500, `clamp(2rem, 4vw, 3rem)`, letter-spacing `-0.03em`): Section h2 — "ทำความรู้จัก Studennnn"
-- **Title** (weight 500, `1.5rem` / 24px, letter-spacing `-0.02em`): Card titles
-- **Body** (weight 400, `1rem` / 16px, line-height 1.6): Default body. Cap at 65–75ch on prose. Use `rgba(0,0,0,0.7)` (#4D4D4D) for soft body, true black for emphasis.
-- **Label** (weight 500, `0.875rem` / 14px): Eyebrows, captions. **No uppercase by default.** Halo's eyebrows are sentence case; Studennnn's follow.
-- **Mono** (weight 400, `0.875rem`): Student IDs ("60001"), class codes ("MATH4A-A8K2"). Monospace for fixed-width alignment in tables.
+- **Display** (weight 600, `clamp(2.5rem, 5vw, 4rem)`, letter-spacing `-0.04em`, line-height 1.05): Hero h1
+- **Headline** (weight 500, `clamp(2rem, 4vw, 3rem)`, letter-spacing `-0.03em`): Section h2
+- **Title** (weight 500, `1.5rem`, letter-spacing `-0.02em`): Card titles
+- **Body** (weight 400, `1rem`, line-height 1.6): Default body. Cap prose at 65-75ch.
+- **Label** (weight 500, `0.875rem`): Eyebrows, captions. No uppercase by default.
+- **Mono** (weight 400, `0.875rem`): Student IDs, class codes.
 
-### Named Rules
+### Named rules (unchanged from ADR-0014)
 
-**The Anuphan-Only Rule.** No serif. No second display font. No Inter, no Plex, no Geist alongside. Anuphan carries display, body, and label across every page. A second font would dilute the Thai+Latin balance Cadson Demak engineered into this family.
+**The Anuphan-Only Rule.** No serif. No second display font. **The 600-Ceiling Rule.** Weight 600 is the heaviest. **The No-Uppercase-Eyebrow Rule.** Section eyebrows stay sentence case. **The Negative-Tracking-Floor Rule.** Display ≥ `-0.04em`, headline `-0.03em`, title `-0.02em`. **The Thai Line-Height Rule.** Body line-height ≥ 1.6.
 
-**The 600-Ceiling Rule.** Weight 600 (semibold) is the heaviest weight used anywhere in the system, including display h1. Weight 700 (bold) is forbidden. Bold reads as shouty; semibold reads as confident.
+## 4. Elevation and Material Depth
 
-**The No-Uppercase-Eyebrow Rule.** Section eyebrows ("USD Halo in Practice" → "Studennnn ในการใช้งาน") stay sentence case at 0.875rem weight 500. Tracked uppercase eyebrows are the Impeccable absolute ban and the saturated-AI grammar; this system avoids them.
+Two complementary systems: **shadow elevation** (cards lift on hover, hero card sits with soft drop shadow) and **material layering** (subordinate surfaces stacked inside parents to create depth without shadow weight).
 
-**The Negative-Tracking-Floor Rule.** Display tracking ≥ `-0.04em`, headline `-0.03em`, title `-0.02em`. Body and label stay at 0. The negative tracking IS the fintech-premium voice — flat tracking on a display heading reads as default Inter.
+### Shadow vocabulary
 
-**The Thai Line-Height Rule.** Body line-height ≥ 1.6 (`leading-relaxed`). Thai วรรณยุกต์ and สระบน sit above the baseline; cramped leading makes them collide.
+- **Resting (`shadow-none`):** Cards default flat. Their `rounded-2xl` + hairline border carry the affordance.
+- **Hover lift (`shadow-lift`):** `0 4px 24px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04)`. Cards lift on hover via `--spring-standard`.
+- **Featured (`shadow-card`):** `0 8px 32px rgba(0,0,0,0.06)`. Reserved for `.card-hero` and large featured surfaces.
+- **Inset (`shadow-inset`):** `inset 0 1px 0 rgba(0,0,0,0.04)`. Subtle inner highlight for `.panel-inset` stats strip.
 
-## 4. Elevation
+### Material layering — the depth pattern
 
-Flat-by-default with subtle responsive lift on interactive cards. The system reads as paper-flat on the off-white surface. Shadow appears only as feedback for interactivity, not as ambient identity. This is a deliberate **reversal** of the Ink+Gold "ambient soft baseline" rule.
+`.card-hero` + `.panel-inset` together encode the iOS layered-depth move. A `.card-hero` is a single card with two zones: a coloured banner zone at the top, a white content zone below. Inside the content zone, a `.panel-inset` strip sits as a subordinate surface — same parent card, lower visual elevation, slight inner-shadow hint that it's recessed. The product owner's reference image shows this exact pattern: bold sky/cloud banner, content area below, KPI stats strip inset within the content area.
 
-### Shadow Vocabulary
-- **Resting (`shadow-none`):** Cards default to no shadow. Their `rounded-2xl` corners and subtle hairline border carry the affordance.
-- **Hover Lift (`shadow-lift`):** `0 4px 24px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04)`. Cards lift on hover over 200ms ease-out. Lift is subtle — premium-fintech, not Material Design 6dp.
-- **Featured (`shadow-card`):** `0 8px 32px rgba(0,0,0,0.06)`. Reserved for hero-card-style elevated surfaces (the hero rounded-2xl panel, large featured cards in product galleries).
+This is the answer to "how do you add depth without heavy shadows." Stack surfaces, don't elevate them.
 
-### Named Rules
+### Glass material (strict scope)
 
-**The Flat-By-Default Rule.** No shadow on resting cards. The `rounded-2xl` corner + `1px rgba(0,0,0,0.08)` hairline carry the affordance. Reach for shadow only on hover, focus, or for deliberately-elevated featured surfaces.
+Frosted glass appears in exactly four places. Anywhere else is a violation of ADR-0028.
 
-**The 200ms Transition Rule.** Shadow and colour transitions run 200ms ease-out. Same number Ink+Gold used; the floor of premium-feel.
+| Surface | Treatment |
+|---|---|
+| Sticky top nav | `.glass-nav` over scrolled content |
+| Mobile bottom nav (student only) | `.glass-nav` always-on |
+| Sheet backdrop | Body blur when `.sheet` open |
+| Hero info bar | Optional frosted strip overlay on `.card-hero` banner |
+
+**Blur strength is hybrid:**
+- Desktop: `backdrop-filter: blur(20px) saturate(180%)` — iOS strength
+- Mobile: `backdrop-filter: blur(12px) saturate(150%)` — Win11 strength, protects Android GPU
+
+**Fallback:** `@supports not (backdrop-filter: blur(1px))` → solid `rgba(255,255,255,0.95)`.
+
+**Never** on: cards (other than the hero info bar), sidebars, data tables, form inputs, body text containers.
+
+### Named rules
+
+**The Flat-By-Default Rule.** Resting cards have no shadow; rounded-2xl + hairline carry the affordance.
+**The Material-By-Layering Rule.** Depth comes from stacked surfaces (`.card-hero` + `.panel-inset`), not from drop shadow weight.
+**The Glass-Is-Chrome-Only Rule.** Frosted glass lives on nav, sheet backdrop, hero info bar — never on cards or content surfaces.
 
 ## 5. Components
 
 ### Buttons
 
-All buttons are **pills** (`rounded-full`). Pad horizontally, modest vertical. The pill shape is the system's primary signal of "interactive element."
+All pills (`rounded-full`). Padding `10px 28px` standard, `6px 18px` `.btn-sm`. Weight 500. Press feedback via `.springy` class (scale 0.97→1 over `--spring-micro`).
 
-- **Shape:** `rounded-full`
-- **Primary:** `bg-black text-white`, padding `10px 28px`, weight 500, hover `bg-[#1f1f1f]`. The default action.
-- **Secondary:** `bg-white text-black ring-1 ring-black/10`, hover `ring-black/20`. For supporting actions where primary is taken.
-- **Ghost:** `text-black/70 hover:text-black hover:bg-black/[0.05]`. Tertiary. No ring.
-- **Danger:** `bg-rose-600 text-white hover:bg-rose-700`. Destructive only.
-- **Small (`btn-sm`):** Padding `6px 18px`, text 13px. Inline table actions.
+- **Primary (`.btn-primary`):** `bg-blue-500 text-white` with inset white-15 highlight along top edge (iOS pressed-glass feel). Hover darkens to `#0070EB`. Active applies `.springy` scale. **Universal across every role.**
+- **Secondary (`.btn-secondary`):** `bg-white text-black ring-1 ring-black/10`. Hover `ring-black/20`. Neutral fallback when primary is taken.
+- **Tinted (`.btn-tinted`):** `bg-blue-50 text-blue-700`. Soft secondary for "ดูทั้งหมด" / "ไปที่ห้องเรียน" — quieter than `.btn-primary`, more visible than `.btn-ghost`.
+- **Ghost (`.btn-ghost`):** `text-black/70 hover:text-black hover:bg-black/[0.05]`. Tertiary.
+- **Danger (`.btn-danger`):** `bg-red-500 text-white hover:bg-red-700`. Destructive only.
 
-### The Arrow-Circle Pattern (signature)
+### The arrow-circle pattern (signature)
 
-The signature CTA variant — a black pill with a trailing **white circular badge** containing an arrow:
-
-```
-[  เข้าสู่ระบบ  (→) ]
-```
-
-Used for the hero CTA and the "Meet" / "Use cases" section CTAs. Structure: `bg-black text-white pl-8 pr-2 py-2 rounded-full inline-flex items-center gap-3`, with trailing `<span class="bg-white rounded-full p-2"><ArrowRight class="text-black"/></span>`. On hover: arrow translates `1.5px` right via group-hover.
+Black pill with trailing white circular badge containing an arrow. Used for hero CTA and landing-page section CTAs. With ADR-0028, the pill body switches from `bg-black` to `bg-blue-500` to match the new primary; the trailing circle remains `bg-white`. Arrow translates `1.5px` right on group-hover.
 
 ### Cards
 
-- **Shape:** `rounded-2xl` (16px). Featured: `rounded-3xl` (24px).
-- **Default (`.card`):** `bg-white`, padding `28px` (`p-7`). Optional hairline `ring-1 ring-black/[0.04]` for definition on the off-white body — usually unnecessary.
-- **Dark (`.card-dark`):** `bg-[#2B2644] text-white`. The aubergine variant. Reserved for 1-2 surfaces per page maximum (per The Aubergine-Is-Surface Rule).
-- **Image (`.card-image`):** Full-bleed background image, padding `28px`, content positioned with `flex flex-col justify-between min-h-80`. Text on image needs verification of contrast — usually a `text-black` heading top-left + `text-black/70` body bottom-left, planned against the image's lighter regions.
-- **Hover:** subtle lift (`shadow-lift`) over 200ms. No tilt, no sheen, no glow.
+| Class | Shape | Surface | Use |
+|---|---|---|---|
+| `.card` | rounded-2xl | white | Default container |
+| `.card-accent` | rounded-2xl | system colour -500 | Saturated hero CTAs, celebration moments |
+| `.card-tinted` | rounded-2xl | system colour -50 | Soft callouts, status banners |
+| `.card-hero` | rounded-3xl | banner zone (course slot gradient) + content zone (white) | Class card, course header, dashboard hero |
+| `.panel-inset` | rounded-xl | `rgba(0,0,0,0.025)` + inner shadow | Subordinate strip inside `.card-hero` content zone |
+| `.card-image` | rounded-2xl | full-bleed background image | Landing surfaces (Phase 12) |
+
+`.card-dark` (aubergine) is **removed**. Pages still referencing it must migrate to `.card-accent` blue or another system colour.
 
 ### Inputs
 
-- **Shape:** `rounded-xl` (12px). Less round than buttons — inputs are fields, not actions.
-- **Resting:** `bg-white ring-1 ring-black/10`, no visible border-stroke. The ring carries the affordance.
-- **Hover:** `ring-black/20`.
-- **Focus:** `ring-2 ring-black`, no shadow ring. (Black focus ring replaces the Ink+Gold focus ring.)
-- **Placeholder:** `text-black/40`. Verify contrast ≥ 4.5:1 — at 0.4 alpha on white, that's 5.7:1, ✅.
+- **Shape:** `rounded-xl` (12px)
+- **Resting:** `bg-white` + `ring-1 ring-black/10`
+- **Hover:** `ring-black/20`
+- **Focus:** `ring-2 ring-blue-500` + outer subtle glow `rgba(10,132,255,0.20)` (iOS pressed-state feel). `prefers-reduced-motion: reduce` drops the glow but keeps the ring.
+- **Placeholder:** `text-black/40` (5.7:1 on white ✅)
 
 ### Badges
 
-- **Shape:** `rounded-full`, padding `2px 10px`, text 12px weight 500.
-- **Default:** `bg-black/[0.05] text-black ring-1 ring-black/[0.08]`. Neutral.
-- **Variants** (`admin`, `teacher`, `student`): **All neutral**. Role differentiation moves to label text and placement, not chroma. (Supersedes the saturated-rose-blue-emerald scheme.)
+- **Shape:** `rounded-full`, padding `2px 10px`, text 12px weight 500
+- **Default:** `bg-black/[0.05] text-black ring-1 ring-black/[0.08]`
+- **Status variants:** `.badge-success` green-tinted, `.badge-warn` orange-tinted, `.badge-danger` red-tinted, `.badge-info` blue-tinted — all use `-50` bg + `-700` text
+- **Role variants** (`admin`, `teacher`, `student`): **All neutral grayscale.** Unchanged from ADR-0014.
 - **Behaviour:** Static. No hover.
 
 ### Tables
 
-- **Wrapper:** `rounded-2xl bg-white`, no visible border.
-- **Header:** small text 13px weight 500, `text-black/50`, no uppercase, no tracking.
-- **Rows:** 1px `border-black/5` divider, hover `bg-black/[0.02]`.
-- **Cell padding:** `12px 16px`.
+Unchanged from ADR-0014. Wrapper `rounded-2xl bg-white`, header 13px weight 500 `text-black/50` no uppercase, rows `border-black/5` divider with `bg-black/[0.02]` hover, cell padding `12px 16px`.
 
 ### Stats (KPI cards)
 
-- **Container:** `.stat` = `rounded-2xl bg-white p-6` with `shadow-lift` on hover.
-- **Label:** 12px weight 500 `text-black/60`. **No uppercase.**
-- **Value:** 36-40px weight 600 tracking `-0.02em` black. Plain. No gradient, no aubergine, no signature treatment.
-- **Note:** The "GPA signature treatment" question is open — `stat-value-gold` is removed. Until a new equivalent is decided, GPA renders as plain bold black with the surrounding card carrying the weight.
+- **Container:** `.stat` = `rounded-2xl bg-white p-6` with `shadow-lift` on hover
+- **Label:** 12px weight 500 `text-black/60`. No uppercase.
+- **Value:** 36-40px weight 600 tracking `-0.02em`. Default `text-black`; `.card-tinted` variant uses the colour `-700` shade.
+- **CountUp:** Wire `useCountUp(target, 600ms)` on initial render. `prefers-reduced-motion: reduce` → instant.
 
-### Hero Card (signature surface)
+### Modals — Pattern 7 dialog + sheet variant
 
-The landing hero is a `rounded-2xl` full-bleed media card (`overflow-hidden`, `relative`, `h-[calc(100vh-96px)]` desktop). Background = image or video, autoplay/muted/playsInline if video. Foreground content positioned `relative z-10 p-12 pt-36` — heading top-left, body + CTA below.
+Native `<dialog>` element remains the implementation primitive (Pattern 7 — Phase 3 hotfix). Two presentations:
 
-### Brand Marquee — Removed
+- **Desktop (default):** Centered modal. Backdrop fade via `--spring-standard`. Content fade-in.
+- **Mobile (`@media max-width: 768px`, opt-in via `.sheet` class):** Bottom sheet. Slides up via `--spring-large`. Body backdrop blur. Rounded-top-2xl. Cap height at 90vh. Optional swipe-to-dismiss (Phase 11D).
 
-The Halo recipe's "Brand Marquee" and "Backed By" sections are **omitted** from this system. Studennnn has no peer-brand list to legitimize against (single-tenant per school, not a B2B platform competing in a marketplace). Per ADR-0014 follow-up.
+Same `<dialog>` element, CSS-only branching. No separate JS, no duplicate state.
 
-## 6. Do's and Don'ts
+### Hero card surface (signature)
 
-### Do:
-- **Do** anchor every page in true black (`#000000`) text on Off-White (`#F5F5F5`) or Surface White (`#FFFFFF`)
-- **Do** reach for Aubergine (`#2B2644`) only as a card surface, only 1-2 times per page (The Aubergine-Is-Surface Rule)
-- **Do** use `rounded-full` for buttons and pills, `rounded-2xl` for cards, `rounded-3xl` for featured / hero card
-- **Do** apply negative letter-spacing on display + headline + title (`-0.04em` to `-0.02em`) — the tracking IS the voice
-- **Do** keep weight 600 as the heaviest ceiling. No weight 700 anywhere.
-- **Do** use Anuphan (Cadson Demak) for everything. Pair sizes 0.875 / 1 / 1.5 / 2 / 2.5+ rem.
-- **Do** use the **arrow-circle pill** (black pill with trailing white circle + arrow) as the signature CTA on hero, "Meet" section, "Use cases" section
-- **Do** keep resting cards flat (`shadow-none`); lift only on hover with the `shadow-lift` token
-- **Do** use full-bleed media (image/video) inside `rounded-2xl` hero card — not CSS scenery, not blob, not mesh-bg
-- **Do** wrap motion in `prefers-reduced-motion: reduce`. Hover lifts, fade-in entries collapse to instant.
-- **Do** verify text contrast ≥ 4.5:1 on every text-on-image surface. Image cards require manual contrast planning per image.
+`.card-hero` carries the product's signature visual move. Structure:
 
-### Don't:
-- **Don't** use "almost-black" softening (`#1a1a1a`, `slate-900`). Primary text is `#000000` (The True-Black Rule).
-- **Don't** put Aubergine on a button. Aubergine is a surface, not an action (The Aubergine-Is-Surface Rule).
+```
+┌─────────────────────────┐  rounded-3xl
+│  Banner zone (120px)    │  course slot gradient mesh
+│   (optional avatar      │
+│    circle overlap ─────┐│
+└────────────────────────┼┘
+│  Content zone (white)  ││
+│  - Title                │  bold name
+│  - Subtitle             │  small supporting
+│  ┌──────────────────┐  │
+│  │ Panel inset      │  │  subordinate KPI strip
+│  │ (stats grid)     │  │
+│  └──────────────────┘  │
+│  - CTA / action row     │
+└─────────────────────────┘
+shadow: 0 8px 32px rgba(0,0,0,0.06)
+```
+
+Banner gradient is the course slot's mesh (8 slots, hash-derived). Phase 11D may swap to photographic WebP backgrounds; the slot API is stable.
+
+## 6. Motion
+
+Single curve (`cubic-bezier(0.32, 0.72, 0, 1)` — iOS UIView spring) at three duration tiers, universal across the system.
+
+| Tier | Token | Duration | Applied to |
+|---|---|---|---|
+| Micro | `--spring-micro` | 80ms | Button press scale (0.97→1), checkbox toggle, switch thumb |
+| Standard | `--spring-standard` | 180ms | Tab switch, hover lift, dropdown open, chip filter swap, dialog backdrop fade |
+| Large | `--spring-large` | 280ms | Sheet slide-in, modal open, page transition, accordion expand |
+
+**Form input focus does NOT spring.** Focus uses a 100ms instant border swap to avoid lag in rapid Tab-Enter data entry (teacher gradebook, attendance grid).
+
+**Reduced motion:** `prefers-reduced-motion: reduce` collapses every spring to `100ms ease-out`. Not instant — instant is jarring; 100ms preserves "change happened" without choreography.
+
+**CountUp** runs on rAF ease-out-quart at 600ms. Reduced-motion short-circuits to render target instantly. Bounded to dashboard KPI cards only.
+
+### Named rules
+
+**The Spring-Curve-Is-Universal Rule.** Single iOS spring curve everywhere — no Material easing, no custom curves per surface, no bouncy elastic.
+**The Form-Focus-Is-Instant Rule.** Input focus border swaps in 100ms ease-out, never sprung. Data entry surfaces depend on this.
+**The Reduced-Motion-Is-Not-Instant Rule.** 100ms ease-out preserves change-happened signal. Instant transitions disorient users with vestibular sensitivity *less* than slow ones.
+
+## 7. Role Modulation Matrix
+
+Same tokens, different rendering by role. This is a rendering decision, not a token decision.
+
+| Aspect | Admin | Teacher | Student |
+|---|---|---|---|
+| Vibrancy default | Low | Medium | Maximum |
+| Course colour exposure | Coloured dot or small chip in lists; **exception:** full `.card-hero` on `/admin/dashboard` class cards (gallery view) | 4px left marker on course list rows, status colours on chips | Full chips on feed, hero gradient mesh banners, tinted KPI cards |
+| Chrome | Dense, audit-lens; critical audit red ring preserved | Desktop-first calm workspace | Mobile-first, glass bottom nav, large touch targets |
+| Role badge | Neutral grayscale | Neutral grayscale | Neutral grayscale |
+| Primary action | System Blue | System Blue | System Blue |
+| Sheet vs modal | Centered modal (desktop keyboard flow) | Centered modal (desktop keyboard flow) | Sheet on mobile, modal on desktop |
+
+**The Gallery-Exception Rule.** When admin or teacher views a *list of things* where glanceable visual differentiation aids scanning (admin dashboard class cards, teacher courses overview), the full `.card-hero` treatment with course-slot gradient mesh banner is permitted regardless of the role's default vibrancy setting. The task is visual scanning, not data entry.
+
+## 8. Do's and Don'ts
+
+### Do
+- **Do** anchor every page in true black text (`#000000`) on off-white body (`#F2F2F7`) or white surface (`#FFFFFF`)
+- **Do** use System Blue (`#0A84FF`) for all primary actions across every role
+- **Do** use course slot colours on content (chips, hero banners, list markers), never on chrome
+- **Do** use `rounded-full` for pills, `rounded-2xl` for cards, `rounded-3xl` for `.card-hero`
+- **Do** apply negative letter-spacing on display + headline + title (`-0.04em` to `-0.02em`)
+- **Do** keep weight 600 as the heaviest ceiling — no weight 700 anywhere
+- **Do** use Anuphan for everything. Single family.
+- **Do** layer subordinate surfaces (`.panel-inset` inside `.card-hero`) for depth, not heavier shadows
+- **Do** keep frosted glass to the four named places: top nav, mobile bottom nav, sheet backdrop, hero info bar
+- **Do** use iOS spring curve at the three duration tiers; form focus stays instant
+- **Do** wrap motion in `prefers-reduced-motion: reduce` → 100ms ease-out (not instant)
+- **Do** verify body-size text contrast — Green-500 and Orange-500 only support large text in white; body must use -700 on -50
+- **Do** apply `.card-hero` to admin dashboard class cards (gallery exception)
+
+### Don't
+- **Don't** use almost-black softening (`#1a1a1a`, `slate-900`). Primary text is `#000000` exactly.
+- **Don't** use aubergine. ADR-0028 retires it.
 - **Don't** use weight 700 (bold) anywhere. 600 is the ceiling.
-- **Don't** use uppercase tracked eyebrows above sections. Halo doesn't. Studennnn doesn't. (Impeccable absolute ban + reinforces 2026 trend avoidance.)
-- **Don't** use saturated semantic colours (rose/blue/emerald/amber) for role identification. Admin/Teacher/Student badges are grayscale. Rose is reserved for danger/destructive only.
-- **Don't** use gradient text. No `text-gradient-gold`, no rainbow, no clipped-gradient h1. (Impeccable absolute ban; removed from globals.css.)
-- **Don't** use shimmer, float, tilt, mesh-bg, blob, sheen, glass, or any Ink+Gold motion utility. Removed from globals.css per ADR-0014.
-- **Don't** add a second display font. Anuphan carries everything.
-- **Don't** uppercase Thai script. Thai has no case.
-- **Don't** style like government ERP / Bootstrap 3 / Thai EdTech default / Google Classroom Material (PRODUCT.md anti-references).
-- **Don't** style like generic AI-SaaS slop — gradient hero, hero-metric template, isometric vector, `01 / 02 / 03` numbered scaffolding (PRODUCT.md anti-reference, refined in ADR-0014).
-- **Don't** use `border-left` greater than 1px as a colored stripe (Impeccable absolute ban).
-- **Don't** nest cards inside cards. Nested cards are always wrong.
-- **Don't** put body text on tinted backgrounds without verifying 4.5:1 contrast. The off-white-on-off-white trap is the AI design tell of 2026.
+- **Don't** use uppercase tracked eyebrows. Sentence-case 0.875rem weight 500.
+- **Don't** use saturated semantic colours for role badges. Role badges are neutral grayscale.
+- **Don't** use gradient text. (Impeccable absolute ban; ADR-0014 ban preserved.)
+- **Don't** use frosted glass on cards, sidebars, data tables, form inputs, or body text containers.
+- **Don't** spring a form input focus ring. 100ms instant border swap.
+- **Don't** add a second display font.
+- **Don't** uppercase Thai script.
+- **Don't** use `border-left` greater than 1px as a coloured stripe (Impeccable absolute ban).
+- **Don't** nest cards inside cards. (`.panel-inset` inside `.card-hero` is a subordinate panel, not a nested card — visually distinct, lower elevation, not tappable.)
+- **Don't** put body text on saturated `.card-accent` Green or Orange. Use large text or switch to `.card-tinted` + `-700` text.
+- **Don't** style like government ERP, Thai EdTech default, Google Classroom Material, or AI-SaaS slop. (PRODUCT.md anti-references.)
+- **Don't** emulate Windows 11 Mica directly. Web has no wallpaper to sample. Translate Mica intent into iOS-style frosted glass at lower blur strength.

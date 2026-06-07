@@ -25,7 +25,6 @@ export interface TeacherScoreboardItem {
   id: string;
   name: string;
   fullScore: number;
-  weight: number;
   position: number;
   publishedAt: Date | null;
 }
@@ -71,7 +70,6 @@ export async function getScoreboardForTeacher(
       id: true,
       name: true,
       fullScore: true,
-      weight: true,
       position: true,
       publishedAt: true,
     },
@@ -149,7 +147,6 @@ export interface ScoreItemGrid {
     courseOfferingId: string;
     name: string;
     fullScore: number;
-    weight: number;
     position: number;
     publishedAt: Date | null;
   };
@@ -176,7 +173,6 @@ export async function getScoreItemGridForTeacher(
       courseOfferingId: true,
       name: true,
       fullScore: true,
-      weight: true,
       position: true,
       publishedAt: true,
       course: { select: { teacherId: true } },
@@ -221,7 +217,6 @@ export async function getScoreItemGridForTeacher(
       courseOfferingId: item.courseOfferingId,
       name: item.name,
       fullScore: item.fullScore,
-      weight: item.weight,
       position: item.position,
       publishedAt: item.publishedAt,
     },
@@ -299,7 +294,6 @@ export async function getStudentTermSnapshot(
             select: {
               id: true,
               fullScore: true,
-              weight: true,
               publishedAt: true,
               entries: {
                 where: { enrollmentId: { not: undefined } },
@@ -332,7 +326,6 @@ export async function getStudentTermSnapshot(
       items: c.scoreItems.map((it) => ({
         id: it.id,
         fullScore: it.fullScore,
-        weight: it.weight,
         publishedAt: it.publishedAt,
       })),
       entries: c.scoreItems.flatMap((it) =>
@@ -396,7 +389,6 @@ export interface StudentScoreItem {
   id: string;
   name: string;
   fullScore: number;
-  weight: number;
   position: number;
   publishedAt: Date;
   /** This student's value on this item, or null if no entry exists yet. */
@@ -439,7 +431,6 @@ export async function getOwnScoresForStudent(
       id: true,
       name: true,
       fullScore: true,
-      weight: true,
       position: true,
       publishedAt: true,
       entries: {
@@ -464,7 +455,6 @@ export async function getOwnScoresForStudent(
       id: it.id,
       name: it.name,
       fullScore: it.fullScore,
-      weight: it.weight,
       position: it.position,
       publishedAt: it.publishedAt,
       myValue: own?.value ?? null,

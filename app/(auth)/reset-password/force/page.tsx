@@ -38,7 +38,7 @@ export default function ForceResetPage() {
             className="input"
           />
           {state.fieldErrors?.currentPassword && (
-            <p className="mt-1 text-xs text-rose-600">
+            <p className="mt-1 text-xs text-red-700">
               {state.fieldErrors.currentPassword}
             </p>
           )}
@@ -62,7 +62,7 @@ export default function ForceResetPage() {
             placeholder="ขั้นต่ำ 8 ตัวอักษร"
           />
           {state.fieldErrors?.newPassword && (
-            <p className="mt-1 text-xs text-rose-600">
+            <p className="mt-1 text-xs text-red-700">
               {state.fieldErrors.newPassword}
             </p>
           )}
@@ -84,14 +84,14 @@ export default function ForceResetPage() {
             className="input"
           />
           {state.fieldErrors?.confirmPassword && (
-            <p className="mt-1 text-xs text-rose-600">
+            <p className="mt-1 text-xs text-red-700">
               {state.fieldErrors.confirmPassword}
             </p>
           )}
         </div>
 
         {state.error && (
-          <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+          <div className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">
             {state.error}
           </div>
         )}

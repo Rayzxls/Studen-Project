@@ -82,7 +82,7 @@ function SlotRow({
           </p>
         )}
         {state.error && (
-          <p className="mt-0.5 text-xs text-rose-600">{state.error}</p>
+          <p className="mt-0.5 text-xs text-red-700">{state.error}</p>
         )}
       </div>
       <form action={formAction}>
@@ -101,7 +101,7 @@ function DeleteButton() {
       type="submit"
       disabled={pending}
       aria-label="ลบ"
-      className="rounded-full p-1.5 text-black/40 transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
+      className="rounded-full p-1.5 text-black/40 transition-colors hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
     >
       <Trash2 className="h-4 w-4" />
     </button>
@@ -195,7 +195,7 @@ function AddSlotForm({ courseId }: { courseId: string }) {
         state.fieldErrors?.startTime ||
         state.fieldErrors?.endTime ||
         state.fieldErrors?.location) && (
-        <ul className="mt-2 space-y-0.5 text-xs text-rose-600">
+        <ul className="mt-2 space-y-0.5 text-xs text-red-700">
           {state.fieldErrors?.dayOfWeek && (
             <li>วัน: {state.fieldErrors.dayOfWeek}</li>
           )}
@@ -211,7 +211,7 @@ function AddSlotForm({ courseId }: { courseId: string }) {
         </ul>
       )}
       {state.error && (
-        <p className="mt-2 text-xs text-rose-600">{state.error}</p>
+        <p className="mt-2 text-xs text-red-700">{state.error}</p>
       )}
     </form>
   );

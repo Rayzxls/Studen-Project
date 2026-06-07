@@ -102,6 +102,27 @@ async function findOrCreateSubmission(
   }
 }
 
+/**
+ * Public wrapper around findOrCreateSubmission — materialises the DRAFT
+ * Submission row for an active student when they open an Assignment, so the
+ * submit form always has a stable submissionId on first visit (the file
+ * upload pipeline scopes presigned files to ownerId=submissionId, and the
+ * form cannot render its channels without one). Race-safe; idempotent.
+ *
+ * A version-less DRAFT created this way reads as "ยังไม่ส่ง" on the teacher
+ * grid (gated on the presence of a current SubmissionVersion), so opening an
+ * assignment never looks like a real submission.
+ */
+export async function ensureSubmission(
+  assignmentId: string,
+  enrollmentId: string
+): Promise<{ id: string; status: Submission["status"] }> {
+  return db.$transaction(
+    (tx) => findOrCreateSubmission(tx, assignmentId, enrollmentId),
+    TX_OPTS
+  );
+}
+
 // ─────────────────────────────────────────────────────────────
 // submitVersion — student-facing initial submit + voluntary resubmit
 // ─────────────────────────────────────────────────────────────
@@ -370,6 +391,7 @@ export async function returnSubmission(
         enrollment: { select: { studentId: true } },
         assignment: {
           select: {
+            id: true,
             title: true,
             course: { select: { id: true, name: true } },
           },
@@ -389,6 +411,7 @@ export async function returnSubmission(
       payload: {
         courseId: enriched.assignment.course.id,
         courseName: enriched.assignment.course.name,
+        assignmentId: enriched.assignment.id,
         assignmentTitle: enriched.assignment.title,
         teacherName: `${teacher.firstName} ${teacher.lastName}`,
         commentExcerpt: clipExcerpt(parsed.comment),
@@ -562,6 +585,7 @@ export async function gradeSubmission(
           enrollment: { select: { studentId: true } },
           assignment: {
             select: {
+              id: true,
               title: true,
               course: { select: { id: true, name: true } },
             },
@@ -581,10 +605,13 @@ export async function gradeSubmission(
         payload: {
           courseId: enriched.assignment.course.id,
           courseName: enriched.assignment.course.name,
+          assignmentId: enriched.assignment.id,
           assignmentTitle: enriched.assignment.title,
           graderName: `${grader.firstName} ${grader.lastName}`,
         },
       });
+      // entityKind selector path for gradeSubmission's enriched select
+      // also needs `assignment.id`; the same SELECT shape is reused.
     }
   }, TX_OPTS);
 }

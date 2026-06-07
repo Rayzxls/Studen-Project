@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Link2 as LinkIcon } from "lucide-react";
 import { assert } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { GradeSubmissionDialog } from "@/components/assignment/grade-submission-dialog";
 import { ReturnSubmissionDialog } from "@/components/assignment/return-submission-dialog";
+import { CommentsThread } from "@/components/comment/comments-thread";
 
 /**
  * Teacher Assignment detail page — Phase 6 · P6-5b.
@@ -29,12 +30,12 @@ interface PageProps {
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   NOT_SUBMITTED: { label: "ยังไม่ส่ง", color: "bg-black/[0.05] text-black/60" },
   DRAFT: { label: "ร่าง", color: "bg-black/[0.05] text-black/60" },
-  SUBMITTED: { label: "ส่งแล้ว", color: "bg-emerald-50 text-emerald-700" },
+  SUBMITTED: { label: "ส่งแล้ว", color: "bg-green-50 text-green-700" },
   LATE_SUBMITTED: {
     label: "ส่งสาย",
-    color: "bg-amber-50 text-amber-700",
+    color: "bg-orange-50 text-orange-700",
   },
-  RETURNED: { label: "ส่งคืน", color: "bg-rose-50 text-rose-700" },
+  RETURNED: { label: "ส่งคืน", color: "bg-red-50 text-red-700" },
   GRADED: { label: "ตรวจแล้ว", color: "bg-blue-50 text-blue-700" },
 };
 
@@ -42,9 +43,11 @@ export default async function AssignmentDetailPage({ params }: PageProps) {
   const { id: courseId, assignmentId } = await params;
 
   let assignment;
+  let session;
   try {
     const result = await assert.canMutateAssignment(assignmentId);
     assignment = result.assignment;
+    session = result.session;
   } catch {
     redirect("/dashboard");
   }
@@ -69,7 +72,10 @@ export default async function AssignmentDetailPage({ params }: PageProps) {
       db.enrollment.findMany({
         where: {
           courseOfferingId: courseId,
-          submissions: { some: { assignmentId } },
+          // Only enrollments with a real submitted version — a version-less
+          // DRAFT (auto-created when a student merely opens the assignment)
+          // does not count as "ever submitted".
+          submissions: { some: { assignmentId, versions: { some: {} } } },
         },
         select: {
           id: true,
@@ -86,6 +92,7 @@ export default async function AssignmentDetailPage({ params }: PageProps) {
           id: true,
           title: true,
           description: true,
+          linkUrls: true,
           dueAt: true,
           isScored: true,
           submissionClosed: true,
@@ -184,6 +191,29 @@ export default async function AssignmentDetailPage({ params }: PageProps) {
             {fullAssignment.description}
           </div>
         )}
+        {Array.isArray(fullAssignment.linkUrls) &&
+          fullAssignment.linkUrls.length > 0 && (
+            <div className="mt-4">
+              <p className="flex items-center gap-1.5 text-xs font-medium text-black/60">
+                <LinkIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                ลิงก์ประกอบงาน
+              </p>
+              <ul className="mt-1.5 space-y-1">
+                {(fullAssignment.linkUrls as string[]).map((href, i) => (
+                  <li key={i}>
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm text-blue-700 underline underline-offset-2 hover:text-blue-900"
+                    >
+                      {href}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
       </div>
 
       <div className="card mt-4 p-6">
@@ -200,8 +230,14 @@ export default async function AssignmentDetailPage({ params }: PageProps) {
             {enrollments.map((enr) => {
               const submission = submissionByEnrollment.get(enr.id);
               const current = submission?.versions[0];
+              // A submission only "counts" once it has a current version —
+              // a version-less DRAFT (student opened but never submitted)
+              // reads as ยังไม่ส่ง with no grade/return actions.
+              const hasSubmitted = !!current;
               const status: keyof typeof STATUS_LABEL =
-                submission?.status ?? "NOT_SUBMITTED";
+                hasSubmitted && submission
+                  ? submission.status
+                  : "NOT_SUBMITTED";
               const badge = STATUS_LABEL[status];
               const value = entryByEnrollment.get(enr.id) ?? null;
               const fullName = `${enr.student.firstName} ${enr.student.lastName}`;
@@ -218,12 +254,12 @@ export default async function AssignmentDetailPage({ params }: PageProps) {
                     <p className="text-[10px] text-black/40">
                       {enr.student.studentId}
                       {isRemoved && (
-                        <span className="ml-2 rounded bg-rose-100 px-1 py-0.5 text-[9px] text-rose-700">
+                        <span className="ml-2 rounded bg-red-100 px-1 py-0.5 text-[9px] text-red-700">
                           นำออกจากห้อง
                         </span>
                       )}
                       {current?.isLate && (
-                        <span className="ml-2 rounded bg-amber-100 px-1 py-0.5 text-[9px] text-amber-800">
+                        <span className="ml-2 rounded bg-orange-100 px-1 py-0.5 text-[9px] text-orange-700">
                           ส่งสาย v{current.versionNumber}
                         </span>
                       )}
@@ -239,8 +275,14 @@ export default async function AssignmentDetailPage({ params }: PageProps) {
                       {value}/{fullAssignment.scoreItem?.fullScore}
                     </span>
                   )}
-                  {submission ? (
-                    <div className="flex gap-1">
+                  {hasSubmitted && submission ? (
+                    <div className="flex items-center gap-1">
+                      <Link
+                        href={`/teacher/courses/${courseId}/assignments/${assignmentId}/submissions/${submission.id}`}
+                        className="text-xs text-black/60 hover:text-black hover:underline"
+                      >
+                        ดูข้อความ →
+                      </Link>
                       <GradeSubmissionDialog
                         courseId={courseId}
                         assignmentId={assignmentId}
@@ -269,6 +311,16 @@ export default async function AssignmentDetailPage({ params }: PageProps) {
             })}
           </ul>
         )}
+      </div>
+
+      <div className="mt-4">
+        <CommentsThread
+          ownerType="ASSIGNMENT"
+          ownerId={fullAssignment.id}
+          courseOfferingId={courseId}
+          scope="CLASS_WIDE"
+          session={session}
+        />
       </div>
     </div>
   );

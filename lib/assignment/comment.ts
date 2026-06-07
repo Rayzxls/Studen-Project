@@ -259,7 +259,7 @@ export async function createComment(
       // Resolve the Submission's parent Assignment title for the snapshot.
       const sub = await tx.submission.findUniqueOrThrow({
         where: { id: parsed.ownerId },
-        select: { assignment: { select: { title: true } } },
+        select: { assignment: { select: { id: true, title: true } } },
       });
       await fanOutTargeted(tx, {
         kind: "COMMENT_REPLIED",
@@ -271,6 +271,9 @@ export async function createComment(
           courseId: owner.courseOfferingId,
           courseName: course.name,
           entityKind: "SUBMISSION",
+          // For SUBMISSION PRIVATE the bell deep-links to the parent
+          // Assignment detail page rather than the Submission row.
+          entityOwnerId: sub.assignment.id,
           entityTitle: sub.assignment.title,
           commenterName,
           commentExcerpt: excerpt,
@@ -325,6 +328,7 @@ export async function createComment(
           courseId: owner.courseOfferingId,
           courseName: course.name,
           entityKind,
+          entityOwnerId: parsed.ownerId,
           entityTitle,
           commenterName,
           commentExcerpt: excerpt,

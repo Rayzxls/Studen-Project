@@ -1,0 +1,141 @@
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+import { ChevronLeft, Link as LinkIcon } from "lucide-react";
+import { assert } from "@/lib/auth/guards";
+import { getCourseOfferingForStudent } from "@/lib/course/queries";
+import { db } from "@/lib/db/client";
+import { formatThaiDateShort } from "@/lib/attendance/format";
+import { CourseShell } from "@/components/course/course-shell";
+import { CommentsThread } from "@/components/comment/comments-thread";
+import { studentCourseTabs } from "../../_tabs";
+
+/**
+ * Student Announcement detail — Phase 7 · P7-8.
+ *
+ * Read-only mirror with CLASS_WIDE comments thread (same one teacher
+ * sees on /teacher/courses/.../announcements/[aid]).
+ */
+
+export const dynamic = "force-dynamic";
+
+interface PageProps {
+  params: Promise<{ id: string; announcementId: string }>;
+}
+
+export default async function StudentAnnouncementDetailPage({
+  params,
+}: PageProps) {
+  const { id, announcementId } = await params;
+
+  let guard;
+  try {
+    guard = await assert.isActiveCourseMember(id);
+  } catch {
+    redirect("/dashboard");
+  }
+
+  const course = await getCourseOfferingForStudent(id, guard.session.user.id);
+  if (!course) notFound();
+
+  const announcement = await db.announcement.findFirst({
+    where: {
+      id: announcementId,
+      courseOfferingId: id,
+      deletedAt: null,
+    },
+    select: {
+      id: true,
+      title: true,
+      body: true,
+      linkUrls: true,
+      postedAt: true,
+      postedBy: {
+        select: {
+          teacher: { select: { firstName: true, lastName: true } },
+        },
+      },
+    },
+  });
+  if (!announcement) notFound();
+
+  const linkUrls = (
+    Array.isArray(announcement.linkUrls) ? announcement.linkUrls : []
+  ) as string[];
+
+  const posterName = announcement.postedBy.teacher
+    ? `${announcement.postedBy.teacher.firstName} ${announcement.postedBy.teacher.lastName}`
+    : "ครู";
+
+  const headline = announcement.title?.trim() || "ประกาศไม่มีหัวข้อ";
+
+  return (
+    <CourseShell
+      session={guard.session}
+      course={course}
+      eyebrow="ห้องเรียน"
+      backHref="/dashboard"
+      tabs={studentCourseTabs(id)}
+    >
+      <div className="space-y-4">
+        <Link
+          href={`/student/courses/${id}/announcements`}
+          className="inline-flex items-center gap-1 text-xs text-black/60 hover:text-black"
+        >
+          <ChevronLeft className="h-3.5 w-3.5" />
+          กลับไปรายการประกาศ
+        </Link>
+
+        <div className="card p-6">
+          <h1
+            className={`text-2xl font-medium md:text-3xl ${
+              announcement.title?.trim() ? "text-black" : "text-black/50"
+            }`}
+            style={{ letterSpacing: "-0.02em" }}
+          >
+            {headline}
+          </h1>
+          <p className="mt-1 text-xs text-black/50">
+            โดย {posterName} · โพสต์เมื่อ{" "}
+            {formatThaiDateShort(announcement.postedAt)}
+          </p>
+
+          <div className="prose prose-sm mt-4 max-w-none whitespace-pre-wrap text-sm text-black/80">
+            {announcement.body}
+          </div>
+
+          {linkUrls.length > 0 && (
+            <div className="mt-5 rounded-xl border border-black/[0.06] bg-black/[0.02] p-4">
+              <p className="mb-2 text-xs font-medium text-black/60">ลิงก์</p>
+              <ul className="space-y-1.5">
+                {linkUrls.map((url, i) => (
+                  <li key={i}>
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 break-all text-xs text-black hover:underline"
+                    >
+                      <LinkIcon
+                        className="h-3 w-3 shrink-0"
+                        aria-hidden="true"
+                      />
+                      {url}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        <CommentsThread
+          ownerType="ANNOUNCEMENT"
+          ownerId={announcement.id}
+          courseOfferingId={id}
+          scope="CLASS_WIDE"
+          session={guard.session}
+        />
+      </div>
+    </CourseShell>
+  );
+}

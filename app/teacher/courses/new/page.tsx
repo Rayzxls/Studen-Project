@@ -9,6 +9,7 @@ import {
   getTeacherRecentClassIds,
   getTeacherHomeroomClassId,
 } from "@/lib/course/queries";
+import { TopNav } from "@/components/layout/top-nav";
 import { CreateCourseForm } from "./form";
 
 // Auth-gated DB-fetching page — skip static prerender.
@@ -26,6 +27,7 @@ export default async function NewCoursePage() {
   if (!year) {
     return (
       <div className="min-h-screen bg-bg">
+        <TopNav session={session} maxWidth="max-w-6xl" />
         <main className="mx-auto max-w-3xl px-6 py-12">
           <div className="card p-6">
             <h1
@@ -52,15 +54,16 @@ export default async function NewCoursePage() {
 
   return (
     <div className="min-h-screen bg-bg">
-      <header className="border-b border-black/[0.06] bg-white/80 backdrop-blur">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
+      <TopNav session={session} maxWidth="max-w-6xl" />
+      <div className="border-b border-black/[0.06] bg-white/60">
+        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-3">
           <Link href="/teacher/courses" className="btn-ghost btn-sm">
             <ChevronLeft className="h-4 w-4" />
             กลับ
           </Link>
           <span className="text-xs text-black/60">ปี {year.name}</span>
         </div>
-      </header>
+      </div>
 
       <main className="mx-auto max-w-3xl animate-fade-in px-6 py-10">
         <h1

@@ -74,6 +74,7 @@ export default async function AttendanceGridPage({ params }: PageProps) {
 
   return (
     <CourseShell
+      session={guard.session}
       course={course}
       eyebrow="รายวิชาที่สอน"
       backHref="/teacher/courses"
@@ -100,7 +101,7 @@ export default async function AttendanceGridPage({ params }: PageProps) {
                   grid.session.scheduledEnd
                 )}
                 {cancelled && (
-                  <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-xs text-rose-700">
+                  <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-700">
                     <Ban className="h-3 w-3" />
                     ยกเลิก
                   </span>
@@ -122,7 +123,7 @@ export default async function AttendanceGridPage({ params }: PageProps) {
                 </p>
               )}
               {cancelled && grid.session.cancelledReason && (
-                <p className="mt-1 text-xs text-rose-700/70">
+                <p className="mt-1 text-xs text-red-700/70">
                   เหตุผลที่ยกเลิก: {grid.session.cancelledReason}
                 </p>
               )}

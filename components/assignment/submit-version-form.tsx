@@ -235,7 +235,7 @@ export function SubmitVersionForm({
       />
 
       {hasExistingCurrent && (
-        <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+        <p className="rounded-lg bg-orange-50 px-3 py-2 text-xs text-orange-700">
           คุณส่งงานนี้ไปแล้ว — การส่งใหม่จะแทนที่เป็นเวอร์ชันใหม่
           (ครูเห็นประวัติทุกเวอร์ชัน)
         </p>
@@ -254,7 +254,7 @@ export function SubmitVersionForm({
             placeholder="พิมพ์คำตอบ / คำอธิบายที่นี่"
           />
           {state.fieldErrors?.textContent && (
-            <p className="mt-1 text-xs text-rose-600">
+            <p className="mt-1 text-xs text-red-700">
               {state.fieldErrors.textContent}
             </p>
           )}
@@ -318,7 +318,7 @@ export function SubmitVersionForm({
                   </span>
                   <button
                     type="button"
-                    className="text-xs text-rose-600 hover:underline"
+                    className="text-xs text-red-700 hover:underline"
                     onClick={() => removeUploaded(u.id)}
                   >
                     นำออก
@@ -362,7 +362,7 @@ export function SubmitVersionForm({
                     </div>
                   )}
                   {e.status === "error" && e.error && (
-                    <p className="mt-1 text-xs text-rose-600">{e.error}</p>
+                    <p className="mt-1 text-xs text-red-700">{e.error}</p>
                   )}
                 </li>
               ))}
@@ -370,7 +370,7 @@ export function SubmitVersionForm({
           )}
 
           {state.fieldErrors?.fileAttachmentIds && (
-            <p className="mt-1 text-xs text-rose-600">
+            <p className="mt-1 text-xs text-red-700">
               {state.fieldErrors.fileAttachmentIds}
             </p>
           )}
@@ -389,7 +389,7 @@ export function SubmitVersionForm({
             placeholder="https://docs.google.com/..."
           />
           {state.fieldErrors?.links && (
-            <p className="mt-1 text-xs text-rose-600">
+            <p className="mt-1 text-xs text-red-700">
               {state.fieldErrors.links}
             </p>
           )}
@@ -397,7 +397,7 @@ export function SubmitVersionForm({
       )}
 
       {state.error && (
-        <p className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
           {state.error === "submission_closed"
             ? "ครูปิดการส่งแล้ว — ไม่สามารถส่งงานนี้ได้"
             : state.error === "auto_closed_at_due"

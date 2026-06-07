@@ -1,42 +1,17 @@
-import { notFound, redirect } from "next/navigation";
-import { requireRole } from "@/lib/auth/guards";
-import { getCourseOfferingForStudent } from "@/lib/course/queries";
-import { CourseShell } from "@/components/course/course-shell";
-import { studentCourseTabs } from "./_tabs";
+import { redirect } from "next/navigation";
 
-// Auth-gated DB-fetching page — skip static prerender.
+/**
+ * Student CourseOffering landing — Phase 10C made Feed the default course
+ * surface (ADR-0025). Opening a course lands the student on the chronological
+ * Feed; the previous overview content now lives at `/overview` (last tab).
+ */
 export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-export default async function StudentCourseOverviewPage({ params }: PageProps) {
-  let session;
-  try {
-    session = await requireRole(["STUDENT"]);
-  } catch {
-    redirect("/dashboard");
-  }
-
+export default async function StudentCourseIndexPage({ params }: PageProps) {
   const { id } = await params;
-  // L1 gate — returns null if student has no active enrollment.
-  const course = await getCourseOfferingForStudent(id, session.user.id);
-  if (!course) notFound();
-
-  return (
-    <CourseShell
-      course={course}
-      eyebrow="ห้องเรียน"
-      backHref="/dashboard"
-      tabs={studentCourseTabs(id)}
-    >
-      <div className="card p-6">
-        <p className="text-sm text-black/60">
-          ยินดีต้อนรับสู่ห้องเรียน — ฟีดประกาศ, การบ้าน,
-          และคะแนนจะแสดงที่นี่ในเฟสถัดไป
-        </p>
-      </div>
-    </CourseShell>
-  );
+  redirect(`/student/courses/${id}/feed`);
 }

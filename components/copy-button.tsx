@@ -49,8 +49,8 @@ export function CopyButton({
     >
       {copied ? (
         <>
-          <Check className="h-3.5 w-3.5 text-emerald-600" />
-          <span className="text-emerald-700">คัดลอกแล้ว</span>
+          <Check className="h-3.5 w-3.5 text-green-700" />
+          <span className="text-green-700">คัดลอกแล้ว</span>
         </>
       ) : (
         <>

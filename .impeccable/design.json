@@ -1,13 +1,13 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-05-31T00:00:00Z",
-  "title": "Design System: Studennnn — Calm Ledger",
+  "generatedAt": "2026-06-05T00:00:00Z",
+  "title": "Design System: Studennnn — Calm Ledger v2",
   "extensions": {
     "colorMeta": {
       "bg": {
         "role": "neutral",
-        "displayName": "Off-White",
-        "canonical": "#f5f5f5",
+        "displayName": "iOS systemGroupedBackground",
+        "canonical": "#f2f2f7",
         "tonalRamp": [
           "#0a0a0a",
           "#262626",
@@ -16,7 +16,7 @@
           "#a3a3a3",
           "#d4d4d4",
           "#ededed",
-          "#f5f5f5"
+          "#f2f2f7"
         ]
       },
       "surface": {
@@ -52,77 +52,99 @@
       "ink-soft": {
         "role": "neutral",
         "displayName": "70% Ink",
-        "canonical": "#4d4d4d",
-        "tonalRamp": [
-          "#0a0a0a",
-          "#1a1a1a",
-          "#333333",
-          "#4d4d4d",
-          "#666666",
-          "#808080",
-          "#a3a3a3",
-          "#cccccc"
-        ]
+        "canonical": "rgba(0,0,0,0.7)"
       },
       "ink-mute": {
         "role": "neutral",
         "displayName": "50% Ink",
-        "canonical": "#808080",
-        "tonalRamp": [
-          "#1a1a1a",
-          "#333333",
-          "#4d4d4d",
-          "#666666",
-          "#808080",
-          "#a3a3a3",
-          "#cccccc",
-          "#ededed"
-        ]
+        "canonical": "rgba(0,0,0,0.5)"
       },
-      "accent": {
-        "role": "secondary",
-        "displayName": "Aubergine",
-        "canonical": "#2b2644",
-        "tonalRamp": [
-          "#13111f",
-          "#1d1a30",
-          "#241f3a",
-          "#2b2644",
-          "#403a5f",
-          "#5c557a",
-          "#8a85a3",
-          "#c6c2d3"
-        ]
-      },
-      "border": {
+      "hairline": {
         "role": "neutral",
         "displayName": "Hairline",
-        "canonical": "#ebebeb",
+        "canonical": "rgba(0,0,0,0.08)"
+      },
+      "blue-500": {
+        "role": "primary-action",
+        "displayName": "System Blue",
+        "canonical": "#0a84ff",
+        "oklch": "oklch(0.62 0.20 250)",
         "tonalRamp": [
-          "#000000",
-          "#404040",
-          "#666666",
-          "#a3a3a3",
-          "#cccccc",
-          "#dbdbdb",
-          "#ebebeb",
-          "#f5f5f5"
+          "#0c4a6e",
+          "#075985",
+          "#0369a1",
+          "#0284c7",
+          "#0a84ff",
+          "#3b9eff",
+          "#7fc1ff",
+          "#eff6ff"
         ]
       },
-      "rose-danger": {
-        "role": "semantic",
-        "displayName": "Danger Rose",
-        "canonical": "#be123c",
-        "tonalRamp": [
-          "#4c0519",
-          "#881337",
-          "#be123c",
-          "#e11d48",
-          "#f43f5e",
-          "#fb7185",
-          "#fda4af",
-          "#ffe4e6"
-        ]
+      "green-500": {
+        "role": "success",
+        "displayName": "System Green",
+        "canonical": "#34c759",
+        "oklch": "oklch(0.72 0.18 145)"
+      },
+      "orange-500": {
+        "role": "warning",
+        "displayName": "System Orange",
+        "canonical": "#ff9500",
+        "oklch": "oklch(0.74 0.18 65)"
+      },
+      "red-500": {
+        "role": "danger",
+        "displayName": "System Red",
+        "canonical": "#ff3b30",
+        "oklch": "oklch(0.62 0.22 25)"
+      },
+      "course-rose": {
+        "role": "course-slot",
+        "displayName": "Course Rose (slot 0)",
+        "canonical": "#f56c7c",
+        "tinted": "#fef1f3"
+      },
+      "course-coral": {
+        "role": "course-slot",
+        "displayName": "Course Coral (slot 1)",
+        "canonical": "#f58e6e",
+        "tinted": "#fef3ee"
+      },
+      "course-amber": {
+        "role": "course-slot",
+        "displayName": "Course Amber (slot 2)",
+        "canonical": "#e8a646",
+        "tinted": "#fdf6e8"
+      },
+      "course-lime": {
+        "role": "course-slot",
+        "displayName": "Course Lime (slot 3)",
+        "canonical": "#94c944",
+        "tinted": "#f2faea"
+      },
+      "course-teal": {
+        "role": "course-slot",
+        "displayName": "Course Teal (slot 4)",
+        "canonical": "#3cb4ac",
+        "tinted": "#ebfaf8"
+      },
+      "course-sky": {
+        "role": "course-slot",
+        "displayName": "Course Sky (slot 5)",
+        "canonical": "#5eaedb",
+        "tinted": "#eef7fc"
+      },
+      "course-indigo": {
+        "role": "course-slot",
+        "displayName": "Course Indigo (slot 6)",
+        "canonical": "#7a7ae5",
+        "tinted": "#eff0fe"
+      },
+      "course-violet": {
+        "role": "course-slot",
+        "displayName": "Course Violet (slot 7)",
+        "canonical": "#b574d6",
+        "tinted": "#f8eefb"
       }
     },
     "typographyMeta": {
@@ -148,24 +170,66 @@
       {
         "name": "lift",
         "value": "0 4px 24px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04)",
-        "purpose": "Card hover state. 200ms ease-out. Subtle — premium-fintech, not Material."
+        "purpose": "Card hover state. Sprung via --spring-standard."
       },
       {
         "name": "card",
         "value": "0 8px 32px rgba(0,0,0,0.06)",
-        "purpose": "Featured / hero card resting elevation. Used on the landing hero rounded-2xl panel."
+        "purpose": ".card-hero resting elevation."
+      },
+      {
+        "name": "inset",
+        "value": "inset 0 1px 0 rgba(0,0,0,0.04)",
+        "purpose": ".panel-inset subordinate surface highlight."
       }
     ],
     "motion": [
       {
-        "name": "ease-out-quick",
-        "value": "200ms ease-out",
-        "purpose": "All colour and shadow transitions. The system's only motion floor."
+        "name": "spring-curve",
+        "value": "cubic-bezier(0.32, 0.72, 0, 1)",
+        "purpose": "iOS UIView spring — universal across the system."
       },
       {
-        "name": "fade-in",
-        "value": "fade-in 200ms ease-out both",
-        "purpose": "Page-level entry for sections."
+        "name": "spring-micro",
+        "value": "80ms cubic-bezier(0.32, 0.72, 0, 1)",
+        "purpose": "Button press scale, checkbox toggle, switch thumb."
+      },
+      {
+        "name": "spring-standard",
+        "value": "180ms cubic-bezier(0.32, 0.72, 0, 1)",
+        "purpose": "Tab switch, hover lift, dropdown, chip filter, dialog backdrop fade."
+      },
+      {
+        "name": "spring-large",
+        "value": "280ms cubic-bezier(0.32, 0.72, 0, 1)",
+        "purpose": "Sheet slide-in, modal open, page transition."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "100ms ease-out",
+        "purpose": "prefers-reduced-motion fallback. NOT instant — 100ms preserves change-happened signal."
+      }
+    ],
+    "glass": [
+      {
+        "name": "glass-blur-desktop",
+        "value": "backdrop-filter: blur(20px) saturate(180%)",
+        "purpose": "iOS-strength frosted on top nav + sheet backdrop (desktop only)."
+      },
+      {
+        "name": "glass-blur-mobile",
+        "value": "backdrop-filter: blur(12px) saturate(150%)",
+        "purpose": "Win11-strength frosted on mobile — protects Android GPU."
+      },
+      {
+        "name": "glass-bg",
+        "value": "rgba(242,242,247,0.72)",
+        "purpose": "Body-tinted glass surface colour."
+      },
+      {
+        "name": "glass-fallback",
+        "value": "rgba(255,255,255,0.95)",
+        "purpose": "Solid fallback via @supports not (backdrop-filter)."
       }
     ],
     "breakpoints": [
@@ -178,153 +242,218 @@
   },
   "components": [
     {
-      "name": "Primary Pill Button",
+      "name": "Primary Pill Button (System Blue)",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Default action. Black pill, white text, hover shifts to #1f1f1f.",
+      "description": "Default action across every role. System Blue pill, white text, inset white-15 top highlight for iOS pressed-glass feel. Hover darkens to #0070EB. Press feedback via .springy.",
       "html": "<button class=\"ds-btn-primary\">เข้าสู่ระบบ</button>",
-      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 28px; border-radius: 9999px; border: none; cursor: pointer; font-family: var(--font-anuphan, system-ui), sans-serif; font-size: 16px; font-weight: 500; color: #ffffff; background: #000000; transition: background-color 200ms ease-out; } .ds-btn-primary:hover { background: #1f1f1f; } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(0,0,0,0.5); }"
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 28px; border-radius: 9999px; border: none; cursor: pointer; font-family: var(--font-anuphan, system-ui), sans-serif; font-size: 16px; font-weight: 500; color: #ffffff; background: #0a84ff; box-shadow: inset 0 1px 0 rgba(255,255,255,0.15); transition: background-color 180ms cubic-bezier(0.32, 0.72, 0, 1), transform 80ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-btn-primary:hover { background: #0070eb; } .ds-btn-primary:active { transform: scale(0.97); } .ds-btn-primary:focus-visible { outline: none; box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 0 0 3px rgba(10,132,255,0.4); }"
     },
     {
-      "name": "Arrow-Circle Pill (Signature CTA)",
+      "name": "Tinted Pill Button (soft blue)",
       "kind": "button",
-      "refersTo": "button-primary",
-      "description": "Signature CTA — black pill with a trailing white circular badge containing an arrow. Used on hero and 'Meet' / 'Use cases' sections only.",
-      "html": "<button class=\"ds-btn-arrow\">เข้าสู่ระบบ<span class=\"ds-btn-arrow-circle\"><svg viewBox='0 0 24 24' width='20' height='20' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12h14'/><path d='m12 5 7 7-7 7'/></svg></span></button>",
-      "css": ".ds-btn-arrow { display: inline-flex; align-items: center; gap: 12px; padding: 8px 8px 8px 32px; border-radius: 9999px; border: none; cursor: pointer; font-family: var(--font-anuphan, system-ui), sans-serif; font-size: 18px; font-weight: 500; color: #ffffff; background: #000000; transition: background-color 200ms ease-out; } .ds-btn-arrow:hover { background: #1f1f1f; } .ds-btn-arrow-circle { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 9999px; background: #ffffff; color: #000000; transition: transform 200ms ease-out; } .ds-btn-arrow:hover .ds-btn-arrow-circle { transform: translateX(2px); } .ds-btn-arrow:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(0,0,0,0.5); }"
+      "refersTo": "button-tinted",
+      "description": "Soft secondary action. Used for 'ดูทั้งหมด', 'ไปที่ห้องเรียน' — quieter than primary, more visible than ghost.",
+      "html": "<button class=\"ds-btn-tinted\">ดูทั้งหมด</button>",
+      "css": ".ds-btn-tinted { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 28px; border-radius: 9999px; border: none; cursor: pointer; font-family: var(--font-anuphan, system-ui), sans-serif; font-size: 16px; font-weight: 500; color: #1e40af; background: #eff6ff; transition: background-color 180ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-btn-tinted:hover { background: #dbeafe; }"
     },
     {
-      "name": "Secondary Pill Button",
+      "name": "Secondary Pill Button (neutral)",
       "kind": "button",
       "refersTo": "button-secondary",
-      "description": "Supporting actions. White pill, black text, hairline ring.",
+      "description": "Neutral supporting action. White pill, black text, hairline ring.",
       "html": "<button class=\"ds-btn-secondary\">ยกเลิก</button>",
-      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 28px; border-radius: 9999px; cursor: pointer; font-family: var(--font-anuphan, system-ui), sans-serif; font-size: 16px; font-weight: 500; color: #000000; background: #ffffff; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1); transition: box-shadow 200ms ease-out; } .ds-btn-secondary:hover { box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2); } .ds-btn-secondary:focus-visible { outline: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2), 0 0 0 3px rgba(0,0,0,0.4); }"
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 28px; border-radius: 9999px; cursor: pointer; font-family: var(--font-anuphan, system-ui), sans-serif; font-size: 16px; font-weight: 500; color: #000000; background: #ffffff; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1); transition: box-shadow 180ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-btn-secondary:hover { box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2); }"
     },
     {
       "name": "Default Card (white)",
       "kind": "card",
       "refersTo": "card",
-      "description": "Default surface. White, rounded-2xl, flat resting, lift on hover.",
-      "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">รายวิชาที่สอน</h3><p class=\"ds-card-body\">คณิตศาสตร์ ม.4 ครูสมชาย ห้อง ม.4/2 เทอม 1/2568</p></div>",
-      "css": ".ds-card { background: #ffffff; border-radius: 16px; padding: 28px; transition: box-shadow 200ms ease-out; } .ds-card:hover { box-shadow: 0 4px 24px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04); } .ds-card-title { font-family: var(--font-anuphan, system-ui), sans-serif; font-size: 24px; font-weight: 500; letter-spacing: -0.02em; color: #000000; margin: 0 0 12px; line-height: 1.3; } .ds-card-body { font-family: var(--font-anuphan, system-ui), sans-serif; font-size: 16px; font-weight: 400; color: rgba(0,0,0,0.7); line-height: 1.6; margin: 0; }"
+      "description": "Default container. White, rounded-2xl, flat resting, lift on hover.",
+      "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">รายวิชาที่สอน</h3><p class=\"ds-card-body\">คณิตศาสตร์ ม.4 ห้อง ม.4/2</p></div>",
+      "css": ".ds-card { background: #ffffff; border-radius: 16px; padding: 28px; transition: box-shadow 180ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-card:hover { box-shadow: 0 4px 24px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04); }"
     },
     {
-      "name": "Dark Card (aubergine)",
+      "name": "Accent Card (saturated system colour)",
       "kind": "card",
-      "refersTo": "card-dark",
-      "description": "Aubergine card surface. Used 1-2 times per page max for contrast moments. NEVER as a button.",
-      "html": "<div class=\"ds-card-dark\"><h3 class=\"ds-card-dark-title\">เปิดได้ทุกที่<br/>ทุกเวลา</h3><p class=\"ds-card-dark-body\">เว็บ มือถือ แท็บเล็ต — เข้าสู่ระบบเดียวกัน</p></div>",
-      "css": ".ds-card-dark { background: #2B2644; border-radius: 16px; padding: 28px; min-height: 320px; display: flex; flex-direction: column; justify-content: space-between; } .ds-card-dark-title { font-family: var(--font-anuphan, system-ui), sans-serif; font-size: 24px; font-weight: 500; letter-spacing: -0.02em; color: #ffffff; margin: 0; line-height: 1.2; } .ds-card-dark-body { font-family: var(--font-anuphan, system-ui), sans-serif; font-size: 16px; font-weight: 400; color: rgba(255,255,255,0.6); line-height: 1.6; margin: 0; }"
+      "refersTo": "card-accent",
+      "description": "Saturated coloured card. Hero CTAs, celebration moments, status banners that need volume. White text. 4 variants: blue / green / orange / red.",
+      "html": "<div class=\"ds-card-accent ds-card-accent--blue\"><h3>สวัสดี รายวินทร์</h3><p>วันนี้คุณมีงาน 3 ชิ้นต้องส่ง</p></div>",
+      "css": ".ds-card-accent { border-radius: 16px; padding: 28px; color: #ffffff; } .ds-card-accent--blue { background: #0a84ff; } .ds-card-accent--green { background: #34c759; } .ds-card-accent--orange { background: #ff9500; } .ds-card-accent--red { background: #ff3b30; }"
     },
     {
-      "name": "Input",
+      "name": "Tinted Card (subtle system colour)",
+      "kind": "card",
+      "refersTo": "card-tinted",
+      "description": "Soft tinted callout. KPI by status, info panels. 4 variants matching system colours.",
+      "html": "<div class=\"ds-card-tinted ds-card-tinted--orange\"><p class=\"ds-card-tinted-label\">ใกล้กำหนดส่ง</p><p class=\"ds-card-tinted-value\">3 ชิ้น</p></div>",
+      "css": ".ds-card-tinted { border-radius: 16px; padding: 24px; } .ds-card-tinted--blue { background: #eff6ff; color: #1e40af; } .ds-card-tinted--green { background: #ecfdf5; color: #15803d; } .ds-card-tinted--orange { background: #fff7ed; color: #c2410c; } .ds-card-tinted--red { background: #fef2f2; color: #b91c1c; }"
+    },
+    {
+      "name": "Hero Card (banner + content + inset stats)",
+      "kind": "card",
+      "refersTo": "card-hero",
+      "description": "Signature surface. Banner zone (course slot gradient mesh) + white content zone with inset stats strip. Matches the product owner's iOS-profile-card reference image.",
+      "html": "<article class=\"ds-card-hero\"><div class=\"ds-card-hero-banner\"></div><div class=\"ds-card-hero-content\"><h3 class=\"ds-card-hero-title\">ป.1/1</h3><p class=\"ds-card-hero-subtitle\">ครูประจำชั้น: สมหญิง สุขสันต์</p><dl class=\"ds-panel-inset\"><div><dt>นักเรียน</dt><dd>32</dd></div><div><dt>วิชา</dt><dd>8</dd></div><div><dt>ครู</dt><dd>5</dd></div></dl></div></article>",
+      "css": ".ds-card-hero { background: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.06); transition: transform 180ms cubic-bezier(0.32, 0.72, 0, 1), box-shadow 180ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-card-hero:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(0,0,0,0.08); } .ds-card-hero-banner { height: 120px; background: radial-gradient(circle at 30% 30%, #5eaedb 0%, #3cb4ac 70%); } .ds-card-hero-content { padding: 24px; } .ds-card-hero-title { font-family: var(--font-anuphan, system-ui), sans-serif; font-size: 24px; font-weight: 600; letter-spacing: -0.02em; color: #000000; margin: 0; } .ds-card-hero-subtitle { font-size: 14px; color: rgba(0,0,0,0.5); margin: 4px 0 16px; } .ds-panel-inset { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; background: rgba(0,0,0,0.025); border-radius: 12px; padding: 16px; box-shadow: inset 0 1px 0 rgba(0,0,0,0.04); } .ds-panel-inset > div { text-align: center; } .ds-panel-inset dt { font-size: 12px; color: rgba(0,0,0,0.5); } .ds-panel-inset dd { font-size: 20px; font-weight: 600; color: #000000; margin: 4px 0 0; }"
+    },
+    {
+      "name": "Input (blue focus glow)",
       "kind": "input",
       "refersTo": "input",
-      "description": "Rounded-xl field. Hairline ring carries the affordance. Black focus ring (no longer gold).",
+      "description": "Rounded-xl field. Hairline ring resting. Focus = blue 2px ring + subtle blue glow (iOS pressed-state). Instant border swap, not sprung.",
       "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"กรอกรหัสห้อง\" />",
-      "css": ".ds-input { display: block; width: 100%; padding: 10px 16px; border-radius: 12px; border: none; background: #ffffff; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1); font-family: var(--font-anuphan, system-ui), sans-serif; font-size: 16px; line-height: 1.6; color: #000000; transition: box-shadow 150ms ease-out; } .ds-input::placeholder { color: rgba(0,0,0,0.4); } .ds-input:hover { box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2); } .ds-input:focus { outline: none; box-shadow: inset 0 0 0 2px #000000; }"
+      "css": ".ds-input { display: block; width: 100%; padding: 10px 16px; border-radius: 12px; border: none; background: #ffffff; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1); font-family: var(--font-anuphan, system-ui), sans-serif; font-size: 16px; line-height: 1.6; color: #000000; transition: box-shadow 100ms ease-out; } .ds-input::placeholder { color: rgba(0,0,0,0.4); } .ds-input:hover { box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2); } .ds-input:focus { outline: none; box-shadow: inset 0 0 0 2px #0a84ff, 0 0 0 4px rgba(10,132,255,0.2); } @media (prefers-reduced-motion: reduce) { .ds-input:focus { box-shadow: inset 0 0 0 2px #0a84ff; } }"
     },
     {
-      "name": "Neutral Badge",
+      "name": "Neutral Badge (role)",
       "kind": "chip",
       "refersTo": "badge",
-      "description": "Identifier chip. Neutral grayscale (no saturated role colours — superseded ADR-0011's rose/blue/emerald scheme).",
+      "description": "Role badge — neutral grayscale. ADR-0028 keeps this rule from ADR-0014.",
       "html": "<span class=\"ds-badge\">ครู</span>",
       "css": ".ds-badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 9999px; background: rgba(0,0,0,0.05); color: #000000; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08); font-family: var(--font-anuphan, system-ui), sans-serif; font-size: 12px; font-weight: 500; line-height: 1.4; }"
+    },
+    {
+      "name": "Status Badge (system colour tinted)",
+      "kind": "chip",
+      "refersTo": "badge",
+      "description": "Status badge — system colour tinted. 4 variants for ส่งแล้ว / ใกล้กำหนด / เลยกำหนด / ประกาศใหม่.",
+      "html": "<span class=\"ds-badge ds-badge--success\">ส่งแล้ว</span>",
+      "css": ".ds-badge--success { background: #ecfdf5; color: #15803d; box-shadow: inset 0 0 0 1px rgba(21,128,61,0.15); } .ds-badge--warn { background: #fff7ed; color: #c2410c; } .ds-badge--danger { background: #fef2f2; color: #b91c1c; } .ds-badge--info { background: #eff6ff; color: #1e40af; }"
     }
   ],
   "narrative": {
-    "northStar": "The Calm Ledger",
-    "overview": "Studennnn looks and feels like a premium private-banking app stripped of any flourish, paired with a leather-bound family ledger left open on a quiet desk. Off-white surface, true black ink, one deep aubergine reserved for the moment of contrast. The interface holds itself with the discipline of a financial product, applied to the domain of a school's daily record-keeping.\n\nThe system explicitly rejects four neighbourhoods that PRODUCT.md calls out by name: government ERP, Thai EdTech default, Google Classroom Material, and generic AI-SaaS landing slop. Premium fintech as a family — Halo, Linear, Stripe Sessions — is the lane we live in, not the lane we avoid. This theme supersedes ADR-0011 Ink + Gold via ADR-0014.",
+    "northStar": "Calm Ledger v2 — friendly, layered, smooth",
+    "overview": "Studennnn keeps the chrome discipline of ADR-0014 (off-white body, true black ink, Anuphan single-family, pill geometry, rounded-2xl cards) and adds back the colour and material depth that ADR-0014 stripped out. Chrome stays calm; content carries colour. Interaction borrows the iOS spring curve at three durations and the iOS frosted-glass vocabulary in four named places.\n\nThe pain ADR-0028 addresses, verbatim from the product owner: 'ผมต้องการ Layout หรือ ธีมสีโดยรวมให้มันสดใสกว่านี้ เพราะตอนนี้ Project จืดมาก ไม่มีสีสัน.' Solution: System Blue as universal primary action, 8-slot course identity palette, .card-hero with banner + inset stats pattern matching the iOS profile-card reference image.",
     "keyCharacteristics": [
-      "Quiet · Premium · Modern (revised from Sophisticated · Modern · Crafted)",
-      "Tri-tonal: off-white body, true black ink, deep aubergine reserved for contrast moments",
-      "Single typeface (Anuphan — Cadson Demak, Latin + Thai) at three weights, 600 ceiling",
-      "Tight negative letter-spacing on all display + headline (-0.04em to -0.02em)",
-      "Pill geometry for actions (rounded-full), 2xl for cards (16px), 3xl for featured (24px)",
-      "No gradient text, no shimmer, no float, no tilt, no glass — motion is colour transitions and gentle shadow only",
-      "Hero surfaces lean on full-bleed media inside rounded-2xl cards, not CSS scenery"
+      "Off-white body (#F2F2F7 iOS systemGroupedBackground), true black ink, white card surfaces",
+      "System Blue (#0A84FF) as universal primary action across every role",
+      "4-colour iOS-style system palette (Blue/Green/Orange/Red) for state + status",
+      "8-slot course identity palette resolved by hash(class.id) — rose/coral/amber/lime/teal/sky/indigo/violet",
+      "Single typeface Anuphan, weight 600 ceiling, negative letter-spacing on display/headline/title",
+      "Pill geometry for actions, 2xl for cards, 3xl for .card-hero",
+      "Material depth via layered surfaces (.card-hero banner+content split, .panel-inset stats strip)",
+      "Frosted glass strictly scoped: top nav, mobile bottom nav, sheet backdrop, hero info bar",
+      "iOS spring curve at 3 duration tiers (80/180/280ms), form-focus instant, reduced-motion 100ms ease-out",
+      "Role-modulated rendering: student maximum vibrancy, teacher 4px markers + status colours, admin neutral with gallery exception"
     ],
     "rules": [
       {
-        "name": "The Aubergine-Is-Surface Rule",
-        "body": "Aubergine (#2B2644) is a card background colour. It is never a button, never an icon, never a chart series. One or two aubergine cards per page is the ceiling.",
+        "name": "The System-Blue-Is-Action Rule",
+        "body": "#0A84FF is the primary action across every role. True black is for text and structural strokes. Aubergine is retired.",
         "section": "colors"
       },
       {
-        "name": "The True-Black Rule",
-        "body": "No almost-black softening. Primary text and primary button surface are #000000 exactly.",
+        "name": "The Course-Colour-Is-Content Rule",
+        "body": "Course colour appears on content (chips, hero banners, list markers), never on chrome.",
+        "section": "colors"
+      },
+      {
+        "name": "The Saturation-Distinguishes-Layer Rule",
+        "body": "System colours sit at higher chroma; course colours at medium chroma. Users read by saturation.",
+        "section": "colors"
+      },
+      {
+        "name": "The True-Black-For-Text Rule",
+        "body": "Primary text and headings are #000000 exact. No slate-900, no #1a1a1a.",
         "section": "colors"
       },
       {
         "name": "The No-Saturated-Role-Colour Rule",
-        "body": "Admin / Teacher / Student badges are neutral grayscale, not rose/blue/emerald. Role differentiation moves to placement and label, not chroma.",
+        "body": "Admin/Teacher/Student badges remain neutral grayscale. Role differentiation moves to placement and label.",
         "section": "colors"
       },
       {
         "name": "The Anuphan-Only Rule",
-        "body": "No serif. No second display font. Anuphan carries display, body, and label across every page.",
+        "body": "No serif. No second display font.",
         "section": "typography"
       },
       {
         "name": "The 600-Ceiling Rule",
-        "body": "Weight 600 (semibold) is the heaviest weight in the system, including display h1. Weight 700 is forbidden.",
+        "body": "Weight 600 is the heaviest. No weight 700.",
         "section": "typography"
       },
       {
         "name": "The No-Uppercase-Eyebrow Rule",
-        "body": "Section eyebrows stay sentence case at 0.875rem weight 500. Tracked uppercase eyebrows are forbidden.",
+        "body": "Section eyebrows stay sentence case 0.875rem weight 500.",
         "section": "typography"
       },
       {
         "name": "The Negative-Tracking-Floor Rule",
-        "body": "Display tracking >= -0.04em, headline -0.03em, title -0.02em. Body and label stay at 0.",
+        "body": "Display >= -0.04em, headline -0.03em, title -0.02em.",
         "section": "typography"
       },
       {
         "name": "The Thai Line-Height Rule",
-        "body": "Body line-height >= 1.6. Thai วรรณยุกต์ stacking requires it.",
+        "body": "Body line-height >= 1.6.",
         "section": "typography"
       },
       {
         "name": "The Flat-By-Default Rule",
-        "body": "No shadow on resting cards. The rounded-2xl corner + 1px rgba(0,0,0,0.08) hairline carry the affordance. Shadow appears on hover or for featured surfaces only.",
+        "body": "Resting cards have no shadow; rounded-2xl + hairline carry the affordance.",
         "section": "elevation"
       },
       {
-        "name": "The 200ms Transition Rule",
-        "body": "Shadow and colour transitions run 200ms ease-out.",
+        "name": "The Material-By-Layering Rule",
+        "body": "Depth comes from stacked surfaces (.card-hero + .panel-inset), not from drop shadow weight.",
         "section": "elevation"
+      },
+      {
+        "name": "The Glass-Is-Chrome-Only Rule",
+        "body": "Frosted glass lives on nav, sheet backdrop, hero info bar — never on cards or content surfaces.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Spring-Curve-Is-Universal Rule",
+        "body": "Single iOS spring curve everywhere — no Material easing, no bouncy elastic.",
+        "section": "motion"
+      },
+      {
+        "name": "The Form-Focus-Is-Instant Rule",
+        "body": "Input focus border swaps in 100ms ease-out, never sprung.",
+        "section": "motion"
+      },
+      {
+        "name": "The Reduced-Motion-Is-Not-Instant Rule",
+        "body": "100ms ease-out preserves change-happened signal; instant disorients.",
+        "section": "motion"
+      },
+      {
+        "name": "The Gallery-Exception Rule",
+        "body": "List-of-things views (/admin/dashboard class cards, course overviews) get full .card-hero treatment regardless of role default vibrancy.",
+        "section": "role-modulation"
       }
     ],
     "dos": [
-      "Do anchor every page in true black (#000000) text on Off-White (#F5F5F5) or Surface White (#FFFFFF)",
-      "Do reach for Aubergine (#2B2644) only as a card surface, only 1-2 times per page",
-      "Do use rounded-full for buttons, rounded-2xl for cards, rounded-3xl for featured / hero",
-      "Do apply negative letter-spacing on display + headline + title — the tracking is the voice",
-      "Do keep weight 600 as the heaviest ceiling. No weight 700.",
+      "Do anchor every page in true black text on off-white body (#F2F2F7) or white surface",
+      "Do use System Blue (#0A84FF) for all primary actions across every role",
+      "Do use course slot colours on content (chips, hero banners, list markers), never on chrome",
+      "Do use rounded-full for pills, rounded-2xl for cards, rounded-3xl for .card-hero",
+      "Do apply negative letter-spacing on display + headline + title",
+      "Do keep weight 600 as the heaviest ceiling",
       "Do use Anuphan for everything",
-      "Do use the arrow-circle pill as the signature CTA",
-      "Do keep resting cards flat. Lift only on hover.",
-      "Do use full-bleed media inside rounded-2xl hero card — not CSS scenery",
-      "Do wrap motion in prefers-reduced-motion: reduce",
-      "Do verify text contrast >= 4.5:1 on every text-on-image surface"
+      "Do layer subordinate surfaces (.panel-inset inside .card-hero) for depth",
+      "Do keep frosted glass to the four named places: top nav, mobile bottom nav, sheet backdrop, hero info bar",
+      "Do use iOS spring curve at 3 duration tiers; form focus stays instant",
+      "Do wrap motion in prefers-reduced-motion: reduce -> 100ms ease-out (not instant)",
+      "Do verify body-size text contrast — Green-500 and Orange-500 only support large text in white",
+      "Do apply .card-hero to admin dashboard class cards (gallery exception)"
     ],
     "donts": [
       "Don't use almost-black softening. Primary text is #000000.",
-      "Don't put Aubergine on a button. Aubergine is a surface.",
-      "Don't use weight 700 anywhere. 600 is the ceiling.",
-      "Don't use uppercase tracked eyebrows above sections.",
-      "Don't use saturated semantic colours for role identification. Admin/Teacher/Student badges are grayscale.",
+      "Don't use aubergine. ADR-0028 retires it.",
+      "Don't use weight 700 anywhere.",
+      "Don't use uppercase tracked eyebrows.",
+      "Don't use saturated semantic colours for role badges.",
       "Don't use gradient text.",
-      "Don't use shimmer, float, tilt, mesh-bg, blob, sheen, glass, or any Ink+Gold motion utility. Removed from globals.css.",
+      "Don't use frosted glass on cards, sidebars, data tables, form inputs, or body text containers.",
+      "Don't spring a form input focus ring.",
       "Don't add a second display font.",
       "Don't uppercase Thai script.",
-      "Don't style like government ERP, Thai EdTech default, Google Classroom Material, or generic AI-SaaS slop.",
-      "Don't use border-left greater than 1px as a colored stripe.",
-      "Don't nest cards inside cards.",
-      "Don't put body text on tinted backgrounds without verifying 4.5:1 contrast."
+      "Don't use border-left greater than 1px as a coloured stripe.",
+      "Don't nest cards inside cards — .panel-inset inside .card-hero is a subordinate panel, not a nested card.",
+      "Don't put body text on saturated .card-accent Green or Orange.",
+      "Don't emulate Windows 11 Mica directly — translate intent to iOS-style frosted glass at lower blur."
     ]
   }
 }

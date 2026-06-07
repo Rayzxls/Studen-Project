@@ -110,9 +110,12 @@ export default async function AdminStudentsPage({ searchParams }: PageProps) {
                 <tr key={s.userId}>
                   <td className="font-mono text-sm">{s.studentId}</td>
                   <td>
-                    <div className="font-medium">
+                    <Link
+                      href={`/admin/users/${s.userId}`}
+                      className="font-medium text-black hover:underline"
+                    >
                       {s.firstName} {s.lastName}
-                    </div>
+                    </Link>
                   </td>
                   <td className="text-sm">
                     {s.className ? (

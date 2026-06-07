@@ -1,28 +1,26 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Plus, LogIn, BookOpen, Users } from "lucide-react";
-import { auth, signOut } from "@/lib/auth";
+import { ArrowRight, Plus, LogIn, BookOpen, Users } from "lucide-react";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db/client";
 import {
   listStudentCourses,
   listTeacherCourses,
 } from "@/lib/course/enrollment";
+import { TopNav } from "@/components/layout/top-nav";
+import { StudentBottomNav } from "@/components/layout/student-bottom-nav";
+import { DueSoonWidget } from "@/components/feed/due-soon-widget";
+import { UserFeed } from "@/components/feed/user-feed";
+import { CourseColorChip } from "@/components/course/course-color-chip";
+import { TeacherHero } from "@/components/dashboard/teacher-hero";
+import { StudentTodayPanel } from "@/components/dashboard/student-today-panel";
+import { AmbientBackground } from "@/components/motion/ambient-background";
+import { EntryStagger } from "@/components/motion/entry-stagger";
+import { Tilt3D } from "@/components/motion/tilt-3d";
 
 // Auth-gated DB-fetching page — skip static prerender.
 export const dynamic = "force-dynamic";
-
-function LogoMark({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 256 256"
-      className={className}
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <path d="M 128.005 191.173 C 128.448 156.208 156.93 128 192 128 L 192 64 L 128 64 C 128 99.346 99.346 128 64 128 L 64 192 L 128 192 Z M 192 256 L 64 256 C 28.654 256 0 227.346 0 192 L 0 64 L 64 64 L 64 0 L 192 0 C 227.346 0 256 28.654 256 64 L 256 192 L 192 192 Z" />
-    </svg>
-  );
-}
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -78,50 +76,121 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-bg">
-      <header className="border-b border-black/[0.06] bg-white/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <LogoMark className="h-6 w-6 text-black" />
-            <span
-              className="text-lg font-medium text-black"
-              style={{ letterSpacing: "-0.02em" }}
-            >
-              Studennnn
-            </span>
-          </Link>
-          <form
-            action={async () => {
-              "use server";
-              await signOut({ redirectTo: "/login" });
-            }}
-          >
-            <button className="btn-ghost btn-sm">ออกจากระบบ</button>
-          </form>
-        </div>
-      </header>
+      <TopNav session={session} />
 
       <main className="mx-auto max-w-6xl animate-fade-in px-6 py-10">
-        <div className="mb-6 flex flex-wrap items-center gap-2">
-          <span className="badge">{roleLabel[user.role]}</span>
-          {user.teacher?.homeroomOf && (
-            <span className="badge">
-              ครูประจำชั้น {user.teacher.homeroomOf.name}
-            </span>
-          )}
-          {user.student?.class && (
-            <span className="badge">{user.student.class.name}</span>
-          )}
-        </div>
+        {/* Student gets the .card-hero blue saturated greeting — the
+            third critical sweep per ADR-0028 § 4. Teacher and admin
+            keep the calm text greeting (Phase 11D will deepen teacher). */}
+        {user.role === "STUDENT" ? (
+          <section
+            className="card-accent card-accent-blue relative overflow-hidden rounded-3xl"
+            style={{
+              padding: "32px",
+              minHeight: 200,
+            }}
+          >
+            {/* Ambient drifting blobs (ADR-0029 T2) add living depth
+                behind the saturated hero without hurting white-text
+                contrast — they sit under a darkening overlay. */}
+            <AmbientBackground tone="blue" intensity={0.55} />
+            {/* Subtle radial highlight in the top-right adds the iOS
+                pressed-glass depth without changing the saturated read. */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0"
+              style={{
+                background:
+                  "radial-gradient(circle at 90% 0%, rgba(255,255,255,0.22) 0%, transparent 55%), linear-gradient(180deg, rgba(10,132,255,0.0) 40%, rgba(10,132,255,0.35) 100%)",
+              }}
+            />
+            {/* Split layout: text on left, mascot image on right */}
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="flex flex-col gap-6 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium text-white">
+                    {roleLabel[user.role]}
+                  </span>
+                  {user.student?.class && (
+                    <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium text-white">
+                      {user.student.class.name}
+                    </span>
+                  )}
+                </div>
 
-        <h1
-          className="text-3xl font-medium text-black md:text-4xl"
-          style={{ letterSpacing: "-0.03em" }}
-        >
-          สวัสดี, {name}
-        </h1>
-        <p className="mt-2 text-base text-black/60">
-          ยินดีต้อนรับเข้าสู่ระบบจัดการห้องเรียน Studennnn
-        </p>
+                <div>
+                  <h1
+                    className="text-3xl font-semibold text-white md:text-4xl"
+                    style={{ letterSpacing: "-0.03em" }}
+                  >
+                    สวัสดี, {name}
+                  </h1>
+                  <p className="mt-2 text-base text-white/80">
+                    ยินดีต้อนรับเข้าสู่ระบบจัดการห้องเรียน Beagle Classroom
+                  </p>
+                </div>
+
+                <div className="mt-auto flex flex-wrap items-center gap-2">
+                  <Link
+                    href="/join"
+                    className="inline-flex items-center gap-2 rounded-full bg-white py-2 pl-5 pr-2 text-sm font-medium text-blue-700 transition-transform hover:scale-[0.99]"
+                  >
+                    เข้าร่วมห้องเรียน
+                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-50 text-blue-700">
+                      <ArrowRight className="h-4 w-4" />
+                    </span>
+                  </Link>
+                  <Link
+                    href="/student/terms"
+                    className="rounded-full bg-white/15 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-white/25"
+                  >
+                    ผลการเรียน
+                  </Link>
+                </div>
+              </div>
+
+              {/* Right column: 3D student mascot — transparent cut-out so it
+                  blends seamlessly into the blue hero (no white box). */}
+              <div className="relative hidden md:flex items-end justify-center w-52 h-52 shrink-0 self-stretch">
+                <Image
+                  src="/brand/student-mascot-transparent.webp"
+                  alt="Student Mascot"
+                  fill
+                  priority
+                  sizes="208px"
+                  className="object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,0.25)]"
+                />
+              </div>
+            </div>
+          </section>
+        ) : user.role === "TEACHER" ? (
+          <>
+            {user.teacher?.homeroomOf && (
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <span className="badge">
+                  ครูประจำชั้น {user.teacher.homeroomOf.name}
+                </span>
+              </div>
+            )}
+            <TeacherHero teacherUserId={session.user.id} name={name} />
+          </>
+        ) : (
+          <>
+            <div className="mb-6 flex flex-wrap items-center gap-2">
+              <span className="badge">{roleLabel[user.role]}</span>
+            </div>
+
+            <h1
+              className="text-3xl font-medium text-black md:text-4xl"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              สวัสดี, {name}
+            </h1>
+            <p className="mt-2 text-base text-black/60">
+              ยินดีต้อนรับเข้าสู่ระบบจัดการห้องเรียน Beagle Classroom
+            </p>
+          </>
+        )}
 
         {/* TEACHER */}
         {user.role === "TEACHER" && teacherCourses && (
@@ -147,34 +216,43 @@ export default async function DashboardPage() {
                 </p>
               </div>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <EntryStagger className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {teacherCourses.slice(0, 6).map((c) => (
-                  <Link
-                    key={c.id}
-                    href={`/teacher/courses/${c.id}`}
-                    className="card p-5 hover:no-underline"
-                  >
-                    <h3
-                      className="font-medium text-black"
-                      style={{ letterSpacing: "-0.01em" }}
+                  <Tilt3D key={c.id} maxDeg={6}>
+                    <Link
+                      href={`/teacher/courses/${c.id}`}
+                      className="card group relative flex p-5 hover:no-underline"
                     >
-                      {c.name}
-                    </h3>
-                    <p className="mt-0.5 text-sm text-black/60">
-                      ห้อง {c.class.name} · {c.term.name}
-                    </p>
-                    <div className="mt-3 flex items-center justify-between border-t border-black/[0.06] pt-3 text-xs">
-                      <span className="font-mono text-black/60">
-                        {c.classCode}
-                      </span>
-                      <span className="inline-flex items-center gap-1 text-black/60">
-                        <Users className="h-3.5 w-3.5" />
-                        {c._count.enrollments}
-                      </span>
-                    </div>
-                  </Link>
+                      {/* Teacher view — 4px course colour marker per ADR-0028 § 8. */}
+                      <CourseColorChip
+                        classId={c.class.id}
+                        variant="marker"
+                        className="mr-4"
+                      />
+                      <div className="flex-1">
+                        <h3
+                          className="font-medium text-black"
+                          style={{ letterSpacing: "-0.01em" }}
+                        >
+                          {c.name}
+                        </h3>
+                        <p className="mt-0.5 text-sm text-black/60">
+                          ห้อง {c.class.name} · {c.term.name}
+                        </p>
+                        <div className="mt-3 flex items-center justify-between border-t border-black/[0.06] pt-3 text-xs">
+                          <span className="font-mono text-black/60">
+                            {c.classCode}
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-black/60">
+                            <Users className="h-3.5 w-3.5" />
+                            {c._count.enrollments}
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  </Tilt3D>
                 ))}
-              </div>
+              </EntryStagger>
             )}
 
             {teacherCourses.length > 6 && (
@@ -186,6 +264,14 @@ export default async function DashboardPage() {
               </Link>
             )}
           </section>
+        )}
+
+        {/* STUDENT — Today's class panel (Phase 11D) + Due Soon. */}
+        {user.role === "STUDENT" && (
+          <div className="mt-10 space-y-4">
+            <StudentTodayPanel studentUserId={session.user.id} />
+            <DueSoonWidget studentUserId={session.user.id} />
+          </div>
         )}
 
         {/* STUDENT */}
@@ -221,31 +307,46 @@ export default async function DashboardPage() {
                 </Link>
               </div>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <EntryStagger className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {studentCourses.map((e) => (
-                  <Link
-                    key={e.id}
-                    href={`/student/courses/${e.course.id}`}
-                    className="card p-5 hover:no-underline"
-                  >
-                    <h3
-                      className="font-medium text-black"
-                      style={{ letterSpacing: "-0.01em" }}
+                  <Tilt3D key={e.id} maxDeg={7}>
+                    <Link
+                      href={`/student/courses/${e.course.id}`}
+                      className="card block p-5 hover:no-underline"
                     >
-                      {e.course.name}
-                    </h3>
-                    <p className="mt-0.5 text-sm text-black/60">
-                      ห้อง {e.course.class.name} · {e.course.term.name}
-                    </p>
-                    <div className="mt-3 border-t border-black/[0.06] pt-3 text-xs text-black/60">
-                      ครู {e.course.teacher.firstName}{" "}
-                      {e.course.teacher.lastName}
-                    </div>
-                  </Link>
+                      {/* Student view — full course colour chip per ADR-0028 § 8. */}
+                      <CourseColorChip
+                        classId={e.course.class.id}
+                        variant="chip"
+                        label={e.course.class.name}
+                        className="mb-3"
+                      />
+                      <h3
+                        className="font-medium text-black"
+                        style={{ letterSpacing: "-0.01em" }}
+                      >
+                        {e.course.name}
+                      </h3>
+                      <p className="mt-0.5 text-sm text-black/60">
+                        {e.course.term.name}
+                      </p>
+                      <div className="mt-3 border-t border-black/[0.06] pt-3 text-xs text-black/60">
+                        ครู {e.course.teacher.firstName}{" "}
+                        {e.course.teacher.lastName}
+                      </div>
+                    </Link>
+                  </Tilt3D>
                 ))}
-              </div>
+              </EntryStagger>
             )}
           </section>
+        )}
+
+        {/* STUDENT — User Feed (Q3 = B: student-only) */}
+        {user.role === "STUDENT" && (
+          <div className="mt-10">
+            <UserFeed session={session} />
+          </div>
         )}
 
         {/* ADMIN */}
@@ -266,44 +367,13 @@ export default async function DashboardPage() {
           </section>
         )}
 
-        {/* Status footer */}
-        <section className="card mt-12 p-6">
-          <h2
-            className="font-medium text-black"
-            style={{ letterSpacing: "-0.02em" }}
-          >
-            อยู่ระหว่างพัฒนา
-          </h2>
-          <p className="mt-2 text-sm text-black/60">
-            <span className="font-medium text-black">Phase ปัจจุบัน:</span> 5 —
-            คะแนน + Term Summary
-          </p>
-          <ul className="mt-3 list-inside list-disc space-y-1 text-sm text-black/60">
-            <li>
-              <span className="text-black/40 line-through">
-                Phase 2 — Academic Data + Class Code + Join
-              </span>{" "}
-              ✓
-            </li>
-            <li>
-              <span className="text-black/40 line-through">
-                Phase 3 — สมาชิกห้อง (ละเอียดขึ้น)
-              </span>{" "}
-              ✓
-            </li>
-            <li>
-              <span className="text-black/40 line-through">
-                Phase 4 — เช็คชื่อ
-              </span>{" "}
-              ✓
-            </li>
-            <li>Phase 6 — การบ้าน + Comments</li>
-            <li>Phase 7 — Feed + Notifications</li>
-            <li>Phase 8 — Admin Audit Tools</li>
-            <li>Phase 9 — Polish + Hardening</li>
-          </ul>
-        </section>
+        {/* Bottom-padding spacer so the last card clears the mobile
+            glass bottom nav (only mounted for STUDENT). */}
+        {user.role === "STUDENT" && <div className="h-20 md:hidden" />}
       </main>
+
+      {/* Student mobile glass bottom nav — ADR-0028 § 5. */}
+      {user.role === "STUDENT" && <StudentBottomNav />}
     </div>
   );
 }

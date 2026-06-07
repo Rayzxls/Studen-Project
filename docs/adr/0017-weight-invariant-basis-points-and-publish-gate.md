@@ -2,6 +2,8 @@
 
 ## Status
 
+**Superseded by [ADR-0024](./0024-sum-based-scoring-supersedes-weight-invariant.md)** — 2026-06-05 (Phase 10 entry). The weight channel and Σ=10000 publish gate described below are removed; per-CourseOffering grade is now computed as `Σ score / Σ fullScore × 100`. Retained here for historical reference — do not implement against this document.
+
 Accepted — 2026-06-04 (Phase 5 entry)
 
 ## Context

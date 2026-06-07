@@ -28,9 +28,9 @@ interface PageProps {
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   NOT_SUBMITTED: { label: "ยังไม่ส่ง", color: "bg-black/[0.05] text-black/60" },
   DRAFT: { label: "ร่าง", color: "bg-black/[0.05] text-black/60" },
-  SUBMITTED: { label: "ส่งแล้ว", color: "bg-emerald-50 text-emerald-700" },
-  LATE_SUBMITTED: { label: "ส่งสาย", color: "bg-amber-50 text-amber-700" },
-  RETURNED: { label: "ส่งคืน", color: "bg-rose-50 text-rose-700" },
+  SUBMITTED: { label: "ส่งแล้ว", color: "bg-green-50 text-green-700" },
+  LATE_SUBMITTED: { label: "ส่งสาย", color: "bg-orange-50 text-orange-700" },
+  RETURNED: { label: "ส่งคืน", color: "bg-red-50 text-red-700" },
   GRADED: { label: "ตรวจแล้ว", color: "bg-blue-50 text-blue-700" },
 };
 
@@ -66,7 +66,7 @@ export default async function StudentAssignmentsListPage({
       subjectCode: true,
       gradeLevel: true,
       creditHours: true,
-      class: { select: { name: true } },
+      class: { select: { id: true, name: true } },
       term: { select: { name: true } },
       teacher: { select: { firstName: true, lastName: true } },
     },
@@ -93,6 +93,7 @@ export default async function StudentAssignmentsListPage({
 
   return (
     <CourseShell
+      session={session}
       course={course}
       eyebrow="วิชาที่เรียน"
       backHref="/dashboard"
@@ -146,7 +147,7 @@ export default async function StudentAssignmentsListPage({
                         )}
                       </div>
                       <p
-                        className={`mt-0.5 text-xs ${isOverdue ? "text-rose-600" : "text-black/50"}`}
+                        className={`mt-0.5 text-xs ${isOverdue ? "text-red-700" : "text-black/50"}`}
                       >
                         กำหนดส่ง: {dueLabel}
                       </p>

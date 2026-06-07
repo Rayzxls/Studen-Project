@@ -67,7 +67,7 @@ export function RemoveMemberDialog({
       <button
         type="button"
         onClick={open}
-        className="text-sm text-rose-600 transition-colors hover:text-rose-700"
+        className="text-sm text-red-700 transition-colors hover:text-red-700"
       >
         นำออก
       </button>
@@ -134,7 +134,7 @@ export function RemoveMemberDialog({
             <div className="mt-1 flex items-center justify-between text-xs">
               <span
                 className={
-                  tooShort || tooLong ? "text-rose-600" : "text-black/40"
+                  tooShort || tooLong ? "text-red-700" : "text-black/40"
                 }
               >
                 {tooShort
@@ -145,21 +145,21 @@ export function RemoveMemberDialog({
               </span>
               <span
                 className={
-                  tooLong ? "font-medium text-rose-600" : "text-black/40"
+                  tooLong ? "font-medium text-red-700" : "text-black/40"
                 }
               >
                 {trimmedLen}/{REASON_MAX}
               </span>
             </div>
             {state.fieldErrors?.reason && (
-              <p className="mt-1 text-xs text-rose-600">
+              <p className="mt-1 text-xs text-red-700">
                 {state.fieldErrors.reason}
               </p>
             )}
           </div>
 
           {state.error && (
-            <p className="mt-3 rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-700">
+            <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">
               {state.error}
             </p>
           )}

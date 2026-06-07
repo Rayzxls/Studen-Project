@@ -65,6 +65,7 @@ export default async function AssignmentsListPage({ params }: PageProps) {
 
   return (
     <CourseShell
+      session={session}
       course={course}
       eyebrow="รายวิชาที่สอน"
       backHref="/teacher/courses"
@@ -130,18 +131,18 @@ export default async function AssignmentsListPage({ params }: PageProps) {
                           <span className="badge-gold">นับคะแนน</span>
                         )}
                         {publishedScoreItem && (
-                          <span className="rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
+                          <span className="rounded-md bg-green-50 px-1.5 py-0.5 text-[10px] font-medium text-green-700">
                             เผยแพร่
                           </span>
                         )}
                         {a.submissionClosed && (
-                          <span className="rounded-md bg-rose-50 px-1.5 py-0.5 text-[10px] font-medium text-rose-700">
+                          <span className="rounded-md bg-red-50 px-1.5 py-0.5 text-[10px] font-medium text-red-700">
                             ปิดการส่ง
                           </span>
                         )}
                       </div>
                       <p
-                        className={`mt-0.5 text-xs ${isOverdue ? "text-rose-600" : "text-black/50"}`}
+                        className={`mt-0.5 text-xs ${isOverdue ? "text-red-700" : "text-black/50"}`}
                       >
                         กำหนดส่ง: {dueLabel}
                         {a.autoCloseAtDue && a.dueAt && (

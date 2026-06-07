@@ -60,7 +60,23 @@ export type AuditEvent =
   | "FILE_DELETED" // Important · owner removal or moderator delete
   | "FILE_INFECTED_BLOCKED" // Critical · enum reserved, no fire site in Phase 6 (AV deferred to Phase 9)
   // Admin
-  | "ADMIN_VIEW_STUDENT_DATA";
+  | "ADMIN_VIEW_STUDENT_DATA"
+  // Phase 8 — read-side admin audit tools
+  | "ADMIN_AUDIT_EXPORTED"
+  // Phase 10 — Admin CRUD surface + analytics export (ADR-0026, Phase 10A Q8b/Q7d)
+  | "ACADEMIC_YEAR_CREATED"
+  | "ACADEMIC_YEAR_UPDATED"
+  | "ACADEMIC_YEAR_DELETED"
+  | "TERM_CREATED"
+  | "TERM_UPDATED"
+  | "TERM_DELETED"
+  | "CLASS_CREATED"
+  | "CLASS_UPDATED"
+  | "CLASS_DELETED"
+  | "HOMEROOM_ASSIGNED" // Important · before/after `{teacherId, classId}`
+  | "TEACHER_CREATED_SINGLE" // Important · single-add path distinct from CSV_IMPORT (which is bulk)
+  | "PASSWORD_RESET_BY_ADMIN" // Important · generated temp password is NOT logged (CLAUDE.md hard rule)
+  | "CLASS_ANALYTICS_EXPORTED"; // Important · payload = filter snapshot, mirrors ADMIN_AUDIT_EXPORTED posture
 
 export interface AuditPayload {
   actorId?: string | null;
@@ -68,6 +84,16 @@ export interface AuditPayload {
   action: AuditEvent;
   targetType?: string;
   targetId?: string;
+  /**
+   * Human-readable snapshot of the target — captured at fire time so the
+   * audit viewer renders without JOINs even if the underlying entity is
+   * renamed or deleted (ADR-0027, Q9d). Examples:
+   *   - ScoreItem fire → "สอบกลางภาค (วิชาคณิตศาสตร์ ม.4)"
+   *   - Enrollment fire → "นาย ก. (ม.4/2 · วิชาคณิตศาสตร์)"
+   * Optional — old fire sites that haven't been touched leave it null;
+   * the renderer falls back to "—".
+   */
+  targetLabel?: string;
   before?: Prisma.InputJsonValue;
   after?: Prisma.InputJsonValue;
   reason?: string;
@@ -91,6 +117,7 @@ export async function audit(
       action: payload.action,
       targetType: payload.targetType ?? null,
       targetId: payload.targetId ?? null,
+      targetLabel: payload.targetLabel ?? null,
       before: payload.before,
       after: payload.after,
       reason: payload.reason ?? null,

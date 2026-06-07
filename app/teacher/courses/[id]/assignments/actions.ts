@@ -38,18 +38,11 @@ export async function createAssignmentAction(
   const allowLink = formData.get("allowLink") === "on";
   const autoCloseAtDue = formData.get("autoCloseAtDue") === "on";
   const isScored = formData.get("isScored") === "on";
-  const weightPctRaw = String(formData.get("weightPct") ?? "");
   const fullScoreRaw = String(formData.get("fullScore") ?? "");
 
-  // % → basis points conversion at the edge (Pattern from Phase 5 ADR-0017).
-  let weightBp: number | undefined;
+  // ADR-0024 — no weight field anymore; only fullScore when isScored.
   let fullScore: number | undefined;
   if (isScored) {
-    const pct = Number.parseFloat(weightPctRaw);
-    if (!Number.isFinite(pct) || pct <= 0 || pct > 100) {
-      return { fieldErrors: { weightPct: "ระบุน้ำหนัก 0.01–100%" } };
-    }
-    weightBp = Math.round(pct * 100);
     fullScore = Number.parseInt(fullScoreRaw, 10);
     if (!Number.isInteger(fullScore) || fullScore <= 0) {
       return { fieldErrors: { fullScore: "ระบุคะแนนเต็มเป็นจำนวนเต็มบวก" } };
@@ -69,7 +62,6 @@ export async function createAssignmentAction(
         submissionClosed: false,
         autoCloseAtDue,
         isScored,
-        weight: weightBp,
         fullScore,
       },
       {

@@ -1,15 +1,31 @@
 import { defineConfig, devices } from "@playwright/test";
 
+/**
+ * Playwright E2E configuration — Phase 9 · P9-3
+ *
+ * Runs against a real local dev server on http://localhost:3000.
+ * Tests share the Neon dev DB with the integration tests, so we keep
+ * the suite serial (workers: 1) and let webServer reuse the dev
+ * server the developer is already running.
+ *
+ * Chromium-only. Cross-browser + Lighthouse + axe-core sweep land in
+ * a Phase 10 hardening pass.
+ */
 export default defineConfig({
   testDir: "./tests/e2e",
-  fullyParallel: true,
+  timeout: 90_000,
+  expect: { timeout: 10_000 },
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
-  reporter: "html",
+  retries: process.env.CI ? 1 : 0,
+  workers: 1,
+  reporter: [["list"]],
   use: {
     baseURL: "http://localhost:3000",
-    trace: "on-first-retry",
+    trace: "retain-on-failure",
+    screenshot: "only-on-failure",
+    actionTimeout: 15_000,
+    navigationTimeout: 30_000,
   },
   projects: [
     {
@@ -22,5 +38,7 @@ export default defineConfig({
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
+    stdout: "ignore",
+    stderr: "pipe",
   },
 });

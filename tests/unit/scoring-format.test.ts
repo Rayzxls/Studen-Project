@@ -1,43 +1,13 @@
 /**
  * Display formatters — `lib/scoring/format.ts`.
  *
- * Coverage focuses on the basis-points → percent conversion (single
- * source of truth per ADR-0017) and the GPA "always 2 decimals" contract.
+ * Phase 5 → Phase 10 cutover (ADR-0024) removed `formatBasisPoints` along
+ * with the `weight` channel. Remaining coverage: `formatPercent` (used by
+ * Score Total) + `formatGpa` (always 2 decimals — Thai transcript contract).
  */
 
 import { describe, it, expect } from "vitest";
-import {
-  formatBasisPoints,
-  formatPercent,
-  formatGpa,
-} from "@/lib/scoring/format";
-
-describe("formatBasisPoints", () => {
-  it("renders 10000 as '100%'", () => {
-    expect(formatBasisPoints(10000)).toBe("100%");
-  });
-
-  it("renders 5000 as '50%' (no trailing zero)", () => {
-    expect(formatBasisPoints(5000)).toBe("50%");
-  });
-
-  it("renders 3333 as '33.33%'", () => {
-    expect(formatBasisPoints(3333)).toBe("33.33%");
-  });
-
-  it("renders 3330 as '33.3%' (one trailing zero trimmed)", () => {
-    expect(formatBasisPoints(3330)).toBe("33.3%");
-  });
-
-  it("renders 0 as '0%'", () => {
-    expect(formatBasisPoints(0)).toBe("0%");
-  });
-
-  it("renders non-finite as '—'", () => {
-    expect(formatBasisPoints(NaN)).toBe("—");
-    expect(formatBasisPoints(Infinity)).toBe("—");
-  });
-});
+import { formatPercent, formatGpa } from "@/lib/scoring/format";
 
 describe("formatPercent", () => {
   it("renders null as '—'", () => {

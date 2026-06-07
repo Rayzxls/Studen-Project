@@ -1,20 +1,56 @@
 @import "tailwindcss";
 
 /* ═══════════════════════════════════════════════════════════
-   Design System: "Calm Ledger"
-   Supersedes Ink + Gold — see docs/adr/0014-theme-calm-ledger-supersedes-ink-gold.md
-   Tailwind v4 (CSS-based @theme)
+   Design System: "Calm Ledger v2"
+   Extends ADR-0014 via ADR-0028 — color-friendly + material.
+   Tailwind v4 (CSS-based @theme).
    ═══════════════════════════════════════════════════════════ */
 
 @theme {
-  /* ───── Colors ───── */
-  --color-bg: #f5f5f5;
+  /* ───── Neutral chrome ───── */
+  --color-bg: #f2f2f7; /* iOS systemGroupedBackground (shifted from #f5f5f5) */
   --color-surface: #ffffff;
   --color-ink: #000000;
-  --color-ink-soft: #4d4d4d;
-  --color-ink-mute: #808080;
-  --color-accent: #2b2644;
+  --color-ink-soft: #4d4d4d; /* equiv rgba(0,0,0,0.70) on white */
+  --color-ink-mute: #808080; /* equiv rgba(0,0,0,0.50) on white */
+  --color-ink-faint: #bfbfbf; /* equiv rgba(0,0,0,0.25) on white */
+  --color-hairline: #ebebeb; /* equiv rgba(0,0,0,0.08) on white */
+  --color-hairline-strong: #d6d6d6; /* equiv rgba(0,0,0,0.16) on white */
+  /* Backward-compat alias — old class names still referenced in some pages. */
   --color-border: #ebebeb;
+
+  /* ───── System colours (4 — semantic only, ADR-0028) ───── */
+  --color-blue-50: #eff6ff;
+  --color-blue-500: #0a84ff; /* primary action — universal across all roles */
+  --color-blue-600: #0070eb; /* primary action hover */
+  --color-blue-700: #1e40af; /* text-on-tinted */
+  --color-green-50: #ecfdf5;
+  --color-green-500: #34c759;
+  --color-green-700: #15803d;
+  --color-orange-50: #fff7ed;
+  --color-orange-500: #ff9500;
+  --color-orange-700: #c2410c;
+  --color-red-50: #fef2f2;
+  --color-red-500: #ff3b30;
+  --color-red-700: #b91c1c;
+
+  /* ───── Course identity palette (8 slots — hash-derived, content-level) ───── */
+  --color-course-rose-500: #f56c7c;
+  --color-course-rose-50: #fef1f3;
+  --color-course-coral-500: #f58e6e;
+  --color-course-coral-50: #fef3ee;
+  --color-course-amber-500: #e8a646;
+  --color-course-amber-50: #fdf6e8;
+  --color-course-lime-500: #94c944;
+  --color-course-lime-50: #f2faea;
+  --color-course-teal-500: #3cb4ac;
+  --color-course-teal-50: #ebfaf8;
+  --color-course-sky-500: #5eaedb;
+  --color-course-sky-50: #eef7fc;
+  --color-course-indigo-500: #7a7ae5;
+  --color-course-indigo-50: #eff0fe;
+  --color-course-violet-500: #b574d6;
+  --color-course-violet-50: #f8eefb;
 
   /* ───── Fonts ───── */
   --font-sans: var(--font-anuphan), system-ui, sans-serif;
@@ -24,10 +60,23 @@
   --shadow-lift:
     0 4px 24px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.04);
   --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.06);
+  --shadow-inset: inset 0 1px 0 rgba(0, 0, 0, 0.04);
+
+  /* ───── Motion (iOS spring 3-tier — ADR-0028 § 6) ───── */
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+  --duration-spring-micro: 80ms;
+  --duration-spring-standard: 180ms;
+  --duration-spring-large: 280ms;
+
+  /* ───── Glass (frosted, scope-limited — ADR-0028 § 5) ───── */
+  --glass-blur-desktop: blur(20px) saturate(180%);
+  --glass-blur-mobile: blur(12px) saturate(150%);
+  --glass-bg: rgba(242, 242, 247, 0.72);
+  --glass-fallback: rgba(255, 255, 255, 0.95);
 
   /* ───── Animations ───── */
-  --animate-fade-in: fade-in 200ms ease-out both;
-  --animate-slide-up: slide-up 280ms ease-out both;
+  --animate-fade-in: fade-in 180ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  --animate-slide-up: slide-up 280ms cubic-bezier(0.32, 0.72, 0, 1) both;
 
   /* ───── Keyframes ───── */
   @keyframes fade-in {
@@ -50,6 +99,71 @@
       transform: translateY(0);
     }
   }
+  @keyframes sheet-slide-up {
+    0% {
+      transform: translateY(100%);
+    }
+    100% {
+      transform: translateY(0);
+    }
+  }
+
+  /* Ambient blob drift — ADR-0029 AmbientBackground. Three offset slow
+     orbits; each blob travels a small loop so the hero bg feels alive
+     without scroll-jacking. */
+  @keyframes blob-drift-a {
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1);
+    }
+    50% {
+      transform: translate(8%, 6%) scale(1.12);
+    }
+  }
+  @keyframes blob-drift-b {
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1);
+    }
+    50% {
+      transform: translate(-7%, 9%) scale(1.08);
+    }
+  }
+  @keyframes blob-drift-c {
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1);
+    }
+    50% {
+      transform: translate(6%, -8%) scale(1.15);
+    }
+  }
+
+  /* Gentle idle bob for the landing hero floating cards. The inner card
+     wrapper bobs; the outer wrapper carries the pointer-parallax
+     transform (so the two transforms don't fight). */
+  @keyframes float-card-bob {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+
+  /* Class-card avatar idle float — gentle bob + slight tilt so the (3D)
+     avatar feels alive. Suppressed under prefers-reduced-motion by the
+     global base block. */
+  @keyframes avatar-float {
+    0%,
+    100% {
+      transform: translateY(0) rotate(-2deg);
+    }
+    50% {
+      transform: translateY(-5px) rotate(2deg);
+    }
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -68,30 +182,31 @@
     text-rendering: optimizeLegibility;
   }
 
-  /* Black focus ring — replaces gold from Ink+Gold */
+  /* Blue focus ring — replaces the black ring from ADR-0014. */
   :focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.4);
     border-radius: 12px;
   }
 
   ::selection {
-    background: rgba(0, 0, 0, 0.12);
+    background: rgba(10, 132, 255, 0.16);
   }
 
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
     *::after {
-      animation-duration: 0.01ms !important;
+      animation-duration: 100ms !important;
       animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
+      transition-duration: 100ms !important;
+      transition-timing-function: ease-out !important;
     }
   }
 }
 
 /* ═══════════════════════════════════════════════════════════
-   Components — Calm Ledger
+   Components — Calm Ledger v2 (ADR-0028)
    ═══════════════════════════════════════════════════════════ */
 
 @layer components {
@@ -101,7 +216,7 @@
     @apply rounded-2xl bg-white;
   }
   .card {
-    @apply transition-shadow duration-200 ease-out;
+    transition: box-shadow var(--duration-spring-standard) var(--ease-spring);
   }
   .card:hover {
     box-shadow: var(--shadow-lift);
@@ -110,9 +225,76 @@
     @apply rounded-3xl bg-white;
     box-shadow: var(--shadow-card);
   }
-  .card-dark {
+
+  /* Saturated accent card — 4 system colour variants. White text. */
+  .card-accent {
     @apply rounded-2xl p-7 text-white;
-    background: var(--color-accent);
+  }
+  .card-accent.card-accent-blue {
+    background: var(--color-blue-500);
+  }
+  .card-accent.card-accent-green {
+    background: var(--color-green-500);
+  }
+  .card-accent.card-accent-orange {
+    background: var(--color-orange-500);
+  }
+  .card-accent.card-accent-red {
+    background: var(--color-red-500);
+  }
+
+  /* Tinted card — 4 subtle variants. Text uses matching -700 weight. */
+  .card-tinted {
+    @apply rounded-2xl p-6;
+  }
+  .card-tinted.card-tinted-blue {
+    background: var(--color-blue-50);
+    color: var(--color-blue-700);
+  }
+  .card-tinted.card-tinted-green {
+    background: var(--color-green-50);
+    color: var(--color-green-700);
+  }
+  .card-tinted.card-tinted-orange {
+    background: var(--color-orange-50);
+    color: var(--color-orange-700);
+  }
+  .card-tinted.card-tinted-red {
+    background: var(--color-red-50);
+    color: var(--color-red-700);
+  }
+
+  /* Hero card — banner zone + content zone (signature surface, ADR-0028 § 5).
+     Banner gradient is applied inline via getCourseSlotGradient(slot). */
+  .card-hero {
+    @apply overflow-hidden rounded-3xl bg-white;
+    box-shadow: var(--shadow-card);
+    transition:
+      transform var(--duration-spring-standard) var(--ease-spring),
+      box-shadow var(--duration-spring-standard) var(--ease-spring);
+  }
+  .card-hero:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+  }
+  .card-hero-banner {
+    height: 120px;
+    position: relative;
+  }
+  .card-hero-content {
+    @apply p-6;
+  }
+
+  /* Panel inset — subordinate strip inside a parent card. NOT a nested card. */
+  .panel-inset {
+    @apply rounded-xl p-4;
+    background: rgba(0, 0, 0, 0.025);
+    box-shadow: var(--shadow-inset);
+  }
+
+  /* Image card — full-bleed media inside rounded-2xl. */
+  .card-image {
+    @apply relative overflow-hidden rounded-2xl;
   }
 
   /* ───── Input ───── */
@@ -120,37 +302,53 @@
     @apply w-full rounded-xl border-0 bg-white px-4 py-2.5 text-base;
     @apply text-ink placeholder:text-black/40;
     box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
-    @apply transition-shadow duration-150 ease-out;
+    transition: box-shadow 100ms ease-out;
   }
   .input:hover {
     box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
   }
   .input:focus {
     @apply outline-none;
-    box-shadow: inset 0 0 0 2px #000000;
+    box-shadow:
+      inset 0 0 0 2px var(--color-blue-500),
+      0 0 0 4px rgba(10, 132, 255, 0.2);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .input:focus {
+      box-shadow: inset 0 0 0 2px var(--color-blue-500);
+    }
   }
 
-  /* ───── Buttons (shared base via multi-selector) ───── */
+  /* ───── Buttons ───── */
   .btn,
   .btn-primary,
   .btn-secondary,
+  .btn-tinted,
   .btn-ghost,
   .btn-danger {
     @apply inline-flex items-center justify-center gap-2;
     @apply rounded-full px-7 py-2.5 text-base font-medium;
-    @apply transition-colors duration-200 ease-out;
     @apply disabled:cursor-not-allowed disabled:opacity-50;
+    transition:
+      background-color var(--duration-spring-standard) var(--ease-spring),
+      box-shadow var(--duration-spring-standard) var(--ease-spring),
+      transform var(--duration-spring-micro) var(--ease-spring);
   }
 
-  /* Primary — true black pill */
+  /* Primary — System Blue pill with inset top highlight (iOS pressed-glass). */
   .btn-primary {
-    @apply bg-black text-white;
+    color: #ffffff;
+    background: var(--color-blue-500);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
   }
   .btn-primary:hover {
-    background: #1f1f1f;
+    background: var(--color-blue-600);
+  }
+  .btn-primary:active {
+    transform: scale(0.97);
   }
 
-  /* Secondary — white pill with hairline ring */
+  /* Secondary — white pill with hairline ring. */
   .btn-secondary {
     @apply bg-white text-black;
     box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
@@ -158,8 +356,23 @@
   .btn-secondary:hover {
     box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
   }
+  .btn-secondary:active {
+    transform: scale(0.98);
+  }
 
-  /* Ghost — text only */
+  /* Tinted — soft blue alternative. */
+  .btn-tinted {
+    background: var(--color-blue-50);
+    color: var(--color-blue-700);
+  }
+  .btn-tinted:hover {
+    background: #dbeafe;
+  }
+  .btn-tinted:active {
+    transform: scale(0.98);
+  }
+
+  /* Ghost — text only. */
   .btn-ghost {
     @apply text-black/70;
   }
@@ -167,19 +380,61 @@
     @apply bg-black/5 text-black;
   }
 
-  /* Danger — rose */
+  /* Danger — System Red. */
   .btn-danger {
-    @apply bg-rose-600 text-white;
+    color: #ffffff;
+    background: var(--color-red-500);
   }
   .btn-danger:hover {
-    @apply bg-rose-700;
+    background: var(--color-red-700);
+  }
+  .btn-danger:active {
+    transform: scale(0.97);
   }
 
   .btn-sm {
     @apply px-5 py-1.5 text-sm;
   }
 
-  /* ───── Badges — neutral grayscale (no saturated role colours per ADR-0014) ───── */
+  /* Springy — press-feedback utility. Apply to clickable surfaces that
+     aren't already a .btn-* (cards, list rows, custom buttons). */
+  .springy {
+    transition: transform var(--duration-spring-micro) var(--ease-spring);
+  }
+  .springy:active {
+    transform: scale(0.98);
+  }
+
+  /* Ambient blobs — ADR-0029 AmbientBackground decoration layer. */
+  .ambient-blob {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(48px);
+    will-change: transform;
+  }
+  .ambient-blob-a {
+    top: -20%;
+    left: -10%;
+    width: 55%;
+    height: 70%;
+    animation: blob-drift-a 22s ease-in-out infinite;
+  }
+  .ambient-blob-b {
+    top: -10%;
+    right: -15%;
+    width: 50%;
+    height: 65%;
+    animation: blob-drift-b 26s ease-in-out infinite;
+  }
+  .ambient-blob-c {
+    bottom: -30%;
+    left: 25%;
+    width: 45%;
+    height: 60%;
+    animation: blob-drift-c 30s ease-in-out infinite;
+  }
+
+  /* ───── Badges — neutral default + status colour variants ───── */
   .badge,
   .badge-admin,
   .badge-teacher,
@@ -188,6 +443,27 @@
     @apply text-ink;
     background: rgba(0, 0, 0, 0.05);
     box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+  }
+  /* Status variants — use system colour tinted bg + -700 text. */
+  .badge-success {
+    background: var(--color-green-50);
+    color: var(--color-green-700);
+    box-shadow: inset 0 0 0 1px rgba(21, 128, 61, 0.15);
+  }
+  .badge-warn {
+    background: var(--color-orange-50);
+    color: var(--color-orange-700);
+    box-shadow: inset 0 0 0 1px rgba(194, 65, 12, 0.15);
+  }
+  .badge-danger {
+    background: var(--color-red-50);
+    color: var(--color-red-700);
+    box-shadow: inset 0 0 0 1px rgba(185, 28, 28, 0.15);
+  }
+  .badge-info {
+    background: var(--color-blue-50);
+    color: var(--color-blue-700);
+    box-shadow: inset 0 0 0 1px rgba(30, 64, 175, 0.15);
   }
 
   /* ───── Table ───── */
@@ -201,7 +477,8 @@
     @apply px-4 py-3;
   }
   .table tbody tr {
-    @apply transition-colors duration-150;
+    transition: background-color var(--duration-spring-standard)
+      var(--ease-spring);
     border-top: 1px solid rgba(0, 0, 0, 0.05);
   }
   .table tbody tr:hover {
@@ -214,7 +491,7 @@
   /* ───── Stat / KPI card ───── */
   .stat {
     @apply rounded-2xl bg-white p-6;
-    @apply transition-shadow duration-200 ease-out;
+    transition: box-shadow var(--duration-spring-standard) var(--ease-spring);
   }
   .stat:hover {
     box-shadow: var(--shadow-lift);
@@ -225,6 +502,49 @@
   .stat-value {
     @apply mt-2 text-4xl font-medium tracking-tight text-black;
     letter-spacing: -0.02em;
+  }
+
+  /* ───── Glass nav — sticky chrome with frosted backdrop ───── */
+  .glass-nav {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur-mobile);
+    -webkit-backdrop-filter: var(--glass-blur-mobile);
+  }
+  @media (min-width: 768px) {
+    .glass-nav {
+      backdrop-filter: var(--glass-blur-desktop);
+      -webkit-backdrop-filter: var(--glass-blur-desktop);
+    }
+  }
+  @supports not (backdrop-filter: blur(1px)) {
+    .glass-nav {
+      background: var(--glass-fallback);
+    }
+  }
+
+  /* ───── Sheet — mobile bottom-sheet variant for native <dialog> ─────
+     Apply class .sheet to a <dialog> element. Desktop unchanged (centered
+     modal); mobile slides up from the bottom edge. */
+  @media (max-width: 767px) {
+    dialog.sheet[open] {
+      margin: 0;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      top: auto;
+      max-width: 100vw;
+      width: 100vw;
+      max-height: 90vh;
+      border-radius: 16px 16px 0 0;
+      animation: sheet-slide-up var(--duration-spring-large) var(--ease-spring)
+        both;
+    }
+    dialog.sheet::backdrop {
+      background: rgba(0, 0, 0, 0.32);
+      backdrop-filter: var(--glass-blur-mobile);
+      -webkit-backdrop-filter: var(--glass-blur-mobile);
+    }
   }
 }
 
@@ -238,12 +558,13 @@
 
 [cmdk-item] {
   @apply flex cursor-pointer items-center justify-between gap-2 rounded-xl px-3 py-2 text-sm;
-  @apply transition-colors;
+  transition: background-color var(--duration-spring-standard)
+    var(--ease-spring);
 }
 
 [cmdk-item][data-selected="true"] {
-  background: rgba(0, 0, 0, 0.05);
-  @apply text-ink;
+  background: var(--color-blue-50);
+  color: var(--color-blue-700);
 }
 
 [cmdk-item]:hover {
@@ -268,12 +589,19 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
-   Compat shims — Ink+Gold orphan classes still referenced by
-   dashboard, privacy, teacher/courses, components/class-code-card.
-   These render as safe no-ops in the Calm Ledger theme so pages
-   don't show broken artifacts before per-surface touch-up.
-   Remove when each surface is migrated.
+   Compat shims — Ink+Gold / aubergine orphans retained as no-ops
+   so pages not yet swept under ADR-0028 still render. Each shim
+   maps the old name onto the new system. Remove per surface as
+   pages migrate.
    ═══════════════════════════════════════════════════════════ */
+
+/* .card-dark (aubergine) — retired. Falls back to a tinted blue card
+   so any leftover consumer still renders coherently with the new system. */
+.card-dark {
+  @apply rounded-2xl p-7;
+  background: var(--color-blue-50);
+  color: var(--color-blue-700);
+}
 
 .mesh-bg {
   background: var(--color-bg);
@@ -288,6 +616,8 @@
   overflow: hidden;
 }
 
+/* Old .glass utility from Ink+Gold — flat white surface no-op (NOT the
+   new .glass-nav which is frosted chrome). */
 .glass {
   background: var(--color-surface);
   border: 1px solid rgba(0, 0, 0, 0.06);
@@ -314,7 +644,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
-   Print (A4 transcript) — kept from Ink+Gold, color recalibrated
+   Print (A4 transcript) — kept from ADR-0014
    ═══════════════════════════════════════════════════════════ */
 
 @media print {
@@ -337,8 +667,10 @@
   .btn,
   .btn-primary,
   .btn-secondary,
+  .btn-tinted,
   .btn-ghost,
-  .btn-danger {
+  .btn-danger,
+  .glass-nav {
     display: none !important;
   }
 
@@ -350,6 +682,9 @@
   .card,
   .card-flat,
   .card-featured,
+  .card-accent,
+  .card-tinted,
+  .card-hero,
   .stat,
   table {
     box-shadow: none !important;
@@ -387,16 +722,6 @@
     padding: 0 !important;
   }
 
-  /* Phase 5 / P5-5c — Transcript print polish.
-     Tailwind print: variants in TermSummaryView do most of the work; these
-     rules cover anything the utility classes can't reach.
-
-     - Page-level: stop URL footers from cluttering the transcript.
-     - Tables: darker borders (slate-200 is too pale on paper) + slightly
-       larger font for the per-row values (the global 11px is fine for
-       data tables; transcript rows need 12px). */
-
-  /* Transcript headline letterspacing tightens up nicely on paper. */
   h1,
   h2,
   h3 {
@@ -404,7 +729,6 @@
     page-break-after: avoid;
   }
 
-  /* Hide native focus rings (inherited from inputs that survived the hide). */
   *:focus,
   *:focus-visible {
     outline: none !important;

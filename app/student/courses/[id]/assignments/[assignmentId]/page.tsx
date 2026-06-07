@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Link2 as LinkIcon } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { SubmitVersionForm } from "@/components/assignment/submit-version-form";
+import { CommentsThread } from "@/components/comment/comments-thread";
+import { ensureSubmission } from "@/lib/assignment/submission";
 
 /**
  * Student Assignment detail page — Phase 6 · P6-6.
@@ -67,6 +69,7 @@ export default async function StudentAssignmentDetailPage({
       courseOfferingId: true,
       title: true,
       description: true,
+      linkUrls: true,
       dueAt: true,
       allowText: true,
       allowFile: true,
@@ -84,6 +87,14 @@ export default async function StudentAssignmentDetailPage({
     },
   });
   if (!assignment || assignment.courseOfferingId !== courseId) notFound();
+
+  // Materialise the DRAFT Submission row on first visit (while the window is
+  // open) so the submit form + file-upload pipeline always have a stable
+  // submissionId. A version-less DRAFT reads as "ยังไม่ส่ง" on the teacher
+  // grid, so this never looks like a real submission.
+  if (!assignment.submissionClosed) {
+    await ensureSubmission(assignmentId, enrollment.id);
+  }
 
   // Own Submission (L1 — never join other students' rows).
   const submission = await db.submission.findUnique({
@@ -128,23 +139,7 @@ export default async function StudentAssignmentDetailPage({
       })
     : null;
 
-  // PRIVATE comments scoped to this Submission (student sees own + teacher's).
-  const comments = submission
-    ? await db.comment.findMany({
-        where: {
-          ownerType: "SUBMISSION",
-          ownerId: submission.id,
-          deletedAt: null,
-        },
-        select: {
-          id: true,
-          body: true,
-          createdAt: true,
-          authorId: true,
-        },
-        orderBy: { createdAt: "asc" },
-      })
-    : [];
+  // PRIVATE comments are surfaced by <CommentsThread /> below (P9-2).
 
   const dueLabel = assignment.dueAt
     ? new Intl.DateTimeFormat("th-TH-u-ca-buddhist", {
@@ -179,6 +174,29 @@ export default async function StudentAssignmentDetailPage({
             {assignment.description}
           </div>
         )}
+        {Array.isArray(assignment.linkUrls) &&
+          assignment.linkUrls.length > 0 && (
+            <div className="mt-4">
+              <p className="flex items-center gap-1.5 text-xs font-medium text-black/60">
+                <LinkIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                ลิงก์ประกอบงาน
+              </p>
+              <ul className="mt-1.5 space-y-1">
+                {(assignment.linkUrls as string[]).map((href, i) => (
+                  <li key={i}>
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm text-blue-700 underline underline-offset-2 hover:text-blue-900"
+                    >
+                      {href}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         {showGrade && grade && (
           <div className="mt-4 rounded-lg bg-blue-50 p-3 text-sm">
             <span className="font-medium text-blue-900">คะแนนของคุณ: </span>
@@ -188,45 +206,37 @@ export default async function StudentAssignmentDetailPage({
       </div>
 
       {submission?.status === "RETURNED" && (
-        <div className="card mt-4 border-rose-200 bg-rose-50/50 p-4">
-          <h3 className="text-sm font-medium text-rose-900">
+        <div className="card mt-4 border-red-200 bg-red-50/50 p-4">
+          <h3 className="text-sm font-medium text-red-700">
             ครูส่งคืน — รอแก้ไขและส่งใหม่
           </h3>
-          <p className="mt-1 text-xs text-rose-800/70">
+          <p className="mt-1 text-xs text-red-700/70">
             อ่าน comment ของครูในหัวข้อ &quot;ข้อความ&quot; ด้านล่าง
           </p>
         </div>
       )}
 
-      {comments.length > 0 && (
-        <div className="card mt-4 p-4">
-          <h3 className="text-sm font-medium text-black">ข้อความจากครู</h3>
-          <ul className="mt-3 space-y-2">
-            {comments.map((c) => (
-              <li
-                key={c.id}
-                className="rounded-md bg-black/[0.03] p-2 text-xs text-black/80"
-              >
-                <p className="whitespace-pre-wrap">{c.body}</p>
-                <p className="mt-1 text-[10px] text-black/40">
-                  {new Intl.DateTimeFormat("th-TH-u-ca-buddhist", {
-                    timeZone: "Asia/Bangkok",
-                    day: "numeric",
-                    month: "short",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  }).format(c.createdAt)}
-                </p>
-              </li>
-            ))}
-          </ul>
+      {/* PRIVATE thread between this student and the teacher — replaces
+          the Phase-6 read-only display (P9-2). Only mounted after the
+          student has a Submission row; first-time visitors see it
+          appear after the first submit. */}
+      {submission && (
+        <div className="mt-4">
+          <CommentsThread
+            ownerType="SUBMISSION"
+            ownerId={submission.id}
+            courseOfferingId={courseId}
+            scope="PRIVATE"
+            session={session}
+            revalidatePath={`/student/courses/${courseId}/assignments/${assignmentId}`}
+          />
         </div>
       )}
 
       <div className="card mt-4 p-6">
         <h3 className="text-sm font-medium text-black">ส่งงาน</h3>
         {assignment.submissionClosed ? (
-          <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">
+          <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
             ครูปิดการส่งแล้ว
           </p>
         ) : submission ? (
@@ -258,7 +268,7 @@ export default async function StudentAssignmentDetailPage({
                 key={v.id}
                 className={`rounded-lg border p-3 ${
                   v.isCurrent
-                    ? "border-emerald-200 bg-emerald-50/30"
+                    ? "border-green-200 bg-green-50/30"
                     : "border-black/10 bg-black/[0.02]"
                 }`}
               >
@@ -266,7 +276,7 @@ export default async function StudentAssignmentDetailPage({
                   <p className="text-xs font-medium text-black">
                     เวอร์ชัน {v.versionNumber}
                     {v.isCurrent && (
-                      <span className="ml-2 text-[10px] text-emerald-700">
+                      <span className="ml-2 text-[10px] text-green-700">
                         (ปัจจุบัน)
                       </span>
                     )}
@@ -280,7 +290,7 @@ export default async function StudentAssignmentDetailPage({
                       minute: "2-digit",
                     }).format(v.submittedAt)}
                     {v.isLate && (
-                      <span className="ml-2 rounded bg-amber-100 px-1 text-[9px] text-amber-800">
+                      <span className="ml-2 rounded bg-orange-100 px-1 text-[9px] text-orange-700">
                         ส่งสาย
                       </span>
                     )}
@@ -310,6 +320,16 @@ export default async function StudentAssignmentDetailPage({
           </ul>
         </div>
       )}
+
+      <div className="mt-4">
+        <CommentsThread
+          ownerType="ASSIGNMENT"
+          ownerId={assignmentId}
+          courseOfferingId={courseId}
+          scope="CLASS_WIDE"
+          session={session}
+        />
+      </div>
     </div>
   );
 }

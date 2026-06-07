@@ -81,7 +81,7 @@ export function GradeSubmissionDialog({
             <p className="mt-0.5 text-xs text-black/50">
               คะแนนเต็ม {fullScore}
               {isScoreItemPublished && (
-                <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">
+                <span className="ml-2 rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-medium text-orange-700">
                   รายการคะแนนเผยแพร่แล้ว — ต้องใส่เหตุผล
                 </span>
               )}
@@ -105,7 +105,7 @@ export function GradeSubmissionDialog({
                     className="input mt-1"
                   />
                   {state.fieldErrors?.value && (
-                    <p className="mt-1 text-xs text-rose-600">
+                    <p className="mt-1 text-xs text-red-700">
                       {state.fieldErrors.value}
                     </p>
                   )}
@@ -126,7 +126,7 @@ export function GradeSubmissionDialog({
                   <div>
                     <label className="block text-xs font-medium text-black/70">
                       เหตุผลการแก้คะแนนหลังเผยแพร่{" "}
-                      <span className="text-rose-500">*</span>
+                      <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -138,7 +138,7 @@ export function GradeSubmissionDialog({
                       placeholder="≥ 5 ตัวอักษร · จะถูกบันทึก audit"
                     />
                     {state.fieldErrors?.reason && (
-                      <p className="mt-1 text-xs text-rose-600">
+                      <p className="mt-1 text-xs text-red-700">
                         {state.fieldErrors.reason}
                       </p>
                     )}
@@ -154,7 +154,7 @@ export function GradeSubmissionDialog({
           </div>
 
           {state.error && (
-            <p className="mt-3 text-xs text-rose-600">{state.error}</p>
+            <p className="mt-3 text-xs text-red-700">{state.error}</p>
           )}
 
           <div className="mt-6 flex justify-end gap-2">

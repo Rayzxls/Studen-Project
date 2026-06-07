@@ -6,9 +6,9 @@
  * `tests/unit/scoring-calc.test.ts`. Any new branch in this file must
  * land with tests in the same commit.
  *
- * Unit conventions (ADR-0017):
- *   - weight    : integer basis points (0..10000 = 0.00 %..100.00 %)
- *   - fullScore : positive integer (whole points)
+ * Unit conventions (ADR-0024 — sum-based, supersedes ADR-0017):
+ *   - fullScore : positive integer (whole points) — also encodes per-
+ *                 item influence in the course grade (Σscore/ΣfullScore)
  *   - value     : non-negative integer, 0..fullScore (validated upstream)
  *   - percent   : real number in [0, 100]
  *   - grade     : real number in [0, 4]
@@ -21,9 +21,7 @@ export type WeightedItem = Readonly<{
   /** Score Item ID — used to match against entries. */
   id: string;
   fullScore: number;
-  /** Basis points (0..10000). */
-  weight: number;
-  /** Only published items contribute to the weighted total. */
+  /** Only published items contribute to the score total. */
   publishedAt: Date | null;
 }>;
 
@@ -35,44 +33,49 @@ export type WeightedEntry = Readonly<{
 }>;
 
 /**
- * Weighted total in percent (0..100) over PUBLISHED items only.
+ * Score Total in percent (0..100) over PUBLISHED items only — ADR-0024.
  *
- *   Σ (value / fullScore × weight)  ÷  Σ weight  × 100
+ *   Σ value  ÷  Σ fullScore  × 100
  *
- * Denominator note: we divide by the sum of PUBLISHED weights rather than
- * a fixed `WEIGHT_SUM_BP`. An in-progress CourseOffering (some items still
- * draft) thereby yields a coherent "percent of what is currently visible".
- * Once publish is complete, `Σ published weight === WEIGHT_SUM_BP` by
- * invariant (ADR-0017), so the two interpretations converge.
+ * fullScore expresses both the per-item ceiling AND the per-item influence:
+ * a Quiz with `fullScore = 10` contributes 10 points of denominator; a
+ * Midterm with `fullScore = 50` contributes 50. No separate weight channel.
  *
  * Missing entry for a published item → counted as 0 / fullScore. The slot
  * was committed to the gradebook; an empty cell means "the student has
  * nothing in this slot", not "skip this item".
  *
- * Returns `null` only when no published items exist (the denominator
- * would be zero). Caller decides whether to render "—", "0 %", or
- * "ยังไม่มีคะแนน".
+ * Returns `null` only when no published items exist OR Σ fullScore === 0
+ * (degenerate published items only). Caller decides whether to render
+ * "—", "0 %", or "ยังไม่มีคะแนน".
+ *
+ * Exported as `scoreTotal` (canonical, ADR-0024) AND `weightedTotal`
+ * (deprecated alias kept for in-flight migration; remove after Phase 10A
+ * lands).
  */
-export function weightedTotal(
+export function scoreTotal(
   items: readonly WeightedItem[],
   entries: readonly WeightedEntry[]
 ): number | null {
   const entryByItem = new Map<string, number>();
   for (const e of entries) entryByItem.set(e.scoreItemId, e.value);
 
-  let weightedSum = 0; // Σ (value / fullScore × weight)
-  let weightSum = 0; // Σ weight (published only)
+  let scoreSum = 0; // Σ value (published only)
+  let fullSum = 0; // Σ fullScore (published only)
   for (const it of items) {
     if (it.publishedAt === null) continue;
-    if (it.fullScore <= 0) continue; // skip degenerate items rather than divide by zero
+    if (it.fullScore <= 0) continue; // skip degenerate items
     const v = entryByItem.get(it.id) ?? 0;
-    weightedSum += (v / it.fullScore) * it.weight;
-    weightSum += it.weight;
+    scoreSum += v;
+    fullSum += it.fullScore;
   }
 
-  if (weightSum === 0) return null;
-  return (weightedSum / weightSum) * 100;
+  if (fullSum === 0) return null;
+  return (scoreSum / fullSum) * 100;
 }
+
+/** @deprecated Use `scoreTotal` (ADR-0024). Kept transiently for ADR-0024 migration. */
+export const weightedTotal = scoreTotal;
 
 /**
  * Map a percent in [0, 100] to a grade in [0, 4] using a sorted-desc
@@ -81,7 +84,7 @@ export function weightedTotal(
  * Caller passes `courseOffering.gradeRulesJson ?? DEFAULT_GRADE_THRESHOLDS`
  * at the boundary — this function does not reach into the schema.
  *
- * Non-finite input → 0 (defensive; should not arise from `weightedTotal`).
+ * Non-finite input → 0 (defensive; should not arise from `scoreTotal`).
  */
 export function gradeFor(
   percent: number,
@@ -102,7 +105,7 @@ export function gradeFor(
  *   - publish is incomplete (`publishedItems < totalItems`)
  *
  * The null contract feeds `termGpa()`: any null collapses Term GPA to
- * null per CONTEXT § Term GPA / ADR-Q4 / Decision 2.4.
+ * null per CONTEXT § Term GPA / Decision 2.4.
  *
  * When complete, `percent` and `grade` are both finite.
  */
@@ -126,7 +129,7 @@ export function gradeForCourseOffering(
     return { grade: null, percent: null, publishedItems, totalItems };
   }
 
-  const percent = weightedTotal(items, entries);
+  const percent = scoreTotal(items, entries);
   if (percent === null) {
     return { grade: null, percent: null, publishedItems, totalItems };
   }

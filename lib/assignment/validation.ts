@@ -27,94 +27,16 @@ import {
 // Assignment
 // ─────────────────────────────────────────────────────────────
 
-/**
- * Weight (basis points 0..10000) — only required when `isScored=true`.
- * Mirrors `lib/scoring` ScoreItemWeightSchema (ADR-0017 § 1) but expressed
- * inline so client form code can pull it without an extra cross-import.
- */
-const WeightBpSchema = z
-  .number({ message: "ระบุน้ำหนัก" })
-  .int("น้ำหนักต้องเป็นจำนวนเต็ม (basis points)")
-  .min(1, "น้ำหนักต้องมากกว่า 0 (ADR-0019 § 2 — no zero default)")
-  .max(10_000, "น้ำหนักรวมต้องไม่เกิน 100%");
-
 const FullScoreSchema = z
   .number({ message: "ระบุคะแนนเต็ม" })
   .int("คะแนนเต็มต้องเป็นจำนวนเต็ม")
   .min(1, "คะแนนเต็มต้องมากกว่า 0");
 
 /**
- * Create Assignment input.
- *
- * ADR-0019: when `isScored=true`, both `weight` and `fullScore` are
- * required (no system-chosen default). The schema enforces this with a
- * cross-field refine so a single submit cannot drift between the two
- * states.
- */
-export const CreateAssignmentSchema = z
-  .object({
-    courseOfferingId: z.string().min(1, "ระบุวิชา"),
-    title: z.string().trim().min(1, "ตั้งชื่อการบ้าน").max(TITLE_MAX),
-    description: z.string().max(DESCRIPTION_MAX, "คำอธิบายยาวเกินไป"),
-    dueAt: z.coerce.date().nullable().optional(),
-    allowText: z.boolean(),
-    allowFile: z.boolean(),
-    allowLink: z.boolean(),
-    submissionClosed: z.boolean().optional().default(false),
-    autoCloseAtDue: z.boolean().optional().default(false),
-    isScored: z.boolean(),
-    weight: WeightBpSchema.optional(),
-    fullScore: FullScoreSchema.optional(),
-  })
-  .refine((v) => v.allowText || v.allowFile || v.allowLink, {
-    message: "ต้องอนุญาตอย่างน้อย 1 ช่องทาง (ข้อความ / ไฟล์ / ลิงก์)",
-    path: ["allowText"],
-  })
-  .refine((v) => !v.isScored || v.weight !== undefined, {
-    message: "ระบุน้ำหนักของรายการคะแนน (ADR-0019)",
-    path: ["weight"],
-  })
-  .refine((v) => !v.isScored || v.fullScore !== undefined, {
-    message: "ระบุคะแนนเต็ม (ADR-0019)",
-    path: ["fullScore"],
-  });
-
-// Use z.input so callers may omit fields with `.default()` — the Zod
-// parser still produces a fully-populated value at the lib layer.
-export type CreateAssignmentInput = z.input<typeof CreateAssignmentSchema>;
-
-/**
- * Update Assignment input. `isScored` toggle here triggers the 3-state
- * dispatch in `updateAssignment` per ADR-0019 § 5 (draft+0 atomic delete,
- * draft+N block, published block).
- *
- * `weight` and `fullScore` are accepted only on the false→true flip — the
- * lib layer rejects them on the true→false flip with `not_scored`.
- */
-export const UpdateAssignmentSchema = z.object({
-  title: z.string().trim().min(1).max(TITLE_MAX).optional(),
-  description: z.string().max(DESCRIPTION_MAX).optional(),
-  dueAt: z.coerce.date().nullable().optional(),
-  allowText: z.boolean().optional(),
-  allowFile: z.boolean().optional(),
-  allowLink: z.boolean().optional(),
-  submissionClosed: z.boolean().optional(),
-  autoCloseAtDue: z.boolean().optional(),
-  isScored: z.boolean().optional(),
-  weight: WeightBpSchema.optional(),
-  fullScore: FullScoreSchema.optional(),
-});
-
-export type UpdateAssignmentInput = z.infer<typeof UpdateAssignmentSchema>;
-
-// ─────────────────────────────────────────────────────────────
-// SubmissionVersion
-// ─────────────────────────────────────────────────────────────
-
-/**
  * URL string — sanity-checked at the API boundary (`URL` parse + length
  * cap). The lib layer does NOT fetch the URL or rewrite it; it stores
- * exactly what the student typed.
+ * exactly what the user typed. Shared by the teacher's assignment reference
+ * links and the student's submission links.
  */
 const LinkUrlSchema = z
   .string()
@@ -132,6 +54,72 @@ const LinkUrlSchema = z
     },
     { message: "ลิงก์ไม่ถูกต้อง (ต้องขึ้นต้นด้วย http:// หรือ https://)" }
   );
+
+/**
+ * Create Assignment input.
+ *
+ * ADR-0019 (post-ADR-0024 update): when `isScored=true`, `fullScore` is
+ * required (no system-chosen default). `weight` is gone — sum-based
+ * scoring uses `fullScore` directly for per-item influence.
+ */
+export const CreateAssignmentSchema = z
+  .object({
+    courseOfferingId: z.string().min(1, "ระบุวิชา"),
+    title: z.string().trim().min(1, "ตั้งชื่อการบ้าน").max(TITLE_MAX),
+    description: z.string().max(DESCRIPTION_MAX, "คำอธิบายยาวเกินไป"),
+    dueAt: z.coerce.date().nullable().optional(),
+    allowText: z.boolean(),
+    allowFile: z.boolean(),
+    allowLink: z.boolean(),
+    submissionClosed: z.boolean().optional().default(false),
+    autoCloseAtDue: z.boolean().optional().default(false),
+    isScored: z.boolean(),
+    fullScore: FullScoreSchema.optional(),
+    /** Teacher-attached reference links shown on the assignment brief. */
+    linkUrls: z
+      .array(LinkUrlSchema)
+      .max(MAX_LINKS_PER_VERSION, "ลิงก์เยอะเกินไป")
+      .default([]),
+  })
+  .refine((v) => v.allowText || v.allowFile || v.allowLink, {
+    message: "ต้องอนุญาตอย่างน้อย 1 ช่องทาง (ข้อความ / ไฟล์ / ลิงก์)",
+    path: ["allowText"],
+  })
+  .refine((v) => !v.isScored || v.fullScore !== undefined, {
+    message: "ระบุคะแนนเต็ม (ADR-0019)",
+    path: ["fullScore"],
+  });
+
+// Use z.input so callers may omit fields with `.default()` — the Zod
+// parser still produces a fully-populated value at the lib layer.
+export type CreateAssignmentInput = z.input<typeof CreateAssignmentSchema>;
+
+/**
+ * Update Assignment input. `isScored` toggle here triggers the 3-state
+ * dispatch in `updateAssignment` per ADR-0019 § 5 (draft+0 atomic delete,
+ * draft+N block, published block).
+ *
+ * `fullScore` is accepted only on the false→true flip — the lib layer
+ * rejects it on the true→false flip with `not_scored`.
+ */
+export const UpdateAssignmentSchema = z.object({
+  title: z.string().trim().min(1).max(TITLE_MAX).optional(),
+  description: z.string().max(DESCRIPTION_MAX).optional(),
+  dueAt: z.coerce.date().nullable().optional(),
+  allowText: z.boolean().optional(),
+  allowFile: z.boolean().optional(),
+  allowLink: z.boolean().optional(),
+  submissionClosed: z.boolean().optional(),
+  autoCloseAtDue: z.boolean().optional(),
+  isScored: z.boolean().optional(),
+  fullScore: FullScoreSchema.optional(),
+});
+
+export type UpdateAssignmentInput = z.infer<typeof UpdateAssignmentSchema>;
+
+// ─────────────────────────────────────────────────────────────
+// SubmissionVersion
+// ─────────────────────────────────────────────────────────────
 
 /**
  * Submit a SubmissionVersion. At least one of textContent / files / links

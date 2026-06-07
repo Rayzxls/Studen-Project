@@ -1,315 +1,218 @@
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, GraduationCap, ShieldCheck, Sparkles } from "lucide-react";
 import { auth } from "@/lib/auth";
+import { BeagleLogo, BeagleWordmark } from "@/components/landing/beagle-logo";
+import { FloatingCards } from "@/components/landing/floating-cards";
+import { ProductMockup } from "@/components/landing/product-mockup";
+import { ShowcaseBento } from "@/components/landing/showcase-bento";
+import { Immersive3D } from "@/components/landing/immersive-3d";
 
 /**
- * Landing — Calm Ledger theme (ADR-0014)
+ * Beagle Classroom — landing page (Phase 12).
  *
- * Halo recipe adapted to Studennnn:
- *   • h-screen wrapper (Navbar absolute + Hero card)
- *   • Info Section "ทำความรู้จัก Studennnn" with 3-card row (1 light + 2 aubergine)
- *   • Use Cases section with featured aubergine card
+ * Two product-owner-specified focus sections:
+ *   1. Hero — "คิด วางแผน ติดตาม ครบในที่เดียว" with an R3F 3D backdrop
+ *      (ADR-0029 T1) + floating product mini-cards parallaxing to the
+ *      pointer (ChronoTask reference, in our brand).
+ *   2. Showcase bento — what the system does, with live-styled mocks.
  *
- * Omitted from the Halo recipe (per user direction):
- *   • Brand Marquee (no Studennnn-equivalent crypto-brand list)
- *   • Backed By section (single-tenant per school, no investor logos)
- *
- * Media placeholders — see image-prompts.md (this commit) for the 3 hero/card
- * background image briefs ready to feed into Midjourney/SDXL/Flux when the
- * user generates them.
+ * Plus glass nav, closing CTA, footer. Real interactivity throughout;
+ * all motion is reduced-motion-safe via the primitives.
  */
-
-function LogoMark({ className }: { className?: string }) {
-  // Two interlocking rounded squares — neutral geometric mark, no trademark.
-  return (
-    <svg
-      viewBox="0 0 256 256"
-      className={className}
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <path d="M 128.005 191.173 C 128.448 156.208 156.93 128 192 128 L 192 64 L 128 64 C 128 99.346 99.346 128 64 128 L 64 192 L 128 192 Z M 192 256 L 64 256 C 28.654 256 0 227.346 0 192 L 0 64 L 64 64 L 64 0 L 192 0 C 227.346 0 256 28.654 256 64 L 256 192 L 192 192 Z" />
-    </svg>
-  );
-}
 
 export default async function HomePage() {
   const session = await auth();
   if (session?.user) redirect("/dashboard");
 
   return (
-    <main className="flex flex-col bg-bg">
-      {/* ──────────────────────────────────────────────────────────
-          HERO WRAPPER — h-screen (Navbar absolute + Hero card)
-          ────────────────────────────────────────────────────────── */}
-      <div className="relative flex h-screen flex-col overflow-hidden">
-        {/* Navbar */}
-        <nav className="absolute inset-x-0 top-0 z-20 px-6 py-5">
-          <div className="mx-auto flex max-w-[88rem] items-center justify-between">
-            <Link href="/" className="flex items-center gap-2">
-              <LogoMark className="h-7 w-7 text-black" />
-              <span
-                className="text-2xl font-medium text-black"
-                style={{ letterSpacing: "-0.02em" }}
-              >
-                Studennnn
-              </span>
+    <main className="flex flex-col overflow-x-hidden bg-bg">
+      {/* ── Glass nav ───────────────────────────────────────────── */}
+      <nav className="glass-nav fixed inset-x-0 top-0 z-50 border-b border-black/[0.06]">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
+          <BeagleWordmark />
+          <div className="hidden items-center gap-8 md:flex">
+            <a
+              href="#features"
+              className="text-sm font-medium text-black/60 transition-colors hover:text-black"
+            >
+              ฟีเจอร์
+            </a>
+            <a
+              href="#roles"
+              className="text-sm font-medium text-black/60 transition-colors hover:text-black"
+            >
+              บทบาท
+            </a>
+            <Link
+              href="/privacy"
+              className="text-sm font-medium text-black/60 transition-colors hover:text-black"
+            >
+              ความเป็นส่วนตัว
             </Link>
-            <div className="hidden items-center gap-8 md:flex">
-              <a
-                href="#info"
-                className="text-base font-medium text-black/60 transition-colors hover:text-black"
-              >
-                เกี่ยวกับ
-              </a>
-              <a
-                href="#roles"
-                className="text-base font-medium text-black/60 transition-colors hover:text-black"
-              >
-                บทบาท
-              </a>
-              <Link
-                href="/privacy"
-                className="text-base font-medium text-black/60 transition-colors hover:text-black"
-              >
-                ความเป็นส่วนตัว
-              </Link>
-            </div>
+          </div>
+          <Link href="/login" className="btn-primary btn-sm">
+            เข้าสู่ระบบ
+          </Link>
+        </div>
+      </nav>
+
+      {/* ── Section 1 — Hero (ChronoTask style: floating cards on a
+          light dotted canvas + soft blue glow; parallax to pointer). ── */}
+      <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 pt-24 pb-16">
+        {/* Dotted grid texture, masked to fade at the edges */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle, rgba(0,0,0,0.05) 1px, transparent 1px)",
+            backgroundSize: "22px 22px",
+            maskImage:
+              "radial-gradient(ellipse 80% 70% at 50% 45%, #000 40%, transparent 100%)",
+            WebkitMaskImage:
+              "radial-gradient(ellipse 80% 70% at 50% 45%, #000 40%, transparent 100%)",
+          }}
+        />
+        {/* Soft brand glow */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(50% 45% at 50% 38%, rgba(10,132,255,0.10) 0%, transparent 70%)",
+          }}
+        />
+        <FloatingCards />
+
+        <div className="relative z-10 mx-auto max-w-3xl text-center">
+          <HeroCopy />
+        </div>
+      </section>
+
+      {/* ── Section 2 — Product illustration (ChronoTask-style cards) ── */}
+      <section id="overview" className="relative overflow-hidden px-6 py-20">
+        <div className="mx-auto max-w-2xl text-center">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+            <Sparkles className="h-3.5 w-3.5" />
+            ดีไซน์ที่คิดมาเพื่อห้องเรียน
+          </span>
+          <h2
+            className="mt-4 text-4xl font-semibold text-black md:text-5xl"
+            style={{ letterSpacing: "-0.03em", lineHeight: 1.1 }}
+          >
+            ทุกข้อมูลของห้องเรียน
+            <br />
+            อยู่ตรงหน้าในมุมเดียว
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-black/60">
+            สรุปการสอบ ตารางเรียนวันนี้ อัตราการเข้าเรียน การแจ้งเตือนงาน
+            และการเชื่อมต่อแอป — เห็นครบในหน้าจอเดียว
+          </p>
+        </div>
+
+        {/* Desktop: feature cards illustration with the live product
+            mockup filling the empty centre. */}
+        <div className="relative mx-auto mt-10 hidden max-w-6xl md:block">
+          <Image
+            src="/landing/hero-cards.webp"
+            alt="ตัวอย่างการ์ดในระบบ Beagle Classroom — สรุปการสอบ ตารางเรียน อัตรามาเรียน และการแจ้งเตือน"
+            width={1672}
+            height={941}
+            className="h-auto w-full select-none"
+          />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <ProductMockup className="w-[34%] min-w-[18rem]" />
+          </div>
+        </div>
+
+        {/* Mobile: the product mockup leads; the dense card illustration
+            sits below at full width. */}
+        <div className="md:hidden">
+          <ProductMockup className="mx-auto mt-8 max-w-sm" />
+          <Image
+            src="/landing/hero-cards.webp"
+            alt="ตัวอย่างการ์ดในระบบ Beagle Classroom"
+            width={1672}
+            height={941}
+            className="mt-8 h-auto w-full select-none"
+          />
+        </div>
+      </section>
+
+      {/* ── Section 3 — Feature bento ───────────────────────────── */}
+      <ShowcaseBento />
+
+      {/* ── Section 4 — Immersive 3D (glass crystal + sparkles) ──── */}
+      <Immersive3D />
+
+      {/* ── Roles strip ─────────────────────────────────────────── */}
+      <section id="roles" className="px-6 py-20">
+        <div className="mx-auto grid max-w-6xl gap-4 md:grid-cols-3">
+          <RoleCard
+            icon={<GraduationCap className="h-5 w-5" />}
+            tone="blue"
+            title="ครูเจ้าของห้อง"
+            body="สร้างวิชา แชร์รหัสห้อง เช็คชื่อ ตรวจงาน กรอกคะแนน ออกเกรด — workspace เดียวต่อเทอม"
+          />
+          <RoleCard
+            icon={<Sparkles className="h-5 w-5" />}
+            tone="green"
+            title="นักเรียน"
+            body="ดูคะแนนตัวเอง อัตรามาเรียน เดดไลน์ และส่งงานจากมือถือ เห็นเฉพาะของตัวเอง"
+          />
+          <RoleCard
+            icon={<ShieldCheck className="h-5 w-5" />}
+            tone="violet"
+            title="ผู้ดูแล"
+            body="ภาพรวมทั้งโรงเรียน ตรวจ audit log นำเข้า CSV รีเซ็ตรหัสผ่าน — ไม่ยุ่งกับข้อมูลแทนใคร"
+          />
+        </div>
+      </section>
+
+      {/* ── Closing CTA ─────────────────────────────────────────── */}
+      <section className="px-6 pb-24">
+        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-blue-500 px-8 py-16 text-center shadow-card md:py-20">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(50% 60% at 80% 10%, rgba(255,255,255,0.22) 0%, transparent 55%), radial-gradient(40% 50% at 15% 90%, rgba(0,0,0,0.18) 0%, transparent 60%)",
+            }}
+          />
+          <div className="relative z-10">
+            <h2
+              className="mx-auto max-w-2xl text-balance text-3xl font-semibold text-white md:text-4xl"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              พร้อมเปลี่ยนห้องเรียนให้เป็นระบบเดียว
+            </h2>
+            <p className="mx-auto mt-4 max-w-md text-base text-white/80">
+              เริ่มต้นใช้งาน Beagle Classroom วันนี้ — ไม่ต้องติดตั้ง
+              เข้าได้ทุกอุปกรณ์
+            </p>
             <Link
               href="/login"
-              className="rounded-full bg-black px-7 py-2.5 text-base font-medium text-white transition-colors duration-200 hover:bg-[#1f1f1f]"
+              className="group mt-8 inline-flex items-center gap-2 rounded-full bg-white py-2.5 pl-6 pr-2.5 text-base font-medium text-blue-700 transition-transform hover:scale-[0.98]"
             >
               เข้าสู่ระบบ
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50">
+                <ArrowRight className="h-4 w-4 text-blue-700 transition-transform group-hover:translate-x-0.5" />
+              </span>
             </Link>
           </div>
-        </nav>
-
-        {/* Hero card */}
-        <div className="mx-auto flex w-full max-w-[88rem] flex-1 items-end px-6 pb-6 pt-20">
-          <div
-            className="relative w-full overflow-hidden rounded-3xl bg-white"
-            style={{ height: "calc(100vh - 96px)" }}
-          >
-            {/* Hero background image — cream wall + aubergine volume composition */}
-            <Image
-              src="/landing/hero-bg.webp"
-              alt=""
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover"
-            />
-
-            {/* Content overlay */}
-            <div className="relative z-10 flex h-full flex-col items-start justify-start p-8 pt-32 md:p-12 md:pt-36">
-              <h1
-                className="mb-5 max-w-3xl text-balance text-5xl font-medium text-black md:text-6xl lg:text-7xl"
-                style={{ letterSpacing: "-0.04em", lineHeight: 1.05 }}
-              >
-                ห้องเรียนของคุณ
-                <br />
-                ครบทุกเทอม
-              </h1>
-              <p className="mb-10 max-w-md text-base leading-relaxed text-black/70 md:text-lg">
-                Studennnn คือระบบจัดการห้องเรียนสำหรับโรงเรียนไทย ที่รวมเช็คชื่อ
-                คะแนน ส่งงาน และผลการเรียน ไว้ในแอปเดียว
-              </p>
-              <Link
-                href="/login"
-                className="group inline-flex items-center gap-3 rounded-full bg-black py-2 pl-8 pr-2 text-base font-medium text-white transition-colors duration-200 hover:bg-[#1f1f1f] md:text-lg"
-              >
-                เริ่มใช้งาน
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white transition-transform duration-200 ease-out group-hover:translate-x-0.5">
-                  <ArrowRight className="h-5 w-5 text-black" />
-                </span>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ──────────────────────────────────────────────────────────
-          INFO SECTION — "ทำความรู้จัก Studennnn"
-          ────────────────────────────────────────────────────────── */}
-      <section id="info" className="bg-bg px-6 py-24">
-        <div className="mx-auto max-w-[88rem]">
-          <div className="mb-16 grid grid-cols-1 items-start gap-12 md:grid-cols-2">
-            <div>
-              <h2
-                className="mb-8 text-balance text-4xl font-medium leading-tight text-black md:text-5xl"
-                style={{ letterSpacing: "-0.03em" }}
-              >
-                ทำความรู้จัก
-                <br />
-                Studennnn
-              </h2>
-              <Link
-                href="/login"
-                className="group inline-flex items-center gap-3 rounded-full bg-black py-2 pl-8 pr-2 text-base font-medium text-white transition-colors duration-200 hover:bg-[#1f1f1f]"
-              >
-                เริ่มใช้
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white transition-transform duration-200 ease-out group-hover:translate-x-0.5">
-                  <ArrowRight className="h-5 w-5 text-black" />
-                </span>
-              </Link>
-            </div>
-            <div>
-              <p className="text-2xl leading-relaxed text-black/70 md:text-3xl">
-                Studennnn รวม Google Classroom + ระบบเกรดของโรงเรียนให้เป็น
-                workspace เดียว ครูตั้งชื่อวิชาเอง แชร์รหัสห้อง ออกเกรดด้วย Term
-                GPA ที่ระบบคำนวณให้
-              </p>
-            </div>
-          </div>
-
-          {/* 3-card row */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {/* Card 1 — featured with image, spans 2 cols on lg */}
-            <article className="relative flex min-h-80 flex-col justify-between overflow-hidden rounded-2xl p-7 lg:col-span-2">
-              <Image
-                src="/landing/info-card-1.webp"
-                alt=""
-                fill
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                className="object-cover"
-              />
-              {/* foreground sits over the bright left half of the image */}
-              <h3
-                className="relative z-10 text-2xl font-medium leading-snug text-black"
-                style={{ letterSpacing: "-0.02em" }}
-              >
-                เกรดอัปเดต
-                <br />
-                ทันทีที่ครูบันทึก
-              </h3>
-              <p className="relative z-10 max-w-xs text-base text-black/70">
-                Weighted total และ Term GPA คำนวณให้อัตโนมัติทุกครั้งที่ครู
-                publish คะแนนใหม่ นักเรียนเห็นทันที
-              </p>
-            </article>
-
-            {/* Card 2 — aubergine */}
-            <article
-              className="flex min-h-80 flex-col justify-between rounded-2xl p-7 text-white"
-              style={{ background: "#2b2644" }}
-            >
-              <h3
-                className="text-2xl font-medium text-white"
-                style={{ letterSpacing: "-0.02em", lineHeight: 1.2 }}
-              >
-                เข้าได้ทุกที่
-                <br />
-                ทุกเวลา
-              </h3>
-              <p className="text-base text-white/60">
-                คอม มือถือ แท็บเล็ต — เข้าสู่ระบบเดียวกัน ไม่มีล็อกเครื่อง
-                ไม่ต้องติดตั้งแอป
-              </p>
-            </article>
-
-            {/* Card 3 — aubergine */}
-            <article
-              className="flex min-h-80 flex-col justify-between rounded-2xl p-7 text-white"
-              style={{ background: "#2b2644" }}
-            >
-              <h3
-                className="text-2xl font-medium text-white"
-                style={{ letterSpacing: "-0.02em", lineHeight: 1.2 }}
-              >
-                คำนวณเกรด
-                <br />
-                อัตโนมัติ
-              </h3>
-              <p className="text-base text-white/60">
-                Weighted total + grade table ตามมาตรฐานโรงเรียน ครูไม่ต้องส่งออก
-                Excel
-              </p>
-            </article>
-          </div>
         </div>
       </section>
 
-      {/* ──────────────────────────────────────────────────────────
-          USE CASES — "บทบาทผู้ใช้"
-          ────────────────────────────────────────────────────────── */}
-      <section id="roles" className="bg-bg px-6 py-24">
-        <div className="mx-auto max-w-[88rem]">
-          <div className="grid grid-cols-1 items-start gap-8 md:grid-cols-2">
-            {/* Left col — heading + body */}
-            <div className="md:pr-12 md:pt-2">
-              <p className="mb-2 text-sm text-black/60">
-                Studennnn ในการใช้งาน
-              </p>
-              <h2
-                className="mb-6 text-5xl font-medium leading-none text-black md:text-6xl"
-                style={{ letterSpacing: "-0.04em" }}
-              >
-                บทบาทผู้ใช้
-              </h2>
-              <p className="max-w-sm text-base leading-relaxed text-black/60">
-                Studennnn รองรับ 3 บทบาท: ครู นักเรียน ผู้ดูแล
-                แต่ละบทบาทมีหน้าจอและ workflow ที่ออกแบบเฉพาะ ไม่ใช่ template
-                เดียวกันสามใบ
-              </p>
-            </div>
-
-            {/* Right col — featured aubergine card with photo */}
-            <div className="relative min-h-[720px] overflow-hidden rounded-3xl bg-[#2b2644]">
-              <Image
-                src="/landing/use-cases-teacher.webp"
-                alt=""
-                fill
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-cover"
-              />
-              {/* dark gradient bottom-left → ensures text contrast across image variation */}
-              <div
-                aria-hidden
-                className="absolute inset-0"
-                style={{
-                  background:
-                    "linear-gradient(to right, rgba(15,10,30,0.55) 0%, rgba(15,10,30,0.25) 45%, rgba(15,10,30,0) 70%)",
-                }}
-              />
-              <div className="relative z-10 p-10 text-white md:p-12">
-                <p className="mb-3 text-sm text-white/70">บทบาทเด่น</p>
-                <h3
-                  className="mb-5 text-4xl font-medium leading-tight text-white md:text-5xl"
-                  style={{ letterSpacing: "-0.03em" }}
-                >
-                  ครูเจ้าของห้อง
-                </h3>
-                <p className="mb-8 max-w-md text-base leading-relaxed text-white/80">
-                  ครูสร้างวิชา ตั้งชื่อ + หน่วยกิตเอง แชร์รหัสห้องให้นักเรียน
-                  เช็คชื่อ ตรวจงาน กรอกคะแนน ออกเกรด — ทุกอย่างใน workspace
-                  เดียวในเทอมเดียวกัน
-                </p>
-                <Link
-                  href="/login"
-                  className="group inline-flex items-center gap-3 text-base font-medium text-white"
-                >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 backdrop-blur transition-colors duration-200 group-hover:bg-white">
-                    <ArrowRight className="h-4 w-4 text-black" />
-                  </span>
-                  ดูเพิ่ม
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ──────────────────────────────────────────────────────────
-          FOOTER STRIP — minimal credibility line
-          ────────────────────────────────────────────────────────── */}
-      <footer className="bg-bg px-6 py-12">
-        <div className="mx-auto flex max-w-[88rem] flex-wrap items-center justify-between gap-y-4 border-t border-black/[0.08] pt-8 text-sm text-black/60">
+      {/* ── Footer ──────────────────────────────────────────────── */}
+      <footer className="px-6 pb-12">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-y-4 border-t border-black/[0.08] pt-8 text-sm text-black/55">
           <div className="flex items-center gap-2">
-            <LogoMark className="h-5 w-5 text-black/60" />
+            <BeagleLogo className="h-6 w-6" />
             <span style={{ letterSpacing: "-0.01em" }}>
-              Studennnn · ปีการศึกษา 2568
+              Beagle Classroom · ปีการศึกษา 2568
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
@@ -327,5 +230,86 @@ export default async function HomePage() {
         </div>
       </footer>
     </main>
+  );
+}
+
+function HeroCopy() {
+  return (
+    <>
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-black/[0.08] bg-white/80 px-3.5 py-1.5 text-xs font-medium text-black/70 backdrop-blur-sm">
+        <Sparkles className="h-3.5 w-3.5 text-blue-600" />
+        ระบบจัดการห้องเรียนสำหรับโรงเรียนไทย
+      </span>
+
+      <h1
+        className="mt-5 text-balance text-5xl font-semibold text-black md:text-6xl lg:text-7xl"
+        style={{ letterSpacing: "-0.045em", lineHeight: 1.02 }}
+      >
+        คิด วางแผน ติดตาม
+        <br />
+        <span className="text-blue-600">ครบในที่เดียว</span>
+      </h1>
+
+      <p className="mx-auto mt-5 max-w-md text-balance text-sm leading-relaxed text-black/65 md:text-base">
+        Beagle Classroom รวมเช็คชื่อ คะแนน ส่งงาน ฟีดประกาศ และผลการเรียน
+        ไว้ในแอปเดียว
+      </p>
+
+      <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+        <Link
+          href="/login"
+          className="group inline-flex items-center gap-2 rounded-full bg-blue-500 py-2.5 pl-6 pr-2.5 text-base font-medium text-white shadow-card transition-transform hover:scale-[0.98]"
+          style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.18)" }}
+        >
+          เริ่มใช้งานฟรี
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white">
+            <ArrowRight className="h-4 w-4 text-blue-600 transition-transform group-hover:translate-x-0.5" />
+          </span>
+        </Link>
+        <a
+          href="#features"
+          className="rounded-full bg-white/80 px-6 py-2.5 text-base font-medium text-black/70 backdrop-blur-sm transition-colors hover:text-black"
+        >
+          ดูฟีเจอร์
+        </a>
+      </div>
+    </>
+  );
+}
+
+function RoleCard({
+  icon,
+  title,
+  body,
+  tone,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  body: string;
+  tone: "blue" | "green" | "violet";
+}) {
+  const chip = {
+    blue: "bg-blue-50 text-blue-700",
+    green: "bg-green-50 text-green-700",
+    violet: "bg-[#eff0fe] text-[#3730a3]",
+  }[tone];
+  return (
+    <div className="card p-7 transition-shadow hover:shadow-lift">
+      <span
+        className={
+          "inline-flex h-11 w-11 items-center justify-center rounded-2xl " +
+          chip
+        }
+      >
+        {icon}
+      </span>
+      <h3
+        className="mt-4 text-lg font-semibold text-black"
+        style={{ letterSpacing: "-0.02em" }}
+      >
+        {title}
+      </h3>
+      <p className="mt-2 text-sm leading-relaxed text-black/60">{body}</p>
+    </div>
   );
 }

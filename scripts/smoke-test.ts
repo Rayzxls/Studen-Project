@@ -925,7 +925,6 @@ async function testPhase5Scoring() {
       courseOfferingId: course.id,
       name: SMOKE_NAME,
       fullScore: 10,
-      weight: 10000,
       position: 999,
     },
     select: { id: true },
@@ -1299,6 +1298,462 @@ async function testPhase7StorageRoutes() {
   );
 }
 
+async function testPhase7Bell() {
+  console.log("\n🔔 Phase 7 / P7-5: bell UI presence per role");
+
+  const BELL_LABEL = 'aria-label="การแจ้งเตือน"';
+
+  // Earlier smoke sections exercise the login rate-limit path; clear the
+  // login buckets so the bell section can sign in fresh without the
+  // rate-limit lockout cascading into "no cookie" failures.
+  await db.rateLimitBucket.deleteMany({
+    where: { id: { startsWith: "login:" } },
+  });
+
+  // Student dashboard → bell present
+  const studentCookie = await signin("60001", "Student1234");
+  if (!studentCookie) {
+    fail("Student login (Phase 7 bell)", "no cookie");
+    return;
+  }
+  const sDash = await fetch(`${BASE}/dashboard`, {
+    headers: { cookie: studentCookie },
+  });
+  const sBody = await sDash.text();
+  await expect(
+    "Student dashboard renders bell",
+    sBody.includes(BELL_LABEL),
+    `aria-label not found in body`
+  );
+
+  // Student course detail (CourseShell) → bell present
+  const demoCode = "MATH4A-DEMO1";
+  const course = await db.courseOffering.findUnique({
+    where: { classCode: demoCode },
+    select: { id: true },
+  });
+  if (course) {
+    const sCourse = await fetch(`${BASE}/student/courses/${course.id}`, {
+      headers: { cookie: studentCookie },
+    });
+    const sCourseBody = await sCourse.text();
+    await expect(
+      "Student course detail renders bell (CourseShell stack)",
+      sCourseBody.includes(BELL_LABEL),
+      `aria-label not found`
+    );
+  }
+
+  // Teacher dashboard → bell present
+  const teacherCookie = await signin("teacher@studennnn.local", "Teacher1234!");
+  if (!teacherCookie) {
+    fail("Teacher login (Phase 7 bell)", "no cookie");
+    return;
+  }
+  const tDash = await fetch(`${BASE}/dashboard`, {
+    headers: { cookie: teacherCookie },
+  });
+  const tBody = await tDash.text();
+  await expect(
+    "Teacher dashboard renders bell",
+    tBody.includes(BELL_LABEL),
+    `aria-label not found`
+  );
+
+  // Teacher course detail → bell present
+  if (course) {
+    const tCourse = await fetch(`${BASE}/teacher/courses/${course.id}`, {
+      headers: { cookie: teacherCookie },
+    });
+    const tCourseBody = await tCourse.text();
+    await expect(
+      "Teacher course detail renders bell (CourseShell stack)",
+      tCourseBody.includes(BELL_LABEL),
+      `aria-label not found`
+    );
+  }
+
+  // Admin dashboard → bell NOT present (no NotificationKind targets ADMIN)
+  const adminCookie = await signin("admin@studennnn.local", "Admin1234!");
+  if (!adminCookie) {
+    fail("Admin login (Phase 7 bell)", "no cookie");
+    return;
+  }
+  const aDash = await fetch(`${BASE}/admin/dashboard`, {
+    headers: { cookie: adminCookie },
+  });
+  const aBody = await aDash.text();
+  await expect(
+    "Admin dashboard does NOT render bell (no admin-targeted kind)",
+    !aBody.includes(BELL_LABEL),
+    `bell unexpectedly present in admin response`
+  );
+}
+
+async function testPhase7DashboardFeed() {
+  console.log("\n📰 Phase 7 / P7-6: dashboard User Feed + Due Soon Widget");
+
+  // Pre-empt cascade lockout (same posture as the bell section).
+  await db.rateLimitBucket.deleteMany({
+    where: { id: { startsWith: "login:" } },
+  });
+
+  const FEED_HEADER = "กิจกรรมล่าสุด";
+  const DUE_SOON_HEADER = "ใกล้ส่ง — ภายใน 24 ชั่วโมง";
+
+  // Student dashboard → User Feed section present
+  const studentCookie = await signin("60001", "Student1234");
+  if (!studentCookie) {
+    fail("Student login (Phase 7 dashboard feed)", "no cookie");
+    return;
+  }
+  const sDash = await fetch(`${BASE}/dashboard`, {
+    headers: { cookie: studentCookie },
+  });
+  const sBody = await sDash.text();
+  await expect(
+    "Student dashboard renders User Feed section",
+    sBody.includes(FEED_HEADER),
+    `"${FEED_HEADER}" not found`
+  );
+
+  // Teacher dashboard → User Feed NOT present (Q3 = B lock)
+  const teacherCookie = await signin("teacher@studennnn.local", "Teacher1234!");
+  if (!teacherCookie) {
+    fail("Teacher login (Phase 7 dashboard feed)", "no cookie");
+    return;
+  }
+  const tDash = await fetch(`${BASE}/dashboard`, {
+    headers: { cookie: teacherCookie },
+  });
+  const tBody = await tDash.text();
+  await expect(
+    "Teacher dashboard does NOT render User Feed (creator role)",
+    !tBody.includes(FEED_HEADER),
+    `feed unexpectedly present in teacher response`
+  );
+  await expect(
+    "Teacher dashboard does NOT render Due Soon Widget (student-only)",
+    !tBody.includes(DUE_SOON_HEADER),
+    `due-soon unexpectedly present in teacher response`
+  );
+
+  // Admin dashboard → neither
+  const adminCookie = await signin("admin@studennnn.local", "Admin1234!");
+  if (!adminCookie) {
+    fail("Admin login (Phase 7 dashboard feed)", "no cookie");
+    return;
+  }
+  const aDash = await fetch(`${BASE}/dashboard`, {
+    headers: { cookie: adminCookie },
+  });
+  const aBody = await aDash.text();
+  await expect(
+    "Admin dashboard does NOT render User Feed",
+    !aBody.includes(FEED_HEADER),
+    `feed unexpectedly present in admin response`
+  );
+  await expect(
+    "Admin dashboard does NOT render Due Soon Widget",
+    !aBody.includes(DUE_SOON_HEADER),
+    `due-soon unexpectedly present in admin response`
+  );
+}
+
+async function testPhase7TeacherPostUI() {
+  console.log("\n📋 Phase 7 / P7-7: teacher Material + Announcement UI");
+
+  await db.rateLimitBucket.deleteMany({
+    where: { id: { startsWith: "login:" } },
+  });
+
+  const teacherCookie = await signin("teacher@studennnn.local", "Teacher1234!");
+  if (!teacherCookie) {
+    fail("Teacher login (Phase 7 post UI)", "no cookie");
+    return;
+  }
+
+  const demoCode = "MATH4A-DEMO1";
+  const course = await db.courseOffering.findUnique({
+    where: { classCode: demoCode },
+    select: { id: true },
+  });
+  if (!course) {
+    fail("Phase 7 post UI setup", `demo course "${demoCode}" missing`);
+    return;
+  }
+
+  // Materials list page
+  const mat = await fetch(`${BASE}/teacher/courses/${course.id}/materials`, {
+    headers: { cookie: teacherCookie },
+  });
+  const matBody = await mat.text();
+  await expect(
+    "Teacher Materials list page renders → 200",
+    mat.status === 200,
+    `got ${mat.status}`
+  );
+  await expect(
+    "Materials list shows section heading",
+    matBody.includes("เอกสารประกอบ"),
+    "heading not found"
+  );
+  await expect(
+    "Materials list shows create button",
+    matBody.includes("เพิ่มเอกสาร"),
+    "create button not found"
+  );
+
+  // Announcements list page
+  const ann = await fetch(
+    `${BASE}/teacher/courses/${course.id}/announcements`,
+    { headers: { cookie: teacherCookie } }
+  );
+  const annBody = await ann.text();
+  await expect(
+    "Teacher Announcements list page renders → 200",
+    ann.status === 200,
+    `got ${ann.status}`
+  );
+  await expect(
+    "Announcements list shows create button",
+    annBody.includes("เพิ่มประกาศ"),
+    "create button not found"
+  );
+
+  // Both new tabs appear in the course tab nav
+  await expect(
+    "Course tab nav lists เอกสาร + ประกาศ tabs",
+    matBody.includes("เอกสาร") && matBody.includes("ประกาศ"),
+    "one or both tabs missing"
+  );
+
+  // L1 boundary — student must be redirected from teacher routes
+  const studentCookie = await signin("60001", "Student1234");
+  if (studentCookie) {
+    const sMat = await fetch(`${BASE}/teacher/courses/${course.id}/materials`, {
+      headers: { cookie: studentCookie },
+      redirect: "manual",
+    });
+    await expect(
+      "Student → /teacher/.../materials redirected away (L1)",
+      sMat.status === 302 || sMat.status === 307,
+      `got ${sMat.status}`
+    );
+  }
+}
+
+async function testPhase7StudentPostUI() {
+  console.log(
+    "\n👨‍🎓 Phase 7 / P7-8: student Material + Announcement UI + comments thread"
+  );
+
+  await db.rateLimitBucket.deleteMany({
+    where: { id: { startsWith: "login:" } },
+  });
+
+  const studentCookie = await signin("60001", "Student1234");
+  if (!studentCookie) {
+    fail("Student login (Phase 7 student post UI)", "no cookie");
+    return;
+  }
+
+  const demoCode = "MATH4A-DEMO1";
+  const course = await db.courseOffering.findUnique({
+    where: { classCode: demoCode },
+    select: { id: true },
+  });
+  if (!course) {
+    fail("P7-8 setup", `demo course "${demoCode}" missing`);
+    return;
+  }
+
+  // Student materials list
+  const mat = await fetch(`${BASE}/student/courses/${course.id}/materials`, {
+    headers: { cookie: studentCookie },
+  });
+  const matBody = await mat.text();
+  await expect(
+    "Student Materials list → 200",
+    mat.status === 200,
+    `got ${mat.status}`
+  );
+  await expect(
+    "Student Materials list shows section heading",
+    matBody.includes("เอกสารประกอบ"),
+    "heading not found"
+  );
+  await expect(
+    "Student tab nav includes เอกสาร tab",
+    matBody.includes("เอกสาร"),
+    "tab missing"
+  );
+
+  // Student announcements list
+  const ann = await fetch(
+    `${BASE}/student/courses/${course.id}/announcements`,
+    { headers: { cookie: studentCookie } }
+  );
+  const annBody = await ann.text();
+  await expect(
+    "Student Announcements list → 200",
+    ann.status === 200,
+    `got ${ann.status}`
+  );
+  await expect(
+    "Student tab nav includes ประกาศ tab",
+    annBody.includes("ประกาศ"),
+    "tab missing"
+  );
+
+  // Pick one Material to verify the detail page + comments thread render
+  const material = await db.material.findFirst({
+    where: { courseOfferingId: course.id, deletedAt: null },
+    select: { id: true },
+  });
+  if (material) {
+    const detail = await fetch(
+      `${BASE}/student/courses/${course.id}/materials/${material.id}`,
+      { headers: { cookie: studentCookie } }
+    );
+    const detailBody = await detail.text();
+    await expect(
+      "Student Material detail → 200",
+      detail.status === 200,
+      `got ${detail.status}`
+    );
+    await expect(
+      "Material detail renders comments thread heading",
+      detailBody.includes("ความคิดเห็น"),
+      "thread heading missing"
+    );
+    await expect(
+      "Material detail renders comment composer textarea",
+      detailBody.includes('name="body"') &&
+        detailBody.includes('name="ownerType"'),
+      "composer fields missing"
+    );
+  }
+
+  // Teacher side — composer also reachable on the same Material detail
+  const teacherCookie = await signin("teacher@studennnn.local", "Teacher1234!");
+  if (teacherCookie && material) {
+    const tDetail = await fetch(
+      `${BASE}/teacher/courses/${course.id}/materials/${material.id}`,
+      { headers: { cookie: teacherCookie } }
+    );
+    const tDetailBody = await tDetail.text();
+    await expect(
+      "Teacher Material detail renders comments thread (P7-7 placeholder replaced)",
+      tDetailBody.includes("ความคิดเห็น") &&
+        !tDetailBody.includes("จะเปิดในขั้น P7-8"),
+      "thread missing or placeholder still present"
+    );
+  }
+
+  // L1 — removed student cannot reach student Materials route
+  // (we don't have an automated removed-student fixture here; the
+  // active-enrollment gate is exercised by `assert.isActiveCourseMember`
+  // and covered by P3 integration tests).
+}
+
+async function testPhase8AdminAuditTools() {
+  console.log("\n🛡️  Phase 8: admin audit tools");
+
+  await db.rateLimitBucket.deleteMany({
+    where: { id: { startsWith: "login:" } },
+  });
+
+  const adminCookie = await signin("admin@studennnn.local", "Admin1234!");
+  if (!adminCookie) {
+    fail("Admin login (Phase 8)", "no cookie");
+    return;
+  }
+
+  const auditList = await fetch(`${BASE}/admin/audit`, {
+    headers: { cookie: adminCookie },
+  });
+  const auditBody = await auditList.text();
+  await expect(
+    "Admin audit viewer renders → 200",
+    auditList.status === 200,
+    `got ${auditList.status}`
+  );
+  await expect(
+    "Audit viewer shows tier filter",
+    auditBody.includes("ระดับ (Tier)"),
+    "tier filter missing"
+  );
+  await expect(
+    "Audit viewer shows date range filter",
+    auditBody.includes('name="from"') && auditBody.includes('name="to"'),
+    "date range inputs missing"
+  );
+  await expect(
+    "Audit viewer shows CSV export button",
+    auditBody.includes("ดาวน์โหลด CSV"),
+    "CSV export button missing"
+  );
+  await expect(
+    "Audit viewer shows tier badges (Critical / Important / Verbose)",
+    /CRITICAL|IMPORTANT|VERBOSE/.test(auditBody),
+    "no tier badge found"
+  );
+
+  // CSV export → 200 + correct content-type
+  const csv = await fetch(`${BASE}/admin/audit/export?tier=CRITICAL`, {
+    headers: { cookie: adminCookie },
+  });
+  await expect(
+    "CSV export returns 200",
+    csv.status === 200,
+    `got ${csv.status}`
+  );
+  await expect(
+    "CSV export uses text/csv content-type",
+    (csv.headers.get("content-type") ?? "").includes("text/csv"),
+    `got ${csv.headers.get("content-type")}`
+  );
+  await expect(
+    "CSV export is an attachment download",
+    (csv.headers.get("content-disposition") ?? "").includes("attachment"),
+    `got ${csv.headers.get("content-disposition")}`
+  );
+  await expect(
+    "CSV export sets X-Audit-Row-Count header",
+    csv.headers.get("x-audit-row-count") !== null,
+    "header missing"
+  );
+
+  // L1 — non-admin cannot export
+  const teacherCookie = await signin("teacher@studennnn.local", "Teacher1234!");
+  if (teacherCookie) {
+    const forbidden = await fetch(`${BASE}/admin/audit/export`, {
+      headers: { cookie: teacherCookie },
+      redirect: "manual",
+    });
+    await expect(
+      "Teacher → /admin/audit/export blocked (403 or redirect)",
+      forbidden.status === 403 ||
+        forbidden.status === 302 ||
+        forbidden.status === 307,
+      `got ${forbidden.status}`
+    );
+  }
+
+  // ADMIN_AUDIT_EXPORTED audit row was written
+  const exported = await db.auditLog.findFirst({
+    where: { action: "ADMIN_AUDIT_EXPORTED" },
+    orderBy: { timestamp: "desc" },
+    select: { id: true, actorRole: true },
+  });
+  await expect(
+    "ADMIN_AUDIT_EXPORTED audit row written",
+    exported !== null && exported.actorRole === "ADMIN",
+    `last export audit: ${JSON.stringify(exported)}`
+  );
+}
+
 async function testAuditLog() {
   console.log("\n📝 Audit log verification");
 
@@ -1370,6 +1825,11 @@ async function main() {
   await testPhase5Scoring();
   await testPhase6Assignments();
   await testPhase7StorageRoutes();
+  await testPhase7Bell();
+  await testPhase7DashboardFeed();
+  await testPhase7TeacherPostUI();
+  await testPhase7StudentPostUI();
+  await testPhase8AdminAuditTools();
   await testAuditLog();
 
   console.log(`\n╭───────────────────────────────────╮`);

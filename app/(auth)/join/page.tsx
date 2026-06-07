@@ -72,10 +72,10 @@ function JoinForm() {
         >
           เข้าห้องเรียนสำเร็จ
         </h1>
-        <div className="mt-5 rounded-xl bg-black/[0.04] p-4 text-sm">
-          <div className="font-medium text-black">{success.courseName}</div>
-          <div className="text-black/60">{success.className}</div>
-          <div className="mt-2 text-xs text-black/60">
+        <div className="mt-5 rounded-xl bg-green-50 p-4 text-sm text-green-700">
+          <div className="font-medium">{success.courseName}</div>
+          <div className="opacity-80">{success.className}</div>
+          <div className="mt-2 text-xs opacity-70">
             ครูผู้สอน: {success.teacherName}
           </div>
         </div>
@@ -121,7 +121,7 @@ function JoinForm() {
         </div>
 
         {error && (
-          <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+          <div className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">
             {error}
           </div>
         )}

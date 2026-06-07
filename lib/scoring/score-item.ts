@@ -1,12 +1,19 @@
 /**
- * ScoreItem mutations — Phase 5 · ADR-0017 + ADR-0018
+ * ScoreItem mutations — Phase 5 · Phase 10 cutover (ADR-0024).
  *
  * All mutations follow Pattern 2 (authz inside `$transaction`) and
  * Pattern 3 (`TX_OPTS` on every transaction).
  *
  * Pre-publish CUD is unaudited (Verbose tier — same posture as Phase 4
- * TimetableSlot per Q11C). Post-publish edits fire the SCORE_*
- * audit family.
+ * TimetableSlot per Q11C). Post-publish edits fire the SCORE_* audit
+ * family.
+ *
+ * ADR-0024 sum-based cutover removed:
+ *   - The `weight` field and basis-points channel.
+ *   - The Σ === WEIGHT_SUM_BP publish gate (publish has no Σ check now).
+ *   - `validateWeights` (no callers; no invariant to enforce).
+ *   - The `weight` member of ADR-0018 field-class B — class B narrows
+ *     to `{fullScore}` only.
  */
 
 import type { Prisma, ScoreItem, ScoreItemSource } from "@prisma/client";
@@ -15,39 +22,12 @@ import { audit } from "@/lib/audit/log";
 import { Conflict, Forbidden, NotFound, ValidationError } from "@/lib/errors";
 import {
   fanOutBroadcast,
-  fanOutTargetedMany,
   suppressNotificationsForDeletedEntity,
 } from "@/lib/notification";
-import {
-  NAME_MAX,
-  REASON_MAX,
-  REASON_MIN,
-  TX_OPTS,
-  WEIGHT_SUM_BP,
-} from "./constants";
+import { NAME_MAX, REASON_MAX, REASON_MIN, TX_OPTS } from "./constants";
 
 // ─────────────────────────────────────────────────────────────
-// PURE — validateWeights
-// ─────────────────────────────────────────────────────────────
-
-/**
- * Σ basis-point weights across a CourseOffering's ScoreItems must equal
- * exactly `WEIGHT_SUM_BP` (= 10000) at publish time — ADR-0017 § Decision 3.
- *
- * Caller picks the slice to validate (all items, all items including a
- * proposed change, etc.). Pure number reduction — no I/O.
- */
-export function validateWeights(items: readonly { weight: number }[]): {
-  sum: number;
-  isValid: boolean;
-} {
-  let sum = 0;
-  for (const it of items) sum += it.weight;
-  return { sum, isValid: sum === WEIGHT_SUM_BP };
-}
-
-// ─────────────────────────────────────────────────────────────
-// Field-class split — ADR-0018 § Decision 2
+// Field-class split — ADR-0018 § Decision 2 (B narrowed by ADR-0024)
 // ─────────────────────────────────────────────────────────────
 
 /** Patch shape for `updateScoreItem`. `publishedAt` is intentionally excluded — see ADR-0018. */
@@ -55,12 +35,11 @@ export interface UpdateScoreItemPatch {
   name?: string;
   position?: number;
   fullScore?: number;
-  weight?: number;
   source?: ScoreItemSource;
 }
 
 /** Score-impacting fields per ADR-0018 Class B — post-publish edits require reason. */
-const CLASS_B_FIELDS = ["fullScore", "weight"] as const;
+const CLASS_B_FIELDS = ["fullScore"] as const;
 /** Provenance fields per ADR-0018 Class C — immutable post-publish. */
 const CLASS_C_FIELDS = ["source"] as const;
 
@@ -74,8 +53,6 @@ export interface CreateScoreItemInput {
   courseOfferingId: string;
   name: string;
   fullScore: number;
-  /** Basis points (0..10000). */
-  weight: number;
   position?: number;
   source?: ScoreItemSource;
 }
@@ -98,7 +75,6 @@ export async function createScoreItem(
 ): Promise<ScoreItem> {
   validateName(input.name);
   validateFullScore(input.fullScore);
-  validateWeightValue(input.weight);
   if (input.position !== undefined && !Number.isInteger(input.position)) {
     throw new ValidationError({ position: "ตำแหน่งต้องเป็นจำนวนเต็ม" });
   }
@@ -118,7 +94,6 @@ export async function createScoreItem(
         courseOfferingId: input.courseOfferingId,
         name: input.name.trim(),
         fullScore: input.fullScore,
-        weight: input.weight,
         source: input.source ?? "MANUAL",
         position: input.position ?? 0,
       },
@@ -129,15 +104,13 @@ export async function createScoreItem(
 /**
  * Update a ScoreItem.
  *
- * Field-class dispatch (ADR-0018 § Decision 2):
+ * Field-class dispatch (ADR-0018 § Decision 2 · ADR-0024 narrows class B):
  *   - Class A (`name`, `position`) → always free, no audit.
- *   - Class B (`fullScore`, `weight`) → if published, require `reason ≥ 5`;
+ *   - Class B (`fullScore`) → if published, require `reason ≥ 5`;
  *     emit `SCORE_EDIT_AFTER_PUBLISH` (Important).
  *   - Class C (`source`) → if published, throw `field_immutable_after_publish`.
  *
- * Additional cross-cutting rules for published items:
- *   - Weight changed → re-validate `Σ === WEIGHT_SUM_BP` inside the tx
- *     (Pattern 2). Fail with `weight_sum_not_100` otherwise.
+ * Additional cross-cutting rule for published items:
  *   - `fullScore` shrink → reject if any existing `ScoreEntry.value` exceeds
  *     the new cap (`entries_exceed_new_full_score`).
  */
@@ -155,7 +128,6 @@ export async function updateScoreItem(
 
   if (patch.name !== undefined) validateName(patch.name);
   if (patch.fullScore !== undefined) validateFullScore(patch.fullScore);
-  if (patch.weight !== undefined) validateWeightValue(patch.weight);
   if (patch.position !== undefined && !Number.isInteger(patch.position)) {
     throw new ValidationError({ position: "ตำแหน่งต้องเป็นจำนวนเต็ม" });
   }
@@ -168,7 +140,6 @@ export async function updateScoreItem(
         courseOfferingId: true,
         name: true,
         fullScore: true,
-        weight: true,
         source: true,
         position: true,
         publishedAt: true,
@@ -216,25 +187,6 @@ export async function updateScoreItem(
       }
     }
 
-    // Class B re-validation: weight change must keep Σ === 10000.
-    if (patch.weight !== undefined && patch.weight !== current.weight) {
-      const allItems = await tx.scoreItem.findMany({
-        where: { courseOfferingId: current.courseOfferingId },
-        select: { id: true, weight: true },
-      });
-      const futureItems = allItems.map((it) =>
-        it.id === scoreItemId ? { ...it, weight: patch.weight! } : it
-      );
-      const sum = futureItems.reduce((acc, it) => acc + it.weight, 0);
-      if (isPublished && sum !== WEIGHT_SUM_BP) {
-        // Hard block on published edit — invariant must hold continuously.
-        throw new ValidationError({
-          weight: `น้ำหนักรวมต้องเท่ากับ ${WEIGHT_SUM_BP / 100}% (ปัจจุบัน ${sum / 100}%)`,
-        });
-      }
-      // For DRAFT items, we allow Σ ≠ 10000 — the publish-gate catches it later.
-    }
-
     // Class B fullScore shrink: reject if any entry would now exceed it.
     if (patch.fullScore !== undefined && patch.fullScore < current.fullScore) {
       const maxEntry = await tx.scoreEntry.aggregate({
@@ -256,7 +208,6 @@ export async function updateScoreItem(
     if (patch.name !== undefined) data.name = patch.name.trim();
     if (patch.position !== undefined) data.position = patch.position;
     if (patch.fullScore !== undefined) data.fullScore = patch.fullScore;
-    if (patch.weight !== undefined) data.weight = patch.weight;
     if (patch.source !== undefined && !isPublished) data.source = patch.source;
 
     const updated = await tx.scoreItem.update({
@@ -275,14 +226,8 @@ export async function updateScoreItem(
           reason: reasonTrimmed,
           ipAddress: ctx.ipAddress,
           userAgent: ctx.userAgent,
-          before: {
-            fullScore: current.fullScore,
-            weight: current.weight,
-          },
-          after: {
-            fullScore: updated.fullScore,
-            weight: updated.weight,
-          },
+          before: { fullScore: current.fullScore },
+          after: { fullScore: updated.fullScore },
         },
         tx
       );
@@ -295,11 +240,12 @@ export async function updateScoreItem(
 /**
  * Publish a ScoreItem.
  *
- * Gates (ADR-0017 § Decision 2):
+ * Gates (ADR-0018):
  *   - Already published → `already_published` (one-way per ADR-0018, no
  *     idempotent republish).
- *   - Σ weight ≠ 10000 across the CourseOffering's ScoreItems →
- *     `weight_sum_not_100`.
+ *
+ * Per ADR-0024 there is no Σ-weight precondition anymore — sum-based
+ * scoring has no aggregate invariant to enforce.
  *
  * Sets `publishedAt = now` and emits `SCORE_ITEM_PUBLISHED` (Important).
  */
@@ -314,7 +260,6 @@ export async function publishScoreItem(
         id: true,
         courseOfferingId: true,
         name: true,
-        weight: true,
         fullScore: true,
         publishedAt: true,
         course: { select: { teacherId: true } },
@@ -326,18 +271,6 @@ export async function publishScoreItem(
     }
     if (current.publishedAt !== null) {
       throw new Conflict("already_published");
-    }
-
-    // Σ === 10000 invariant — fetch ALL items in this CourseOffering.
-    const allItems = await tx.scoreItem.findMany({
-      where: { courseOfferingId: current.courseOfferingId },
-      select: { weight: true },
-    });
-    const { sum, isValid } = validateWeights(allItems);
-    if (!isValid) {
-      throw new ValidationError({
-        weight: `น้ำหนักรวมต้องเท่ากับ ${WEIGHT_SUM_BP / 100}% (ปัจจุบัน ${sum / 100}%)`,
-      });
     }
 
     const updated = await tx.scoreItem.update({
@@ -356,7 +289,6 @@ export async function publishScoreItem(
         userAgent: ctx.userAgent,
         after: {
           name: current.name,
-          weight: current.weight,
           fullScore: current.fullScore,
           publishedAt: updated.publishedAt?.toISOString() ?? null,
         },
@@ -417,7 +349,6 @@ export async function deleteScoreItem(
         id: true,
         courseOfferingId: true,
         name: true,
-        weight: true,
         fullScore: true,
         publishedAt: true,
         course: { select: { teacherId: true } },
@@ -453,7 +384,6 @@ export async function deleteScoreItem(
           userAgent: ctx.userAgent,
           before: {
             name: current.name,
-            weight: current.weight,
             fullScore: current.fullScore,
             publishedAt: current.publishedAt?.toISOString() ?? null,
           },
@@ -492,14 +422,6 @@ function validateFullScore(fullScore: number): void {
   if (!Number.isInteger(fullScore) || fullScore <= 0) {
     throw new ValidationError({
       fullScore: "คะแนนเต็มต้องเป็นจำนวนเต็มบวก",
-    });
-  }
-}
-
-function validateWeightValue(weight: number): void {
-  if (!Number.isInteger(weight) || weight < 0 || weight > WEIGHT_SUM_BP) {
-    throw new ValidationError({
-      weight: `น้ำหนักต้องเป็นจำนวนเต็ม 0..${WEIGHT_SUM_BP} (basis points)`,
     });
   }
 }

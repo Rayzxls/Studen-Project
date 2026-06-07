@@ -17,10 +17,13 @@ import {
 } from "./_fixtures";
 
 /**
- * Integration tests for lib/scoring/score-item.ts — Phase 5 P5-7.
+ * Integration tests for lib/scoring/score-item.ts — Phase 5 + Phase 10
+ * cutover (ADR-0024 supersedes ADR-0017 weight invariant).
  *
- * Verifies ADR-0017 (basis-point weight + publish-gate) and ADR-0018
- * (publish one-way + field-class edit policy) against live Neon.
+ * Verifies ADR-0018 (publish one-way + field-class A/C edit policy,
+ * narrowed-B {fullScore}-only after ADR-0024) and ADR-0024 (sum-based:
+ * publish has no Σ precondition; fullScore alone encodes per-item
+ * influence) against live Neon.
  *
  * Pattern 2 (authz inside the $transaction) is exercised explicitly by
  * cross-teacher Forbidden tests for every mutation; Pattern 3 (TX_OPTS)
@@ -47,12 +50,10 @@ describe("createScoreItem", () => {
         courseOfferingId: ctx.courseOfferingId,
         name: "สอบกลางภาค",
         fullScore: 30,
-        weight: 3000,
       },
       ctx0(ctx)
     );
     expect(item.publishedAt).toBeNull();
-    expect(item.weight).toBe(3000);
     expect(item.fullScore).toBe(30);
     expect(item.source).toBe("MANUAL");
   });
@@ -64,35 +65,32 @@ describe("createScoreItem", () => {
           courseOfferingId: ctx.courseOfferingId,
           name: "X",
           fullScore: 10,
-          weight: 5000,
         },
         { actorUserId: ctx.otherTeacherUserId }
       )
     ).rejects.toBeInstanceOf(Forbidden);
   });
 
-  it("rejects weight outside 0..10000 with ValidationError", async () => {
-    await expect(
-      createScoreItem(
-        {
-          courseOfferingId: ctx.courseOfferingId,
-          name: "X",
-          fullScore: 10,
-          weight: 10001,
-        },
-        ctx0(ctx)
-      )
-    ).rejects.toBeInstanceOf(ValidationError);
-  });
-
-  it("rejects fullScore <= 0", async () => {
+  it("rejects fullScore <= 0 with ValidationError", async () => {
     await expect(
       createScoreItem(
         {
           courseOfferingId: ctx.courseOfferingId,
           name: "X",
           fullScore: 0,
-          weight: 5000,
+        },
+        ctx0(ctx)
+      )
+    ).rejects.toBeInstanceOf(ValidationError);
+  });
+
+  it("rejects non-integer fullScore with ValidationError", async () => {
+    await expect(
+      createScoreItem(
+        {
+          courseOfferingId: ctx.courseOfferingId,
+          name: "X",
+          fullScore: 10.5,
         },
         ctx0(ctx)
       )
@@ -106,7 +104,6 @@ describe("createScoreItem", () => {
           courseOfferingId: ctx.courseOfferingId,
           name: "   ",
           fullScore: 10,
-          weight: 5000,
         },
         ctx0(ctx)
       )
@@ -114,7 +111,7 @@ describe("createScoreItem", () => {
   });
 });
 
-describe("publishScoreItem (ADR-0017 § Decision 2 — Σ === 10000 gate)", () => {
+describe("publishScoreItem (ADR-0024 — no Σ precondition)", () => {
   let ctx: TestCourseContext;
   beforeEach(async () => {
     ctx = await setupTestCourse();
@@ -123,22 +120,12 @@ describe("publishScoreItem (ADR-0017 § Decision 2 — Σ === 10000 gate)", () =
     await ctx.cleanup();
   });
 
-  it("publishes when Σ weight === 10000", async () => {
+  it("publishes a single ScoreItem (no aggregate gate exists)", async () => {
     const a = await createScoreItem(
       {
         courseOfferingId: ctx.courseOfferingId,
         name: "A",
         fullScore: 10,
-        weight: 4000,
-      },
-      ctx0(ctx)
-    );
-    await createScoreItem(
-      {
-        courseOfferingId: ctx.courseOfferingId,
-        name: "B",
-        fullScore: 10,
-        weight: 6000,
       },
       ctx0(ctx)
     );
@@ -146,48 +133,36 @@ describe("publishScoreItem (ADR-0017 § Decision 2 — Σ === 10000 gate)", () =
     expect(published.publishedAt).not.toBeNull();
   });
 
-  it("rejects when Σ weight === 9999 (rounding 33.33% × 3)", async () => {
-    const items = [];
-    for (let i = 0; i < 3; i++) {
-      items.push(
-        await createScoreItem(
-          {
-            courseOfferingId: ctx.courseOfferingId,
-            name: `Item${i}`,
-            fullScore: 10,
-            weight: 3333,
-          },
-          ctx0(ctx)
-        )
-      );
-    }
-    await expect(publishScoreItem(items[0]!.id, ctx0(ctx))).rejects.toThrow(
-      ValidationError
-    );
-  });
-
-  it("rejects when Σ weight === 10001", async () => {
-    const a = await createScoreItem(
+  it("publishes even when sibling items are still in draft", async () => {
+    // Under ADR-0017 this would have required Σweight === 10000 across
+    // ALL items in the course. ADR-0024 removed that gate — a teacher can
+    // publish the midterm item while quizzes are still being scaffolded.
+    const midterm = await createScoreItem(
       {
         courseOfferingId: ctx.courseOfferingId,
-        name: "A",
-        fullScore: 10,
-        weight: 5001,
+        name: "Midterm",
+        fullScore: 50,
       },
       ctx0(ctx)
     );
     await createScoreItem(
       {
         courseOfferingId: ctx.courseOfferingId,
-        name: "B",
+        name: "Quiz draft 1",
         fullScore: 10,
-        weight: 5000,
       },
       ctx0(ctx)
     );
-    await expect(publishScoreItem(a.id, ctx0(ctx))).rejects.toThrow(
-      ValidationError
+    await createScoreItem(
+      {
+        courseOfferingId: ctx.courseOfferingId,
+        name: "Quiz draft 2",
+        fullScore: 10,
+      },
+      ctx0(ctx)
     );
+    const published = await publishScoreItem(midterm.id, ctx0(ctx));
+    expect(published.publishedAt).not.toBeNull();
   });
 
   it("emits SCORE_ITEM_PUBLISHED audit on success", async () => {
@@ -196,7 +171,6 @@ describe("publishScoreItem (ADR-0017 § Decision 2 — Σ === 10000 gate)", () =
         courseOfferingId: ctx.courseOfferingId,
         name: "Solo",
         fullScore: 10,
-        weight: 10000,
       },
       ctx0(ctx)
     );
@@ -208,13 +182,33 @@ describe("publishScoreItem (ADR-0017 § Decision 2 — Σ === 10000 gate)", () =
     expect(audits[0]!.actorId).toBe(ctx.teacherUserId);
   });
 
+  it("audit payload omits the legacy `weight` field (ADR-0024)", async () => {
+    const a = await createScoreItem(
+      {
+        courseOfferingId: ctx.courseOfferingId,
+        name: "Solo",
+        fullScore: 10,
+      },
+      ctx0(ctx)
+    );
+    await publishScoreItem(a.id, ctx0(ctx));
+    const audit = await db.auditLog.findFirst({
+      where: { action: "SCORE_ITEM_PUBLISHED", targetId: a.id },
+    });
+    expect(audit).not.toBeNull();
+    // `after` payload should contain fullScore + name + publishedAt only
+    const after = audit!.after as Record<string, unknown>;
+    expect(after).toHaveProperty("fullScore");
+    expect(after).toHaveProperty("publishedAt");
+    expect(after).not.toHaveProperty("weight");
+  });
+
   it("rejects re-publish with Conflict (ADR-0018 one-way)", async () => {
     const a = await createScoreItem(
       {
         courseOfferingId: ctx.courseOfferingId,
         name: "Solo",
         fullScore: 10,
-        weight: 10000,
       },
       ctx0(ctx)
     );
@@ -230,7 +224,6 @@ describe("publishScoreItem (ADR-0017 § Decision 2 — Σ === 10000 gate)", () =
         courseOfferingId: ctx.courseOfferingId,
         name: "Solo",
         fullScore: 10,
-        weight: 10000,
       },
       ctx0(ctx)
     );
@@ -240,7 +233,7 @@ describe("publishScoreItem (ADR-0017 § Decision 2 — Σ === 10000 gate)", () =
   });
 });
 
-describe("updateScoreItem (ADR-0018 § Decision 2 — field-class dispatch)", () => {
+describe("updateScoreItem (ADR-0018 field-class dispatch · B={fullScore})", () => {
   let ctx: TestCourseContext;
   beforeEach(async () => {
     ctx = await setupTestCourse();
@@ -249,14 +242,13 @@ describe("updateScoreItem (ADR-0018 § Decision 2 — field-class dispatch)", ()
     await ctx.cleanup();
   });
 
-  // Helper: publish a single 100%-weight item so isPublished branches fire.
+  // Helper: publish a single ScoreItem so isPublished branches fire.
   async function makePublished() {
     const item = await createScoreItem(
       {
         courseOfferingId: ctx.courseOfferingId,
         name: "Quiz",
         fullScore: 20,
-        weight: 10000,
       },
       ctx0(ctx)
     );
@@ -269,18 +261,16 @@ describe("updateScoreItem (ADR-0018 § Decision 2 — field-class dispatch)", ()
         courseOfferingId: ctx.courseOfferingId,
         name: "Quiz",
         fullScore: 20,
-        weight: 5000,
       },
       ctx0(ctx)
     );
     const updated = await updateScoreItem(
       item.id,
-      { name: "Quiz v2", fullScore: 25, weight: 4000 },
+      { name: "Quiz v2", fullScore: 25 },
       ctx0(ctx)
     );
     expect(updated.name).toBe("Quiz v2");
     expect(updated.fullScore).toBe(25);
-    expect(updated.weight).toBe(4000);
   });
 
   it("post-publish class A (name): free, no reason, no audit", async () => {
@@ -297,61 +287,45 @@ describe("updateScoreItem (ADR-0018 § Decision 2 — field-class dispatch)", ()
     expect(audits).toHaveLength(0);
   });
 
-  it("post-publish class B (weight): rejects without reason", async () => {
+  it("post-publish class B (fullScore): rejects without reason", async () => {
     const item = await makePublished();
     await expect(
-      updateScoreItem(item.id, { weight: 9000 }, ctx0(ctx))
+      updateScoreItem(item.id, { fullScore: 25 }, ctx0(ctx))
     ).rejects.toBeInstanceOf(ValidationError);
   });
 
-  it("post-publish class B (weight): rejects when Σ would break invariant", async () => {
+  it("post-publish class B (fullScore): rejects when reason shorter than 5", async () => {
     const item = await makePublished();
     await expect(
       updateScoreItem(
         item.id,
-        { weight: 9000 },
-        { ...ctx0(ctx), reason: "fixing weight" }
+        { fullScore: 25 },
+        { ...ctx0(ctx), reason: "fix" }
       )
-    ).rejects.toBeInstanceOf(ValidationError); // Σ = 9000 ≠ 10000
+    ).rejects.toBeInstanceOf(ValidationError);
   });
 
-  it("post-publish class B (weight): allows + audits when Σ stays valid", async () => {
-    // Two items: A=4000 published, B=6000 draft. Change A's weight to 3000
-    // and B's to 7000 in sequence; both edits must preserve Σ = 10000.
-    const a = await createScoreItem(
-      {
-        courseOfferingId: ctx.courseOfferingId,
-        name: "A",
-        fullScore: 10,
-        weight: 4000,
-      },
-      ctx0(ctx)
-    );
-    const b = await createScoreItem(
-      {
-        courseOfferingId: ctx.courseOfferingId,
-        name: "B",
-        fullScore: 10,
-        weight: 6000,
-      },
-      ctx0(ctx)
-    );
-    await publishScoreItem(a.id, ctx0(ctx));
-    // Move 1000 bp from A to B — both should stay valid mid-flight via
-    // the two-step. First update B (draft, free) to 7000, then A
-    // (published, reason) to 3000. Σ stays 10000 at every step.
-    await updateScoreItem(b.id, { weight: 7000 }, ctx0(ctx));
+  it("post-publish class B (fullScore): allows + audits with reason ≥ 5", async () => {
+    const item = await makePublished();
     const updated = await updateScoreItem(
-      a.id,
-      { weight: 3000 },
-      { ...ctx0(ctx), reason: "rebalance after team review" }
+      item.id,
+      { fullScore: 25 },
+      { ...ctx0(ctx), reason: "expanded rubric to add bonus part" }
     );
-    expect(updated.weight).toBe(3000);
+    expect(updated.fullScore).toBe(25);
     const audits = await db.auditLog.findMany({
-      where: { action: "SCORE_EDIT_AFTER_PUBLISH", targetId: a.id },
+      where: { action: "SCORE_EDIT_AFTER_PUBLISH", targetId: item.id },
     });
     expect(audits).toHaveLength(1);
-    expect(audits[0]!.reason).toBe("rebalance after team review");
+    expect(audits[0]!.reason).toContain("expanded rubric");
+    // ADR-0024 — audit before/after only carries fullScore for class B
+    // (weight no longer in schema).
+    const before = audits[0]!.before as Record<string, unknown>;
+    const after = audits[0]!.after as Record<string, unknown>;
+    expect(before).toHaveProperty("fullScore", 20);
+    expect(after).toHaveProperty("fullScore", 25);
+    expect(before).not.toHaveProperty("weight");
+    expect(after).not.toHaveProperty("weight");
   });
 
   it("post-publish fullScore shrink: rejects when an entry exceeds the new cap", async () => {
@@ -406,7 +380,6 @@ describe("updateScoreItem (ADR-0018 § Decision 2 — field-class dispatch)", ()
         courseOfferingId: ctx.courseOfferingId,
         name: "X",
         fullScore: 10,
-        weight: 5000,
       },
       ctx0(ctx)
     );
@@ -435,7 +408,6 @@ describe("deleteScoreItem (ADR-0018 § Decision 1 escape hatch)", () => {
         courseOfferingId: ctx.courseOfferingId,
         name: "Drafty",
         fullScore: 10,
-        weight: 5000,
       },
       ctx0(ctx)
     );
@@ -454,7 +426,6 @@ describe("deleteScoreItem (ADR-0018 § Decision 1 escape hatch)", () => {
         courseOfferingId: ctx.courseOfferingId,
         name: "Final",
         fullScore: 50,
-        weight: 10000,
       },
       ctx0(ctx)
     );
@@ -473,7 +444,6 @@ describe("deleteScoreItem (ADR-0018 § Decision 1 escape hatch)", () => {
         courseOfferingId: ctx.courseOfferingId,
         name: "Final",
         fullScore: 50,
-        weight: 10000,
       },
       ctx0(ctx)
     );
@@ -500,6 +470,10 @@ describe("deleteScoreItem (ADR-0018 § Decision 1 escape hatch)", () => {
     });
     expect(audits).toHaveLength(1);
     expect(audits[0]!.reason).toContain("moved to next term");
+    // ADR-0024 — audit before-payload no longer carries weight
+    const before = audits[0]!.before as Record<string, unknown>;
+    expect(before).toHaveProperty("fullScore", 50);
+    expect(before).not.toHaveProperty("weight");
   });
 
   it("rejects cross-teacher delete with Forbidden", async () => {
@@ -508,7 +482,6 @@ describe("deleteScoreItem (ADR-0018 § Decision 1 escape hatch)", () => {
         courseOfferingId: ctx.courseOfferingId,
         name: "X",
         fullScore: 10,
-        weight: 5000,
       },
       ctx0(ctx)
     );

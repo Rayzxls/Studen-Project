@@ -21,10 +21,10 @@ const STATUS_LABEL: Record<AttendanceStatus, string> = {
   ABSENT: "ขาด",
 };
 const STATUS_ACTIVE: Record<AttendanceStatus, string> = {
-  PRESENT: "bg-emerald-100 text-emerald-800 ring-1 ring-emerald-300",
-  LATE: "bg-amber-100 text-amber-800 ring-1 ring-amber-300",
-  EXCUSED: "bg-blue-100 text-blue-800 ring-1 ring-blue-300",
-  ABSENT: "bg-rose-100 text-rose-800 ring-1 ring-rose-300",
+  PRESENT: "bg-green-100 text-green-700 ring-1 ring-green-300",
+  LATE: "bg-orange-100 text-orange-700 ring-1 ring-orange-300",
+  EXCUSED: "bg-blue-100 text-blue-700 ring-1 ring-blue-300",
+  ABSENT: "bg-red-100 text-red-700 ring-1 ring-red-300",
 };
 const REASON_MIN = 5;
 const REASON_MAX = 500;
@@ -188,7 +188,7 @@ export function AttendanceGrid({
       </div>
 
       {isBackEdit && (
-        <div className="mb-3 flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-900 ring-1 ring-amber-200">
+        <div className="mb-3 flex items-start gap-2 rounded-xl bg-orange-50 px-3 py-2 text-xs text-orange-700 ring-1 ring-orange-200">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <div>
             <p className="font-medium">คาบนี้ผ่านมาเกิน 24 ชั่วโมงแล้ว</p>
@@ -262,7 +262,7 @@ export function AttendanceGrid({
             <span
               className={
                 reasonLen > 0 && reasonLen < REASON_MIN
-                  ? "text-rose-600"
+                  ? "text-red-700"
                   : "text-black/40"
               }
             >
@@ -273,7 +273,7 @@ export function AttendanceGrid({
             <span
               className={
                 reasonLen > REASON_MAX
-                  ? "font-medium text-rose-600"
+                  ? "font-medium text-red-700"
                   : "text-black/40"
               }
             >
@@ -281,7 +281,7 @@ export function AttendanceGrid({
             </span>
           </div>
           {state.fieldErrors?.reason && (
-            <p className="mt-1 text-xs text-rose-600">
+            <p className="mt-1 text-xs text-red-700">
               {state.fieldErrors.reason}
             </p>
           )}
@@ -296,12 +296,12 @@ export function AttendanceGrid({
       )}
 
       {state.error && (
-        <p className="mt-3 rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-700">
+        <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">
           {state.error}
         </p>
       )}
       {state.ok && (
-        <p className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+        <p className="mt-3 rounded-xl bg-green-50 px-3 py-2 text-xs text-green-700">
           บันทึกแล้ว ({state.marked} คน
           {state.audited ? " · บันทึก audit" : ""})
         </p>
@@ -378,7 +378,7 @@ function StudentCard({
           <p className="truncate text-sm font-medium text-black">
             {row.studentName}
             {row.removed && (
-              <span className="ml-2 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] text-rose-700">
+              <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-[10px] text-red-700">
                 ถูกนำออกแล้ว
               </span>
             )}
@@ -429,7 +429,7 @@ function StudentRow({
         <p className="text-sm font-medium text-black">
           {row.studentName}
           {row.removed && (
-            <span className="ml-2 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] text-rose-700">
+            <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-[10px] text-red-700">
               ถูกนำออกแล้ว
             </span>
           )}

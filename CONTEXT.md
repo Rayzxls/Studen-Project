@@ -161,12 +161,12 @@ History-preserving: ห้องนี้ในอดีต = แสดงตา
 
 ### Score Item (รายการคะแนน) ⭐
 "ช่อง" คะแนน 1 ช่อง ใน CourseOffering
-มีคุณสมบัติ: `name`, `full_score`, `weight`, `is_published`, `published_at`, `source` (manual หรือ assignment-linked)
-**Weight storage:** integer basis points (0..10000 = 0.00 %..100.00 %) — UI render เป็น `%` ที่ขอบ (ADR-0017)
-**Invariant:** ผลรวม `weight` ของ Score Item ทั้งหมดใน CourseOffering = 10000 (= 100 %) — บังคับตอน publish เท่านั้น (draft ไม่ block, มี Σ pill บอกสถานะ)
-**Field-class rules ตอนแก้หลัง publish (ADR-0018):**
+มีคุณสมบัติ: `name`, `full_score`, `is_published`, `published_at`, `source` (manual หรือ assignment-linked)
+**Influence model (ADR-0024):** ไม่มี `weight` channel แล้ว — `fullScore` เป็นตัวกำหนดอิทธิพลของ Score Item ในเกรดวิชาโดยตรง (Quiz fullScore=10 มีน้ำหนัก 10/Σ ของวิชา, Midterm fullScore=50 มีน้ำหนัก 50/Σ อัตโนมัติ)
+**Invariant:** ❌ ไม่มี Σ invariant — ตัด publish-gate `Σweight=10000` ทิ้งทั้งระบบ (เคยอยู่ใน ADR-0017, superseded)
+**Field-class rules ตอนแก้หลัง publish (ADR-0018 § B partially superseded by ADR-0024):**
 - **A — cosmetic** (`name`, `position`) → แก้เสรี ไม่ต้อง reason
-- **B — score-impacting** (`weight`, `fullScore`) → ต้อง `reason ≥ 5` + audit `SCORE_EDIT_AFTER_PUBLISH`
+- **B — score-impacting** (`fullScore`) → ต้อง `reason ≥ 5` + audit `SCORE_EDIT_AFTER_PUBLISH` (เดิมมี `weight` ใน class นี้ด้วย — ลบไปพร้อม column drop)
 - **C — provenance** (`source`, `scoreItemTemplateId`) → immutable; ถ้าจะเปลี่ยนต้อง delete + create ใหม่
 
 ### Score Item Template
@@ -181,11 +181,13 @@ History-preserving: ห้องนี้ในอดีต = แสดงตา
 **One-way door (ADR-0018):** `publishedAt` set ครั้งเดียวแล้ว revert ไม่ได้ — ไม่มี unpublish
 **หลัง publish:**
 - การแก้ Score Entry ต้องระบุ `reason ≥ 5` + audit `SCORE_EDIT_AFTER_PUBLISH`
-- การแก้ ScoreItem field class B (`weight`, `fullScore`) → reason + audit เดียวกัน
+- การแก้ ScoreItem field class B (`fullScore`) → reason + audit เดียวกัน
 - การลบ ScoreItem ที่มี entry → reason ≥ 5 + audit `SCORE_DELETE_AFTER_PUBLISH` (Critical)
 
-### Weighted Total
-`Σ (score / full_score × weight)` ของ Score Item ที่ publish แล้ว — หน่วย %
+### Score Total (เกรด% ของวิชา)
+`Σ score / Σ fullScore × 100` ของ Score Item ที่ publish แล้ว — หน่วย %
+สูตรนี้แทน "Weighted Total" เดิม (ADR-0017 superseded by ADR-0024). `fullScore` มากกว่า = อิทธิพลในเกรดวิชามากกว่า โดยอัตโนมัติ
+Edge cases: 0 published items → `null` (state `EMPTY`); `ΣfullScore === 0` → `null`
 
 ### Grade (เกรด)
 ระดับผลการเรียน 0-4 — คำนวณอัตโนมัติจาก Weighted Total ของ **CourseOffering หนึ่ง**
@@ -500,7 +502,9 @@ User **ต้องเปลี่ยน** ตอน login ครั้งแร
 | "Subject" | ไม่มีในระบบ (ADR-0012 — ใช้ CourseOffering แทน) |
 | "Class" (ลอยๆ — หมายถึงคาบ?) | Session (คาบ) / Class (ห้องนักเรียน) |
 | "Grade" (ลอยๆ — เกรด หรือชั้น?) | Grade (เกรด 0-4) / Grade Level (ม.4, ม.5) |
-| "Score" ลอยๆ | Score Entry / Score Item / Weighted Total |
+| "Score" ลอยๆ | Score Entry / Score Item / Score Total |
+| "Weighted Total" | Score Total (ADR-0024 superseded weight-based formula) |
+| "weight" / "น้ำหนัก" ใน Score Item | ❌ ไม่มีแล้ว — `fullScore` กำหนดอิทธิพลโดยตรง (ADR-0024) |
 | "Attendance" คำเดียว | Attendance Record (ของคน) / Session (คาบ) |
 | "Homework" / "Task" | Assignment |
 | "Submit" ลอยๆ | Submission (entity) / submit action (verb) |

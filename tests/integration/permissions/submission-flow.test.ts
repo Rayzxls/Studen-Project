@@ -53,7 +53,6 @@ async function makeAssignment(opts: {
       submissionClosed: opts.closed ?? false,
       autoCloseAtDue: opts.autoClose ?? false,
       isScored: opts.scored ?? false,
-      weight: opts.scored ? 5000 : undefined,
       fullScore: opts.scored ? 50 : undefined,
     },
     { actorUserId: ctx.teacherUserId }

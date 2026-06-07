@@ -13,16 +13,17 @@ const INITIAL_STATE: CreateScoreItemState = {};
 
 type Props = {
   courseId: string;
-  /** Current Σ basis points for the course — display only, the publish gate is server-side. */
-  currentSumBp: number;
 };
 
-export function CreateScoreItemForm({ courseId, currentSumBp }: Props) {
+/**
+ * ADR-0024 update — `weight` (basis points 0..10000) input removed. Sum-based
+ * scoring uses `fullScore` directly as the per-item influence weight in the
+ * course grade. Σ is informational only on the parent page (no publish gate).
+ */
+export function CreateScoreItemForm({ courseId }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [name, setName] = useState("");
   const [fullScore, setFullScore] = useState("10");
-  /** Weight stored as a "%" string in the field, converted to bp at submit. */
-  const [weightPct, setWeightPct] = useState("");
 
   const [state, formAction] = useActionState(
     createScoreItemAction,
@@ -46,19 +47,6 @@ export function CreateScoreItemForm({ courseId, currentSumBp }: Props) {
     }, 0);
   }, [state.ok]);
 
-  // Convert "12.5" → 1250 bp on submit via a hidden field that mirrors the
-  // user's percent input. Two-decimal precision matches ADR-0017.
-  const weightBp = (() => {
-    const pct = Number.parseFloat(weightPct);
-    if (!Number.isFinite(pct)) return "";
-    return String(Math.round(pct * 100));
-  })();
-
-  const remainingBp = 10_000 - currentSumBp;
-  const remainingPctLabel = (remainingBp / 100)
-    .toFixed(2)
-    .replace(/\.?0+$/, "");
-
   return (
     <>
       <button type="button" onClick={open} className="btn-primary btn-sm">
@@ -75,7 +63,6 @@ export function CreateScoreItemForm({ courseId, currentSumBp }: Props) {
       >
         <form action={formAction} className="p-6">
           <input type="hidden" name="courseId" value={courseId} />
-          <input type="hidden" name="weight" value={weightBp} />
 
           <div className="mb-4 flex items-start justify-between gap-4">
             <div>
@@ -86,7 +73,8 @@ export function CreateScoreItemForm({ courseId, currentSumBp }: Props) {
                 เพิ่มรายการคะแนน
               </h2>
               <p className="mt-1 text-sm text-black/60">
-                เหลือน้ำหนัก {remainingPctLabel}% เพื่อให้ครบ 100%
+                ตั้งชื่อ + ใส่คะแนนเต็ม —
+                คะแนนเต็มที่สูงกว่าจะมีอิทธิพลต่อเกรดมากกว่าโดยอัตโนมัติ
               </p>
             </div>
             <button
@@ -119,66 +107,39 @@ export function CreateScoreItemForm({ courseId, currentSumBp }: Props) {
                 maxLength={200}
               />
               {state.fieldErrors?.name && (
-                <p className="mt-1 text-xs text-rose-600">
+                <p className="mt-1 text-xs text-red-700">
                   {state.fieldErrors.name}
                 </p>
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label
-                  htmlFor="fullScore"
-                  className="mb-1.5 block text-xs font-medium text-black/60"
-                >
-                  คะแนนเต็ม
-                </label>
-                <input
-                  type="number"
-                  id="fullScore"
-                  name="fullScore"
-                  required
-                  min={1}
-                  step={1}
-                  value={fullScore}
-                  onChange={(e) => setFullScore(e.target.value)}
-                  className="input"
-                />
-                {state.fieldErrors?.fullScore && (
-                  <p className="mt-1 text-xs text-rose-600">
-                    {state.fieldErrors.fullScore}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label
-                  htmlFor="weightPct"
-                  className="mb-1.5 block text-xs font-medium text-black/60"
-                >
-                  น้ำหนัก (%)
-                </label>
-                <input
-                  type="number"
-                  id="weightPct"
-                  required
-                  min={0}
-                  max={100}
-                  step={0.01}
-                  value={weightPct}
-                  onChange={(e) => setWeightPct(e.target.value)}
-                  placeholder={remainingPctLabel}
-                  className="input"
-                />
-                {state.fieldErrors?.weight && (
-                  <p className="mt-1 text-xs text-rose-600">
-                    {state.fieldErrors.weight}
-                  </p>
-                )}
-              </div>
+            <div>
+              <label
+                htmlFor="fullScore"
+                className="mb-1.5 block text-xs font-medium text-black/60"
+              >
+                คะแนนเต็ม
+              </label>
+              <input
+                type="number"
+                id="fullScore"
+                name="fullScore"
+                required
+                min={1}
+                step={1}
+                value={fullScore}
+                onChange={(e) => setFullScore(e.target.value)}
+                className="input"
+              />
+              {state.fieldErrors?.fullScore && (
+                <p className="mt-1 text-xs text-red-700">
+                  {state.fieldErrors.fullScore}
+                </p>
+              )}
             </div>
 
             {state.error && (
-              <p className="rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-700">
+              <p className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">
                 {state.error}
               </p>
             )}

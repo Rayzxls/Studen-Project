@@ -9,11 +9,7 @@ import {
   type WeightedItem,
   type WeightedEntry,
 } from "@/lib/scoring/calc";
-import {
-  formatBasisPoints,
-  formatPercent,
-  formatGpa,
-} from "@/lib/scoring/format";
+import { formatPercent, formatGpa } from "@/lib/scoring/format";
 import { CourseShell } from "@/components/course/course-shell";
 import { studentCourseTabs } from "../_tabs";
 
@@ -50,7 +46,6 @@ export default async function StudentScoresPage({ params }: PageProps) {
   const calcItems: WeightedItem[] = items.map((it) => ({
     id: it.id,
     fullScore: it.fullScore,
-    weight: it.weight,
     publishedAt: it.publishedAt,
   }));
   const calcEntries: WeightedEntry[] = items
@@ -65,6 +60,7 @@ export default async function StudentScoresPage({ params }: PageProps) {
 
   return (
     <CourseShell
+      session={guard.session}
       course={course}
       eyebrow="ห้องเรียน"
       backHref="/dashboard"
@@ -82,7 +78,7 @@ export default async function StudentScoresPage({ params }: PageProps) {
                 {formatPercent(percent)}
               </p>
               {!isComplete && (
-                <p className="mt-1 text-xs text-amber-700">
+                <p className="mt-1 text-xs text-orange-700">
                   ยังเผยแพร่ไม่ครบ ({publishedItems}/{totalItems} รายการ) —
                   เกรดวิชาจะแสดงเมื่อครูเผยแพร่ครบทุกรายการ
                 </p>
@@ -93,7 +89,7 @@ export default async function StudentScoresPage({ params }: PageProps) {
               <p
                 className={
                   "mt-1 text-3xl font-bold tracking-tight " +
-                  (grade !== null ? "text-emerald-700" : "text-black/30")
+                  (grade !== null ? "text-green-700" : "text-black/30")
                 }
               >
                 {grade !== null ? formatGpa(grade) : "—"}
@@ -131,8 +127,7 @@ export default async function StudentScoresPage({ params }: PageProps) {
                           {it.name}
                         </p>
                         <p className="mt-0.5 text-xs text-black/50">
-                          น้ำหนัก {formatBasisPoints(it.weight)} · คะแนนเต็ม{" "}
-                          {it.fullScore}
+                          คะแนนเต็ม {it.fullScore}
                         </p>
                         {it.myNote && (
                           <p className="mt-1 truncate text-xs text-black/70">

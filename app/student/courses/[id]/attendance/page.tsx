@@ -44,6 +44,7 @@ export default async function StudentAttendancePage({ params }: PageProps) {
 
   return (
     <CourseShell
+      session={guard.session}
       course={course}
       eyebrow="ห้องเรียน"
       backHref="/dashboard"

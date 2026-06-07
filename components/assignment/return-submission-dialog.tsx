@@ -44,7 +44,7 @@ export function ReturnSubmissionDialog({
     <>
       <button
         type="button"
-        className="btn-ghost btn-sm text-rose-600 hover:bg-rose-50"
+        className="btn-ghost btn-sm text-red-700 hover:bg-red-50"
         onClick={() => dialogRef.current?.showModal()}
       >
         ส่งคืน
@@ -69,7 +69,7 @@ export function ReturnSubmissionDialog({
 
           <div className="mt-5">
             <label className="block text-xs font-medium text-black/70">
-              เหตุผล / สิ่งที่ให้แก้ <span className="text-rose-500">*</span>
+              เหตุผล / สิ่งที่ให้แก้ <span className="text-red-500">*</span>
             </label>
             <textarea
               name="comment"
@@ -81,14 +81,14 @@ export function ReturnSubmissionDialog({
               placeholder="เช่น 'เพิ่มเหตุผลในข้อ 2 หน่อยครับ' · ≥ 5 ตัวอักษร"
             />
             {state.fieldErrors?.comment && (
-              <p className="mt-1 text-xs text-rose-600">
+              <p className="mt-1 text-xs text-red-700">
                 {state.fieldErrors.comment}
               </p>
             )}
           </div>
 
           {state.error && (
-            <p className="mt-3 text-xs text-rose-600">{state.error}</p>
+            <p className="mt-3 text-xs text-red-700">{state.error}</p>
           )}
 
           <div className="mt-6 flex justify-end gap-2">
