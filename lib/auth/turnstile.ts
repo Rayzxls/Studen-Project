@@ -17,8 +17,10 @@ export async function verifyTurnstile(
 ): Promise<TurnstileVerifyResult> {
   const secret = process.env.TURNSTILE_SECRET_KEY;
   if (!secret) {
-    // Dev mode without configured secret — allow only if using test secret
-    return { success: false, errorCodes: ["missing-secret"] };
+    // CAPTCHA not configured (small private deploy / dev) — skip the check
+    // rather than dead-locking signup. Set TURNSTILE_SECRET_KEY +
+    // NEXT_PUBLIC_TURNSTILE_SITE_KEY to enforce it for public production.
+    return { success: true, errorCodes: ["captcha-disabled"] };
   }
 
   const body = new URLSearchParams({

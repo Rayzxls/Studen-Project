@@ -239,7 +239,9 @@ export default function SignupPage() {
 
         <button
           type="submit"
-          disabled={pending || !consent || !turnstileToken}
+          disabled={
+            pending || !consent || (!!TURNSTILE_SITE_KEY && !turnstileToken)
+          }
           className="btn-primary w-full justify-center"
         >
           {pending ? "กำลังสร้างบัญชี..." : "สมัครสมาชิก"}
