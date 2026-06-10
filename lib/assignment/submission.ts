@@ -159,7 +159,18 @@ export async function submitVersion(
   input: SubmitVersionInput & { assignmentId: string },
   ctx: ActorCtx
 ): Promise<SubmissionVersion> {
-  const parsed = SubmitVersionSchema.parse(input);
+  const parsedResult = SubmitVersionSchema.safeParse(input);
+  if (!parsedResult.success) {
+    throw new ValidationError(
+      Object.fromEntries(
+        parsedResult.error.issues.map((issue) => [
+          issue.path.join(".") || "_",
+          issue.message,
+        ])
+      )
+    );
+  }
+  const parsed = parsedResult.data;
 
   const now = new Date();
 

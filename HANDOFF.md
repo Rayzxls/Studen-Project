@@ -3,11 +3,57 @@
 > เอกสารนี้ใช้สำหรับเริ่ม **session ใหม่** กับ AI assistant แล้วต่อยอดได้ทันที
 > อ่านไฟล์นี้ + `CLAUDE.md` + `CONTEXT.md` ก่อนเริ่มงาน
 
-อัพเดตล่าสุด: **2026-06-06** · branch `phase-11` = 59 commits บน `phase-10` · **Phase 0-12 + brand/3D polish ปิดครบ · Phase 9 ต่อ (Hardening + Deploy) deferred**
+อัพเดตล่าสุด: **2026-06-10** · branch `phase-11` (merged → `main`) · **LIVE บน production** (Vercel) · Codex changes ค้าง uncommitted
 
 ---
 
-## ⚠️ START HERE — Session resume point (2026-06-06 · branch `phase-11`, HEAD `f63b448`)
+## ⚠️ START HERE — Session resume point (2026-06-10 · LIVE production trial)
+
+### 🚀 Production (deployed, ใช้งานจริงได้)
+- **URL:** `https://studen-project.vercel.app` (Vercel project `studen-project`, team `rayzxls' projects`)
+- **DB:** Neon `neondb` (`ep-wild-scene-ao2ft9vq-pooler` · ap-southeast-1) — **dev = prod อันเดียวกัน** (ผู้ใช้เลือกใช้ตัวนี้เป็น prod)
+- **Admin คนเดียว:** identifier `Rayzxls` / pwd `Rayzxls0088` (สร้างผ่าน `pnpm db:reset-admin` — DB ถูกล้างเหลือ admin เดียว)
+- **Env บน Vercel:** `DATABASE_URL` (+`connect_timeout`), `AUTH_SECRET`, `AUTH_URL`, `NEXT_PUBLIC_APP_URL` · Turnstile/Upstash **ไม่ได้ตั้ง** (signup ทำงานได้เพราะแก้ให้ optional)
+- **`main` = source of truth ของ deploy** (Vercel auto-deploy on push to main). phase-11 merged เข้า main ผ่าน PR #1/#2/#3
+
+### งานที่ปิดไปแล้ว (merged → main, deployed)
+- Immersive UI (mascot + classroom webp), Feed-default course shell, assignment submit-first-visit fix, **teacher reference links บน assignment** (+ `Assignment.linkUrls` JSON column — db push แล้ว), composer link attachments + redesign
+- Deploy tooling: `prisma/bootstrap.ts` (`db:bootstrap`), `prisma/reset-to-admin.ts` (`db:reset-admin`), `docs/DEPLOY.md`
+- Auth hotfixes (deployed): **Turnstile optional เมื่อไม่ตั้ง key** (client button + `verifyTurnstile` skip + `SignupStudentSchema.turnstileToken` optional) — แก้ signup deadlock
+
+### ⏳ Codex changes — **ยัง uncommitted** (typecheck 0 · lint 0)
+อีก agent (Codex) เขียนเพิ่มในเครื่อง ยังไม่ commit/ยังไม่ deploy:
+- **withdrawSubmission** — นักเรียนยกเลิกการส่ง (`lib/assignment/submission.ts` + `withdrawSubmissionAction` + `components/assignment/withdraw-submission-button.tsx`). authz ครบ
+  - ✅ **(2026-06-10) audit เพิ่มแล้ว:** `SUBMISSION_WITHDRAWN` (Important · เพิ่มเฉพาะ TS union — ไม่มี migration เพราะ `AuditLog.action` เป็น String) + sync label.ts/tier.ts/Security.md · block withdraw เมื่อสถานะ `RETURNED` (path ที่ถูกคือแก้แล้วส่งใหม่) · UI เปลี่ยนเป็น inline confirm panel (เลิกใช้ `window.confirm`)
+  - ⏳ **teacher notification ยังไม่มี** — ต้องเพิ่มค่าใหม่ใน `NotificationKind` enum (Prisma migration) จึงตัดสินใจเลื่อน; ครูเห็นผลทาง review queue (งานหายจากคิวรอตรวจ) + audit log
+- **Student Assignment Workspace** — รื้อ `app/student/courses/[id]/assignments/[assignmentId]/page.tsx` เป็น 2 โซน (โพสต์ครู+คอมเมนต์ห้อง / panel ส่งงาน). ensureSubmission + linkUrls เดิมยังอยู่
+- **CommentsThread** variant `social` (IG-style) + composer
+- **Landing**: ลบ `components/landing/hero-scene.tsx` + เอา R3F/WebGL ออกจาก `immersive-3d.tsx` → CSS cards (perf)
+- **CONTEXT.md**: เพิ่ม domain — Admin Observer View, Submission Conversation/Answer, Student Assignment Workspace, Assignment Review Workspace
+- ⚠️ **doc ล้ำหน้า code:** "Admin Observer View" + "Assignment Review Workspace" เขียนใน CONTEXT.md แต่ **ยังไม่ได้ implement** (diff ไม่มีหน้า teacher/admin)
+- ⚠️ ไฟล์ขยะ untracked ควร `.gitignore`: `.codex/`, `next-dev-*.log`, `vite-dev-*.log`
+
+### ✅ งานที่ปิดในเครื่องแล้ว (2026-06-10 — committed บน phase-11, รอ PR → main)
+- **Assignment Review Workspace (teacher)** — master-detail 3 คอลัมน์ที่ `/teacher/courses/[id]/assignments/[assignmentId]` (`?filter=` + `?sid=`), `quickGradeAndAdvanceAction`/`returnAndAdvanceAction` redirect ไปคิวถัดไป, `components/assignment/review-panel.tsx`
+- **Dashboard reshape ทั้ง 3 role** — operating dashboard ไม่ใช่ feed:
+  - lib ใหม่ `lib/dashboard/action-center.ts` (student returned/due/recent-scores · teacher review-queue/attendance-today/class-health)
+  - primitives ใหม่ `components/dashboard/primitives.tsx` (SectionHeader/MetricTile/ActionRow/CourseQuickLink/EmptyState) + `student-action-center.tsx` + `teacher-ops.tsx`
+  - `/dashboard`: student = hero+summary chips + Action Center (ส่งคืน>งานต้องส่ง>feed) + aside (วันนี้/คะแนนล่าสุด/ห้องเรียน) · teacher = KPI 4 ตัว + Review Queue + Class Health + เช็คชื่อวันนี้ · admin = doorway
+  - `/admin/dashboard`: operational alerts (ไม่มี timeline แล้ว) + MetricTile + งานผู้ดูแล/การตรวจสอบ · class cards คงเดิม
+  - **หน้าใหม่ `/admin/activity`** (กิจกรรมในระบบ — แยกจาก Audit Log) + sidebar item · filter: ประเภท/วิชา/ช่วงเวลา · TODO: actor filter + pagination (รอ activity query module)
+  - `components/dashboard/teacher-hero.tsx` ไม่ถูกใช้แล้ว (ยังไม่ลบ)
+
+### ⏭️ NEXT
+- PR phase-11 → main → auto-deploy
+- withdraw: audit ✅ แล้ว — เหลือ teacher notification (ต้องเพิ่ม `NotificationKind` + migration ถ้าจะทำ)
+- Activity Review: actor filter + pagination + ย้าย query ไป lib module
+- Implement "Admin Observer View" ให้ตรง CONTEXT.md (หรือถอน doc ออกถ้ายังไม่ทำ)
+- Perf: เว็บช้า — สาเหตุหลักคาดว่า Neon free-tier scale-to-zero (cold start) + Vercel↔Neon region + force-dynamic ทุกหน้า (ยังไม่ได้ตรวจ region จริง)
+- หมุนรหัส: DB password + admin password หลุดในแชต → ควร rotate
+
+---
+
+## START HERE (เดิม) — Session resume point (2026-06-06 · branch `phase-11`, HEAD `f63b448`)
 
 ทั้งหมดอยู่บน branch **`phase-11`** (pushed to origin, 59 commits ยังไม่ merge เข้า `main`). typecheck 0 · lint 0 (254 pre-existing warnings) · tests 429 passing. ยังไม่มี schema migration ใน Phase 11/12.
 

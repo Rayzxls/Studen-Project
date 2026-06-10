@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { assert, requireAuth } from "@/lib/auth/guards";
 import { PresignUploadSchema } from "@/lib/assignment/validation";
 import { presignUpload } from "@/lib/storage/presign";
+import {
+  isLocalStorageFallbackEnabled,
+  presignLocalUpload,
+} from "@/lib/storage/local-dev";
 import { errorResponse, ValidationError } from "@/lib/errors";
 
 /**
@@ -53,7 +57,11 @@ export async function POST(req: Request) {
       );
     }
 
-    const result = await presignUpload(parsed.data, {
+    const signer = isLocalStorageFallbackEnabled()
+      ? presignLocalUpload
+      : presignUpload;
+
+    const result = await signer(parsed.data, {
       actorUserId: session.user.id,
       // Inner predicate is a no-op because assert.canUploadTo already ran;
       // presignUpload still calls it for unit-test symmetry, so return true.

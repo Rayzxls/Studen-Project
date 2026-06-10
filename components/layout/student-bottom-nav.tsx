@@ -23,7 +23,7 @@ import { LayoutGrid, BookOpen, GraduationCap, Bell } from "lucide-react";
  */
 const items = [
   { href: "/dashboard", label: "ฟีด", icon: LayoutGrid },
-  { href: "/join", label: "ห้องเรียน", icon: BookOpen },
+  { href: "/student/courses", label: "ห้องเรียน", icon: BookOpen },
   { href: "/student/terms", label: "ผลการเรียน", icon: GraduationCap },
   { href: "/notifications", label: "แจ้งเตือน", icon: Bell },
 ] as const;

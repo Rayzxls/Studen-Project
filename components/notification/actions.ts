@@ -15,6 +15,7 @@ import { redirect } from "next/navigation";
 import { requireAuth } from "@/lib/auth/guards";
 import {
   markNotificationRead,
+  markVisibleNotificationsRead,
   markAllNotificationsRead,
 } from "@/lib/notification";
 
@@ -29,6 +30,17 @@ export async function markReadAndNavigate(formData: FormData): Promise<void> {
     });
   }
   redirect(href);
+}
+
+export async function markVisibleReadAction(
+  notificationIds: string[]
+): Promise<{ marked: number }> {
+  const session = await requireAuth();
+  const marked = await markVisibleNotificationsRead({
+    notificationIds,
+    recipientId: session.user.id,
+  });
+  return { marked };
 }
 
 export async function markAllReadAction(): Promise<void> {

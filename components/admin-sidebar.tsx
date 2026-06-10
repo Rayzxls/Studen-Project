@@ -9,6 +9,7 @@ import {
   Upload,
   ScrollText,
   Settings2,
+  Activity,
 } from "lucide-react";
 
 const items = [
@@ -17,6 +18,7 @@ const items = [
   { href: "/admin/teachers", label: "ครู", icon: Users },
   { href: "/admin/students", label: "นักเรียน", icon: GraduationCap },
   { href: "/admin/import", label: "นำเข้า CSV", icon: Upload },
+  { href: "/admin/activity", label: "กิจกรรมในระบบ", icon: Activity },
   { href: "/admin/audit", label: "Audit Log", icon: ScrollText },
 ];
 

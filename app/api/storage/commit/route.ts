@@ -3,6 +3,10 @@ import { z } from "zod";
 import type { FileOwnerType } from "@prisma/client";
 import { assert, requireAuth } from "@/lib/auth/guards";
 import { commitUpload } from "@/lib/storage/commit";
+import {
+  commitLocalUpload,
+  isLocalStorageFallbackEnabled,
+} from "@/lib/storage/local-dev";
 import { verifyCommitToken } from "@/lib/storage/jwt";
 import { isFileOwnerType } from "@/lib/storage/keys";
 import { getRequestMeta } from "@/lib/utils/request";
@@ -82,7 +86,11 @@ export async function POST(req: Request) {
       verified.payload.oId
     );
 
-    const result = await commitUpload(
+    const commit = isLocalStorageFallbackEnabled()
+      ? commitLocalUpload
+      : commitUpload;
+
+    const result = await commit(
       { commitToken: parsed.data.commitToken },
       {
         actorUserId: session.user.id,

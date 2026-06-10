@@ -1,27 +1,50 @@
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, Plus, LogIn, BookOpen, Users } from "lucide-react";
+import { ArrowRight, GraduationCap, Plus, ScrollText } from "lucide-react";
+import type { Session } from "@/lib/auth/permissions";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db/client";
+import { listStudentCourses } from "@/lib/course/enrollment";
+import { currentTerm } from "@/lib/dashboard/queries";
 import {
-  listStudentCourses,
-  listTeacherCourses,
-} from "@/lib/course/enrollment";
+  getStudentActionCenter,
+  getTeacherClassHealth,
+  getTeacherReviewQueue,
+} from "@/lib/dashboard/action-center";
 import { TopNav } from "@/components/layout/top-nav";
 import { StudentBottomNav } from "@/components/layout/student-bottom-nav";
-import { DueSoonWidget } from "@/components/feed/due-soon-widget";
-import { UserFeed } from "@/components/feed/user-feed";
-import { CourseColorChip } from "@/components/course/course-color-chip";
-import { TeacherHero } from "@/components/dashboard/teacher-hero";
 import { StudentTodayPanel } from "@/components/dashboard/student-today-panel";
+import { TeacherHero } from "@/components/dashboard/teacher-hero";
+import {
+  CourseShowcaseCard,
+  CourseShowcaseEmpty,
+} from "@/components/dashboard/primitives";
+import {
+  DueWorkBlock,
+  RecentScoresBlock,
+  ReturnedWorkBlock,
+} from "@/components/dashboard/student-action-center";
+import {
+  ClassHealthBlock,
+  ReviewQueueBlock,
+} from "@/components/dashboard/teacher-ops";
 import { AmbientBackground } from "@/components/motion/ambient-background";
-import { EntryStagger } from "@/components/motion/entry-stagger";
-import { Tilt3D } from "@/components/motion/tilt-3d";
 
 // Auth-gated DB-fetching page — skip static prerender.
 export const dynamic = "force-dynamic";
 
+/**
+ * Role-aware dashboard — Phase 11 reshape.
+ *
+ * Each role lands on an operating dashboard, not a feed:
+ *   Student — "วันนี้ต้องจัดการอะไร": returned work, due work, today's
+ *             classes, fresh scores, course quick access.
+ *   Teacher — "ห้องไหนต้องดูแลตอนนี้": review queue, attendance today,
+ *             class health.
+ *   Admin   — a doorway card into /admin/dashboard (the real admin
+ *             operating surface).
+ */
 export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
@@ -31,13 +54,11 @@ export default async function DashboardPage() {
     select: {
       role: true,
       identifier: true,
-      createdAt: true,
       admin: { select: { firstName: true, lastName: true } },
       teacher: {
         select: {
           firstName: true,
           lastName: true,
-          email: true,
           homeroomOf: { select: { name: true } },
         },
       },
@@ -45,13 +66,11 @@ export default async function DashboardPage() {
         select: {
           firstName: true,
           lastName: true,
-          studentId: true,
           class: { select: { name: true } },
         },
       },
     },
   });
-
   if (!user) redirect("/login");
 
   const name = user.admin
@@ -62,318 +81,335 @@ export default async function DashboardPage() {
         ? `${user.student.firstName} ${user.student.lastName}`
         : user.identifier;
 
-  const roleLabel: Record<typeof user.role, string> = {
-    ADMIN: "ผู้ดูแลระบบ",
-    TEACHER: "ครู",
-    STUDENT: "นักเรียน",
-  };
-
-  // Role-specific data
-  const teacherCourses =
-    user.role === "TEACHER" ? await listTeacherCourses(session.user.id) : null;
-  const studentCourses =
-    user.role === "STUDENT" ? await listStudentCourses(session.user.id) : null;
-
   return (
     <div className="min-h-screen bg-bg">
       <TopNav session={session} />
 
-      <main className="mx-auto max-w-6xl animate-fade-in px-6 py-10">
-        {/* Student gets the .card-hero blue saturated greeting — the
-            third critical sweep per ADR-0028 § 4. Teacher and admin
-            keep the calm text greeting (Phase 11D will deepen teacher). */}
-        {user.role === "STUDENT" ? (
-          <section
-            className="card-accent card-accent-blue relative overflow-hidden rounded-3xl"
-            style={{
-              padding: "32px",
-              minHeight: 200,
-            }}
-          >
-            {/* Ambient drifting blobs (ADR-0029 T2) add living depth
-                behind the saturated hero without hurting white-text
-                contrast — they sit under a darkening overlay. */}
-            <AmbientBackground tone="blue" intensity={0.55} />
-            {/* Subtle radial highlight in the top-right adds the iOS
-                pressed-glass depth without changing the saturated read. */}
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-0"
-              style={{
-                background:
-                  "radial-gradient(circle at 90% 0%, rgba(255,255,255,0.22) 0%, transparent 55%), linear-gradient(180deg, rgba(10,132,255,0.0) 40%, rgba(10,132,255,0.35) 100%)",
-              }}
-            />
-            {/* Split layout: text on left, mascot image on right */}
-            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div className="flex flex-col gap-6 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium text-white">
-                    {roleLabel[user.role]}
-                  </span>
-                  {user.student?.class && (
-                    <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium text-white">
-                      {user.student.class.name}
-                    </span>
-                  )}
-                </div>
+      <main className="mx-auto max-w-6xl animate-fade-in px-4 py-8 sm:px-6 md:py-10">
+        {user.role === "STUDENT" && (
+          <StudentDashboard
+            session={session}
+            name={name}
+            className={user.student?.class?.name ?? null}
+          />
+        )}
 
-                <div>
-                  <h1
-                    className="text-3xl font-semibold text-white md:text-4xl"
-                    style={{ letterSpacing: "-0.03em" }}
-                  >
-                    สวัสดี, {name}
-                  </h1>
-                  <p className="mt-2 text-base text-white/80">
-                    ยินดีต้อนรับเข้าสู่ระบบจัดการห้องเรียน Beagle Classroom
-                  </p>
-                </div>
+        {user.role === "TEACHER" && (
+          <TeacherDashboard
+            teacherUserId={session.user.id}
+            name={name}
+            homeroomName={user.teacher?.homeroomOf?.name ?? null}
+          />
+        )}
 
-                <div className="mt-auto flex flex-wrap items-center gap-2">
-                  <Link
-                    href="/join"
-                    className="inline-flex items-center gap-2 rounded-full bg-white py-2 pl-5 pr-2 text-sm font-medium text-blue-700 transition-transform hover:scale-[0.99]"
-                  >
-                    เข้าร่วมห้องเรียน
-                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-50 text-blue-700">
-                      <ArrowRight className="h-4 w-4" />
-                    </span>
-                  </Link>
-                  <Link
-                    href="/student/terms"
-                    className="rounded-full bg-white/15 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-white/25"
-                  >
-                    ผลการเรียน
-                  </Link>
-                </div>
-              </div>
+        {user.role === "ADMIN" && <AdminDoorway name={name} />}
 
-              {/* Right column: 3D student mascot — transparent cut-out so it
-                  blends seamlessly into the blue hero (no white box). */}
-              <div className="relative hidden md:flex items-end justify-center w-52 h-52 shrink-0 self-stretch">
-                <Image
-                  src="/brand/student-mascot-transparent.webp"
-                  alt="Student Mascot"
-                  fill
-                  priority
-                  sizes="208px"
-                  className="object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,0.25)]"
-                />
-              </div>
-            </div>
-          </section>
-        ) : user.role === "TEACHER" ? (
-          <>
-            {user.teacher?.homeroomOf && (
-              <div className="mb-3 flex flex-wrap items-center gap-2">
-                <span className="badge">
-                  ครูประจำชั้น {user.teacher.homeroomOf.name}
+        {user.role === "STUDENT" && <div className="h-20 md:hidden" />}
+      </main>
+
+      {user.role === "STUDENT" && <StudentBottomNav />}
+    </div>
+  );
+}
+
+function countBy<T>(
+  items: T[],
+  getKey: (item: T) => string
+): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const item of items) {
+    const key = getKey(item);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return counts;
+}
+
+function yearLabelFromTerm(termName?: string | null): string | undefined {
+  if (!termName) return undefined;
+  const year = termName.match(/\d{4}/)?.[0];
+  return year ? `ปี ${year}` : termName;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Student
+// ─────────────────────────────────────────────────────────────
+
+async function StudentDashboard({
+  session,
+  name,
+  className,
+}: {
+  session: Session;
+  name: string;
+  className: string | null;
+}) {
+  const [actionCenter, courses] = await Promise.all([
+    getStudentActionCenter(session.user.id),
+    listStudentCourses(session.user.id),
+  ]);
+  const dueByCourse = countBy(actionCenter.due, (item) => item.courseId);
+  const returnedByCourse = countBy(
+    actionCenter.returned,
+    (item) => item.courseId
+  );
+  const scoreByCourse = countBy(
+    actionCenter.recentScores,
+    (item) => item.courseId
+  );
+
+  return (
+    <>
+      {/* Top summary band — greeting + what needs handling today. */}
+      <section
+        className="card-accent card-accent-blue relative overflow-hidden rounded-3xl p-6 sm:p-8"
+        style={{ minHeight: 168 }}
+      >
+        <AmbientBackground tone="blue" intensity={0.55} />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(circle at 90% 0%, rgba(255,255,255,0.22) 0%, transparent 55%), linear-gradient(180deg, rgba(10,132,255,0.0) 40%, rgba(10,132,255,0.35) 100%)",
+          }}
+        />
+        <div className="relative z-10 flex items-center justify-between gap-6">
+          <div className="min-w-0 space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium text-white">
+                นักเรียน
+              </span>
+              {className && (
+                <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium text-white">
+                  {className}
                 </span>
-              </div>
-            )}
-            <TeacherHero teacherUserId={session.user.id} name={name} />
-          </>
-        ) : (
-          <>
-            <div className="mb-6 flex flex-wrap items-center gap-2">
-              <span className="badge">{roleLabel[user.role]}</span>
+              )}
             </div>
-
             <h1
-              className="text-3xl font-medium text-black md:text-4xl"
+              className="text-2xl font-semibold text-white sm:text-3xl"
               style={{ letterSpacing: "-0.03em" }}
             >
               สวัสดี, {name}
             </h1>
-            <p className="mt-2 text-base text-black/60">
-              ยินดีต้อนรับเข้าสู่ระบบจัดการห้องเรียน Beagle Classroom
-            </p>
-          </>
-        )}
-
-        {/* TEACHER */}
-        {user.role === "TEACHER" && teacherCourses && (
-          <section className="mt-10">
-            <div className="mb-4 flex items-center justify-between">
-              <h2
-                className="text-xl font-medium text-black"
-                style={{ letterSpacing: "-0.02em" }}
-              >
-                วิชาที่สอน ({teacherCourses.length})
-              </h2>
-              <Link href="/teacher/courses/new" className="btn-primary btn-sm">
-                <Plus className="h-4 w-4" />
-                สร้างวิชา
-              </Link>
-            </div>
-
-            {teacherCourses.length === 0 ? (
-              <div className="card-flat p-8 text-center">
-                <BookOpen className="mx-auto mb-3 h-10 w-10 text-black/20" />
-                <p className="text-sm text-black/60">
-                  ยังไม่มีวิชาที่สอน — กดสร้างวิชาแรก
-                </p>
-              </div>
-            ) : (
-              <EntryStagger className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {teacherCourses.slice(0, 6).map((c) => (
-                  <Tilt3D key={c.id} maxDeg={6}>
-                    <Link
-                      href={`/teacher/courses/${c.id}`}
-                      className="card group relative flex p-5 hover:no-underline"
-                    >
-                      {/* Teacher view — 4px course colour marker per ADR-0028 § 8. */}
-                      <CourseColorChip
-                        classId={c.class.id}
-                        variant="marker"
-                        className="mr-4"
-                      />
-                      <div className="flex-1">
-                        <h3
-                          className="font-medium text-black"
-                          style={{ letterSpacing: "-0.01em" }}
-                        >
-                          {c.name}
-                        </h3>
-                        <p className="mt-0.5 text-sm text-black/60">
-                          ห้อง {c.class.name} · {c.term.name}
-                        </p>
-                        <div className="mt-3 flex items-center justify-between border-t border-black/[0.06] pt-3 text-xs">
-                          <span className="font-mono text-black/60">
-                            {c.classCode}
-                          </span>
-                          <span className="inline-flex items-center gap-1 text-black/60">
-                            <Users className="h-3.5 w-3.5" />
-                            {c._count.enrollments}
-                          </span>
-                        </div>
-                      </div>
-                    </Link>
-                  </Tilt3D>
-                ))}
-              </EntryStagger>
-            )}
-
-            {teacherCourses.length > 6 && (
+            <div className="flex flex-wrap gap-2">
               <Link
-                href="/teacher/courses"
-                className="mt-4 inline-block text-sm text-black hover:underline"
+                href="/join"
+                className="inline-flex min-h-9 items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm transition-colors hover:bg-blue-50 hover:no-underline"
               >
-                ดูทั้งหมด →
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                เข้าร่วมห้องเรียน
               </Link>
-            )}
-          </section>
-        )}
-
-        {/* STUDENT — Today's class panel (Phase 11D) + Due Soon. */}
-        {user.role === "STUDENT" && (
-          <div className="mt-10 space-y-4">
-            <StudentTodayPanel studentUserId={session.user.id} />
-            <DueSoonWidget studentUserId={session.user.id} />
-          </div>
-        )}
-
-        {/* STUDENT */}
-        {user.role === "STUDENT" && studentCourses && (
-          <section className="mt-10">
-            <div className="mb-4 flex items-center justify-between">
-              <h2
-                className="text-xl font-medium text-black"
-                style={{ letterSpacing: "-0.02em" }}
+              <Link
+                href="/student/terms"
+                className="inline-flex min-h-9 items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-semibold text-white ring-1 ring-white/25 transition-colors hover:bg-white/20 hover:no-underline"
               >
-                ห้องเรียนของฉัน ({studentCourses.length})
-              </h2>
-              <div className="flex items-center gap-2">
-                <Link href="/student/terms" className="btn-ghost btn-sm">
-                  ผลการเรียน
-                </Link>
-                <Link href="/join" className="btn-secondary btn-sm">
-                  <LogIn className="h-4 w-4" />
-                  เข้าร่วมด้วยรหัส
-                </Link>
-              </div>
+                <GraduationCap className="h-4 w-4" aria-hidden="true" />
+                ผลการเรียน
+              </Link>
             </div>
+          </div>
+          <div className="relative hidden h-40 w-40 shrink-0 md:block">
+            <Image
+              src="/brand/student-mascot-transparent.webp"
+              alt=""
+              fill
+              priority
+              sizes="160px"
+              className="object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,0.25)]"
+            />
+          </div>
+        </div>
+      </section>
 
-            {studentCourses.length === 0 ? (
-              <div className="card-flat p-8 text-center">
-                <BookOpen className="mx-auto mb-3 h-10 w-10 text-black/20" />
-                <p className="text-sm text-black/60">
-                  ยังไม่ได้เข้าห้องเรียนใดๆ — ขอรหัสจากครูแล้วกด
-                </p>
-                <Link href="/join" className="btn-primary mt-4">
-                  <LogIn className="h-4 w-4" />
-                  เข้าร่วมห้องเรียน
-                </Link>
-              </div>
-            ) : (
-              <EntryStagger className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {studentCourses.map((e) => (
-                  <Tilt3D key={e.id} maxDeg={7}>
-                    <Link
-                      href={`/student/courses/${e.course.id}`}
-                      className="card block p-5 hover:no-underline"
-                    >
-                      {/* Student view — full course colour chip per ADR-0028 § 8. */}
-                      <CourseColorChip
-                        classId={e.course.class.id}
-                        variant="chip"
-                        label={e.course.class.name}
-                        className="mb-3"
-                      />
-                      <h3
-                        className="font-medium text-black"
-                        style={{ letterSpacing: "-0.01em" }}
-                      >
-                        {e.course.name}
-                      </h3>
-                      <p className="mt-0.5 text-sm text-black/60">
-                        {e.course.term.name}
-                      </p>
-                      <div className="mt-3 border-t border-black/[0.06] pt-3 text-xs text-black/60">
-                        ครู {e.course.teacher.firstName}{" "}
-                        {e.course.teacher.lastName}
-                      </div>
-                    </Link>
-                  </Tilt3D>
-                ))}
-              </EntryStagger>
-            )}
-          </section>
-        )}
-
-        {/* STUDENT — User Feed (Q3 = B: student-only) */}
-        {user.role === "STUDENT" && (
-          <div className="mt-10">
-            <UserFeed session={session} />
+      <section className="mt-6">
+        {courses.length === 0 ? (
+          <CourseShowcaseEmpty
+            href="/join"
+            title="ยังไม่มีวิชาเรียน"
+            hint="เข้าร่วมด้วยรหัสห้องจากครู แล้ววิชาของคุณจะแสดงตรงนี้"
+            actionLabel="เข้าร่วมห้องเรียน"
+          />
+        ) : (
+          <div className="mx-auto grid max-w-5xl gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            {courses.map((e) => {
+              const courseId = e.course.id;
+              const dueCount = dueByCourse.get(courseId) ?? 0;
+              const returnedCount = returnedByCourse.get(courseId) ?? 0;
+              const needsAction = dueCount + returnedCount;
+              return (
+                <CourseShowcaseCard
+                  key={e.id}
+                  href={`/student/courses/${courseId}`}
+                  title={e.course.name}
+                  subtitle={e.course.class.name}
+                  badge={yearLabelFromTerm(e.course.term.name)}
+                  classId={e.course.class.id}
+                  notice={
+                    needsAction > 0
+                      ? `มีงานต้องจัดการ ${needsAction} ชิ้น`
+                      : `ครู ${e.course.teacher.firstName} ${e.course.teacher.lastName}`
+                  }
+                  noticeTone={needsAction > 0 ? "attention" : "muted"}
+                  stats={[
+                    { value: dueCount, label: "งานต้องส่ง" },
+                    { value: scoreByCourse.get(courseId) ?? 0, label: "คะแนน" },
+                    { value: "1", label: "ครู" },
+                  ]}
+                  actionLabel="เข้าวิชา"
+                />
+              );
+            })}
           </div>
         )}
+      </section>
 
-        {/* ADMIN */}
-        {user.role === "ADMIN" && (
-          <section className="mt-10">
+      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_330px] lg:items-start">
+        {/* Action Center — the main block. */}
+        <div className="min-w-0 space-y-4">
+          <ReturnedWorkBlock items={actionCenter.returned} />
+          <DueWorkBlock items={actionCenter.due} />
+        </div>
+
+        <aside className="space-y-4">
+          <StudentTodayPanel studentUserId={session.user.id} />
+          <RecentScoresBlock items={actionCenter.recentScores} />
+        </aside>
+      </div>
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Teacher
+// ─────────────────────────────────────────────────────────────
+
+async function TeacherDashboard({
+  teacherUserId,
+  name,
+  homeroomName,
+}: {
+  teacherUserId: string;
+  name: string;
+  homeroomName: string | null;
+}) {
+  const [reviewQueue, classHealth, term] = await Promise.all([
+    getTeacherReviewQueue(teacherUserId),
+    getTeacherClassHealth(teacherUserId),
+    currentTerm(),
+  ]);
+
+  return (
+    <>
+      {homeroomName && (
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <span className="badge">ครูประจำชั้น {homeroomName}</span>
+        </div>
+      )}
+
+      <TeacherHero teacherUserId={teacherUserId} name={name} />
+
+      <section className="mt-6">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
             <h2
-              className="mb-4 text-xl font-medium text-black"
+              className="text-xl font-semibold text-black"
               style={{ letterSpacing: "-0.02em" }}
             >
-              เครื่องมือผู้ดูแล
+              วิชาที่สอน
             </h2>
-            <Link href="/admin/dashboard" className="btn-primary">
-              เปิด Admin Panel
-            </Link>
-            <p className="mt-3 text-sm text-black/60">
-              จัดการครู / นักเรียน · นำเข้า CSV · ตรวจ Audit Log
+            <p className="mt-1 text-sm text-black/55">
+              เปิดดูห้องเรียน งาน และความคืบหน้าของนักเรียนได้จากการ์ดนี้
             </p>
-          </section>
+          </div>
+          <Link href="/teacher/courses/new" className="btn-primary btn-sm">
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            สร้างวิชา
+          </Link>
+        </div>
+
+        {classHealth.length === 0 ? (
+          <CourseShowcaseEmpty
+            href="/teacher/courses/new"
+            title="ยังไม่มีวิชาที่สอน"
+            hint="สร้างวิชาแรก แล้วแชร์รหัสห้องให้นักเรียนเข้าร่วม"
+            actionLabel="สร้างวิชา"
+          />
+        ) : (
+          <div className="mx-auto grid max-w-5xl gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            {classHealth.map((c) => (
+              <CourseShowcaseCard
+                key={c.courseId}
+                href={`/teacher/courses/${c.courseId}`}
+                title={c.courseName}
+                subtitle={c.className}
+                badge={yearLabelFromTerm(term?.academicYearName ?? term?.name)}
+                classId={c.classId}
+                notice={
+                  c.pendingReview > 0
+                    ? `รอตรวจ ${c.pendingReview} ชิ้น`
+                    : "พร้อมดูแลห้องเรียน"
+                }
+                noticeTone={c.pendingReview > 0 ? "attention" : "success"}
+                stats={[
+                  { value: c.activeStudents, label: "นักเรียน" },
+                  { value: c.pendingReview, label: "รอตรวจ" },
+                  { value: c.draftScoreItems, label: "ร่างคะแนน" },
+                ]}
+                actionLabel="ดูข้อมูล"
+              />
+            ))}
+          </div>
         )}
+      </section>
 
-        {/* Bottom-padding spacer so the last card clears the mobile
-            glass bottom nav (only mounted for STUDENT). */}
-        {user.role === "STUDENT" && <div className="h-20 md:hidden" />}
-      </main>
+      <section className="mt-6">
+        <div className="mb-4">
+          <h2
+            className="text-xl font-semibold text-black"
+            style={{ letterSpacing: "-0.02em" }}
+          >
+            งานที่ต้องดูแล
+          </h2>
+          <p className="mt-1 text-sm text-black/55">
+            เหลือเฉพาะรายการที่ครูต้องลงมือทำต่อ ไม่ซ้ำกับตัวเลขสรุปใน Hero
+          </p>
+        </div>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <ReviewQueueBlock items={reviewQueue} />
+          <ClassHealthBlock rows={classHealth} />
+        </div>
+      </section>
+    </>
+  );
+}
 
-      {/* Student mobile glass bottom nav — ADR-0028 § 5. */}
-      {user.role === "STUDENT" && <StudentBottomNav />}
-    </div>
+// ─────────────────────────────────────────────────────────────
+// Admin
+// ─────────────────────────────────────────────────────────────
+
+function AdminDoorway({ name }: { name: string }) {
+  return (
+    <>
+      <span className="badge">ผู้ดูแลระบบ</span>
+      <h1
+        className="mt-2 text-2xl font-semibold text-black sm:text-3xl"
+        style={{ letterSpacing: "-0.03em" }}
+      >
+        สวัสดี, {name}
+      </h1>
+      <p className="mt-1 text-sm text-black/55">
+        งานดูแลระบบทั้งหมดอยู่ใน Admin Panel
+      </p>
+      <div className="mt-6 flex flex-wrap gap-2">
+        <Link href="/admin/dashboard" className="btn-primary">
+          เปิด Admin Panel
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        </Link>
+        <Link href="/admin/audit" className="btn-secondary">
+          <ScrollText className="h-4 w-4" aria-hidden="true" />
+          ดู Audit Log
+        </Link>
+      </div>
+    </>
   );
 }
