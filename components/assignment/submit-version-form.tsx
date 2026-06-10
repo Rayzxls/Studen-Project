@@ -48,6 +48,9 @@ export function SubmitVersionForm({
   allowFile,
   allowLink,
   hasExistingCurrent,
+  startCollapsed = false,
+  collapsedLabel,
+  collapsedButtonClassName,
 }: {
   courseId: string;
   assignmentId: string;
@@ -56,6 +59,9 @@ export function SubmitVersionForm({
   allowFile: boolean;
   allowLink: boolean;
   hasExistingCurrent: boolean;
+  startCollapsed?: boolean;
+  collapsedLabel?: string;
+  collapsedButtonClassName?: string;
 }) {
   const [state, formAction, isPending] = useActionState<
     SubmitVersionState,
@@ -66,6 +72,9 @@ export function SubmitVersionForm({
   const [inFlight, setInFlight] = useState<UploadProgressEntry[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [isEditingExisting, setIsEditingExisting] = useState(
+    startCollapsed ? false : !hasExistingCurrent
+  );
 
   const anyUploadInFlight = inFlight.some(
     (e) => e.status === "uploading" || e.status === "committing"
@@ -234,14 +243,24 @@ export function SubmitVersionForm({
         value={JSON.stringify(uploaded.map((u) => u.id))}
       />
 
-      {hasExistingCurrent && (
+      {(hasExistingCurrent || startCollapsed) && !isEditingExisting && (
+        <button
+          type="button"
+          className={collapsedButtonClassName ?? "btn-primary btn-sm w-full"}
+          onClick={() => setIsEditingExisting(true)}
+        >
+          {collapsedLabel ?? (hasExistingCurrent ? "แก้ไขงาน" : "เพิ่มงาน")}
+        </button>
+      )}
+
+      {hasExistingCurrent && isEditingExisting && (
         <p className="rounded-lg bg-orange-50 px-3 py-2 text-xs text-orange-700">
-          คุณส่งงานนี้ไปแล้ว — การส่งใหม่จะแทนที่เป็นเวอร์ชันใหม่
-          (ครูเห็นประวัติทุกเวอร์ชัน)
+          การส่งใหม่จะสร้างเวอร์ชันล่าสุดแทนของเดิม
+          ครูยังดูประวัติทุกเวอร์ชันได้
         </p>
       )}
 
-      {allowText && (
+      {isEditingExisting && allowText && (
         <div>
           <label className="block text-xs font-medium text-black/70">
             ข้อความ
@@ -261,7 +280,7 @@ export function SubmitVersionForm({
         </div>
       )}
 
-      {allowFile && (
+      {isEditingExisting && allowFile && (
         <div>
           <label className="block text-xs font-medium text-black/70">
             ไฟล์แนบ (≤ {HUMAN_MAX_MB} MB ต่อไฟล์ · PDF / รูปภาพ / Office docs)
@@ -377,7 +396,7 @@ export function SubmitVersionForm({
         </div>
       )}
 
-      {allowLink && (
+      {isEditingExisting && allowLink && (
         <div>
           <label className="block text-xs font-medium text-black/70">
             ลิงก์ (แต่ละลิงก์ขึ้นบรรทัดใหม่ · สูงสุด 10)
@@ -396,7 +415,7 @@ export function SubmitVersionForm({
         </div>
       )}
 
-      {state.error && (
+      {isEditingExisting && state.error && (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
           {state.error === "submission_closed"
             ? "ครูปิดการส่งแล้ว — ไม่สามารถส่งงานนี้ได้"
@@ -406,21 +425,33 @@ export function SubmitVersionForm({
         </p>
       )}
 
-      <div className="flex justify-end">
-        <button
-          type="submit"
-          className="btn-primary btn-sm"
-          disabled={isPending || anyUploadInFlight}
-        >
-          {isPending
-            ? "กำลังส่ง…"
-            : anyUploadInFlight
-              ? "รออัปโหลดเสร็จก่อน…"
-              : hasExistingCurrent
-                ? "ส่งใหม่ (แทนที่เวอร์ชันเก่า)"
-                : "ส่งงาน"}
-        </button>
-      </div>
+      {isEditingExisting && (
+        <div className="flex justify-end gap-2">
+          {hasExistingCurrent && (
+            <button
+              type="button"
+              className="btn-ghost btn-sm"
+              onClick={() => setIsEditingExisting(false)}
+              disabled={isPending || anyUploadInFlight}
+            >
+              ปิด
+            </button>
+          )}
+          <button
+            type="submit"
+            className="btn-primary btn-sm"
+            disabled={isPending || anyUploadInFlight}
+          >
+            {isPending
+              ? "กำลังส่ง…"
+              : anyUploadInFlight
+                ? "รออัปโหลดเสร็จก่อน…"
+                : hasExistingCurrent
+                  ? "ส่งใหม่ (แทนที่เวอร์ชันเก่า)"
+                  : "ส่งงาน"}
+          </button>
+        </div>
+      )}
     </form>
   );
 }

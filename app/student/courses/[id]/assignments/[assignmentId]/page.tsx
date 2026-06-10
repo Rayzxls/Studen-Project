@@ -1,43 +1,65 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ChevronLeft, Link2 as LinkIcon } from "lucide-react";
+import {
+  AlertCircle,
+  CalendarClock,
+  CheckCircle2,
+  ChevronLeft,
+  FileText,
+  History,
+  Link2 as LinkIcon,
+  MessageSquare,
+  MoreVertical,
+} from "lucide-react";
+import type { SubmissionStatus } from "@prisma/client";
 import { requireRole } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { SubmitVersionForm } from "@/components/assignment/submit-version-form";
+import { WithdrawSubmissionButton } from "@/components/assignment/withdraw-submission-button";
 import { CommentsThread } from "@/components/comment/comments-thread";
 import { ensureSubmission } from "@/lib/assignment/submission";
-
-/**
- * Student Assignment detail page — Phase 6 · P6-6.
- *
- * L1-projected view:
- *   - Sees the Assignment brief + teacher's attached materials (when
- *     P6-3d wiring lands).
- *   - Sees own Submission + own version history (every SubmissionVersion
- *     they've ever submitted, ordered DESC by versionNumber).
- *   - When status=RETURNED, surfaces the teacher's PRIVATE comment(s)
- *     above the resubmit form. Other PRIVATE comments scoped to this
- *     student × this Submission also render here.
- *   - NEVER sees peers' submissions, peers' grades, or peers' comments
- *     on private threads.
- *
- * If the student has no Submission row yet (first visit), a DRAFT
- * Submission gets lazy-materialised by the first submitVersion call —
- * we issue a placeholder card here and only render the form after we
- * have a submission id. To keep that submission id stable across renders
- * before the first submit, we fall back to a no-op trick: render the
- * form without a row, but show a "ส่งงานครั้งแรก" affordance that POSTs
- * to a server action which does findOrCreateSubmission inline. Phase 6
- * MVP: we render the form using the existing Submission row if it
- * exists; otherwise we lazy-materialize on first submit through
- * submitVersion (which calls findOrCreateSubmission internally).
- */
 
 export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ id: string; assignmentId: string }>;
 }
+
+const statusCopy: Record<
+  SubmissionStatus,
+  { label: string; tone: string; note: string }
+> = {
+  NOT_SUBMITTED: {
+    label: "ยังไม่ได้ส่ง",
+    tone: "badge",
+    note: "ส่งงานได้จากกล่องนี้",
+  },
+  DRAFT: {
+    label: "ยังไม่ได้ส่ง",
+    tone: "badge",
+    note: "ยังไม่มีงานที่อยู่ในคิวรอตรวจ",
+  },
+  SUBMITTED: {
+    label: "ส่งแล้ว",
+    tone: "badge badge-success",
+    note: "ครูจะเห็นเวอร์ชันล่าสุดของคุณ",
+  },
+  LATE_SUBMITTED: {
+    label: "ส่งสาย",
+    tone: "badge badge-warn",
+    note: "ส่งแล้วหลังเวลาที่กำหนด",
+  },
+  RETURNED: {
+    label: "ครูส่งคืนให้แก้",
+    tone: "badge badge-danger",
+    note: "ครูส่งคืนพร้อมคำแนะนำ (ดูในแจ้งเตือน) — แก้ไขแล้วส่งใหม่ได้เลย",
+  },
+  GRADED: {
+    label: "ตรวจแล้ว",
+    tone: "badge badge-info",
+    note: "งานนี้มีผลการตรวจแล้ว",
+  },
+};
 
 export default async function StudentAssignmentDetailPage({
   params,
@@ -50,7 +72,6 @@ export default async function StudentAssignmentDetailPage({
   }
   const { id: courseId, assignmentId } = await params;
 
-  // Authz — active enrollment in this CourseOffering.
   const enrollment = await db.enrollment.findUnique({
     where: {
       studentId_courseOfferingId: {
@@ -88,15 +109,10 @@ export default async function StudentAssignmentDetailPage({
   });
   if (!assignment || assignment.courseOfferingId !== courseId) notFound();
 
-  // Materialise the DRAFT Submission row on first visit (while the window is
-  // open) so the submit form + file-upload pipeline always have a stable
-  // submissionId. A version-less DRAFT reads as "ยังไม่ส่ง" on the teacher
-  // grid, so this never looks like a real submission.
   if (!assignment.submissionClosed) {
     await ensureSubmission(assignmentId, enrollment.id);
   }
 
-  // Own Submission (L1 — never join other students' rows).
   const submission = await db.submission.findUnique({
     where: {
       assignmentId_enrollmentId: {
@@ -122,7 +138,6 @@ export default async function StudentAssignmentDetailPage({
     },
   });
 
-  // Own ScoreEntry for the linked ScoreItem (if scored + published).
   const showGrade =
     assignment.isScored &&
     assignment.scoreItem !== null &&
@@ -139,8 +154,6 @@ export default async function StudentAssignmentDetailPage({
       })
     : null;
 
-  // PRIVATE comments are surfaced by <CommentsThread /> below (P9-2).
-
   const dueLabel = assignment.dueAt
     ? new Intl.DateTimeFormat("th-TH-u-ca-buddhist", {
         timeZone: "Asia/Bangkok",
@@ -152,184 +165,417 @@ export default async function StudentAssignmentDetailPage({
       }).format(assignment.dueAt)
     : "ส่งเมื่อพร้อม";
 
-  return (
-    <div className="mx-auto max-w-3xl px-4 py-6">
-      <Link
-        href={`/student/courses/${courseId}/assignments`}
-        className="inline-flex items-center gap-1 text-xs text-black/50 hover:text-black"
-      >
-        <ChevronLeft className="h-3 w-3" /> กลับไปยังรายการการบ้าน
-      </Link>
+  const hasCurrentVersion =
+    submission?.versions.some((version) => version.isCurrent) ?? false;
+  const currentStatus = hasCurrentVersion
+    ? (submission?.status ?? "NOT_SUBMITTED")
+    : "DRAFT";
+  const status = statusCopy[currentStatus];
+  // Withdraw only applies while the work is actually waiting in the
+  // teacher's review queue. RETURNED work is already out of the queue —
+  // the student's path there is "แก้ไขงาน" (resubmit), never withdraw
+  // (the lib layer rejects it too). GRADED is final.
+  const canWithdrawSubmittedWork =
+    Boolean(submission) &&
+    hasCurrentVersion &&
+    (currentStatus === "SUBMITTED" || currentStatus === "LATE_SUBMITTED") &&
+    !assignment.submissionClosed;
 
-      <div className="card mt-3 p-6">
-        <h1 className="text-xl font-medium text-black">{assignment.title}</h1>
-        <p className="mt-1 text-xs text-black/50">
-          กำหนดส่ง: {dueLabel}
-          {assignment.isScored && (
-            <span className="ml-3 badge-gold">นับคะแนน</span>
-          )}
-        </p>
-        {assignment.description && (
-          <div className="mt-4 whitespace-pre-wrap text-sm text-black/80">
-            {assignment.description}
-          </div>
-        )}
-        {Array.isArray(assignment.linkUrls) &&
-          assignment.linkUrls.length > 0 && (
-            <div className="mt-4">
-              <p className="flex items-center gap-1.5 text-xs font-medium text-black/60">
-                <LinkIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                ลิงก์ประกอบงาน
-              </p>
-              <ul className="mt-1.5 space-y-1">
-                {(assignment.linkUrls as string[]).map((href, i) => (
-                  <li key={i}>
+  return (
+    <>
+      <div className="lg:hidden">
+        <div className="min-h-[100svh] bg-bg text-black">
+          <header className="glass-nav sticky top-0 z-30 flex h-16 items-center justify-between px-4">
+            <Link
+              href={`/student/courses/${courseId}/assignments`}
+              className="grid h-11 w-11 place-items-center rounded-full text-black/55 transition hover:bg-black/5 hover:text-black"
+              aria-label="กลับ"
+            >
+              <ChevronLeft className="h-7 w-7" aria-hidden="true" />
+            </Link>
+            <button
+              type="button"
+              className="grid h-11 w-11 place-items-center rounded-full text-black/45 transition hover:bg-black/5 hover:text-black"
+              aria-label="เมนูเพิ่มเติม"
+            >
+              <MoreVertical className="h-6 w-6" aria-hidden="true" />
+            </button>
+          </header>
+
+          <main className="px-4 pb-76 pt-4">
+            <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_14px_38px_rgba(15,23,42,0.08)] ring-1 ring-black/[0.04]">
+              <div className="h-1.5 bg-blue-500" />
+              <div className="p-5">
+                <div className="flex items-start gap-3">
+                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-blue-500 p-[2px]">
+                    <div className="grid h-full w-full place-items-center rounded-full bg-white">
+                      <FileText
+                        className="h-5 w-5 text-blue-500"
+                        aria-hidden="true"
+                      />
+                    </div>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold text-black/50">
+                      โพสต์งานจากครู
+                    </p>
+                    <h1 className="mt-1 text-3xl font-semibold leading-tight tracking-normal text-black">
+                      {assignment.title}
+                    </h1>
+                  </div>
+                </div>
+
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 ring-1 ring-blue-500/10">
+                    <CalendarClock className="h-3.5 w-3.5" aria-hidden="true" />
+                    {dueLabel}
+                  </span>
+                  {assignment.isScored && (
+                    <span className="badge badge-info">
+                      {assignment.scoreItem?.fullScore ?? "-"} คะแนน
+                    </span>
+                  )}
+                </div>
+
+                <a
+                  href="#class-comments"
+                  className="mt-5 flex min-h-11 items-center gap-2 rounded-2xl bg-black/[0.025] px-4 py-3 text-sm font-medium text-blue-700 transition hover:bg-blue-50"
+                >
+                  <MessageSquare className="h-5 w-5" aria-hidden="true" />
+                  <span>เพิ่มความคิดเห็นในชั้นเรียน</span>
+                </a>
+
+                {assignment.description && (
+                  <div className="mt-5 whitespace-pre-wrap rounded-[22px] bg-gradient-to-br from-[#eef7fc] via-white to-[#eff0fe] p-4 text-[15px] leading-7 text-black/75 ring-1 ring-black/[0.04]">
+                    {assignment.description}
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {Array.isArray(assignment.linkUrls) &&
+              assignment.linkUrls.length > 0 && (
+                <div className="mt-4 space-y-3">
+                  {(assignment.linkUrls as string[]).map((href, index) => (
                     <a
+                      key={`${href}-${index}`}
                       href={href}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-sm text-blue-700 underline underline-offset-2 hover:text-blue-900"
+                      className="block truncate rounded-2xl bg-white px-4 py-3 text-sm text-blue-700 shadow-lift"
                     >
                       {href}
                     </a>
-                  </li>
-                ))}
-              </ul>
+                  ))}
+                </div>
+              )}
+
+            <section id="class-comments" className="mt-4 scroll-mt-20">
+              <CommentsThread
+                ownerType="ASSIGNMENT"
+                ownerId={assignmentId}
+                courseOfferingId={courseId}
+                scope="CLASS_WIDE"
+                session={session}
+                title="ความคิดเห็นในชั้นเรียน"
+                emptyText="ยังไม่มีคอมเมนต์ใต้โพสต์นี้ — เป็นคนแรกเลย"
+                variant="social"
+              />
+            </section>
+          </main>
+
+          <section className="fixed inset-x-0 bottom-0 z-40 max-h-[85svh] overflow-y-auto rounded-t-[30px] bg-white px-5 pb-6 pt-4 text-black shadow-[0_-20px_60px_rgba(15,23,42,0.16)] ring-1 ring-black/[0.05]">
+            <div className="mx-auto mb-6 h-1.5 w-14 rounded-full bg-black/18" />
+            <div className="mb-5 flex items-center justify-between gap-4">
+              <h2 className="text-2xl font-semibold tracking-normal">
+                งานของคุณ
+              </h2>
+              <span className={`${status.tone} shrink-0`}>{status.label}</span>
             </div>
-          )}
-        {showGrade && grade && (
-          <div className="mt-4 rounded-lg bg-blue-50 p-3 text-sm">
-            <span className="font-medium text-blue-900">คะแนนของคุณ: </span>
-            {grade.value}/{assignment.scoreItem?.fullScore}
-          </div>
-        )}
+
+            {showGrade && grade && (
+              <div className="mb-4 rounded-2xl bg-blue-50 px-4 py-3 text-sm text-blue-700">
+                คะแนนของคุณ:{" "}
+                <span className="font-semibold text-blue-900">
+                  {grade.value}/{assignment.scoreItem?.fullScore}
+                </span>
+              </div>
+            )}
+
+            {assignment.submissionClosed ? (
+              <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
+                ครูปิดการส่งแล้ว
+              </p>
+            ) : submission ? (
+              <SubmitVersionForm
+                courseId={courseId}
+                assignmentId={assignmentId}
+                submissionId={submission.id}
+                allowText={assignment.allowText}
+                allowFile={assignment.allowFile}
+                allowLink={assignment.allowLink}
+                hasExistingCurrent={hasCurrentVersion}
+                startCollapsed
+                collapsedLabel={hasCurrentVersion ? "แก้ไขงาน" : "+  เพิ่มงาน"}
+                collapsedButtonClassName="w-full rounded-full bg-blue-500 px-6 py-3.5 text-center text-lg font-semibold text-white shadow-[0_12px_28px_rgba(10,132,255,0.22)] transition hover:bg-blue-600"
+              />
+            ) : null}
+
+            {canWithdrawSubmittedWork && submission && (
+              <div className="mt-3">
+                <WithdrawSubmissionButton
+                  courseId={courseId}
+                  assignmentId={assignmentId}
+                  submissionId={submission.id}
+                />
+              </div>
+            )}
+          </section>
+        </div>
       </div>
 
-      {submission?.status === "RETURNED" && (
-        <div className="card mt-4 border-red-200 bg-red-50/50 p-4">
-          <h3 className="text-sm font-medium text-red-700">
-            ครูส่งคืน — รอแก้ไขและส่งใหม่
-          </h3>
-          <p className="mt-1 text-xs text-red-700/70">
-            อ่าน comment ของครูในหัวข้อ &quot;ข้อความ&quot; ด้านล่าง
-          </p>
-        </div>
-      )}
+      <div className="hidden lg:block mx-auto max-w-7xl px-4 py-6 sm:px-6">
+        <Link
+          href={`/student/courses/${courseId}/assignments`}
+          className="inline-flex items-center gap-1 text-xs text-black/50 transition hover:text-black"
+        >
+          <ChevronLeft className="h-3 w-3" /> กลับไปยังรายการการบ้าน
+        </Link>
 
-      {/* PRIVATE thread between this student and the teacher — replaces
-          the Phase-6 read-only display (P9-2). Only mounted after the
-          student has a Submission row; first-time visitors see it
-          appear after the first submit. */}
-      {submission && (
-        <div className="mt-4">
-          <CommentsThread
-            ownerType="SUBMISSION"
-            ownerId={submission.id}
-            courseOfferingId={courseId}
-            scope="PRIVATE"
-            session={session}
-            revalidatePath={`/student/courses/${courseId}/assignments/${assignmentId}`}
-          />
-        </div>
-      )}
+        <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+          <main className="order-1 min-w-0 space-y-5 lg:order-none">
+            <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)] ring-1 ring-black/[0.04]">
+              <div className="h-1.5 bg-blue-500" />
+              <div className="p-5 sm:p-7">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-blue-500 p-[2px]">
+                      <div className="grid h-full w-full place-items-center rounded-full bg-white">
+                        <FileText
+                          className="h-5 w-5 text-[#0a84ff]"
+                          aria-hidden="true"
+                        />
+                      </div>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-black/55">
+                        โพสต์งานจากครู
+                      </p>
+                      <h1 className="mt-1 text-2xl font-semibold leading-tight text-black sm:text-3xl">
+                        {assignment.title}
+                      </h1>
+                    </div>
+                  </div>
+                  <span className={`${status.tone} shrink-0`}>
+                    {status.label}
+                  </span>
+                </div>
 
-      <div className="card mt-4 p-6">
-        <h3 className="text-sm font-medium text-black">ส่งงาน</h3>
-        {assignment.submissionClosed ? (
-          <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
-            ครูปิดการส่งแล้ว
-          </p>
-        ) : submission ? (
-          <div className="mt-3">
-            <SubmitVersionForm
-              courseId={courseId}
-              assignmentId={assignmentId}
-              submissionId={submission.id}
-              allowText={assignment.allowText}
-              allowFile={assignment.allowFile}
-              allowLink={assignment.allowLink}
-              hasExistingCurrent={submission.versions.some((v) => v.isCurrent)}
+                <div className="mt-5 flex flex-wrap gap-2 text-xs text-black/55">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1.5 font-medium text-blue-700 ring-1 ring-blue-500/10">
+                    <CalendarClock className="h-3.5 w-3.5" aria-hidden="true" />
+                    กำหนดส่ง: {dueLabel}
+                  </span>
+                  {assignment.isScored && (
+                    <span className="badge badge-info">
+                      นับคะแนน {assignment.scoreItem?.fullScore ?? "-"} คะแนน
+                    </span>
+                  )}
+                  {assignment.submissionClosed && (
+                    <span className="badge badge-danger">ปิดการส่งแล้ว</span>
+                  )}
+                </div>
+
+                {assignment.description && (
+                  <div className="mt-6 whitespace-pre-wrap rounded-[24px] bg-gradient-to-br from-[#eef7fc] via-white to-[#eff0fe] p-5 text-[15px] leading-7 text-black/80 ring-1 ring-black/[0.04]">
+                    {assignment.description}
+                  </div>
+                )}
+
+                {Array.isArray(assignment.linkUrls) &&
+                  assignment.linkUrls.length > 0 && (
+                    <div className="mt-5">
+                      <p className="flex items-center gap-1.5 text-xs font-medium text-black/60">
+                        <LinkIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                        ลิงก์ประกอบงาน
+                      </p>
+                      <ul className="mt-2 grid gap-2">
+                        {(assignment.linkUrls as string[]).map(
+                          (href, index) => (
+                            <li key={`${href}-${index}`}>
+                              <a
+                                href={href}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="block truncate rounded-2xl bg-blue-50 px-3 py-2 text-sm text-blue-700 underline-offset-2 transition hover:bg-blue-100 hover:underline"
+                              >
+                                {href}
+                              </a>
+                            </li>
+                          )
+                        )}
+                      </ul>
+                    </div>
+                  )}
+              </div>
+            </section>
+
+            <CommentsThread
+              ownerType="ASSIGNMENT"
+              ownerId={assignmentId}
+              courseOfferingId={courseId}
+              scope="CLASS_WIDE"
+              session={session}
+              title="ความคิดเห็นในชั้นเรียน"
+              emptyText="ยังไม่มีคอมเมนต์ใต้โพสต์นี้ — เป็นคนแรกเลย"
+              variant="social"
             />
-          </div>
-        ) : (
-          <p className="mt-3 text-xs text-black/50">
-            ระบบจะสร้าง draft submission ให้อัตโนมัติเมื่อกดส่งครั้งแรก — กรุณา
-            reload หน้านี้หลังการส่งครั้งแรก
-          </p>
-        )}
-      </div>
+          </main>
 
-      {submission && submission.versions.length > 0 && (
-        <div className="card mt-4 p-6">
-          <h3 className="text-sm font-medium text-black">ประวัติการส่ง</h3>
-          <ul className="mt-3 space-y-3">
-            {submission.versions.map((v) => (
-              <li
-                key={v.id}
-                className={`rounded-lg border p-3 ${
-                  v.isCurrent
-                    ? "border-green-200 bg-green-50/30"
-                    : "border-black/10 bg-black/[0.02]"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium text-black">
-                    เวอร์ชัน {v.versionNumber}
-                    {v.isCurrent && (
-                      <span className="ml-2 text-[10px] text-green-700">
-                        (ปัจจุบัน)
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-[10px] text-black/40">
-                    {new Intl.DateTimeFormat("th-TH-u-ca-buddhist", {
-                      timeZone: "Asia/Bangkok",
-                      day: "numeric",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    }).format(v.submittedAt)}
-                    {v.isLate && (
-                      <span className="ml-2 rounded bg-orange-100 px-1 text-[9px] text-orange-700">
-                        ส่งสาย
-                      </span>
-                    )}
+          <aside className="order-2 space-y-5 lg:order-none lg:sticky lg:top-24">
+            <section className="card p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-medium text-black">ส่งงาน</h2>
+                  <p className="mt-1 text-xs leading-5 text-black/50">
+                    {status.note}
                   </p>
                 </div>
-                {v.textContent && (
-                  <p className="mt-2 whitespace-pre-wrap text-xs text-black/70">
-                    {v.textContent}
+                {currentStatus === "RETURNED" ? (
+                  <AlertCircle className="h-5 w-5 text-red-500" />
+                ) : hasCurrentVersion ? (
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                ) : (
+                  <FileText className="h-5 w-5 text-black/35" />
+                )}
+              </div>
+
+              <div className="mt-4 rounded-2xl bg-black/[0.025] p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-medium text-black/50">
+                    สถานะล่าสุด
+                  </span>
+                  <span className={status.tone}>{status.label}</span>
+                </div>
+                {showGrade && grade && (
+                  <div className="mt-3 rounded-xl bg-blue-50 px-3 py-2 text-sm text-blue-700">
+                    คะแนนของคุณ:{" "}
+                    <span className="font-medium">
+                      {grade.value}/{assignment.scoreItem?.fullScore}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-4 space-y-3">
+                {assignment.submissionClosed ? (
+                  <p className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">
+                    ครูปิดการส่งแล้ว
+                  </p>
+                ) : submission ? (
+                  <SubmitVersionForm
+                    courseId={courseId}
+                    assignmentId={assignmentId}
+                    submissionId={submission.id}
+                    allowText={assignment.allowText}
+                    allowFile={assignment.allowFile}
+                    allowLink={assignment.allowLink}
+                    hasExistingCurrent={hasCurrentVersion}
+                  />
+                ) : (
+                  <p className="text-xs leading-5 text-black/50">
+                    รีเฟรชหน้านี้อีกครั้งเพื่อเริ่มส่งงาน
                   </p>
                 )}
-                {Array.isArray(v.links) && v.links.length > 0 && (
-                  <ul className="mt-2 space-y-0.5">
-                    {(v.links as string[]).map((href, i) => (
-                      <li
-                        key={i}
-                        className="text-[11px] text-blue-700 hover:underline"
-                      >
-                        <a href={href} target="_blank" rel="noreferrer">
-                          {href}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
 
-      <div className="mt-4">
-        <CommentsThread
-          ownerType="ASSIGNMENT"
-          ownerId={assignmentId}
-          courseOfferingId={courseId}
-          scope="CLASS_WIDE"
-          session={session}
-        />
+                {canWithdrawSubmittedWork && submission && (
+                  <WithdrawSubmissionButton
+                    courseId={courseId}
+                    assignmentId={assignmentId}
+                    submissionId={submission.id}
+                  />
+                )}
+              </div>
+            </section>
+
+            {submission && submission.versions.length > 0 && (
+              <section className="card p-5">
+                <div className="flex items-center gap-2">
+                  <History
+                    className="h-4 w-4 text-black/40"
+                    aria-hidden="true"
+                  />
+                  <h2 className="text-base font-medium text-black">
+                    ประวัติการส่ง
+                  </h2>
+                </div>
+                <ul className="mt-4 space-y-3">
+                  {submission.versions.map((version) => (
+                    <li
+                      key={version.id}
+                      className={`rounded-2xl border p-3 ${
+                        version.isCurrent
+                          ? "border-green-200 bg-green-50/40"
+                          : "border-black/10 bg-black/[0.02]"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-xs font-medium text-black">
+                            เวอร์ชัน {version.versionNumber}
+                          </p>
+                          <p className="mt-1 text-[11px] text-black/45">
+                            {new Intl.DateTimeFormat("th-TH-u-ca-buddhist", {
+                              timeZone: "Asia/Bangkok",
+                              day: "numeric",
+                              month: "short",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }).format(version.submittedAt)}
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 gap-1">
+                          {version.isCurrent && (
+                            <span className="badge badge-success">ล่าสุด</span>
+                          )}
+                          {!version.isCurrent && (
+                            <span className="badge">เก็บไว้</span>
+                          )}
+                          {version.isLate && (
+                            <span className="badge badge-warn">ส่งสาย</span>
+                          )}
+                        </div>
+                      </div>
+                      {version.textContent && (
+                        <p className="mt-3 line-clamp-4 whitespace-pre-wrap text-xs leading-5 text-black/65">
+                          {version.textContent}
+                        </p>
+                      )}
+                      {Array.isArray(version.links) &&
+                        version.links.length > 0 && (
+                          <ul className="mt-3 space-y-1">
+                            {(version.links as string[]).map((href, index) => (
+                              <li key={`${href}-${index}`}>
+                                <a
+                                  href={href}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="block truncate text-[11px] text-blue-700 hover:underline"
+                                >
+                                  {href}
+                                </a>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+          </aside>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

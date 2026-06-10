@@ -34,12 +34,18 @@ export async function CommentsThread({
   scope,
   session,
   revalidatePath: revalidateOverride,
+  title = "ความคิดเห็น",
+  emptyText = "ยังไม่มีความคิดเห็น เป็นคนแรกที่ตอบ",
+  variant = "default",
 }: {
   ownerType: CommentOwnerType;
   ownerId: string;
   courseOfferingId: string;
   scope: CommentScope;
   session: Session;
+  title?: string;
+  emptyText?: string;
+  variant?: "default" | "social";
   /**
    * Optional override for the path the actions revalidate after a
    * mutation. SUBMISSION threads pass this because the per-submission
@@ -95,26 +101,83 @@ export async function CommentsThread({
 
   const now = new Date();
   const aliveCount = comments.filter((c) => c.deletedAt === null).length;
+  const isSocial = variant === "social";
 
   return (
-    <section className="card p-6">
-      <div className="mb-4 flex items-center gap-2">
-        <MessageSquare className="h-4 w-4 text-black/40" aria-hidden="true" />
+    <section
+      className={
+        isSocial
+          ? "overflow-hidden rounded-[28px] bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)] ring-1 ring-black/[0.04]"
+          : "card p-6"
+      }
+    >
+      {isSocial && <div className="h-1.5 bg-blue-500" />}
+      <div
+        className={
+          isSocial
+            ? "flex items-center gap-3 px-5 pb-4 pt-5 sm:px-6"
+            : "mb-4 flex items-center gap-2"
+        }
+      >
+        <span
+          className={
+            isSocial
+              ? "grid h-10 w-10 place-items-center rounded-full bg-blue-500 p-[2px]"
+              : ""
+          }
+        >
+          <span
+            className={
+              isSocial
+                ? "grid h-full w-full place-items-center rounded-full bg-white"
+                : ""
+            }
+          >
+            <MessageSquare
+              className={
+                isSocial ? "h-4 w-4 text-[#0a84ff]" : "h-4 w-4 text-black/40"
+              }
+              aria-hidden="true"
+            />
+          </span>
+        </span>
         <h2
-          className="text-base font-medium text-black"
+          className={
+            isSocial
+              ? "text-lg font-semibold text-black"
+              : "text-base font-medium text-black"
+          }
           style={{ letterSpacing: "-0.01em" }}
         >
-          ความคิดเห็น
+          {title}
         </h2>
-        <span className="text-xs text-black/40">{aliveCount}</span>
+        <span
+          className={
+            isSocial
+              ? "rounded-full bg-black/[0.04] px-2 py-0.5 text-xs font-medium text-black/45"
+              : "text-xs text-black/40"
+          }
+        >
+          {aliveCount}
+        </span>
       </div>
 
       {comments.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-black/15 p-6 text-center text-sm text-black/50">
-          ยังไม่มีความคิดเห็น เป็นคนแรกที่ตอบ
+        <p
+          className={
+            isSocial
+              ? "mx-5 rounded-[22px] border border-dashed border-black/10 bg-gradient-to-br from-[#eef7fc] to-[#eff0fe] p-8 text-center text-sm text-black/45 sm:mx-6"
+              : "rounded-xl border border-dashed border-black/15 p-6 text-center text-sm text-black/50"
+          }
+        >
+          {emptyText}
         </p>
       ) : (
-        <ul className="divide-y divide-black/5">
+        <ul
+          className={
+            isSocial ? "space-y-3 px-5 sm:px-6" : "divide-y divide-black/5"
+          }
+        >
           {comments.map((c) => {
             const isOwn = c.authorId === session.user.id;
             const isAlive = c.deletedAt === null;
@@ -133,15 +196,33 @@ export async function CommentsThread({
                   ? "ผู้ดูแล"
                   : null;
             return (
-              <li key={c.id} className="py-3">
+              <li
+                key={c.id}
+                className={
+                  isSocial
+                    ? "rounded-[24px] bg-gradient-to-br from-black/[0.025] to-black/[0.01] p-3"
+                    : "py-3"
+                }
+              >
                 <div className="flex items-start justify-between gap-3">
+                  {isSocial && (
+                    <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-blue-500 text-xs font-semibold text-white">
+                      {authorName.trim().slice(0, 1)}
+                    </div>
+                  )}
                   <div className="min-w-0 flex-1">
                     <p className="flex items-center gap-2 text-xs text-black/60">
                       <span className="font-medium text-black">
                         {authorName}
                       </span>
                       {roleBadge && (
-                        <span className="rounded bg-black/[0.05] px-1.5 py-0.5 text-[10px] text-black/60">
+                        <span
+                          className={
+                            isSocial
+                              ? "rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700"
+                              : "rounded bg-black/[0.05] px-1.5 py-0.5 text-[10px] text-black/60"
+                          }
+                        >
                           {roleBadge}
                         </span>
                       )}
@@ -152,7 +233,13 @@ export async function CommentsThread({
                       )}
                     </p>
                     {isAlive ? (
-                      <p className="mt-1 whitespace-pre-wrap break-words text-sm text-black/80">
+                      <p
+                        className={
+                          isSocial
+                            ? "mt-1 whitespace-pre-wrap break-words text-[15px] leading-6 text-black/80"
+                            : "mt-1 whitespace-pre-wrap break-words text-sm text-black/80"
+                        }
+                      >
                         {c.body}
                       </p>
                     ) : (
@@ -201,6 +288,7 @@ export async function CommentsThread({
         ownerId={ownerId}
         scope={scope}
         revalidate={revalidate}
+        variant={variant}
       />
     </section>
   );
