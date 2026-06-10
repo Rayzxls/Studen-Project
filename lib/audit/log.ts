@@ -48,6 +48,7 @@ export type AuditEvent =
   // Phase 5 pre-publish ScoreItem CUD.
   | "ASSIGNMENT_UPDATED" // Important only when isScored:true→false toggle with reason ≥ 5
   | "SUBMISSION_RETURNED" // Important · reason = private comment body (≥ 5)
+  | "SUBMISSION_WITHDRAWN" // Important · student pulls own work out of the review queue (history preserved)
   // Moderation (Phase 6+)
   | "COMMENT_MODERATED" // Important when Teacher (own course) · Critical when Admin × PRIVATE
   // Material + Announcement (Phase 7) — past-tense per Pattern 10 · Q4.2 lock

@@ -330,6 +330,7 @@ Response = 429 + `Retry-After`
 - `ADMIN_VIEW_STUDENT_DATA` (เข้าดูข้อมูลรายคน)
 - `ASSIGNMENT_CREATE/EDIT/DELETE`
 - `ASSIGNMENT_GRADE/RETURN`
+- `SUBMISSION_WITHDRAWN` (นักเรียนถอนงานออกจากคิวรอตรวจ — history preserved)
 - `COURSE_MEMBER_JOINED`
 - `COURSE_MEMBER_RESTORED_BY_REJOIN` (ADR-0013)
 - `FILE_UPLOAD` (large only? — log all to keep storage attribution)

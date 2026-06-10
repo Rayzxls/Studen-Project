@@ -54,6 +54,7 @@ const ACTION_LABEL_TH: Record<AuditEvent, string> = {
   // Assignment + Submission
   ASSIGNMENT_UPDATED: "ยกเลิกการนับคะแนนของการบ้าน",
   SUBMISSION_RETURNED: "ส่งงานกลับให้นักเรียนแก้",
+  SUBMISSION_WITHDRAWN: "นักเรียนยกเลิกการส่งงาน",
   // Moderation
   COMMENT_MODERATED: "ลบข้อความโดยผู้ดูแล",
   // Material + Announcement
