@@ -11,7 +11,6 @@ import { db } from "@/lib/db/client";
 import { currentTerm } from "@/lib/dashboard/queries";
 
 import { getStudentTermSnapshot } from "@/lib/scoring/queries";
-import { termGpa } from "@/lib/scoring/term-gpa";
 import { gradeForCourseOffering } from "@/lib/scoring/calc";
 import { DEFAULT_GRADE_THRESHOLDS } from "@/lib/scoring/constants";
 
@@ -140,10 +139,10 @@ export default async function AdminClassDetailPage({
     }
   }
 
-  // Grades calculations
+  // Per-course grade calculations — admin sees per-course grades only,
+  // never a Term GPA rollup (CONTEXT § Learning Results: "เกรด" = เกรดรายวิชา).
   let gradesData: {
     userId: string;
-    gpa: number | null;
     courseGrades: Map<string, { grade: number | null; percent: number | null }>;
   }[] = [];
 
@@ -151,7 +150,6 @@ export default async function AdminClassDetailPage({
     gradesData = await Promise.all(
       cls.students.map(async (s) => {
         const snapshot = await getStudentTermSnapshot(s.userId, term.id);
-        const gpaResult = termGpa(snapshot.bundles);
 
         const courseGrades = new Map<
           string,
@@ -193,7 +191,6 @@ export default async function AdminClassDetailPage({
 
         return {
           userId: s.userId,
-          gpa: gpaResult.value,
           courseGrades,
         };
       })
@@ -538,7 +535,7 @@ export default async function AdminClassDetailPage({
         <section className="card p-6">
           <h2 className="mb-4 flex items-center gap-2 text-sm font-medium text-black/80">
             <ClipboardList className="h-4 w-4" />
-            ตารางคะแนนรวมและเกรดเฉลี่ย (GPA)
+            ตารางคะแนนและเกรดรายวิชา
           </h2>
           {cls.students.length === 0 ? (
             <p className="text-xs text-black/40 text-center py-6">
@@ -559,9 +556,6 @@ export default async function AdminClassDetailPage({
                         {c.name}
                       </th>
                     ))}
-                    <th className="px-4 py-2.5 text-right font-semibold text-green-800">
-                      GPA
-                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-xs">
@@ -603,11 +597,6 @@ export default async function AdminClassDetailPage({
                             </td>
                           );
                         })}
-                        <td className="px-4 py-3 text-right font-bold text-green-700">
-                          {studentGrade && studentGrade.gpa !== null
-                            ? studentGrade.gpa.toFixed(2)
-                            : "—"}
-                        </td>
                       </tr>
                     );
                   })}

@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { ChevronDown, Award } from "lucide-react";
-import { termGpa } from "@/lib/scoring/term-gpa";
-import { deriveTermStatus } from "@/lib/scoring/term-status";
-import { gradeForCourseOffering } from "@/lib/scoring/calc";
-import { formatGpa, formatPercent } from "@/lib/scoring/format";
+import { gradeForCourseOffering, scoreTotal } from "@/lib/scoring/calc";
+import { formatPercent } from "@/lib/scoring/format";
 import {
   DEFAULT_GRADE_THRESHOLDS,
   type GradeThreshold,
@@ -14,15 +12,20 @@ import type {
 } from "@/lib/scoring/queries";
 import type { TermCourseBundle } from "@/lib/scoring/term-gpa";
 import { PrintButton } from "./print-button";
-import { AnimatedStat } from "@/components/dashboard/animated-stat";
 
 /**
- * Shared transcript-style view for `/student/terms` + `/student/terms/[termId]`.
+ * "ผลการเรียนของฉัน" — shared view for `/student/terms` +
+ * `/student/terms/[termId]` (CONTEXT § Learning Results).
  *
- * Server component — no client JS except the Print button (which is a
- * thin <PrintButton/> that calls window.print).
+ * Mental model: per-course grades. The course table is the hero — each row
+ * shows คะแนนรวม / % / เกรดรายวิชา / สถานะ. Term is a lightweight filter
+ * (picker top-right), NOT a GPA container: no Term-GPA hero card, no
+ * "ยังไม่จบเทอม" progress. A course's grade renders only when every
+ * ScoreItem of that course is published; partial publishes show the
+ * running score with a "กำลังอัปเดต" badge instead of a fake final grade.
  *
- * Print styles live in `globals.css @media print` (added P5-5c).
+ * Server component — no client JS except the Print button.
+ * Print styles live in `globals.css @media print`.
  */
 type Props = {
   studentName: string;
@@ -33,9 +36,11 @@ type Props = {
   allTerms: StudentTermOption[];
   /** Course list metadata for the table. */
   rows: StudentTermCourseRow[];
-  /** Bundles aligned 1:1 with `rows` — passed to PURE termGpa(). */
+  /** Bundles aligned 1:1 with `rows` — published items + own entries. */
   bundles: TermCourseBundle[];
 };
+
+type CourseRowStatus = "NO_SCORES" | "UPDATING" | "FINAL";
 
 export function TermSummaryView({
   studentName,
@@ -45,37 +50,57 @@ export function TermSummaryView({
   rows,
   bundles,
 }: Props) {
-  const gpaResult = termGpa(bundles);
-  const status = deriveTermStatus(gpaResult);
-
-  // Per-row grade derivation — same PURE function the GPA uses, so the
-  // table column agrees with the headline number bit-for-bit.
-  const perRowGrade = rows.map((r, i) => {
+  // Per-row derivation. The grade comes from the same PURE function the
+  // rest of the system uses (null until publish is complete); the running
+  // score/percent are computed over PUBLISHED items only so a partially
+  // published course never fakes a final number.
+  const courseRows = rows.map((r, i) => {
     const b = bundles[i]!;
     const thresholds = parseThresholds(r.gradeRulesJson);
     const res = gradeForCourseOffering(b.items, b.entries, thresholds);
-    return { row: r, bundle: b, ...res };
-  });
 
-  const progressPct =
-    gpaResult.totalItems === 0
-      ? 0
-      : Math.round((gpaResult.publishedItems / gpaResult.totalItems) * 100);
+    const entryByItem = new Map(b.entries.map((e) => [e.scoreItemId, e.value]));
+    let scoreSum = 0;
+    let fullSum = 0;
+    for (const it of b.items) {
+      if (it.publishedAt === null || it.fullScore <= 0) continue;
+      scoreSum += entryByItem.get(it.id) ?? 0;
+      fullSum += it.fullScore;
+    }
+    const partialPercent = scoreTotal(b.items, b.entries);
+
+    const status: CourseRowStatus =
+      res.publishedItems === 0
+        ? "NO_SCORES"
+        : res.publishedItems < res.totalItems
+          ? "UPDATING"
+          : "FINAL";
+
+    return {
+      row: r,
+      grade: res.grade,
+      scoreSum,
+      fullSum,
+      percent: partialPercent,
+      status,
+    };
+  });
 
   return (
     <div className="space-y-4 print:space-y-2">
-      {/* Header — student + term + actions */}
+      {/* Header — student + light term filter */}
       <div className="card p-6 print:p-0 print:shadow-none print:border-none">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-xs font-medium text-black/50 print:text-black">
-              ผลการเรียน
+              {selectedTerm.name}
+              {selectedTerm.isActive && " · ภาคเรียนปัจจุบัน"}
             </p>
             <h1
               className="mt-1 text-2xl font-bold tracking-tight text-black md:text-3xl"
               style={{ letterSpacing: "-0.02em" }}
             >
-              {selectedTerm.name}
+              ผลการเรียนของฉัน
             </h1>
             <p className="mt-1 text-sm text-black/60 print:text-black">
               {studentName} · เลขประจำตัว {studentIdNumber}
@@ -89,62 +114,13 @@ export function TermSummaryView({
         </div>
       </div>
 
-      {/* GPA KPI */}
-      <div className="card p-6 print:p-0 print:shadow-none print:border-none">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-xs font-medium text-black/50 print:text-black">
-              GPA ภาคเรียน
-            </p>
-            <p
-              className={
-                "mt-1 text-4xl font-bold tracking-tight " +
-                (gpaResult.value !== null ? "text-green-700" : "text-black/30")
-              }
-            >
-              {gpaResult.value !== null ? (
-                /* AnimatedStat with decimals=2 — counts up from 0 on
-                   mount, snaps to target on prefers-reduced-motion.
-                   Print path keeps the static formatGpa fallback below. */
-                <span className="print:hidden">
-                  <AnimatedStat value={gpaResult.value} decimals={2} />
-                </span>
-              ) : (
-                formatGpa(gpaResult.value)
-              )}
-              {gpaResult.value !== null && (
-                <span className="hidden print:inline">
-                  {formatGpa(gpaResult.value)}
-                </span>
-              )}
-            </p>
-            <StatusBadge status={status} />
-          </div>
-          {gpaResult.value === null && gpaResult.totalItems > 0 && (
-            <div className="min-w-[14rem] flex-1 print:hidden">
-              <p className="text-xs text-black/50">ความคืบหน้าการเผยแพร่</p>
-              <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                <div
-                  className="h-full bg-green-500 transition-[width]"
-                  style={{ width: `${progressPct}%` }}
-                />
-              </div>
-              <p className="mt-1 text-xs text-black/50">
-                เผยแพร่แล้ว {gpaResult.publishedItems}/{gpaResult.totalItems}{" "}
-                รายการ ({progressPct}%)
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Course table */}
+      {/* Course table — the hero of this page */}
       <div className="card p-6 print:p-0 print:shadow-none print:border-none">
         <h2
           className="mb-3 text-lg font-medium text-black print:mb-1"
           style={{ letterSpacing: "-0.02em" }}
         >
-          รายวิชาในเทอม ({rows.length})
+          รายวิชา ({rows.length})
         </h2>
 
         {rows.length === 0 ? (
@@ -155,61 +131,74 @@ export function TermSummaryView({
             </div>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-slate-200 print:rounded-none print:border-black">
+          <div className="overflow-x-auto rounded-xl border border-slate-200 print:rounded-none print:border-black">
             <table className="w-full text-sm print:text-xs">
               <thead>
                 <tr className="bg-slate-50/60 text-left text-xs text-black/50 print:bg-transparent print:text-black">
                   <th className="px-3 py-2">วิชา</th>
                   <th className="px-3 py-2">ครู</th>
-                  <th className="px-3 py-2 text-right">หน่วยกิต</th>
+                  <th className="px-3 py-2 text-right">คะแนนรวม</th>
                   <th className="px-3 py-2 text-right">%</th>
                   <th className="px-3 py-2 text-right">เกรด</th>
+                  <th className="px-3 py-2 text-right">สถานะ</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 print:divide-black/20">
-                {perRowGrade.map((rg) => (
-                  <tr key={rg.row.courseOfferingId}>
+                {courseRows.map((cr) => (
+                  <tr key={cr.row.courseOfferingId}>
                     <td className="px-3 py-2">
                       <Link
-                        href={`/student/courses/${rg.row.courseOfferingId}/scores`}
+                        href={`/student/courses/${cr.row.courseOfferingId}/scores`}
                         className="font-medium text-black hover:underline print:no-underline"
                       >
-                        {rg.row.name}
+                        {cr.row.name}
                       </Link>
-                      {rg.row.subjectCode && (
+                      {cr.row.subjectCode && (
                         <p className="text-xs text-black/40 font-mono">
-                          {rg.row.subjectCode}
+                          {cr.row.subjectCode}
                         </p>
                       )}
                     </td>
                     <td className="px-3 py-2 text-black/70">
-                      {rg.row.teacherFirstName} {rg.row.teacherLastName}
+                      {cr.row.teacherFirstName} {cr.row.teacherLastName}
                     </td>
                     <td className="px-3 py-2 text-right text-black/70">
-                      {rg.row.creditHours}
+                      {cr.status === "NO_SCORES" ? (
+                        <span className="text-black/30">—</span>
+                      ) : (
+                        <>
+                          {cr.scoreSum}
+                          <span className="text-black/40">/{cr.fullSum}</span>
+                        </>
+                      )}
                     </td>
                     <td className="px-3 py-2 text-right">
-                      {formatPercent(rg.percent)}
+                      {cr.status === "NO_SCORES"
+                        ? "—"
+                        : formatPercent(cr.percent)}
                     </td>
-                    <td className="px-3 py-2 text-right font-medium">
-                      {rg.grade !== null ? formatGpa(rg.grade) : "—"}
+                    <td className="px-3 py-2 text-right font-semibold">
+                      {cr.grade !== null ? (
+                        <span className="text-blue-700 print:text-black">
+                          {cr.grade.toFixed(1)}
+                        </span>
+                      ) : (
+                        <span className="font-normal text-black/30">—</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      <CourseStatusBadge status={cr.status} />
                     </td>
                   </tr>
                 ))}
               </tbody>
-              <tfoot className="bg-slate-50/60 text-xs print:bg-transparent">
-                <tr>
-                  <td colSpan={4} className="px-3 py-2 text-right font-medium">
-                    GPA
-                  </td>
-                  <td className="px-3 py-2 text-right font-bold">
-                    {formatGpa(gpaResult.value)}
-                  </td>
-                </tr>
-              </tfoot>
             </table>
           </div>
         )}
+
+        <p className="mt-3 text-xs text-black/40 print:hidden">
+          เกรดของแต่ละวิชาจะแสดงเมื่อครูประกาศคะแนนครบทุกรายการของวิชานั้น
+        </p>
       </div>
 
       {/* Print-only footer — transcript identification stamp. Hidden on
@@ -229,6 +218,28 @@ export function TermSummaryView({
         {`${studentIdNumber}/${selectedTerm.id.slice(-6).toUpperCase()}`}
       </p>
     </div>
+  );
+}
+
+function CourseStatusBadge({ status }: { status: CourseRowStatus }) {
+  if (status === "FINAL") {
+    return (
+      <span className="inline-flex rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-medium text-green-700 print:bg-transparent print:text-black">
+        ประกาศแล้ว
+      </span>
+    );
+  }
+  if (status === "UPDATING") {
+    return (
+      <span className="inline-flex rounded-full bg-orange-50 px-2 py-0.5 text-[11px] font-medium text-orange-700 print:bg-transparent print:text-black">
+        กำลังอัปเดต
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-500 print:bg-transparent print:text-black">
+      ยังไม่มีคะแนน
+    </span>
   );
 }
 
@@ -260,7 +271,7 @@ function TermPicker({
               >
                 {t.name}
                 {t.isActive && (
-                  <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-[10px] text-green-700">
+                  <span className="ml-2 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] text-blue-700">
                     ปัจจุบัน
                   </span>
                 )}
@@ -270,32 +281,6 @@ function TermPicker({
         })}
       </ul>
     </details>
-  );
-}
-
-function StatusBadge({
-  status,
-}: {
-  status: "EMPTY" | "IN_PROGRESS" | "COMPLETED";
-}) {
-  if (status === "COMPLETED") {
-    return (
-      <p className="mt-1 inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700 print:bg-transparent print:text-black">
-        จบเทอมแล้ว
-      </p>
-    );
-  }
-  if (status === "IN_PROGRESS") {
-    return (
-      <p className="mt-1 inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-xs text-orange-700 print:bg-transparent print:text-black">
-        ยังไม่จบเทอม
-      </p>
-    );
-  }
-  return (
-    <p className="mt-1 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 print:bg-transparent print:text-black">
-      ไม่มีคะแนนในเทอมนี้
-    </p>
   );
 }
 

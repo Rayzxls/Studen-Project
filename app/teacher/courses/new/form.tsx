@@ -120,7 +120,7 @@ export function CreateCourseForm({
             className="input"
           />
           <p className="mt-1.5 text-xs text-ink-soft">
-            ใช้คำนวณเกรดเฉลี่ยรวมเทอม (ตามมาตรฐานโรงเรียน)
+            หน่วยกิตตามโครงสร้างหลักสูตรของโรงเรียน
           </p>
           {state.fieldErrors?.creditHours && (
             <p className="mt-1 text-xs text-red-700">

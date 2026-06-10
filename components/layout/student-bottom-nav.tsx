@@ -13,7 +13,7 @@ import { LayoutGrid, BookOpen, GraduationCap, Bell } from "lucide-react";
  * Four destinations matching the student's mental model:
  *  - ฟีด        → /dashboard (the role-aware landing; for student it's feed)
  *  - ห้องเรียน  → /join          (course join + quick switcher)
- *  - ผลการเรียน → /student/terms (term GPA + transcript path)
+ *  - ผลการเรียน → /student/terms (เกรดรายวิชา — CONTEXT § Learning Results)
  *  - แจ้งเตือน  → /notifications (Phase 7 bell expanded)
  *
  * Glass treatment: .glass-nav class applies the system frosted blur

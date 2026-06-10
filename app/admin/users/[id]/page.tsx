@@ -7,7 +7,6 @@ import { renderAuditLog } from "@/lib/audit/render";
 import { ResetPasswordCard } from "@/components/admin/reset-password-card";
 import { currentTerm, getStudentStats } from "@/lib/dashboard/queries";
 import { getStudentTermSnapshot } from "@/lib/scoring/queries";
-import { termGpa } from "@/lib/scoring/term-gpa";
 import { gradeForCourseOffering } from "@/lib/scoring/calc";
 import { DEFAULT_GRADE_THRESHOLDS } from "@/lib/scoring/constants";
 import { getAttendanceStatsForStudent } from "@/lib/attendance/queries";
@@ -103,7 +102,6 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
   const term = await currentTerm();
 
   let studentStats = null;
-  let gpaResult = null;
   let courseDetailsList: {
     courseId: string;
     attendanceRate: number | null;
@@ -119,7 +117,6 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
       getStudentTermSnapshot(user.id, term.id),
     ]);
     studentStats = stats;
-    gpaResult = termGpa(snapshot.bundles);
 
     const detailsPromises = snapshot.rows.map(async (r, i) => {
       const b = snapshot.bundles[i]!;
@@ -373,16 +370,6 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
                   studentStats.attendanceRate !== null
                     ? `${studentStats.attendanceRate}%`
                     : "—"
-                }
-              />
-            )}
-            {gpaResult && (
-              <Row
-                label="เกรดเฉลี่ย (GPA เทอมนี้)"
-                value={
-                  gpaResult.value !== null
-                    ? gpaResult.value.toFixed(2)
-                    : "ยังไม่คำนวณ (รอประกาศคะแนน)"
                 }
               />
             )}
