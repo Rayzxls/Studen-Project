@@ -3,6 +3,7 @@ import { Search } from "lucide-react";
 import { listStudents } from "@/lib/admin/students-list";
 import { getActiveAcademicYear, getClassesByYear } from "@/lib/course/queries";
 import { PaginationLinks } from "@/components/pagination";
+import { UserAvatar } from "@/components/profile/user-avatar";
 
 interface PageProps {
   searchParams: Promise<{
@@ -112,8 +113,13 @@ export default async function AdminStudentsPage({ searchParams }: PageProps) {
                   <td>
                     <Link
                       href={`/admin/users/${s.userId}`}
-                      className="font-medium text-black hover:underline"
+                      className="inline-flex items-center gap-2 font-medium text-black hover:underline"
                     >
+                      <UserAvatar
+                        userId={s.userId}
+                        hasImage={s.hasAvatar}
+                        size={26}
+                      />
                       {s.firstName} {s.lastName}
                     </Link>
                   </td>

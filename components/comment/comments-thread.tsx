@@ -4,6 +4,7 @@ import type { Session } from "@/lib/auth/permissions";
 import { db } from "@/lib/db/client";
 import { COMMENT_EDIT_WINDOW_MS } from "@/lib/assignment/constants";
 import { formatNotificationTime } from "@/lib/notification/time-format";
+import { UserAvatar } from "@/components/profile/user-avatar";
 import { CommentComposer } from "./composer";
 import { EditCommentDialog } from "./edit-comment-dialog";
 import { SelfDeleteCommentButton } from "./delete-comment-button";
@@ -79,6 +80,7 @@ export async function CommentsThread({
         author: {
           select: {
             role: true,
+            profileImageId: true,
             teacher: { select: { firstName: true, lastName: true } },
             student: { select: { firstName: true, lastName: true } },
           },
@@ -206,9 +208,13 @@ export async function CommentsThread({
               >
                 <div className="flex items-start justify-between gap-3">
                   {isSocial && (
-                    <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-blue-500 text-xs font-semibold text-white">
-                      {authorName.trim().slice(0, 1)}
-                    </div>
+                    // Avatar only — the visible name stays the REAL name
+                    // (displayName never reaches shared surfaces).
+                    <UserAvatar
+                      userId={c.authorId}
+                      hasImage={c.author.profileImageId !== null}
+                      size={36}
+                    />
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="flex items-center gap-2 text-xs text-black/60">

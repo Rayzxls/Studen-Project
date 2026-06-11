@@ -10,6 +10,7 @@ import {
   ScrollText,
   Settings2,
   Activity,
+  UserRound,
 } from "lucide-react";
 
 const items = [
@@ -20,6 +21,7 @@ const items = [
   { href: "/admin/import", label: "นำเข้า CSV", icon: Upload },
   { href: "/admin/activity", label: "กิจกรรมในระบบ", icon: Activity },
   { href: "/admin/audit", label: "Audit Log", icon: ScrollText },
+  { href: "/profile", label: "โปรไฟล์", icon: UserRound },
 ];
 
 export function AdminSidebar() {

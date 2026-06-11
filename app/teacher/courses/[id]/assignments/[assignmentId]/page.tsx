@@ -12,6 +12,7 @@ import { assert } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { CommentsThread } from "@/components/comment/comments-thread";
 import { ReviewPanel } from "@/components/assignment/review-panel";
+import { UserAvatar } from "@/components/profile/user-avatar";
 import { SubmissionFilePreview } from "@/components/assignment/submission-file-preview";
 
 /**
@@ -112,7 +113,13 @@ export default async function AssignmentReviewWorkspacePage({
           id: true,
           removedAt: true,
           student: {
-            select: { firstName: true, lastName: true, studentId: true },
+            select: {
+              userId: true,
+              firstName: true,
+              lastName: true,
+              studentId: true,
+              user: { select: { profileImageId: true } },
+            },
           },
         },
       }),
@@ -125,7 +132,13 @@ export default async function AssignmentReviewWorkspacePage({
           id: true,
           removedAt: true,
           student: {
-            select: { firstName: true, lastName: true, studentId: true },
+            select: {
+              userId: true,
+              firstName: true,
+              lastName: true,
+              studentId: true,
+              user: { select: { profileImageId: true } },
+            },
           },
         },
       }),
@@ -189,6 +202,8 @@ export default async function AssignmentReviewWorkspacePage({
     submissionId: string | null;
     name: string;
     studentId: string;
+    studentUserId: string;
+    hasAvatar: boolean;
     status: SubmissionStatus;
     isLate: boolean;
     submittedAt: Date | null;
@@ -207,6 +222,8 @@ export default async function AssignmentReviewWorkspacePage({
       submissionId: hasSubmitted && submission ? submission.id : null,
       name: `${enr.student.firstName} ${enr.student.lastName}`,
       studentId: enr.student.studentId,
+      studentUserId: enr.student.userId,
+      hasAvatar: enr.student.user.profileImageId !== null,
       status,
       isLate: current?.isLate ?? false,
       submittedAt: current?.submittedAt ?? null,
@@ -423,6 +440,11 @@ export default async function AssignmentReviewWorkspacePage({
                   const badge = STATUS_LABEL[r.status];
                   const inner = (
                     <>
+                      <UserAvatar
+                        userId={r.studentUserId}
+                        hasImage={r.hasAvatar}
+                        size={28}
+                      />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm text-black">{r.name}</p>
                         <p className="truncate text-[10px] text-black/40">
@@ -484,13 +506,20 @@ export default async function AssignmentReviewWorkspacePage({
               <>
                 <div className="card p-5">
                   <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <h2 className="truncate text-base font-semibold text-black">
-                        {activeRow.name}
-                      </h2>
-                      <p className="text-xs text-black/45">
-                        เลขประจำตัว {activeRow.studentId}
-                      </p>
+                    <div className="flex min-w-0 items-center gap-3">
+                      <UserAvatar
+                        userId={activeRow.studentUserId}
+                        hasImage={activeRow.hasAvatar}
+                        size={40}
+                      />
+                      <div className="min-w-0">
+                        <h2 className="truncate text-base font-semibold text-black">
+                          {activeRow.name}
+                        </h2>
+                        <p className="text-xs text-black/45">
+                          เลขประจำตัว {activeRow.studentId}
+                        </p>
+                      </div>
                     </div>
                     <span
                       className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-medium ${STATUS_LABEL[activeRow.status].color}`}

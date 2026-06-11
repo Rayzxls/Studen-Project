@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Search, Upload } from "lucide-react";
 import { listTeachers } from "@/lib/admin/teachers-list";
 import { PaginationLinks } from "@/components/pagination";
+import { UserAvatar } from "@/components/profile/user-avatar";
 
 interface PageProps {
   searchParams: Promise<{ search?: string; page?: string }>;
@@ -91,8 +92,13 @@ export default async function AdminTeachersPage({ searchParams }: PageProps) {
                   <td>
                     <Link
                       href={`/admin/users/${t.userId}`}
-                      className="font-medium text-black hover:underline"
+                      className="inline-flex items-center gap-2 font-medium text-black hover:underline"
                     >
+                      <UserAvatar
+                        userId={t.userId}
+                        hasImage={t.hasAvatar}
+                        size={26}
+                      />
                       {t.firstName} {t.lastName}
                     </Link>
                   </td>

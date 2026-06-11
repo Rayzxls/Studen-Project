@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { ArrowRight, GraduationCap, Plus, ScrollText } from "lucide-react";
 import type { Session } from "@/lib/auth/permissions";
 import { auth } from "@/lib/auth";
+import { resolveDisplayName } from "@/lib/profile/display-name";
+import { UserAvatar } from "@/components/profile/user-avatar";
 import { db } from "@/lib/db/client";
 import { listStudentCourses } from "@/lib/course/enrollment";
 import { currentTerm } from "@/lib/dashboard/queries";
@@ -54,6 +56,8 @@ export default async function DashboardPage() {
     select: {
       role: true,
       identifier: true,
+      displayName: true,
+      profileImageId: true,
       admin: { select: { firstName: true, lastName: true } },
       teacher: {
         select: {
@@ -73,13 +77,20 @@ export default async function DashboardPage() {
   });
   if (!user) redirect("/login");
 
-  const name = user.admin
+  const realName = user.admin
     ? `${user.admin.firstName} ${user.admin.lastName}`
     : user.teacher
       ? `${user.teacher.firstName} ${user.teacher.lastName}`
       : user.student
         ? `${user.student.firstName} ${user.student.lastName}`
-        : user.identifier;
+        : null;
+  // Friendly greeting only — every shared surface keeps the real name.
+  const name = resolveDisplayName({
+    displayName: user.displayName,
+    realName,
+    identifier: user.identifier,
+  });
+  const hasAvatar = user.profileImageId !== null;
 
   return (
     <div className="min-h-screen bg-bg">
@@ -90,6 +101,7 @@ export default async function DashboardPage() {
           <StudentDashboard
             session={session}
             name={name}
+            hasAvatar={hasAvatar}
             className={user.student?.class?.name ?? null}
           />
         )}
@@ -98,11 +110,18 @@ export default async function DashboardPage() {
           <TeacherDashboard
             teacherUserId={session.user.id}
             name={name}
+            hasAvatar={hasAvatar}
             homeroomName={user.teacher?.homeroomOf?.name ?? null}
           />
         )}
 
-        {user.role === "ADMIN" && <AdminDoorway name={name} />}
+        {user.role === "ADMIN" && (
+          <AdminDoorway
+            name={name}
+            userId={session.user.id}
+            hasAvatar={hasAvatar}
+          />
+        )}
 
         {user.role === "STUDENT" && <div className="h-20 md:hidden" />}
       </main>
@@ -137,10 +156,12 @@ function yearLabelFromTerm(termName?: string | null): string | undefined {
 async function StudentDashboard({
   session,
   name,
+  hasAvatar,
   className,
 }: {
   session: Session;
   name: string;
+  hasAvatar: boolean;
   className: string | null;
 }) {
   const [actionCenter, courses] = await Promise.all([
@@ -185,12 +206,20 @@ async function StudentDashboard({
                 </span>
               )}
             </div>
-            <h1
-              className="text-2xl font-semibold text-white sm:text-3xl"
-              style={{ letterSpacing: "-0.03em" }}
-            >
-              สวัสดี, {name}
-            </h1>
+            <div className="flex items-center gap-3">
+              <UserAvatar
+                userId={session.user.id}
+                hasImage={hasAvatar}
+                size={44}
+                className="ring-2 ring-white/40"
+              />
+              <h1
+                className="text-2xl font-semibold text-white sm:text-3xl"
+                style={{ letterSpacing: "-0.03em" }}
+              >
+                สวัสดี, {name}
+              </h1>
+            </div>
             <div className="flex flex-wrap gap-2">
               <Link
                 href="/join"
@@ -286,10 +315,12 @@ async function StudentDashboard({
 async function TeacherDashboard({
   teacherUserId,
   name,
+  hasAvatar,
   homeroomName,
 }: {
   teacherUserId: string;
   name: string;
+  hasAvatar: boolean;
   homeroomName: string | null;
 }) {
   const [reviewQueue, classHealth, term] = await Promise.all([
@@ -306,7 +337,11 @@ async function TeacherDashboard({
         </div>
       )}
 
-      <TeacherHero teacherUserId={teacherUserId} name={name} />
+      <TeacherHero
+        teacherUserId={teacherUserId}
+        name={name}
+        hasAvatar={hasAvatar}
+      />
 
       <section className="mt-6">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -387,16 +422,27 @@ async function TeacherDashboard({
 // Admin
 // ─────────────────────────────────────────────────────────────
 
-function AdminDoorway({ name }: { name: string }) {
+function AdminDoorway({
+  name,
+  userId,
+  hasAvatar,
+}: {
+  name: string;
+  userId: string;
+  hasAvatar: boolean;
+}) {
   return (
     <>
       <span className="badge">ผู้ดูแลระบบ</span>
-      <h1
-        className="mt-2 text-2xl font-semibold text-black sm:text-3xl"
-        style={{ letterSpacing: "-0.03em" }}
-      >
-        สวัสดี, {name}
-      </h1>
+      <div className="mt-2 flex items-center gap-3">
+        <UserAvatar userId={userId} hasImage={hasAvatar} size={40} />
+        <h1
+          className="text-2xl font-semibold text-black sm:text-3xl"
+          style={{ letterSpacing: "-0.03em" }}
+        >
+          สวัสดี, {name}
+        </h1>
+      </div>
       <p className="mt-1 text-sm text-black/55">
         งานดูแลระบบทั้งหมดอยู่ใน Admin Panel
       </p>
