@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { KeyRound, Search } from "lucide-react";
 import { listStudents } from "@/lib/admin/students-list";
 import { getActiveAcademicYear, getClassesByYear } from "@/lib/course/queries";
 import { PaginationLinks } from "@/components/pagination";
@@ -104,6 +104,7 @@ export default async function AdminStudentsPage({ searchParams }: PageProps) {
                 <th>วิชาที่ลงทะเบียน</th>
                 <th>สมัครเมื่อ</th>
                 <th>สถานะ</th>
+                <th>จัดการ</th>
               </tr>
             </thead>
             <tbody>
@@ -140,6 +141,23 @@ export default async function AdminStudentsPage({ searchParams }: PageProps) {
                     ) : (
                       <span className="badge">disabled</span>
                     )}
+                  </td>
+                  <td>
+                    <div className="flex flex-wrap gap-2">
+                      <Link
+                        href={`/admin/users/${s.userId}`}
+                        className="btn-ghost btn-sm"
+                      >
+                        ดูข้อมูล
+                      </Link>
+                      <Link
+                        href={`/admin/users/${s.userId}#reset-password`}
+                        className="btn-secondary btn-sm"
+                      >
+                        <KeyRound className="h-3.5 w-3.5" />
+                        Reset Password
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))}
