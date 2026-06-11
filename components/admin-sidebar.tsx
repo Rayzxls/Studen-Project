@@ -3,24 +3,24 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BookOpen,
+  ClipboardList,
   LayoutDashboard,
-  Users,
   GraduationCap,
-  Upload,
   ScrollText,
-  Settings2,
   Activity,
   UserRound,
+  Users,
 } from "lucide-react";
 
 const items = [
   { href: "/admin/dashboard", label: "ภาพรวม", icon: LayoutDashboard },
-  { href: "/admin/setup", label: "ตั้งค่าโครงสร้าง", icon: Settings2 },
   { href: "/admin/teachers", label: "ครู", icon: Users },
   { href: "/admin/students", label: "นักเรียน", icon: GraduationCap },
-  { href: "/admin/import", label: "นำเข้า CSV", icon: Upload },
-  { href: "/admin/activity", label: "กิจกรรมในระบบ", icon: Activity },
+  { href: "/admin/classes", label: "ห้องเรียนทั้งหมด", icon: BookOpen },
+  { href: "/admin/activity", label: "Activity Review", icon: Activity },
   { href: "/admin/audit", label: "Audit Log", icon: ScrollText },
+  { href: "/admin/setup", label: "ตั้งค่าระบบ", icon: ClipboardList },
   { href: "/profile", label: "โปรไฟล์", icon: UserRound },
 ];
 
