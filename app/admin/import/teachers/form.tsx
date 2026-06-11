@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRef, useState } from "react";
 import {
   Upload,
@@ -154,6 +155,12 @@ export function TeacherImportForm() {
           <button onClick={handleReset} className="btn-ghost btn-sm">
             นำเข้าเพิ่ม
           </button>
+          <Link
+            href={`/admin/teachers?imported=${created.length}`}
+            className="btn-ghost btn-sm"
+          >
+            กลับหน้าครู
+          </Link>
         </div>
 
         <div className="mt-4 max-h-72 overflow-y-auto rounded-xl border border-black/[0.06]">

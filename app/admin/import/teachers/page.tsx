@@ -13,15 +13,13 @@ export default function TeacherImportPage() {
 
   return (
     <div className="animate-fade-in p-6 md:p-10 space-y-5 max-w-4xl">
-      <Link href="/admin/import" className="btn-ghost btn-sm w-fit">
+      <Link href="/admin/teachers" className="btn-ghost btn-sm w-fit">
         <ChevronLeft className="h-4 w-4" />
-        กลับ
+        กลับหน้าครู
       </Link>
 
       <div>
-        <h1 className="text-3xl font-medium tracking-tight">
-          นำเข้าครูจาก CSV
-        </h1>
+        <h1 className="text-3xl font-medium tracking-tight">นำเข้าครูหลายคน</h1>
         <p className="mt-1 text-sm text-ink-soft">
           อัพโหลดไฟล์ CSV → ดูตัวอย่าง → ยืนยันนำเข้า —
           ระบบสร้างรหัสผ่านชั่วคราวให้ทุกคน

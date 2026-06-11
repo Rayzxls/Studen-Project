@@ -283,7 +283,9 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
 
       {/* Reset password card — full reveal-once flow */}
       {!isSelf && !user.deletedAt && (
-        <ResetPasswordCard userId={user.id} displayName={displayName} />
+        <div id="reset-password" className="scroll-mt-24">
+          <ResetPasswordCard userId={user.id} displayName={displayName} />
+        </div>
       )}
 
       {/* Avatar moderation — only when the target actually has one */}
