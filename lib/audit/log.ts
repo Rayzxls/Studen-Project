@@ -49,6 +49,11 @@ export type AuditEvent =
   | "ASSIGNMENT_UPDATED" // Important only when isScored:true→false toggle with reason ≥ 5
   | "SUBMISSION_RETURNED" // Important · reason = private comment body (≥ 5)
   | "SUBMISSION_WITHDRAWN" // Important · student pulls own work out of the review queue (history preserved)
+  // Profile (Phase 13) — learning identity, not social media
+  | "DISPLAY_NAME_CHANGED" // Important · self-service set/clear of User.displayName
+  | "PROFILE_IMAGE_CHANGED" // Important · user uploads/replaces own avatar
+  | "PROFILE_IMAGE_DELETED" // Important · user removes own avatar (back to default)
+  | "PROFILE_IMAGE_RESET_BY_ADMIN" // Important · admin clears another user's avatar
   // Moderation (Phase 6+)
   | "COMMENT_MODERATED" // Important when Teacher (own course) · Critical when Admin × PRIVATE
   // Material + Announcement (Phase 7) — past-tense per Pattern 10 · Q4.2 lock

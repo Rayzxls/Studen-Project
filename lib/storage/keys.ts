@@ -69,6 +69,7 @@ export const FILE_OWNER_TYPES = [
   "ANNOUNCEMENT",
   "SUBMISSION",
   "COMMENT",
+  "PROFILE_IMAGE",
 ] as const;
 
 export type FileOwnerTypeLiteral = (typeof FILE_OWNER_TYPES)[number];

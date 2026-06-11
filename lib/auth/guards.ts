@@ -511,6 +511,12 @@ export const assert = {
       }
       return session;
     }
+    if (ownerType === "PROFILE_IMAGE") {
+      // A user may only upload an avatar into their OWN profile scope —
+      // ownerId must be the session user id, any role (Phase 13).
+      if (ownerId !== session.user.id) throw new Forbidden();
+      return session;
+    }
     throw new Forbidden("owner_type_not_supported_yet");
   },
 };

@@ -235,6 +235,7 @@ export const FileOwnerTypeSchema = z.enum([
   "ANNOUNCEMENT",
   "SUBMISSION",
   "COMMENT",
+  "PROFILE_IMAGE",
 ]);
 
 const AllowedMimeSchema = z.enum(

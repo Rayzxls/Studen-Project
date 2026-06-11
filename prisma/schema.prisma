@@ -39,6 +39,16 @@ model User {
   updatedAt      DateTime  @updatedAt
   deletedAt      DateTime? // soft delete
 
+  // Learning-identity profile (Phase 13) — NOT social media.
+  // displayName: optional friendly name for personal UI (dashboard greeting,
+  // profile heading) only. Real name stays authoritative everywhere else
+  // (comments, review, grades, attendance, admin, audit). May duplicate.
+  displayName String?
+  // Pointer to the current PROFILE_IMAGE FileAttachment (cropped 512×512).
+  // Null = default avatar. Plain string (no FK) — FileAttachment is the
+  // polymorphic table looked up via (ownerType, ownerId).
+  profileImageId String?
+
   admin                 Admin?
   teacher               Teacher?
   student               Student?
@@ -482,6 +492,7 @@ enum FileOwnerType {
   ANNOUNCEMENT // teacher post (Phase 7 — reserved)
   SUBMISSION // student-submitted file — attached to parent Submission (P7-0a); SubmissionVersion.fileAttachmentIds is the per-version pointer array
   COMMENT // file embedded in a comment (Phase 7 — reserved)
+  PROFILE_IMAGE // user's own cropped avatar — ownerId = User.id (Phase 13)
 }
 
 // Polymorphic file attachment table — ownerType + ownerId rather than a per-owner FK.
