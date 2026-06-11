@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { CourseColorChip } from "@/components/course/course-color-chip";
 import { AnimatedStat } from "@/components/dashboard/animated-stat";
+import { UserAvatar } from "@/components/profile/user-avatar";
 import { getCourseSlotColors } from "@/lib/theme/course-color";
 
 /**
@@ -245,6 +246,9 @@ export function CourseShowcaseCard({
   notice,
   noticeTone = "muted",
   classId,
+  avatarUserId,
+  hasAvatar = false,
+  avatarAlt = "",
   stats,
   actionLabel,
 }: {
@@ -255,6 +259,9 @@ export function CourseShowcaseCard({
   notice?: string;
   noticeTone?: "muted" | "attention" | "success";
   classId: string;
+  avatarUserId?: string;
+  hasAvatar?: boolean;
+  avatarAlt?: string;
   stats: [CourseShowcaseStat, CourseShowcaseStat, CourseShowcaseStat];
   actionLabel: string;
 }) {
@@ -302,13 +309,23 @@ export function CourseShowcaseCard({
           }}
         >
           <span className="grid h-full w-full place-items-center overflow-hidden rounded-full bg-white">
-            <Image
-              src="/brand/beagle-avatar.webp"
-              alt=""
-              width={74}
-              height={74}
-              className="h-[74px] w-[74px] object-cover"
-            />
+            {avatarUserId ? (
+              <UserAvatar
+                userId={avatarUserId}
+                hasImage={hasAvatar}
+                size={74}
+                alt={avatarAlt}
+                className="h-[74px] w-[74px] ring-0"
+              />
+            ) : (
+              <Image
+                src="/brand/beagle-avatar.webp"
+                alt=""
+                width={74}
+                height={74}
+                className="h-[74px] w-[74px] object-cover"
+              />
+            )}
           </span>
         </span>
 

@@ -90,6 +90,9 @@ export default async function StudentCoursesPage() {
                     subtitle={e.course.class.name}
                     badge={yearLabelFromTerm(e.course.term.name)}
                     classId={e.course.class.id}
+                    avatarUserId={e.course.teacher.userId}
+                    hasAvatar={Boolean(e.course.teacher.user.profileImageId)}
+                    avatarAlt={`ครู ${e.course.teacher.firstName} ${e.course.teacher.lastName}`}
                     notice={
                       needsAction > 0
                         ? `มีงานต้องจัดการ ${needsAction} ชิ้น`

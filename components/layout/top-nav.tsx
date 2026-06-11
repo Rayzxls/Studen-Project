@@ -6,6 +6,7 @@ import { db } from "@/lib/db/client";
 import { Bell } from "@/components/notification/bell";
 import { BeagleLogo } from "@/components/landing/beagle-logo";
 import { UserAvatar } from "@/components/profile/user-avatar";
+import { ThemeModeControl } from "@/components/theme/theme-mode-control";
 
 /**
  * Shared app chrome — Phase 7 · P7-5
@@ -52,7 +53,7 @@ export async function TopNav({
   const me = session
     ? await db.user.findUnique({
         where: { id: session.user.id },
-        select: { profileImageId: true },
+        select: { profileImageId: true, themeMode: true },
       })
     : null;
 
@@ -106,10 +107,17 @@ export async function TopNav({
                   />
                   โปรไฟล์
                 </Link>
-                <span
-                  className="flex min-h-10 cursor-not-allowed items-center gap-2.5 rounded-xl px-3 text-sm text-black/35"
-                  title="โหมดมืดกำลังมาเร็ว ๆ นี้"
-                >
+                <div className="rounded-xl px-2.5 py-2">
+                  <div className="mb-2 flex items-center gap-2 text-xs font-medium text-black/55">
+                    <Palette className="h-4 w-4" aria-hidden="true" />
+                    ธีม
+                  </div>
+                  <ThemeModeControl
+                    initialMode={me?.themeMode ?? "SYSTEM"}
+                    density="compact"
+                  />
+                </div>
+                <span className="hidden" title="โหมดมืดกำลังมาเร็ว ๆ นี้">
                   <Palette className="h-4 w-4" aria-hidden="true" />
                   ธีม · เร็ว ๆ นี้
                 </span>

@@ -8,6 +8,7 @@ import { TopNav } from "@/components/layout/top-nav";
 import { AvatarEditor } from "@/components/profile/avatar-editor";
 import { ChangePasswordForm } from "@/components/profile/change-password-form";
 import { DisplayNameForm } from "@/components/profile/display-name-form";
+import { ThemeModeControl } from "@/components/theme/theme-mode-control";
 
 /**
  * /profile — Phase 13 · learning identity, not social media.
@@ -37,6 +38,7 @@ export default async function ProfilePage() {
       identifier: true,
       displayName: true,
       profileImageId: true,
+      themeMode: true,
       admin: { select: { firstName: true, lastName: true } },
       teacher: { select: { firstName: true, lastName: true } },
       student: { select: { firstName: true, lastName: true } },
@@ -125,10 +127,10 @@ export default async function ProfilePage() {
             <p className="mt-1 text-xs text-black/50">
               เลือกโหมดการแสดงผลของทั้งระบบ
             </p>
-            <div
-              className="mt-4 inline-flex rounded-full bg-black/[0.04] p-1"
-              aria-disabled="true"
-            >
+            <div className="mt-4">
+              <ThemeModeControl initialMode={user.themeMode} />
+            </div>
+            <div className="hidden" aria-disabled="true">
               {["ตามระบบ", "สว่าง", "มืด"].map((label, i) => (
                 <span
                   key={label}
@@ -143,9 +145,7 @@ export default async function ProfilePage() {
                 </span>
               ))}
             </div>
-            <p className="mt-2 text-[11px] text-black/40">
-              เร็ว ๆ นี้ — โหมดมืดกำลังมา
-            </p>
+            <p className="hidden">เร็ว ๆ นี้ — โหมดมืดกำลังมา</p>
           </section>
 
           {/* Security */}

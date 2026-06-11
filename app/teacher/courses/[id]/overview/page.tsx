@@ -283,10 +283,10 @@ export default async function CourseOverviewPage({ params }: PageProps) {
               </Link>
             </p>
           ) : (
-            <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
+            <div className="mt-4 overflow-x-auto rounded-xl border border-hairline bg-surface">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-slate-50/60 text-left text-xs text-black/50">
+                  <tr className="bg-bg text-left text-xs font-medium text-ink-soft">
                     <th className="px-3 py-2">นักเรียน</th>
                     <th className="px-3 py-2 text-right">คะแนนรวม</th>
                     <th className="px-3 py-2 text-right">%</th>
@@ -295,12 +295,12 @@ export default async function CourseOverviewPage({ params }: PageProps) {
                     <th className="px-3 py-2 text-right">รอตรวจ</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-hairline">
                   {studentRows.map((r) => (
                     <tr
                       key={r.enrollmentId}
                       className={
-                        "hover:bg-slate-50/40 " +
+                        "transition-colors hover:bg-bg " +
                         (r.removedAt !== null ? "opacity-60" : "")
                       }
                     >
@@ -308,7 +308,7 @@ export default async function CourseOverviewPage({ params }: PageProps) {
                         <p className="font-medium text-black">
                           {r.firstName} {r.lastName}
                         </p>
-                        <p className="font-mono text-[11px] text-black/40">
+                        <p className="font-mono text-[11px] text-ink-mute">
                           {r.studentId}
                           {r.removedAt !== null && (
                             <span className="ml-2 rounded bg-red-50 px-1 py-0.5 text-[10px] font-sans text-red-700">
@@ -317,16 +317,16 @@ export default async function CourseOverviewPage({ params }: PageProps) {
                           )}
                         </p>
                       </td>
-                      <td className="px-3 py-2.5 text-right text-black/70">
+                      <td className="px-3 py-2.5 text-right text-ink-soft">
                         {publishedFullSum > 0 ? (
                           <>
                             {r.scoreSum}
-                            <span className="text-black/40">
+                            <span className="text-ink-mute">
                               /{publishedFullSum}
                             </span>
                           </>
                         ) : (
-                          <span className="text-black/30">—</span>
+                          <span className="text-ink-faint">—</span>
                         )}
                       </td>
                       <td className="px-3 py-2.5 text-right">
@@ -342,7 +342,7 @@ export default async function CourseOverviewPage({ params }: PageProps) {
                             กำลังอัปเดต
                           </span>
                         ) : (
-                          <span className="font-normal text-black/30">—</span>
+                          <span className="font-normal text-ink-faint">—</span>
                         )}
                       </td>
                       <td className="px-3 py-2.5 text-right">
@@ -360,7 +360,7 @@ export default async function CourseOverviewPage({ params }: PageProps) {
                             {r.attendanceRate}%
                           </span>
                         ) : (
-                          <span className="text-black/30">—</span>
+                          <span className="text-ink-faint">—</span>
                         )}
                       </td>
                       <td className="px-3 py-2.5 text-right">
@@ -369,7 +369,7 @@ export default async function CourseOverviewPage({ params }: PageProps) {
                             {r.pending} ชิ้น
                           </span>
                         ) : (
-                          <span className="text-black/30">—</span>
+                          <span className="text-ink-faint">—</span>
                         )}
                       </td>
                     </tr>
@@ -379,7 +379,7 @@ export default async function CourseOverviewPage({ params }: PageProps) {
             </div>
           )}
 
-          <p className="mt-3 text-xs text-black/40">
+          <p className="mt-3 text-xs text-ink-mute">
             คะแนน / % / เกรด คำนวณจากรายการคะแนนที่ประกาศแล้วเท่านั้น
             (ตรงกับที่นักเรียนเห็น) — เกรดรายวิชาจะคำนวณเมื่อประกาศครบทุกรายการ
           </p>

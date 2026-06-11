@@ -7,6 +7,7 @@ import {
   setProfileImage,
   updateDisplayName,
 } from "@/lib/profile/mutations";
+import { parseThemeMode, updateOwnThemeMode } from "@/lib/theme/mode";
 import { changeOwnPassword } from "@/lib/auth/change-password";
 import { getRequestMeta } from "@/lib/utils/request";
 import { HttpError, ValidationError } from "@/lib/errors";
@@ -130,5 +131,23 @@ export async function changePasswordAction(
     if (err instanceof HttpError) return { error: err.message };
     throw err;
   }
+  return { ok: true };
+}
+
+export async function updateThemeModeAction(
+  themeModeInput: string
+): Promise<ProfileFormState> {
+  const session = await requireAuth();
+
+  try {
+    const themeMode = parseThemeMode(themeModeInput);
+    await updateOwnThemeMode({ userId: session.user.id, themeMode });
+  } catch (err) {
+    if (err instanceof ValidationError) return { fieldErrors: err.errors };
+    if (err instanceof HttpError) return { error: err.message };
+    throw err;
+  }
+
+  revalidatePath("/profile");
   return { ok: true };
 }

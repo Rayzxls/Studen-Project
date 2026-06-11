@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ChevronLeft, Plus } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
+import { db } from "@/lib/db/client";
 import { listTeacherCourses } from "@/lib/course/enrollment";
 import { TopNav } from "@/components/layout/top-nav";
 import {
@@ -19,7 +20,14 @@ export default async function TeacherCoursesPage() {
     redirect("/dashboard");
   }
 
-  const courses = await listTeacherCourses(session.user.id);
+  const [courses, me] = await Promise.all([
+    listTeacherCourses(session.user.id),
+    db.user.findUnique({
+      where: { id: session.user.id },
+      select: { profileImageId: true },
+    }),
+  ]);
+  const hasAvatar = Boolean(me?.profileImageId);
 
   return (
     <div className="min-h-screen bg-bg">
@@ -72,6 +80,9 @@ export default async function TeacherCoursesPage() {
                   subtitle={c.class.name}
                   badge={yearLabelFromTerm(c.term.name)}
                   classId={c.class.id}
+                  avatarUserId={session.user.id}
+                  hasAvatar={hasAvatar}
+                  avatarAlt={`ครู ${c.teacher.firstName} ${c.teacher.lastName}`}
                   notice={
                     c.codeActive ? `รหัส ${c.classCode}` : "ปิดรับนักเรียน"
                   }

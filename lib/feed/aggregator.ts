@@ -39,6 +39,10 @@ export interface FeedItem {
   bodyPreview?: string | null;
   /** Display name of the teacher who posted ("ครูสมชาย ใจดี"). */
   authorName?: string | null;
+  /** Real user id for rendering the author's profile avatar. */
+  authorUserId?: string | null;
+  /** True when the author has uploaded a profile image. */
+  authorHasAvatar?: boolean;
   /** Total count of file attachments + link URLs on the source. */
   attachmentCount?: number;
 }
@@ -132,7 +136,14 @@ async function aggregateFeed(
               createdAt: true,
               course: {
                 select: {
-                  teacher: { select: { firstName: true, lastName: true } },
+                  teacher: {
+                    select: {
+                      userId: true,
+                      firstName: true,
+                      lastName: true,
+                      user: { select: { profileImageId: true } },
+                    },
+                  },
                 },
               },
             },
@@ -162,6 +173,8 @@ async function aggregateFeed(
               postedAt: true,
               postedBy: {
                 select: {
+                  id: true,
+                  profileImageId: true,
                   teacher: { select: { firstName: true, lastName: true } },
                   admin: { select: { firstName: true, lastName: true } },
                 },
@@ -193,6 +206,8 @@ async function aggregateFeed(
               postedAt: true,
               postedBy: {
                 select: {
+                  id: true,
+                  profileImageId: true,
                   teacher: { select: { firstName: true, lastName: true } },
                   admin: { select: { firstName: true, lastName: true } },
                 },
@@ -224,7 +239,14 @@ async function aggregateFeed(
               publishedAt: true,
               course: {
                 select: {
-                  teacher: { select: { firstName: true, lastName: true } },
+                  teacher: {
+                    select: {
+                      userId: true,
+                      firstName: true,
+                      lastName: true,
+                      user: { select: { profileImageId: true } },
+                    },
+                  },
                 },
               },
             },
@@ -244,6 +266,8 @@ async function aggregateFeed(
         detail: a.dueAt ? a.dueAt.toISOString() : null,
         bodyPreview: truncatePreview(a.description),
         authorName: teacherFullName(a.course?.teacher),
+        authorUserId: a.course?.teacher?.userId ?? null,
+        authorHasAvatar: Boolean(a.course?.teacher?.user.profileImageId),
         attachmentCount: 0,
       })
     ),
@@ -258,6 +282,8 @@ async function aggregateFeed(
         authorName:
           teacherFullName(m.postedBy?.teacher) ??
           adminFullName(m.postedBy?.admin),
+        authorUserId: m.postedBy?.id ?? null,
+        authorHasAvatar: Boolean(m.postedBy?.profileImageId),
         attachmentCount:
           jsonArrayLength(m.fileAttachmentIds) + jsonArrayLength(m.linkUrls),
       })
@@ -273,6 +299,8 @@ async function aggregateFeed(
         authorName:
           teacherFullName(an.postedBy?.teacher) ??
           adminFullName(an.postedBy?.admin),
+        authorUserId: an.postedBy?.id ?? null,
+        authorHasAvatar: Boolean(an.postedBy?.profileImageId),
         attachmentCount:
           jsonArrayLength(an.fileAttachmentIds) + jsonArrayLength(an.linkUrls),
       })
@@ -286,6 +314,8 @@ async function aggregateFeed(
         title: s.name,
         bodyPreview: null,
         authorName: teacherFullName(s.course?.teacher),
+        authorUserId: s.course?.teacher?.userId ?? null,
+        authorHasAvatar: Boolean(s.course?.teacher?.user.profileImageId),
         attachmentCount: 0,
       })
     ),

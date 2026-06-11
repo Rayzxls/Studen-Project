@@ -273,6 +273,9 @@ async function StudentDashboard({
                   subtitle={e.course.class.name}
                   badge={yearLabelFromTerm(e.course.term.name)}
                   classId={e.course.class.id}
+                  avatarUserId={e.course.teacher.userId}
+                  hasAvatar={Boolean(e.course.teacher.user.profileImageId)}
+                  avatarAlt={`ครู ${e.course.teacher.firstName} ${e.course.teacher.lastName}`}
                   notice={
                     needsAction > 0
                       ? `มีงานต้องจัดการ ${needsAction} ชิ้น`
@@ -379,6 +382,9 @@ async function TeacherDashboard({
                 subtitle={c.className}
                 badge={yearLabelFromTerm(term?.academicYearName ?? term?.name)}
                 classId={c.classId}
+                avatarUserId={teacherUserId}
+                hasAvatar={hasAvatar}
+                avatarAlt={`ครู ${name}`}
                 notice={
                   c.pendingReview > 0
                     ? `รอตรวจ ${c.pendingReview} ชิ้น`

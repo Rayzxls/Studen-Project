@@ -68,7 +68,14 @@ export default async function StudentAssignmentsListPage({
       creditHours: true,
       class: { select: { id: true, name: true } },
       term: { select: { name: true } },
-      teacher: { select: { firstName: true, lastName: true } },
+      teacher: {
+        select: {
+          userId: true,
+          firstName: true,
+          lastName: true,
+          user: { select: { profileImageId: true } },
+        },
+      },
     },
   });
   if (!course) notFound();

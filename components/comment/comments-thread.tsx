@@ -207,15 +207,13 @@ export async function CommentsThread({
                 }
               >
                 <div className="flex items-start justify-between gap-3">
-                  {isSocial && (
-                    // Avatar only — the visible name stays the REAL name
-                    // (displayName never reaches shared surfaces).
-                    <UserAvatar
-                      userId={c.authorId}
-                      hasImage={c.author.profileImageId !== null}
-                      size={36}
-                    />
-                  )}
+                  {/* Avatar only — the visible name stays the REAL name
+                      (displayName never reaches shared surfaces). */}
+                  <UserAvatar
+                    userId={c.authorId}
+                    hasImage={c.author.profileImageId !== null}
+                    size={isSocial ? 36 : 32}
+                  />
                   <div className="min-w-0 flex-1">
                     <p className="flex items-center gap-2 text-xs text-black/60">
                       <span className="font-medium text-black">

@@ -1,8 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronLeft, BookOpen } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import type { Role } from "@prisma/client";
 import { TopNav } from "@/components/layout/top-nav";
+import { UserAvatar } from "@/components/profile/user-avatar";
 import { TabNav, type CourseTab } from "./tab-nav";
 
 /**
@@ -30,7 +31,12 @@ export type CourseShellProps = {
     creditHours: number;
     class: { id: string; name: string };
     term: { name: string };
-    teacher: { firstName: string; lastName: string };
+    teacher: {
+      userId: string;
+      firstName: string;
+      lastName: string;
+      user: { profileImageId: string | null };
+    };
   };
   /** Eyebrow badge text — e.g. "รายวิชาที่สอน" (teacher) or "ห้องเรียน" (student) */
   eyebrow: string;
@@ -91,7 +97,7 @@ export function CourseShell({
               className="absolute inset-x-0 bottom-0 h-12"
               style={{
                 background:
-                  "linear-gradient(to top, rgba(255,255,255,0.95) 0%, transparent 100%)",
+                  "linear-gradient(to top, var(--color-surface) 0%, transparent 100%)",
               }}
             />
             {/* Eyebrow chip floats on the banner — translucent on glass. */}
@@ -100,26 +106,30 @@ export function CourseShell({
             </span>
           </div>
 
-          {/* Content zone — white surface with content sitting up against
-              the banner edge. The book-icon avatar overlaps the banner
-              (iOS profile-card pattern; same shape as ClassCard hero
-              on /admin/dashboard). */}
+          {/* Content zone — themed surface with content sitting up against
+              the banner edge. The teacher avatar overlaps the banner
+              so every course carries its owner's identity. */}
           <div className="card-hero-content relative -mt-10 pb-0">
-            <div className="flex items-end gap-4">
+            <div className="flex items-start gap-4">
               <span
-                className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white shadow-card"
+                className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-surface shadow-card"
                 aria-hidden="true"
               >
-                <BookOpen className="h-7 w-7 text-black/70" />
+                <UserAvatar
+                  userId={course.teacher.userId}
+                  hasImage={course.teacher.user.profileImageId !== null}
+                  size={64}
+                  className="rounded-2xl ring-0"
+                />
               </span>
-              <div className="min-w-0 flex-1 pb-1">
+              <div className="min-w-0 flex-1 pb-1 pt-4">
                 <h1
-                  className="truncate text-2xl font-semibold text-black md:text-3xl"
+                  className="truncate text-2xl font-semibold text-ink md:text-3xl"
                   style={{ letterSpacing: "-0.03em" }}
                 >
                   {course.name}
                 </h1>
-                <p className="mt-1 truncate text-sm text-black/60">
+                <p className="mt-1 truncate text-sm text-ink-mute">
                   ห้อง {course.class.name} · {course.gradeLevel} ·{" "}
                   {course.creditHours} หน่วยกิต
                   {course.subjectCode ? ` · รหัส ${course.subjectCode}` : ""} ·

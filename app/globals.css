@@ -170,6 +170,60 @@
    Base
    ═══════════════════════════════════════════════════════════ */
 
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #101318;
+  --color-surface: #171b22;
+  --color-ink: #f4f7fb;
+  --color-ink-soft: #c9d2df;
+  --color-ink-mute: #aeb9c8;
+  --color-ink-faint: #778394;
+  --color-hairline: #29313d;
+  --color-hairline-strong: #3a4656;
+  --color-border: #29313d;
+  --color-blue-50: #0f2742;
+  --color-blue-500: #4da3ff;
+  --color-blue-600: #2f8df0;
+  --color-blue-700: #9cccff;
+  --color-green-50: #102a1e;
+  --color-green-700: #86efac;
+  --color-orange-50: #35210e;
+  --color-orange-700: #fdba74;
+  --color-red-50: #351617;
+  --color-red-700: #fca5a5;
+  --shadow-lift:
+    0 16px 40px rgba(0, 0, 0, 0.32), 0 2px 8px rgba(0, 0, 0, 0.22);
+  --shadow-card: 0 18px 48px rgba(0, 0, 0, 0.28);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --glass-bg: rgba(16, 19, 24, 0.78);
+  --glass-fallback: rgba(23, 27, 34, 0.96);
+}
+
+html[data-theme="cream"] {
+  color-scheme: light;
+  --color-bg: #f7f3ea;
+  --color-surface: #fffdf8;
+  --color-ink: #1f2328;
+  --color-ink-soft: #51564f;
+  --color-ink-mute: #7b776d;
+  --color-ink-faint: #b8afa0;
+  --color-hairline: #e8ded0;
+  --color-hairline-strong: #d8caba;
+  --color-border: #e8ded0;
+  --color-blue-50: #edf6ff;
+  --color-blue-500: #0a84ff;
+  --color-blue-600: #0070eb;
+  --color-blue-700: #1e5fae;
+  --color-green-50: #edf8ed;
+  --color-orange-50: #fff3df;
+  --color-red-50: #fff0ee;
+  --shadow-lift:
+    0 12px 34px rgba(80, 67, 42, 0.1), 0 3px 10px rgba(80, 67, 42, 0.06);
+  --shadow-card: 0 18px 44px rgba(80, 67, 42, 0.1);
+  --glass-bg: rgba(247, 243, 234, 0.78);
+  --glass-fallback: rgba(255, 253, 248, 0.96);
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;
@@ -180,6 +234,59 @@
     color: var(--color-ink);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+  }
+
+  body,
+  .card,
+  .card-flat,
+  .card-featured,
+  .card-hero,
+  .input,
+  .btn-secondary,
+  .table,
+  .stat,
+  .glass-nav {
+    transition:
+      background-color 180ms ease,
+      border-color 180ms ease,
+      color 180ms ease,
+      box-shadow 180ms ease;
+  }
+
+  html[data-theme="dark"] .bg-white {
+    background-color: var(--color-surface) !important;
+  }
+
+  html[data-theme="dark"] .text-black {
+    color: var(--color-ink) !important;
+  }
+
+  html[data-theme="dark"] [class*="text-black/"] {
+    color: var(--color-ink-mute) !important;
+  }
+
+  html[data-theme="dark"] [class*="border-black/"] {
+    border-color: var(--color-hairline) !important;
+  }
+
+  html[data-theme="dark"] :where(.bg-slate-50, .bg-slate-50\/60, .bg-gray-50, .bg-zinc-50, .bg-neutral-50) {
+    background-color: color-mix(in srgb, var(--color-ink) 5%, transparent) !important;
+  }
+
+  html[data-theme="dark"] :where(.hover\:bg-slate-50:hover, .hover\:bg-slate-50\/40:hover, .hover\:bg-slate-50\/60:hover, .hover\:bg-gray-50:hover) {
+    background-color: color-mix(in srgb, var(--color-ink) 7%, transparent) !important;
+  }
+
+  html[data-theme="dark"] :where(.border-slate-200, .border-gray-200, .border-zinc-200, .border-neutral-200) {
+    border-color: var(--color-hairline) !important;
+  }
+
+  html[data-theme="dark"] :where(.divide-slate-100, .divide-gray-100, .divide-zinc-100, .divide-neutral-100) > :not([hidden]) ~ :not([hidden]) {
+    border-color: var(--color-hairline) !important;
+  }
+
+  html[data-theme="dark"] :where(.text-slate-500, .text-slate-600, .text-slate-700, .text-gray-500, .text-gray-600, .text-gray-700) {
+    color: var(--color-ink-soft) !important;
   }
 
   /* Blue focus ring — replaces the black ring from ADR-0014. */
@@ -213,7 +320,8 @@
   /* ───── Card ───── */
   .card,
   .card-flat {
-    @apply rounded-2xl bg-white;
+    @apply rounded-2xl;
+    background: var(--color-surface);
   }
   .card {
     transition: box-shadow var(--duration-spring-standard) var(--ease-spring);
@@ -222,7 +330,8 @@
     box-shadow: var(--shadow-lift);
   }
   .card-featured {
-    @apply rounded-3xl bg-white;
+    @apply rounded-3xl;
+    background: var(--color-surface);
     box-shadow: var(--shadow-card);
   }
 
@@ -267,7 +376,8 @@
   /* Hero card — banner zone + content zone (signature surface, ADR-0028 § 5).
      Banner gradient is applied inline via getCourseSlotGradient(slot). */
   .card-hero {
-    @apply overflow-hidden rounded-3xl bg-white;
+    @apply overflow-hidden rounded-3xl;
+    background: var(--color-surface);
     box-shadow: var(--shadow-card);
     transition:
       transform var(--duration-spring-standard) var(--ease-spring),
@@ -288,7 +398,7 @@
   /* Panel inset — subordinate strip inside a parent card. NOT a nested card. */
   .panel-inset {
     @apply rounded-xl p-4;
-    background: rgba(0, 0, 0, 0.025);
+    background: color-mix(in srgb, var(--color-ink) 3%, transparent);
     box-shadow: var(--shadow-inset);
   }
 
@@ -299,13 +409,17 @@
 
   /* ───── Input ───── */
   .input {
-    @apply w-full rounded-xl border-0 bg-white px-4 py-2.5 text-base;
-    @apply text-ink placeholder:text-black/40;
-    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+    @apply w-full rounded-xl border-0 px-4 py-2.5 text-base;
+    @apply text-ink;
+    background: var(--color-surface);
+    box-shadow: inset 0 0 0 1px var(--color-hairline-strong);
     transition: box-shadow 100ms ease-out;
   }
+  .input::placeholder {
+    color: var(--color-ink-faint);
+  }
   .input:hover {
-    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+    box-shadow: inset 0 0 0 1px var(--color-ink-faint);
   }
   .input:focus {
     @apply outline-none;
@@ -350,11 +464,12 @@
 
   /* Secondary — white pill with hairline ring. */
   .btn-secondary {
-    @apply bg-white text-black;
-    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+    color: var(--color-ink);
+    background: var(--color-surface);
+    box-shadow: inset 0 0 0 1px var(--color-hairline-strong);
   }
   .btn-secondary:hover {
-    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+    box-shadow: inset 0 0 0 1px var(--color-ink-faint);
   }
   .btn-secondary:active {
     transform: scale(0.98);
@@ -374,10 +489,11 @@
 
   /* Ghost — text only. */
   .btn-ghost {
-    @apply text-black/70;
+    color: var(--color-ink-soft);
   }
   .btn-ghost:hover {
-    @apply bg-black/5 text-black;
+    color: var(--color-ink);
+    background: color-mix(in srgb, var(--color-ink) 5%, transparent);
   }
 
   /* Danger — System Red. */
@@ -441,8 +557,8 @@
   .badge-student {
     @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
     @apply text-ink;
-    background: rgba(0, 0, 0, 0.05);
-    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+    background: color-mix(in srgb, var(--color-ink) 5%, transparent);
+    box-shadow: inset 0 0 0 1px var(--color-hairline);
   }
   /* Status variants — use system colour tinted bg + -700 text. */
   .badge-success {
@@ -468,10 +584,12 @@
 
   /* ───── Table ───── */
   .table {
-    @apply w-full overflow-hidden rounded-2xl bg-white text-sm;
+    @apply w-full overflow-hidden rounded-2xl text-sm;
+    background: var(--color-surface);
   }
   .table thead {
-    @apply text-left text-xs font-medium text-black/50;
+    @apply text-left text-xs font-medium;
+    color: var(--color-ink-mute);
   }
   .table thead th {
     @apply px-4 py-3;
@@ -479,10 +597,10 @@
   .table tbody tr {
     transition: background-color var(--duration-spring-standard)
       var(--ease-spring);
-    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    border-top: 1px solid var(--color-hairline);
   }
   .table tbody tr:hover {
-    background: rgba(0, 0, 0, 0.02);
+    background: color-mix(in srgb, var(--color-ink) 3%, transparent);
   }
   .table tbody td {
     @apply px-4 py-3;
@@ -490,17 +608,20 @@
 
   /* ───── Stat / KPI card ───── */
   .stat {
-    @apply rounded-2xl bg-white p-6;
+    @apply rounded-2xl p-6;
+    background: var(--color-surface);
     transition: box-shadow var(--duration-spring-standard) var(--ease-spring);
   }
   .stat:hover {
     box-shadow: var(--shadow-lift);
   }
   .stat-label {
-    @apply text-xs font-medium text-black/60;
+    @apply text-xs font-medium;
+    color: var(--color-ink-mute);
   }
   .stat-value {
-    @apply mt-2 text-4xl font-medium tracking-tight text-black;
+    @apply mt-2 text-4xl font-medium tracking-tight;
+    color: var(--color-ink);
     letter-spacing: -0.02em;
   }
 
@@ -509,6 +630,27 @@
     background: var(--glass-bg);
     backdrop-filter: var(--glass-blur-mobile);
     -webkit-backdrop-filter: var(--glass-blur-mobile);
+  }
+
+  .dark-ui-soft {
+    background: color-mix(in srgb, var(--color-ink) 5%, transparent);
+  }
+
+  .theme-segment-active {
+    color: #ffffff;
+    background: var(--color-blue-500);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
+      0 8px 18px rgba(10, 132, 255, 0.18);
+  }
+
+  .theme-segment-idle {
+    color: var(--color-ink-mute);
+  }
+
+  .theme-segment-idle:hover {
+    color: var(--color-ink);
+    background: color-mix(in srgb, var(--color-ink) 5%, transparent);
   }
   @media (min-width: 768px) {
     .glass-nav {

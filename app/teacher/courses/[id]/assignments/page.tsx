@@ -131,7 +131,7 @@ export default async function AssignmentsListPage({ params }: PageProps) {
                           <span className="badge-gold">นับคะแนน</span>
                         )}
                         {publishedScoreItem && (
-                          <span className="rounded-md bg-green-50 px-1.5 py-0.5 text-[10px] font-medium text-green-700">
+                          <span className="rounded-md bg-green-500 px-1.5 py-0.5 text-[10px] font-semibold text-white shadow-sm ring-1 ring-black/10">
                             เผยแพร่
                           </span>
                         )}

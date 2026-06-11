@@ -12,6 +12,7 @@ import {
 import type { FeedItem, FeedKind } from "@/lib/feed/aggregator";
 import { resolveCourseFeedHref } from "@/lib/feed/navigation";
 import { EntryStagger } from "@/components/motion/entry-stagger";
+import { UserAvatar } from "@/components/profile/user-avatar";
 
 /**
  * Course Feed — Phase 11.8 Instagram-style redesign.
@@ -197,15 +198,24 @@ function FeedCard({
     >
       {/* Header strip — avatar + author + kind chip + relative time */}
       <header className="flex items-center gap-3 px-5 pt-5">
-        <span
-          className={
-            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-medium " +
-            decor.avatarBg
-          }
-          aria-hidden="true"
-        >
-          <span className={"text-sm " + decor.avatarText}>{initials}</span>
-        </span>
+        {item.authorUserId ? (
+          <UserAvatar
+            userId={item.authorUserId}
+            hasImage={Boolean(item.authorHasAvatar)}
+            size={40}
+            alt={authorName}
+          />
+        ) : (
+          <span
+            className={
+              "flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-medium " +
+              decor.avatarBg
+            }
+            aria-hidden="true"
+          >
+            <span className={"text-sm " + decor.avatarText}>{initials}</span>
+          </span>
+        )}
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-black">
             {authorName}

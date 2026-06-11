@@ -432,7 +432,14 @@ export async function listStudentCourses(studentUserId: string) {
           classCode: true,
           class: { select: { id: true, name: true } },
           term: { select: { name: true } },
-          teacher: { select: { firstName: true, lastName: true } },
+          teacher: {
+            select: {
+              userId: true,
+              firstName: true,
+              lastName: true,
+              user: { select: { profileImageId: true } },
+            },
+          },
         },
       },
     },
@@ -455,6 +462,14 @@ export async function listTeacherCourses(teacherUserId: string) {
       createdAt: true,
       class: { select: { id: true, name: true } },
       term: { select: { name: true } },
+      teacher: {
+        select: {
+          userId: true,
+          firstName: true,
+          lastName: true,
+          user: { select: { profileImageId: true } },
+        },
+      },
       _count: { select: { enrollments: { where: { removedAt: null } } } },
     },
   });

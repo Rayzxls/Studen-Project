@@ -26,6 +26,13 @@ enum Role {
   STUDENT
 }
 
+enum ThemeMode {
+  SYSTEM
+  LIGHT
+  DARK
+  CREAM
+}
+
 model User {
   id             String    @id @default(cuid())
   role           Role
@@ -48,6 +55,7 @@ model User {
   // Null = default avatar. Plain string (no FK) — FileAttachment is the
   // polymorphic table looked up via (ownerType, ownerId).
   profileImageId String?
+  themeMode      ThemeMode @default(SYSTEM)
 
   admin                 Admin?
   teacher               Teacher?
