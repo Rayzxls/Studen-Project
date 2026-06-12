@@ -1,16 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  BookOpen,
-  CalendarClock,
-  ChevronLeft,
-  ClipboardList,
-  Eye,
+  Award,
+  CalendarCheck,
+  ClipboardCheck,
   GraduationCap,
   Users,
 } from "lucide-react";
+import { AttendanceStatus, SubmissionStatus } from "@prisma/client";
 import { db } from "@/lib/db/client";
-import { UserAvatar } from "@/components/profile/user-avatar";
+import { gradeForCourseOffering, scoreTotal } from "@/lib/scoring/calc";
+import { formatPercent } from "@/lib/scoring/format";
 
 export const dynamic = "force-dynamic";
 
@@ -18,209 +18,282 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-export default async function AdminCourseObserverPage({ params }: PageProps) {
+export default async function AdminCourseOverviewPage({ params }: PageProps) {
   const { id } = await params;
-  const course = await db.courseOffering.findUnique({
+
+  const courseExists = await db.courseOffering.findUnique({
     where: { id },
-    select: {
-      id: true,
-      name: true,
-      subjectCode: true,
-      gradeLevel: true,
-      creditHours: true,
-      classCode: true,
-      codeActive: true,
-      createdAt: true,
-      teacher: {
-        select: {
-          userId: true,
-          firstName: true,
-          lastName: true,
-          email: true,
-          user: { select: { profileImageId: true } },
-        },
-      },
-      class: {
+    select: { id: true },
+  });
+  if (!courseExists) notFound();
+
+  const [scoreItems, enrollments, pendingByEnrollment, attendanceByEnrollment] =
+    await Promise.all([
+      db.scoreItem.findMany({
+        where: { courseOfferingId: id },
         select: {
           id: true,
           name: true,
-          gradeLevel: true,
-          academicYear: { select: { name: true } },
+          fullScore: true,
+          position: true,
+          publishedAt: true,
         },
-      },
-      term: {
+        orderBy: [{ position: "asc" }, { id: "asc" }],
+      }),
+      db.enrollment.findMany({
+        where: {
+          courseOfferingId: id,
+          OR: [
+            { removedAt: null },
+            { scoreEntries: { some: { scoreItem: { courseOfferingId: id } } } },
+          ],
+        },
         select: {
-          name: true,
-          academicYear: { select: { name: true } },
+          id: true,
+          removedAt: true,
+          student: {
+            select: {
+              userId: true,
+              studentId: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          scoreEntries: {
+            where: { scoreItem: { courseOfferingId: id } },
+            select: { scoreItemId: true, value: true },
+          },
         },
-      },
-      _count: {
-        select: {
-          enrollments: { where: { removedAt: null } },
-          assignments: true,
-          scoreItems: true,
-          materials: true,
-          announcements: true,
-          timetableSlots: true,
+        orderBy: [
+          { student: { firstName: "asc" } },
+          { student: { lastName: "asc" } },
+        ],
+      }),
+      db.submission.groupBy({
+        by: ["enrollmentId"],
+        where: {
+          assignment: { courseOfferingId: id },
+          status: {
+            in: [SubmissionStatus.SUBMITTED, SubmissionStatus.LATE_SUBMITTED],
+          },
         },
-      },
-    },
+        _count: { _all: true },
+      }),
+      db.attendanceRecord.groupBy({
+        by: ["enrollmentId", "status"],
+        where: { session: { courseOfferingId: id, cancelledAt: null } },
+        _count: { _all: true },
+      }),
+    ]);
+
+  const pendingMap = new Map(
+    pendingByEnrollment.map((g) => [g.enrollmentId, g._count._all])
+  );
+  const attendanceMap = new Map<string, { marked: number; attended: number }>();
+  for (const g of attendanceByEnrollment) {
+    const row = attendanceMap.get(g.enrollmentId) ?? { marked: 0, attended: 0 };
+    row.marked += g._count._all;
+    if (
+      g.status === AttendanceStatus.PRESENT ||
+      g.status === AttendanceStatus.LATE
+    ) {
+      row.attended += g._count._all;
+    }
+    attendanceMap.set(g.enrollmentId, row);
+  }
+
+  const activeEnrollments = enrollments.filter((e) => e.removedAt === null);
+  const publishedItems = scoreItems.filter((it) => it.publishedAt !== null);
+  const publishedFullScore = publishedItems.reduce(
+    (sum, it) => sum + Math.max(0, it.fullScore),
+    0
+  );
+  const pendingTotal = pendingByEnrollment.reduce(
+    (sum, g) => sum + g._count._all,
+    0
+  );
+
+  let markedAll = 0;
+  let attendedAll = 0;
+  for (const row of attendanceMap.values()) {
+    markedAll += row.marked;
+    attendedAll += row.attended;
+  }
+  const avgAttendance =
+    markedAll > 0 ? Math.round((attendedAll / markedAll) * 100) : null;
+
+  const studentRows = enrollments.map((enrollment) => {
+    const entries = enrollment.scoreEntries.map((entry) => ({
+      scoreItemId: entry.scoreItemId,
+      value: entry.value,
+    }));
+    const entryByItem = new Map(entries.map((e) => [e.scoreItemId, e.value]));
+    const scoreSum = publishedItems.reduce((sum, item) => {
+      if (item.fullScore <= 0) return sum;
+      return sum + (entryByItem.get(item.id) ?? 0);
+    }, 0);
+    const grade = gradeForCourseOffering(scoreItems, entries);
+    const percent = scoreTotal(scoreItems, entries);
+    const attendance = attendanceMap.get(enrollment.id);
+    const attendanceRate =
+      attendance && attendance.marked > 0
+        ? Math.round((attendance.attended / attendance.marked) * 100)
+        : null;
+
+    return {
+      enrollment,
+      scoreSum,
+      percent,
+      grade: grade.grade,
+      attendanceRate,
+      pending: pendingMap.get(enrollment.id) ?? 0,
+    };
   });
 
-  if (!course) notFound();
-
   return (
-    <div className="mx-auto max-w-6xl animate-fade-in space-y-6 px-6 py-8 md:px-10">
-      <Link
-        href="/admin/classes"
-        className="inline-flex items-center gap-1 text-xs font-medium text-black/50 transition hover:text-black hover:no-underline"
-      >
-        <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />
-        กลับไปห้องเรียนทั้งหมด
-      </Link>
+    <div className="space-y-6">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <MetricCard
+          href={`/admin/courses/${id}/members`}
+          icon={<Users className="h-4 w-4" />}
+          label="นักเรียนทั้งหมด"
+          value={activeEnrollments.length}
+          suffix="คน"
+          tone="blue"
+        />
+        <MetricCard
+          href={`/admin/courses/${id}/assignments`}
+          icon={<ClipboardCheck className="h-4 w-4" />}
+          label="งานรอตรวจ"
+          value={pendingTotal}
+          suffix="ชิ้น"
+          tone={pendingTotal > 0 ? "orange" : "plain"}
+        />
+        <MetricCard
+          href={`/admin/courses/${id}/scores`}
+          icon={<Award className="h-4 w-4" />}
+          label="คะแนนที่ประกาศแล้ว"
+          value={publishedItems.length}
+          suffix="รายการ"
+          tone="blue"
+        />
+        <MetricCard
+          href={`/admin/courses/${id}/attendance`}
+          icon={<CalendarCheck className="h-4 w-4" />}
+          label="เข้าเรียนเฉลี่ย"
+          value={avgAttendance ?? "—"}
+          suffix={avgAttendance === null ? "" : "%"}
+          tone="plain"
+        />
+      </div>
 
-      <header className="card overflow-hidden">
-        <div className="border-b border-black/[0.06] bg-blue-50/70 px-6 py-3">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-medium text-blue-700 shadow-soft">
-            <Eye className="h-3.5 w-3.5" aria-hidden="true" />
-            Admin Observer · อ่านอย่างเดียว
-          </div>
-        </div>
-        <div className="grid gap-6 p-6 lg:grid-cols-[1fr_300px]">
+      <section className="card p-6">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <div className="badge mb-3">รายวิชาที่ครูสร้าง</div>
-            <h1 className="text-3xl font-semibold tracking-tight text-black md:text-4xl">
-              {course.name}
-            </h1>
-            <p className="mt-2 text-sm text-ink-soft">
-              {course.subjectCode || "ไม่มีรหัสวิชา"} · {course.gradeLevel} ·{" "}
-              {course.creditHours} หน่วยกิต · {course.term.academicYear.name} ·{" "}
-              {course.term.name}
+            <h2 className="flex items-center gap-2 text-lg font-medium tracking-tight text-black">
+              <GraduationCap className="h-5 w-5 text-blue-600" />
+              ผลการเรียนรายคน ({studentRows.length})
+            </h2>
+            <p className="mt-1 text-xs text-ink-soft">
+              คะแนน / % / เกรด คำนวณจากรายการคะแนนที่ประกาศแล้วเท่านั้น
             </p>
-
-            <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              <Metric
-                icon={<Users className="h-4 w-4" />}
-                label="นักเรียน"
-                value={course._count.enrollments}
-              />
-              <Metric
-                icon={<ClipboardList className="h-4 w-4" />}
-                label="งาน"
-                value={course._count.assignments}
-              />
-              <Metric
-                icon={<GraduationCap className="h-4 w-4" />}
-                label="รายการคะแนน"
-                value={course._count.scoreItems}
-              />
-            </div>
           </div>
-
-          <aside className="rounded-2xl bg-black/[0.03] p-4">
-            <p className="text-xs font-medium text-ink-soft">ครูผู้สอน</p>
-            <Link
-              href={`/admin/users/${course.teacher.userId}`}
-              className="mt-3 flex items-center gap-3 rounded-2xl bg-white p-3 shadow-soft transition hover:shadow-card hover:no-underline"
-            >
-              <UserAvatar
-                userId={course.teacher.userId}
-                hasImage={Boolean(course.teacher.user.profileImageId)}
-                size={44}
-              />
-              <span className="min-w-0">
-                <span className="block font-medium text-black">
-                  {course.teacher.firstName} {course.teacher.lastName}
-                </span>
-                <span className="block truncate text-xs text-ink-soft">
-                  {course.teacher.email}
-                </span>
-              </span>
-            </Link>
-            <div className="mt-4 space-y-2 text-xs text-ink-soft">
-              <p>
-                ห้อง:{" "}
-                <Link
-                  href={`/admin/classes/${course.class.id}`}
-                  className="font-medium text-black hover:underline"
-                >
-                  {course.class.name}
-                </Link>
-              </p>
-              <p>
-                รหัสเข้าห้อง:{" "}
-                <span className="font-mono text-black">{course.classCode}</span>
-              </p>
-              <p>สถานะรับเข้า: {course.codeActive ? "เปิดรับ" : "ปิดรับ"}</p>
-            </div>
-          </aside>
+          <span className="rounded-full bg-black/[0.04] px-3 py-1 text-xs text-ink-soft">
+            คะแนนเต็มที่ประกาศ {publishedFullScore}
+          </span>
         </div>
-      </header>
 
-      <section className="grid gap-4 md:grid-cols-2">
-        <ReadOnlyTile
-          icon={<BookOpen className="h-5 w-5" />}
-          title="Feed / เอกสาร / ประกาศ"
-          description="ชั้นถัดไปจะนำหน้า Feed ของครูมาแสดงแบบอ่านอย่างเดียว และซ่อนปุ่มสร้าง/แก้ไข/ลบทั้งหมด"
-        />
-        <ReadOnlyTile
-          icon={<ClipboardList className="h-5 w-5" />}
-          title="งาน / คะแนน / สมาชิก"
-          description="ชั้นถัดไปจะเปิดดูข้อมูลเหมือนครู แต่ทุก action ที่แก้ข้อมูลจะถูกซ่อนจาก Admin Observer"
-        />
-        <ReadOnlyTile
-          icon={<CalendarClock className="h-5 w-5" />}
-          title="เช็คชื่อ"
-          description={`มีตารางสอน ${course._count.timetableSlots.toLocaleString("th-TH")} รายการในวิชานี้`}
-        />
-        <ReadOnlyTile
-          icon={<GraduationCap className="h-5 w-5" />}
-          title="ภาพรวม"
-          description={`มีเอกสาร ${course._count.materials.toLocaleString("th-TH")} และประกาศ ${course._count.announcements.toLocaleString("th-TH")} รายการ`}
-        />
+        {studentRows.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-black/15 p-8 text-center text-sm text-ink-soft">
+            ยังไม่มีนักเรียนในรายวิชานี้
+          </div>
+        ) : (
+          <div className="overflow-x-auto rounded-2xl border border-black/[0.08]">
+            <table className="table w-full">
+              <thead>
+                <tr>
+                  <th>นักเรียน</th>
+                  <th className="text-right">คะแนนรวม</th>
+                  <th className="text-right">%</th>
+                  <th className="text-right">เกรด</th>
+                  <th className="text-right">เข้าเรียน</th>
+                  <th className="text-right">รอตรวจ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {studentRows.map((row) => (
+                  <tr key={row.enrollment.id}>
+                    <td>
+                      <Link
+                        href={`/admin/users/${row.enrollment.student.userId}`}
+                        className="font-medium text-black hover:underline"
+                      >
+                        {row.enrollment.student.firstName}{" "}
+                        {row.enrollment.student.lastName}
+                      </Link>
+                      <p className="mt-0.5 font-mono text-[10px] text-ink-soft">
+                        {row.enrollment.student.studentId}
+                        {row.enrollment.removedAt && " · ออกจากรายวิชาแล้ว"}
+                      </p>
+                    </td>
+                    <td className="text-right text-sm">
+                      {row.scoreSum}/{publishedFullScore || 0}
+                    </td>
+                    <td className="text-right text-sm">
+                      {row.percent === null ? "—" : formatPercent(row.percent)}
+                    </td>
+                    <td className="text-right text-sm font-semibold text-blue-600">
+                      {row.grade === null ? "—" : row.grade.toFixed(1)}
+                    </td>
+                    <td className="text-right text-sm">
+                      {row.attendanceRate === null
+                        ? "—"
+                        : `${row.attendanceRate}%`}
+                    </td>
+                    <td className="text-right text-sm">{row.pending}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     </div>
   );
 }
 
-function Metric({
+function MetricCard({
+  href,
   icon,
   label,
   value,
+  suffix,
+  tone,
 }: {
+  href: string;
   icon: React.ReactNode;
   label: string;
-  value: number;
+  value: number | string;
+  suffix: string;
+  tone: "blue" | "orange" | "plain";
 }) {
-  return (
-    <div className="rounded-2xl bg-black/[0.035] p-4">
-      <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white text-blue-600 shadow-soft">
-        {icon}
-      </div>
-      <p className="text-2xl font-semibold text-black">
-        {value.toLocaleString("th-TH")}
-      </p>
-      <p className="text-xs text-ink-soft">{label}</p>
-    </div>
-  );
-}
+  const className =
+    tone === "blue"
+      ? "card-tinted card-tinted-blue"
+      : tone === "orange"
+        ? "card-tinted card-tinted-orange"
+        : "card";
 
-function ReadOnlyTile({
-  icon,
-  title,
-  description,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-}) {
   return (
-    <div className="card p-5">
-      <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+    <Link href={href} className={`${className} block p-5 hover:no-underline`}>
+      <p className="flex items-center gap-1.5 text-xs font-medium opacity-80">
         {icon}
-      </div>
-      <h2 className="font-semibold text-black">{title}</h2>
-      <p className="mt-1 text-sm leading-6 text-ink-soft">{description}</p>
-    </div>
+        {label}
+      </p>
+      <p className="mt-2 text-3xl font-semibold tracking-tight">
+        {typeof value === "number" ? value.toLocaleString("th-TH") : value}
+        {suffix && <span className="ml-1 text-base font-medium">{suffix}</span>}
+      </p>
+    </Link>
   );
 }
