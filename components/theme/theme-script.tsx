@@ -1,4 +1,5 @@
 import type { ThemeMode } from "@prisma/client";
+import Script from "next/script";
 import { THEME_STORAGE_KEY } from "@/components/theme/theme-utils";
 
 function scriptSource(mode: ThemeMode) {
@@ -24,7 +25,7 @@ function scriptSource(mode: ThemeMode) {
 
 export function ThemeScript({ mode }: { mode: ThemeMode }) {
   return (
-    <script
+    <Script
       id="beagle-theme-script"
       dangerouslySetInnerHTML={{ __html: scriptSource(mode) }}
     />
