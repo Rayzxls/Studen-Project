@@ -4,13 +4,14 @@ import { CheckCircle2, FileText } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
 import { getCourseOfferingForTeacher } from "@/lib/course/queries";
 import { db } from "@/lib/db/client";
+import { gradeForCourseOffering, scoreTotal } from "@/lib/scoring/calc";
+import { formatPercent } from "@/lib/scoring/format";
 import { CourseShell } from "@/components/course/course-shell";
 import { CreateScoreItemForm } from "@/components/scoring/create-score-item-form";
 import { PublishScoreItemDialog } from "@/components/scoring/publish-score-item-dialog";
 import { DeleteScoreItemDialog } from "@/components/scoring/delete-score-item-dialog";
 import { teacherCourseTabs } from "../_tabs";
 
-// Auth-gated DB-fetching page — skip static prerender.
 export const dynamic = "force-dynamic";
 
 interface PageProps {
@@ -29,9 +30,7 @@ export default async function ScoresListPage({ params }: PageProps) {
   const course = await getCourseOfferingForTeacher(id, session.user.id);
   if (!course) notFound();
 
-  // Authorization is already enforced by getCourseOfferingForTeacher (which
-  // checks teacherId); reads below are scoped to this CourseOffering.
-  const [itemsRaw, activeMemberCount] = await Promise.all([
+  const [items, enrollments, activeMemberCount] = await Promise.all([
     db.scoreItem.findMany({
       where: { courseOfferingId: id },
       select: {
@@ -44,19 +43,47 @@ export default async function ScoresListPage({ params }: PageProps) {
       },
       orderBy: [{ position: "asc" }, { id: "asc" }],
     }),
+    db.enrollment.findMany({
+      where: {
+        courseOfferingId: id,
+        OR: [
+          { removedAt: null },
+          { scoreEntries: { some: { scoreItem: { courseOfferingId: id } } } },
+        ],
+      },
+      select: {
+        id: true,
+        removedAt: true,
+        student: {
+          select: {
+            studentId: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        scoreEntries: {
+          where: { scoreItem: { courseOfferingId: id } },
+          select: { scoreItemId: true, value: true },
+        },
+      },
+      orderBy: [
+        { student: { firstName: "asc" } },
+        { student: { lastName: "asc" } },
+      ],
+    }),
     db.enrollment.count({
       where: { courseOfferingId: id, removedAt: null },
     }),
   ]);
 
-  const items = itemsRaw;
+  const publishedItems = items.filter((item) => item.publishedAt !== null);
+  const fullScoreSum = items.reduce((acc, item) => acc + item.fullScore, 0);
+  const publishedFullScore = publishedItems.reduce(
+    (sum, item) => sum + Math.max(0, item.fullScore),
+    0
+  );
   const allPublished =
-    items.length > 0 && items.every((it) => it.publishedAt !== null);
-  // ADR-0024 — sum-based scoring removed the Σweight publish gate. The
-  // grade contribution of each item is its `fullScore` directly; surfaces
-  // can still inform the teacher of the cumulative scale via "Σ คะแนนเต็ม"
-  // as a helpful (non-blocking) information chip.
-  const fullScoreSum = items.reduce((acc, it) => acc + it.fullScore, 0);
+    items.length > 0 && items.every((item) => item.publishedAt !== null);
 
   return (
     <CourseShell
@@ -66,91 +93,184 @@ export default async function ScoresListPage({ params }: PageProps) {
       backHref="/teacher/courses"
       tabs={teacherCourseTabs(id)}
     >
-      <div className="card p-6">
-        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h2
-              className="text-lg font-medium text-black"
-              style={{ letterSpacing: "-0.02em" }}
-            >
-              รายการคะแนน
-            </h2>
-            <p className="mt-0.5 text-xs text-black/50">
-              {items.length === 0
-                ? "ยังไม่มีรายการ"
-                : `${items.length} รายการ · ${items.filter((it) => it.publishedAt !== null).length} เผยแพร่แล้ว`}
-            </p>
+      <div className="space-y-4">
+        <section className="card p-6">
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-medium tracking-tight text-black">
+                คะแนนและเกรดรายวิชา
+              </h2>
+              <p className="mt-1 text-xs text-black/50">
+                แยกให้เห็นว่านักเรียนได้คะแนนจากส่วนไหนบ้าง ·
+                กดชื่อรายการคะแนนเพื่อเข้าไปกรอก/แก้คะแนน
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <CreateScoreItemForm courseId={id} />
+              <span className="rounded-full bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200">
+                คะแนนเต็มรวม {fullScoreSum}
+              </span>
+              {allPublished && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-green-500 px-3 py-1 text-xs font-semibold text-white shadow-sm ring-1 ring-black/10">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  เผยแพร่ครบ
+                </span>
+              )}
+            </div>
           </div>
-          <CreateScoreItemForm courseId={id} />
-        </div>
 
-        {/* Informational pill (ADR-0024) — fullScore total + publish status. */}
-        <div className="mb-4">
-          <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200">
-            Σ คะแนนเต็ม = {fullScoreSum}
-          </span>
-          {allPublished && (
-            <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-green-500 px-2.5 py-1 text-xs font-semibold text-white shadow-sm ring-1 ring-black/10">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              เผยแพร่ครบทุกรายการ
-            </span>
+          {items.length === 0 ? (
+            <EmptyState />
+          ) : enrollments.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-black/15 p-8 text-center text-sm text-black/50">
+              ยังไม่มีนักเรียนให้แสดงคะแนน
+            </div>
+          ) : (
+            <div className="overflow-x-auto rounded-2xl border border-black/[0.08]">
+              <table className="table w-full min-w-[900px]">
+                <thead>
+                  <tr>
+                    <th className="sticky left-0 z-10 bg-surface">นักเรียน</th>
+                    {items.map((item) => (
+                      <th key={item.id} className="text-right">
+                        <Link
+                          href={`/teacher/courses/${id}/scores/${item.id}`}
+                          className="block max-w-[140px] truncate text-black hover:underline"
+                        >
+                          {item.name}
+                        </Link>
+                        <span className="mt-0.5 block text-[10px] font-normal text-ink-soft">
+                          /{item.fullScore} ·{" "}
+                          {item.publishedAt ? "ประกาศแล้ว" : "ร่าง"}
+                        </span>
+                      </th>
+                    ))}
+                    <th className="text-right">คะแนนรวม</th>
+                    <th className="text-right">%</th>
+                    <th className="text-right">เกรด</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {enrollments.map((enrollment) => {
+                    const entries = enrollment.scoreEntries.map((entry) => ({
+                      scoreItemId: entry.scoreItemId,
+                      value: entry.value,
+                    }));
+                    const entryByItem = new Map(
+                      entries.map((entry) => [entry.scoreItemId, entry.value])
+                    );
+                    const scoreSum = publishedItems.reduce((sum, item) => {
+                      if (item.fullScore <= 0) return sum;
+                      return sum + (entryByItem.get(item.id) ?? 0);
+                    }, 0);
+                    const percent = scoreTotal(items, entries);
+                    const grade = gradeForCourseOffering(items, entries);
+
+                    return (
+                      <tr key={enrollment.id}>
+                        <td className="sticky left-0 z-10 bg-surface">
+                          <p className="font-medium text-black">
+                            {enrollment.student.firstName}{" "}
+                            {enrollment.student.lastName}
+                          </p>
+                          <p className="mt-0.5 font-mono text-[10px] text-ink-soft">
+                            {enrollment.student.studentId}
+                            {enrollment.removedAt && " · ออกจากรายวิชาแล้ว"}
+                          </p>
+                        </td>
+                        {items.map((item) => {
+                          const value = entryByItem.get(item.id);
+                          return (
+                            <td
+                              key={item.id}
+                              className={
+                                "text-right text-sm " +
+                                (item.publishedAt ? "" : "text-ink-soft")
+                              }
+                            >
+                              {value ?? "—"}
+                            </td>
+                          );
+                        })}
+                        <td className="text-right text-sm font-medium">
+                          {scoreSum}/{publishedFullScore || 0}
+                        </td>
+                        <td className="text-right text-sm">
+                          {percent === null ? "—" : formatPercent(percent)}
+                        </td>
+                        <td className="text-right text-sm font-semibold text-blue-600">
+                          {grade.grade === null ? "—" : grade.grade.toFixed(1)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
-        </div>
+        </section>
 
-        {items.length === 0 ? (
-          <EmptyState />
-        ) : (
-          <ul className="divide-y divide-slate-100">
-            {items.map((it) => {
-              const published = it.publishedAt !== null;
-              return (
-                <li key={it.id} className="-mx-2 flex items-center gap-2 px-2">
-                  <Link
-                    href={`/teacher/courses/${id}/scores/${it.id}`}
-                    className="-mx-2 flex flex-1 items-center justify-between gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-slate-50/60"
+        {items.length > 0 && (
+          <section className="card p-6">
+            <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-black">
+              <FileText className="h-4 w-4 text-blue-600" />
+              รายการคะแนนทั้งหมด
+            </h2>
+            <ul className="divide-y divide-black/[0.06]">
+              {items.map((item) => {
+                const published = item.publishedAt !== null;
+                return (
+                  <li
+                    key={item.id}
+                    className="-mx-2 flex items-center gap-2 px-2"
                   >
-                    <div className="min-w-0">
-                      <p className="flex items-center gap-2 truncate text-sm font-medium text-black">
-                        <FileText className="h-4 w-4 shrink-0 text-black/30" />
-                        {it.name}
-                        {published ? (
-                          <span className="rounded-full bg-green-500 px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm ring-1 ring-black/10">
-                            เผยแพร่แล้ว
-                          </span>
-                        ) : (
-                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600">
-                            ร่าง
-                          </span>
-                        )}
-                      </p>
-                      <p className="mt-0.5 text-xs text-black/50">
-                        คะแนนเต็ม {it.fullScore} · {it._count.entries} คะแนน
-                      </p>
-                    </div>
-                  </Link>
-                  <div className="flex shrink-0 items-center gap-1">
-                    {!published && (
-                      <PublishScoreItemDialog
+                    <Link
+                      href={`/teacher/courses/${id}/scores/${item.id}`}
+                      className="-mx-2 flex flex-1 items-center justify-between gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-slate-50/60"
+                    >
+                      <div className="min-w-0">
+                        <p className="flex items-center gap-2 truncate text-sm font-medium text-black">
+                          {item.name}
+                          {published ? (
+                            <span className="rounded-full bg-green-500 px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm ring-1 ring-black/10">
+                              เผยแพร่แล้ว
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600">
+                              ร่าง
+                            </span>
+                          )}
+                        </p>
+                        <p className="mt-0.5 text-xs text-black/50">
+                          คะแนนเต็ม {item.fullScore} · บันทึกคะแนนแล้ว{" "}
+                          {item._count.entries.toLocaleString("th-TH")} รายการ
+                        </p>
+                      </div>
+                    </Link>
+                    <div className="flex shrink-0 items-center gap-1">
+                      {!published && (
+                        <PublishScoreItemDialog
+                          courseId={id}
+                          scoreItemId={item.id}
+                          scoreItemName={item.name}
+                          fullScore={item.fullScore}
+                          entriesCount={item._count.entries}
+                          activeMemberCount={activeMemberCount}
+                        />
+                      )}
+                      <DeleteScoreItemDialog
                         courseId={id}
-                        scoreItemId={it.id}
-                        scoreItemName={it.name}
-                        fullScore={it.fullScore}
-                        entriesCount={it._count.entries}
-                        activeMemberCount={activeMemberCount}
+                        scoreItemId={item.id}
+                        scoreItemName={item.name}
+                        isPublished={published}
+                        entriesCount={item._count.entries}
                       />
-                    )}
-                    <DeleteScoreItemDialog
-                      courseId={id}
-                      scoreItemId={it.id}
-                      scoreItemName={it.name}
-                      isPublished={published}
-                      entriesCount={it._count.entries}
-                    />
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
         )}
       </div>
     </CourseShell>
@@ -162,8 +282,7 @@ function EmptyState() {
     <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center">
       <p className="text-sm text-black/60">ยังไม่มีรายการคะแนน</p>
       <p className="mt-1 text-xs text-black/40">
-        กด &ldquo;เพิ่มรายการคะแนน&rdquo; ด้านบนเพื่อสร้างช่องคะแนนแรก (เช่น
-        สอบกลางภาค, การบ้าน)
+        กด &ldquo;เพิ่มรายการคะแนน&rdquo; ด้านบนเพื่อสร้างช่องคะแนนแรก
       </p>
     </div>
   );
