@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, GraduationCap, Plus, ScrollText } from "lucide-react";
+import { GraduationCap, Plus } from "lucide-react";
 import type { Session } from "@/lib/auth/permissions";
 import { auth } from "@/lib/auth";
 import { resolveDisplayName } from "@/lib/profile/display-name";
@@ -44,12 +44,13 @@ export const dynamic = "force-dynamic";
  *             classes, fresh scores, course quick access.
  *   Teacher — "ห้องไหนต้องดูแลตอนนี้": review queue, attendance today,
  *             class health.
- *   Admin   — a doorway card into /admin/dashboard (the real admin
- *             operating surface).
+ *   Admin   — redirects straight to /admin/dashboard, the real operating
+ *             surface with sidebar + system overview.
  */
 export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
+  if (session.user.role === "ADMIN") redirect("/admin/dashboard");
 
   const user = await db.user.findUnique({
     where: { id: session.user.id },
@@ -58,7 +59,6 @@ export default async function DashboardPage() {
       identifier: true,
       displayName: true,
       profileImageId: true,
-      admin: { select: { firstName: true, lastName: true } },
       teacher: {
         select: {
           firstName: true,
@@ -77,13 +77,11 @@ export default async function DashboardPage() {
   });
   if (!user) redirect("/login");
 
-  const realName = user.admin
-    ? `${user.admin.firstName} ${user.admin.lastName}`
-    : user.teacher
-      ? `${user.teacher.firstName} ${user.teacher.lastName}`
-      : user.student
-        ? `${user.student.firstName} ${user.student.lastName}`
-        : null;
+  const realName = user.teacher
+    ? `${user.teacher.firstName} ${user.teacher.lastName}`
+    : user.student
+      ? `${user.student.firstName} ${user.student.lastName}`
+      : null;
   // Friendly greeting only — every shared surface keeps the real name.
   const name = resolveDisplayName({
     displayName: user.displayName,
@@ -112,14 +110,6 @@ export default async function DashboardPage() {
             name={name}
             hasAvatar={hasAvatar}
             homeroomName={user.teacher?.homeroomOf?.name ?? null}
-          />
-        )}
-
-        {user.role === "ADMIN" && (
-          <AdminDoorway
-            name={name}
-            userId={session.user.id}
-            hasAvatar={hasAvatar}
           />
         )}
 
@@ -420,48 +410,6 @@ async function TeacherDashboard({
           <ClassHealthBlock rows={classHealth} />
         </div>
       </section>
-    </>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// Admin
-// ─────────────────────────────────────────────────────────────
-
-function AdminDoorway({
-  name,
-  userId,
-  hasAvatar,
-}: {
-  name: string;
-  userId: string;
-  hasAvatar: boolean;
-}) {
-  return (
-    <>
-      <span className="badge">ผู้ดูแลระบบ</span>
-      <div className="mt-2 flex items-center gap-3">
-        <UserAvatar userId={userId} hasImage={hasAvatar} size={40} />
-        <h1
-          className="text-2xl font-semibold text-black sm:text-3xl"
-          style={{ letterSpacing: "-0.03em" }}
-        >
-          สวัสดี, {name}
-        </h1>
-      </div>
-      <p className="mt-1 text-sm text-black/55">
-        งานดูแลระบบทั้งหมดอยู่ใน Admin Panel
-      </p>
-      <div className="mt-6 flex flex-wrap gap-2">
-        <Link href="/admin/dashboard" className="btn-primary">
-          เปิด Admin Panel
-          <ArrowRight className="h-4 w-4" aria-hidden="true" />
-        </Link>
-        <Link href="/admin/audit" className="btn-secondary">
-          <ScrollText className="h-4 w-4" aria-hidden="true" />
-          ดู Audit Log
-        </Link>
-      </div>
     </>
   );
 }

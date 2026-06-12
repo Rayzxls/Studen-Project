@@ -1,28 +1,17 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { ClassPicker, type ClassOption } from "@/components/class-picker";
 import { createCourseAction, type CreateCourseState } from "./actions";
 
 interface FormProps {
-  classes: ClassOption[];
   terms: { id: string; name: string; number: number; isActive: boolean }[];
-  recentClassIds: string[];
-  homeroomClassId: string | null;
 }
 
 const initial: CreateCourseState = {};
 
-export function CreateCourseForm({
-  classes,
-  terms,
-  recentClassIds,
-  homeroomClassId,
-}: FormProps) {
+export function CreateCourseForm({ terms }: FormProps) {
   const [state, action, pending] = useActionState(createCourseAction, initial);
   const defaultTerm = terms.find((t) => t.isActive)?.id ?? terms[0]?.id ?? "";
-  const [classId, setClassId] = useState("");
-  const selectedClass = classes.find((c) => c.id === classId);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   return (
@@ -50,25 +39,59 @@ export function CreateCourseForm({
         )}
       </div>
 
-      {/* Class + Term */}
+      {/* Class identity + Term */}
       <div className="grid gap-4 md:grid-cols-2">
         <div className="card p-5">
-          <label htmlFor="classId" className="mb-1.5 block text-sm font-medium">
-            ห้องเรียน
-          </label>
-          <ClassPicker
-            classes={classes}
-            recentClassIds={recentClassIds}
-            homeroomClassId={homeroomClassId}
-            value={classId}
-            onChange={setClassId}
-            inputName="classId"
-          />
-          {state.fieldErrors?.classId && (
-            <p className="mt-1 text-xs text-red-700">
-              {state.fieldErrors.classId}
-            </p>
-          )}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label
+                htmlFor="gradeLevel"
+                className="mb-1.5 block text-sm font-medium"
+              >
+                ระดับชั้น
+              </label>
+              <input
+                id="gradeLevel"
+                name="gradeLevel"
+                type="text"
+                required
+                maxLength={20}
+                className="input"
+                placeholder="เช่น ม.4"
+              />
+              {state.fieldErrors?.gradeLevel && (
+                <p className="mt-1 text-xs text-red-700">
+                  {state.fieldErrors.gradeLevel}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label
+                htmlFor="roomName"
+                className="mb-1.5 block text-sm font-medium"
+              >
+                ห้อง
+              </label>
+              <input
+                id="roomName"
+                name="roomName"
+                type="text"
+                required
+                maxLength={40}
+                className="input"
+                placeholder="เช่น 3"
+              />
+              {state.fieldErrors?.roomName && (
+                <p className="mt-1 text-xs text-red-700">
+                  {state.fieldErrors.roomName}
+                </p>
+              )}
+            </div>
+          </div>
+          <p className="mt-2 text-xs text-ink-soft">
+            ระบบจะสร้างหรือใช้ห้องเดิมให้อัตโนมัติ เช่น ม.4 + ห้อง 3 = ม.4/3
+          </p>
         </div>
 
         <div className="card p-5">
@@ -99,60 +122,33 @@ export function CreateCourseForm({
         </div>
       </div>
 
-      {/* Credit + Grade level (Grade level auto-suggests from class) */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="card p-5">
-          <label
-            htmlFor="creditHours"
-            className="mb-1.5 block text-sm font-medium"
-          >
-            หน่วยกิต
-          </label>
-          <input
-            id="creditHours"
-            name="creditHours"
-            type="number"
-            step="0.5"
-            min="0"
-            max="10"
-            required
-            defaultValue="1.5"
-            className="input"
-          />
-          <p className="mt-1.5 text-xs text-ink-soft">
-            หน่วยกิตตามโครงสร้างหลักสูตรของโรงเรียน
+      {/* Credit */}
+      <div className="card p-5">
+        <label
+          htmlFor="creditHours"
+          className="mb-1.5 block text-sm font-medium"
+        >
+          หน่วยกิต
+        </label>
+        <input
+          id="creditHours"
+          name="creditHours"
+          type="number"
+          step="0.5"
+          min="0"
+          max="10"
+          required
+          defaultValue="1.5"
+          className="input"
+        />
+        <p className="mt-1.5 text-xs text-ink-soft">
+          หน่วยกิตตามโครงสร้างหลักสูตรของโรงเรียน
+        </p>
+        {state.fieldErrors?.creditHours && (
+          <p className="mt-1 text-xs text-red-700">
+            {state.fieldErrors.creditHours}
           </p>
-          {state.fieldErrors?.creditHours && (
-            <p className="mt-1 text-xs text-red-700">
-              {state.fieldErrors.creditHours}
-            </p>
-          )}
-        </div>
-
-        <div className="card p-5">
-          <label
-            htmlFor="gradeLevel"
-            className="mb-1.5 block text-sm font-medium"
-          >
-            ระดับชั้น
-          </label>
-          <input
-            id="gradeLevel"
-            name="gradeLevel"
-            type="text"
-            required
-            maxLength={20}
-            className="input"
-            placeholder="เช่น ม.4"
-            defaultValue={selectedClass?.gradeLevel ?? ""}
-            key={selectedClass?.gradeLevel}
-          />
-          {state.fieldErrors?.gradeLevel && (
-            <p className="mt-1 text-xs text-red-700">
-              {state.fieldErrors.gradeLevel}
-            </p>
-          )}
-        </div>
+        )}
       </div>
 
       {/* Advanced: subject code */}
