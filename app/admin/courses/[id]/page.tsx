@@ -4,13 +4,11 @@ import {
   Award,
   CalendarCheck,
   ClipboardCheck,
-  GraduationCap,
+  ListChecks,
   Users,
 } from "lucide-react";
 import { AttendanceStatus, SubmissionStatus } from "@prisma/client";
 import { db } from "@/lib/db/client";
-import { gradeForCourseOffering, scoreTotal } from "@/lib/scoring/calc";
-import { formatPercent } from "@/lib/scoring/format";
 
 export const dynamic = "force-dynamic";
 
@@ -43,31 +41,11 @@ export default async function AdminCourseOverviewPage({ params }: PageProps) {
       db.enrollment.findMany({
         where: {
           courseOfferingId: id,
-          OR: [
-            { removedAt: null },
-            { scoreEntries: { some: { scoreItem: { courseOfferingId: id } } } },
-          ],
+          removedAt: null,
         },
         select: {
           id: true,
-          removedAt: true,
-          student: {
-            select: {
-              userId: true,
-              studentId: true,
-              firstName: true,
-              lastName: true,
-            },
-          },
-          scoreEntries: {
-            where: { scoreItem: { courseOfferingId: id } },
-            select: { scoreItemId: true, value: true },
-          },
         },
-        orderBy: [
-          { student: { firstName: "asc" } },
-          { student: { lastName: "asc" } },
-        ],
       }),
       db.submission.groupBy({
         by: ["enrollmentId"],
@@ -86,9 +64,6 @@ export default async function AdminCourseOverviewPage({ params }: PageProps) {
       }),
     ]);
 
-  const pendingMap = new Map(
-    pendingByEnrollment.map((g) => [g.enrollmentId, g._count._all])
-  );
   const attendanceMap = new Map<string, { marked: number; attended: number }>();
   for (const g of attendanceByEnrollment) {
     const row = attendanceMap.get(g.enrollmentId) ?? { marked: 0, attended: 0 };
@@ -102,7 +77,6 @@ export default async function AdminCourseOverviewPage({ params }: PageProps) {
     attendanceMap.set(g.enrollmentId, row);
   }
 
-  const activeEnrollments = enrollments.filter((e) => e.removedAt === null);
   const publishedItems = scoreItems.filter((it) => it.publishedAt !== null);
   const publishedFullScore = publishedItems.reduce(
     (sum, it) => sum + Math.max(0, it.fullScore),
@@ -122,34 +96,6 @@ export default async function AdminCourseOverviewPage({ params }: PageProps) {
   const avgAttendance =
     markedAll > 0 ? Math.round((attendedAll / markedAll) * 100) : null;
 
-  const studentRows = enrollments.map((enrollment) => {
-    const entries = enrollment.scoreEntries.map((entry) => ({
-      scoreItemId: entry.scoreItemId,
-      value: entry.value,
-    }));
-    const entryByItem = new Map(entries.map((e) => [e.scoreItemId, e.value]));
-    const scoreSum = publishedItems.reduce((sum, item) => {
-      if (item.fullScore <= 0) return sum;
-      return sum + (entryByItem.get(item.id) ?? 0);
-    }, 0);
-    const grade = gradeForCourseOffering(scoreItems, entries);
-    const percent = scoreTotal(scoreItems, entries);
-    const attendance = attendanceMap.get(enrollment.id);
-    const attendanceRate =
-      attendance && attendance.marked > 0
-        ? Math.round((attendance.attended / attendance.marked) * 100)
-        : null;
-
-    return {
-      enrollment,
-      scoreSum,
-      percent,
-      grade: grade.grade,
-      attendanceRate,
-      pending: pendingMap.get(enrollment.id) ?? 0,
-    };
-  });
-
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -157,7 +103,7 @@ export default async function AdminCourseOverviewPage({ params }: PageProps) {
           href={`/admin/courses/${id}/members`}
           icon={<Users className="h-4 w-4" />}
           label="นักเรียนทั้งหมด"
-          value={activeEnrollments.length}
+          value={enrollments.length}
           suffix="คน"
           tone="blue"
         />
@@ -187,77 +133,22 @@ export default async function AdminCourseOverviewPage({ params }: PageProps) {
         />
       </div>
 
-      <section className="card p-6">
-        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h2 className="flex items-center gap-2 text-lg font-medium tracking-tight text-black">
-              <GraduationCap className="h-5 w-5 text-blue-600" />
-              ผลการเรียนรายคน ({studentRows.length})
-            </h2>
-            <p className="mt-1 text-xs text-ink-soft">
-              คะแนน / % / เกรด คำนวณจากรายการคะแนนที่ประกาศแล้วเท่านั้น
-            </p>
-          </div>
-          <span className="rounded-full bg-black/[0.04] px-3 py-1 text-xs text-ink-soft">
-            คะแนนเต็มที่ประกาศ {publishedFullScore}
-          </span>
-        </div>
-
-        {studentRows.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-black/15 p-8 text-center text-sm text-ink-soft">
-            ยังไม่มีนักเรียนในรายวิชานี้
-          </div>
-        ) : (
-          <div className="overflow-x-auto rounded-2xl border border-black/[0.08]">
-            <table className="table w-full">
-              <thead>
-                <tr>
-                  <th>นักเรียน</th>
-                  <th className="text-right">คะแนนรวม</th>
-                  <th className="text-right">%</th>
-                  <th className="text-right">เกรด</th>
-                  <th className="text-right">เข้าเรียน</th>
-                  <th className="text-right">รอตรวจ</th>
-                </tr>
-              </thead>
-              <tbody>
-                {studentRows.map((row) => (
-                  <tr key={row.enrollment.id}>
-                    <td>
-                      <Link
-                        href={`/admin/users/${row.enrollment.student.userId}`}
-                        className="font-medium text-black hover:underline"
-                      >
-                        {row.enrollment.student.firstName}{" "}
-                        {row.enrollment.student.lastName}
-                      </Link>
-                      <p className="mt-0.5 font-mono text-[10px] text-ink-soft">
-                        {row.enrollment.student.studentId}
-                        {row.enrollment.removedAt && " · ออกจากรายวิชาแล้ว"}
-                      </p>
-                    </td>
-                    <td className="text-right text-sm">
-                      {row.scoreSum}/{publishedFullScore || 0}
-                    </td>
-                    <td className="text-right text-sm">
-                      {row.percent === null ? "—" : formatPercent(row.percent)}
-                    </td>
-                    <td className="text-right text-sm font-semibold text-blue-600">
-                      {row.grade === null ? "—" : row.grade.toFixed(1)}
-                    </td>
-                    <td className="text-right text-sm">
-                      {row.attendanceRate === null
-                        ? "—"
-                        : `${row.attendanceRate}%`}
-                    </td>
-                    <td className="text-right text-sm">{row.pending}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <DetailCard
+          href={`/admin/courses/${id}/scores`}
+          icon={<Award className="h-5 w-5" />}
+          title="คะแนนและเกรด"
+          description="ดูแยกรายการคะแนนว่าแต่ละคนได้คะแนนจากส่วนไหนบ้าง พร้อมคะแนนรวม เปอร์เซ็นต์ และเกรดของรายวิชา"
+          meta={`ประกาศแล้ว ${publishedItems.length}/${scoreItems.length} รายการ · คะแนนเต็มที่ประกาศ ${publishedFullScore}`}
+        />
+        <DetailCard
+          href={`/admin/courses/${id}/attendance`}
+          icon={<ListChecks className="h-5 w-5" />}
+          title="การเข้าเรียน"
+          description="ดูจำนวนมาเรียน สาย ลา ขาด และค่อยสรุปเป็นเปอร์เซ็นต์การเข้าเรียนของแต่ละคน"
+          meta={`เช็คแล้ว ${markedAll.toLocaleString("th-TH")} รายการ · เฉลี่ย ${avgAttendance === null ? "—" : `${avgAttendance}%`}`}
+        />
+      </div>
     </div>
   );
 }
@@ -293,6 +184,33 @@ function MetricCard({
       <p className="mt-2 text-3xl font-semibold tracking-tight">
         {typeof value === "number" ? value.toLocaleString("th-TH") : value}
         {suffix && <span className="ml-1 text-base font-medium">{suffix}</span>}
+      </p>
+    </Link>
+  );
+}
+
+function DetailCard({
+  href,
+  icon,
+  title,
+  description,
+  meta,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  meta: string;
+}) {
+  return (
+    <Link href={href} className="card block p-5 hover:no-underline">
+      <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+        {icon}
+      </div>
+      <h2 className="text-base font-semibold text-black">{title}</h2>
+      <p className="mt-1 text-sm leading-6 text-ink-soft">{description}</p>
+      <p className="mt-4 rounded-full bg-black/[0.04] px-3 py-1 text-xs text-ink-soft">
+        {meta}
       </p>
     </Link>
   );
