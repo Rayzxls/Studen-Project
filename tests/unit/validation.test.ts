@@ -75,9 +75,15 @@ describe("SignupStudentSchema", () => {
     expect(res.success).toBe(false);
   });
 
-  it("rejects without turnstile token", () => {
-    const res = SignupStudentSchema.safeParse({ ...valid, turnstileToken: "" });
-    expect(res.success).toBe(false);
+  it("accepts an empty/absent turnstile token at the schema layer", () => {
+    // Turnstile is optional in the schema (default ""); enforcement lives in
+    // verifyTurnstile, which is skipped when TURNSTILE_SECRET_KEY is unset.
+    // See lib/validation/schemas.ts + commit e25421a (signup deadlock fix).
+    expect(
+      SignupStudentSchema.safeParse({ ...valid, turnstileToken: "" }).success
+    ).toBe(true);
+    const { turnstileToken: _omit, ...withoutToken } = valid;
+    expect(SignupStudentSchema.safeParse(withoutToken).success).toBe(true);
   });
 
   it("rejects short password", () => {
