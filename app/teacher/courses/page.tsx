@@ -5,6 +5,7 @@ import { requireRole } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { listTeacherCourses } from "@/lib/course/enrollment";
 import { TopNav } from "@/components/layout/top-nav";
+import { StudentBottomNav } from "@/components/layout/student-bottom-nav";
 import {
   CourseShowcaseCard,
   CourseShowcaseEmpty,
@@ -105,7 +106,10 @@ export default async function TeacherCoursesPage() {
             </div>
           )}
         </section>
+        <div className="h-20 md:hidden" />
       </main>
+
+      <StudentBottomNav role="teacher" />
     </div>
   );
 }

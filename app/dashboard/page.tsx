@@ -117,10 +117,16 @@ export default async function DashboardPage() {
           />
         )}
 
-        {user.role === "STUDENT" && <div className="h-20 md:hidden" />}
+        {(user.role === "STUDENT" || user.role === "TEACHER") && (
+          <div className="h-20 md:hidden" />
+        )}
       </main>
 
-      {user.role === "STUDENT" && <StudentBottomNav />}
+      {(user.role === "STUDENT" || user.role === "TEACHER") && (
+        <StudentBottomNav
+          role={user.role === "TEACHER" ? "teacher" : "student"}
+        />
+      )}
     </div>
   );
 }

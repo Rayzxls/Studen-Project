@@ -1,74 +1,42 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LayoutGrid, BookOpen, GraduationCap, Bell } from "lucide-react";
+import { Plus } from "lucide-react";
 
-/**
- * Student mobile bottom nav — ADR-0028 § 5 (glass-nav scope) + § 8 (student
- * mobile-first rendering). Renders only for STUDENT role + only on mobile
- * (md:hidden). Mounted in app/dashboard/page.tsx where role gating already
- * happens at the page level.
- *
- * Four destinations matching the student's mental model:
- *  - ฟีด        → /dashboard (the role-aware landing; for student it's feed)
- *  - ห้องเรียน  → /join          (course join + quick switcher)
- *  - ผลการเรียน → /student/terms (เกรดรายวิชา — CONTEXT § Learning Results)
- *  - แจ้งเตือน  → /notifications (Phase 7 bell expanded)
- *
- * Glass treatment: .glass-nav class applies the system frosted blur
- * (desktop 20px / mobile 12px) over scrolled content. iOS spring on
- * the tap-scale via .springy. Safe-area inset preserved with
- * env(safe-area-inset-bottom).
- */
-const items = [
-  { href: "/dashboard", label: "ฟีด", icon: LayoutGrid },
-  { href: "/student/courses", label: "ห้องเรียน", icon: BookOpen },
-  { href: "/student/terms", label: "ผลการเรียน", icon: GraduationCap },
-  { href: "/notifications", label: "แจ้งเตือน", icon: Bell },
-] as const;
+const actions = {
+  student: { href: "/join", label: "เข้าร่วมชั้นเรียน" },
+  teacher: { href: "/teacher/courses/new", label: "สร้างห้องเรียน" },
+} as const;
 
-export function StudentBottomNav() {
-  const pathname = usePathname();
+type MobileActionRole = keyof typeof actions;
+
+export function StudentBottomNav({
+  role = "student",
+}: {
+  role?: MobileActionRole;
+}) {
+  const action = actions[role];
 
   return (
-    <nav
-      aria-label="แถบนำทางหลัก"
-      className="glass-nav fixed bottom-0 left-0 right-0 z-30 border-t border-black/[0.06] md:hidden print:hidden"
+    <div
+      className="pointer-events-none fixed inset-x-0 z-40 flex justify-center px-4 md:hidden print:hidden"
       style={{
-        paddingBottom: "env(safe-area-inset-bottom)",
+        bottom: "max(1rem, env(safe-area-inset-bottom))",
       }}
     >
-      <ul className="mx-auto flex max-w-md items-stretch justify-between px-1">
-        {items.map(({ href, label, icon: Icon }) => {
-          const active =
-            pathname === href ||
-            (href !== "/dashboard" && pathname.startsWith(`${href}/`));
-          return (
-            <li key={href} className="flex-1">
-              <Link
-                href={href}
-                aria-current={active ? "page" : undefined}
-                className={
-                  "springy flex flex-col items-center gap-1 px-2 py-2.5 text-[11px] font-medium transition-colors " +
-                  (active ? "text-blue-700" : "text-black/55 hover:text-black")
-                }
-                style={{
-                  transitionDuration: "var(--duration-spring-standard)",
-                  transitionTimingFunction: "var(--ease-spring)",
-                }}
-              >
-                <Icon
-                  className="h-5 w-5"
-                  strokeWidth={active ? 2.3 : 1.8}
-                  aria-hidden="true"
-                />
-                <span>{label}</span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
+      <Link
+        href={action.href}
+        aria-label={action.label}
+        title={action.label}
+        className="springy pointer-events-auto grid h-10 w-10 place-items-center rounded-full bg-blue-600 text-white shadow-[0_10px_24px_rgba(37,99,235,0.3)] ring-1 ring-white/35 transition hover:bg-blue-500 hover:no-underline active:scale-95"
+        style={{
+          transitionDuration: "var(--duration-spring-standard)",
+          transitionTimingFunction: "var(--ease-spring)",
+        }}
+      >
+        <Plus className="h-5 w-5" strokeWidth={2.4} aria-hidden="true" />
+        <span className="sr-only">{action.label}</span>
+      </Link>
+    </div>
   );
 }
