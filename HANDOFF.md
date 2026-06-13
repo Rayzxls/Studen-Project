@@ -7,13 +7,11 @@
 ### Repo / branch state
 
 - Repo หลักที่กำลังทำงาน: `D:\Studennnn`
-- Commit ล่าสุดที่ปิดงานแล้ว: `028e2a5 feat(classroom): improve course feed and workflows`
-- หลัง commit นี้ยังมีงานค้าง uncommitted 3 ไฟล์ เป็นงาน mobile FAB ล่าสุด:
-  - `app/dashboard/page.tsx`
-  - `app/teacher/courses/page.tsx`
-  - `components/layout/student-bottom-nav.tsx`
-- Validation ล่าสุดหลังปรับ FAB เหลือ 40px:
-  - `npm.cmd run typecheck` ผ่าน
+- Commit ล่าสุด: `5b82622 feat(mobile): replace 4-item bottom nav with a single floating action button`
+- ✅ **(2026-06-13) mobile FAB commit แล้ว** — working tree สะอาด ไม่มี uncommitted
+  - `5b82622` FAB · `8224f79` CONTEXT Class rule · `4acb97d`/`45fcdf7` HANDOFF · `1c1e835` turnstile test fix
+- Validation หลัง FAB (40px):
+  - `pnpm typecheck` ผ่าน · `pnpm lint` 0 error · `pnpm test` 429/429
 - Validation ก่อนหน้าในชุดงานเดียวกัน:
   - `npm.cmd run typecheck` ผ่าน
   - `npm.cmd run lint` ผ่านแบบมี warning เดิมจำนวนมาก แต่ไม่มี error
@@ -24,7 +22,7 @@
 | เช็ค | ผล |
 |------|-----|
 | `pnpm typecheck` | **0 errors** |
-| `pnpm lint` | **0 errors** · 255 warnings (baseline เดิม + 1 ใหม่ `c2 unused` จาก WIP FAB) |
+| `pnpm lint` | **0 errors** · 255 warnings (baseline เดิม · `c2 unused` อยู่ใน `tests/unit/scoring-term-gpa.test.ts` ไม่เกี่ยว FAB) |
 | `pnpm build` | **ผ่าน** |
 | `pnpm test` (unit) | **428/429 ผ่าน** — ดู "Known issue" ด้านล่าง |
 
@@ -50,7 +48,7 @@
 | `c746bc0` `94778e3` `dc34c0d` | **Batch 1+2: Profile + Theme/Dark mode** (displayName fallback, avatar crop 512² upload/delete + audit, change password, 4 โหมด SYSTEM/LIGHT/DARK/CREAM, transition 180ms, ไม่ audit theme) | Claude verify ครบ + QA browser |
 | `52165cb` `9dedb13` `898b3ee` `266a538` | Dashboard reshape 3 role, student assignment workspace, `SUBMISSION_WITHDRAWN` audit, per-course grade mental model | Claude verify |
 
-**IN-PROGRESS (uncommitted, 3 ไฟล์):** mobile FAB nav — ทำเสร็จ typecheck ผ่าน ยังไม่ commit (ดู section ถัดไป)
+**DONE (committed `5b82622`):** mobile FAB nav — แทน bottom nav 4 เมนูด้วยปุ่ม `+` 40px (student→/join, teacher→/teacher/courses/new) · working tree สะอาดแล้ว
 
 **ยังไม่ทำ / debt ที่ Codex เลือกหยิบได้:**
 - Profile/Theme = **0 test coverage** (47 test files ไม่มีตัวไหนครอบ `lib/profile/*`, `lib/theme/*`, presign PROFILE_IMAGE scope guard, displayName fallback)
