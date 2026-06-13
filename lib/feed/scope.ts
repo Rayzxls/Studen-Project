@@ -34,7 +34,7 @@ export async function getCourseScopeForUser(
       where: {
         studentId: session.user.id,
         removedAt: null,
-        course: { term: { isActive: true } },
+        course: { archivedAt: null, term: { isActive: true } },
       },
       select: { courseOfferingId: true },
     });
@@ -47,6 +47,7 @@ export async function getCourseScopeForUser(
     const courses = await db.courseOffering.findMany({
       where: {
         teacherId: session.user.id,
+        archivedAt: null,
         term: { isActive: true },
       },
       select: { id: true },

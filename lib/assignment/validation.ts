@@ -80,6 +80,12 @@ export const CreateAssignmentSchema = z
       .array(LinkUrlSchema)
       .max(MAX_LINKS_PER_VERSION, "ลิงก์เยอะเกินไป")
       .default([]),
+    /** Teacher-attached worksheet/example files shown on the assignment brief. */
+    fileAttachmentIds: z
+      .array(z.string().min(1))
+      .max(MAX_LINKS_PER_VERSION)
+      .default([]),
+    id: z.string().min(1).max(64).optional(),
   })
   .refine((v) => v.allowText || v.allowFile || v.allowLink, {
     message: "ต้องอนุญาตอย่างน้อย 1 ช่องทาง (ข้อความ / ไฟล์ / ลิงก์)",
@@ -109,6 +115,7 @@ export const UpdateAssignmentSchema = z.object({
   allowText: z.boolean().optional(),
   allowFile: z.boolean().optional(),
   allowLink: z.boolean().optional(),
+  fileAttachmentIds: z.array(z.string().min(1)).optional(),
   submissionClosed: z.boolean().optional(),
   autoCloseAtDue: z.boolean().optional(),
   isScored: z.boolean().optional(),

@@ -9,6 +9,7 @@ import { CourseShell } from "@/components/course/course-shell";
 import { EditMaterialDialog } from "@/components/material/edit-material-dialog";
 import { DeleteMaterialDialog } from "@/components/material/delete-material-dialog";
 import { CommentsThread } from "@/components/comment/comments-thread";
+import { SafeExternalLinkButton } from "@/components/link/safe-external-link-button";
 import { teacherCourseTabs } from "../../_tabs";
 
 /**
@@ -124,18 +125,16 @@ export default async function TeacherMaterialDetailPage({ params }: PageProps) {
               <ul className="space-y-1.5">
                 {linkUrls.map((url, i) => (
                   <li key={i}>
-                    <a
+                    <SafeExternalLinkButton
                       href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 break-all text-xs text-black hover:underline"
+                      className="inline-flex items-center gap-1.5 break-all text-left text-xs text-black hover:underline"
                     >
                       <LinkIcon
                         className="h-3 w-3 shrink-0"
                         aria-hidden="true"
                       />
                       {url}
-                    </a>
+                    </SafeExternalLinkButton>
                   </li>
                 ))}
               </ul>

@@ -6,6 +6,7 @@ import { getCourseOfferingForTeacher } from "@/lib/course/queries";
 import { db } from "@/lib/db/client";
 import { CourseShell } from "@/components/course/course-shell";
 import { CreateAssignmentDialog } from "@/components/assignment/create-assignment-dialog";
+import { AssignmentRowActions } from "@/components/assignment/assignment-row-actions";
 import { teacherCourseTabs } from "../_tabs";
 
 /**
@@ -52,7 +53,11 @@ export default async function AssignmentsListPage({ params }: PageProps) {
     select: {
       id: true,
       title: true,
+      description: true,
       dueAt: true,
+      allowText: true,
+      allowFile: true,
+      allowLink: true,
       isScored: true,
       submissionClosed: true,
       autoCloseAtDue: true,
@@ -117,12 +122,15 @@ export default async function AssignmentsListPage({ params }: PageProps) {
               const publishedScoreItem =
                 a.isScored && a.scoreItem?.publishedAt !== null;
               return (
-                <li key={a.id}>
+                <li
+                  key={a.id}
+                  className="flex items-start justify-between gap-3 py-3 transition-colors hover:bg-black/[0.02]"
+                >
                   <Link
                     href={`/teacher/courses/${id}/assignments/${a.id}`}
-                    className="flex items-start justify-between gap-3 py-3 transition-colors hover:bg-black/[0.02]"
+                    className="min-w-0 flex-1"
                   >
-                    <div className="min-w-0 flex-1 px-2">
+                    <div className="min-w-0 px-2">
                       <div className="flex items-center gap-2">
                         <p className="truncate text-sm font-medium text-black">
                           {a.title}
@@ -152,10 +160,13 @@ export default async function AssignmentsListPage({ params }: PageProps) {
                         )}
                       </p>
                     </div>
+                  </Link>
+                  <div className="flex items-center gap-2">
                     <span className="self-center px-2 text-xs text-black/40">
                       {a._count.submissions} ส่งแล้ว →
                     </span>
-                  </Link>
+                    <AssignmentRowActions courseId={id} assignment={a} />
+                  </div>
                 </li>
               );
             })}

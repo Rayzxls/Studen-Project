@@ -42,8 +42,10 @@ const ACTION_LABEL_TH: Record<AuditEvent, string> = {
   CLASS_CODE_EXPIRY_SET: "ตั้งเวลาหมดอายุ Class Code",
   // Course Membership
   COURSE_MEMBER_JOINED: "นักเรียนเข้าห้อง",
+  COURSE_MEMBER_LEFT: "นักเรียนออกจากวิชา",
   COURSE_MEMBER_REMOVED: "นำนักเรียนออกจากห้อง",
   COURSE_MEMBER_RESTORED_BY_REJOIN: "นักเรียนกลับเข้าห้องอัตโนมัติ",
+  COURSE_OFFERING_ARCHIVED: "ครูยกเลิกวิชา",
   // Scoring
   SCORE_ITEM_PUBLISHED: "เผยแพร่รายการคะแนน",
   SCORE_EDIT_AFTER_PUBLISH: "แก้คะแนนหลังเผยแพร่",

@@ -4,6 +4,7 @@ import { getCourseOfferingForTeacher } from "@/lib/course/queries";
 import { listTimetableSlots } from "@/lib/attendance/timetable";
 import { CourseShell } from "@/components/course/course-shell";
 import { ClassCodeControls } from "@/components/course/class-code-controls";
+import { ArchiveCourseDialog } from "@/components/course/archive-course-dialog";
 import { TimetableEditor } from "@/components/attendance/timetable-editor";
 import { GradeThresholdsCard } from "@/components/scoring/grade-thresholds-card";
 import { teacherCourseTabs } from "../_tabs";
@@ -47,6 +48,7 @@ export default async function CourseSettingsPage({ params }: PageProps) {
         />
         <TimetableEditor courseId={id} slots={slots} />
         <GradeThresholdsCard />
+        <ArchiveCourseDialog courseId={id} courseName={course.name} />
       </div>
     </CourseShell>
   );

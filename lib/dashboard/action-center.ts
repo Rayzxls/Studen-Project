@@ -70,7 +70,7 @@ export async function getStudentActionCenter(
     where: {
       studentId: studentUserId,
       removedAt: null,
-      course: { termId: term.id },
+      course: { termId: term.id, archivedAt: null },
     },
     select: { id: true, courseOfferingId: true },
   });
@@ -227,7 +227,9 @@ export async function getTeacherReviewQueue(
       status: {
         in: [SubmissionStatus.SUBMITTED, SubmissionStatus.LATE_SUBMITTED],
       },
-      assignment: { course: { teacherId: teacherUserId, termId: term.id } },
+      assignment: {
+        course: { teacherId: teacherUserId, termId: term.id, archivedAt: null },
+      },
     },
     _count: { _all: true },
   });
@@ -307,7 +309,7 @@ export async function getTeacherAttendanceToday(
   const slots = await db.timetableSlot.findMany({
     where: {
       dayOfWeek,
-      course: { teacherId: teacherUserId, termId: term.id },
+      course: { teacherId: teacherUserId, termId: term.id, archivedAt: null },
     },
     orderBy: { startTime: "asc" },
     select: {
@@ -402,7 +404,7 @@ export async function getTeacherClassHealth(
   if (!term) return [];
 
   const courses = await db.courseOffering.findMany({
-    where: { teacherId: teacherUserId, termId: term.id },
+    where: { teacherId: teacherUserId, termId: term.id, archivedAt: null },
     orderBy: { name: "asc" },
     select: {
       id: true,

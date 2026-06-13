@@ -1,6 +1,8 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { CheckCircle2 } from "lucide-react";
 import {
   submitVersionAction,
   type SubmitVersionState,
@@ -161,6 +163,7 @@ export function SubmitVersionForm({
   collapsedLabel?: string;
   collapsedButtonClassName?: string;
 }) {
+  const router = useRouter();
   const [state, formAction, isPending] = useActionState<
     SubmitVersionState,
     FormData
@@ -178,6 +181,31 @@ export function SubmitVersionForm({
   const anyUploadInFlight = inFlight.some(
     (e) => e.status === "uploading" || e.status === "committing"
   );
+  const showSubmitSuccess = Boolean(state.ok && state.submittedAt);
+
+  useEffect(() => {
+    if (!state.ok || !state.submittedAt) return;
+
+    const timer = window.setTimeout(() => {
+      setIsEditingExisting(false);
+      setLocalSubmitError(null);
+      setUploaded((prev) => {
+        prev.forEach((file) => {
+          if (file.previewUrl) URL.revokeObjectURL(file.previewUrl);
+        });
+        return [];
+      });
+      setInFlight((prev) => {
+        prev.forEach((entry) => {
+          if (entry.previewUrl) URL.revokeObjectURL(entry.previewUrl);
+        });
+        return [];
+      });
+      router.refresh();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [router, state.ok, state.submittedAt]);
 
   function updateInFlight(
     localId: string,
@@ -416,6 +444,24 @@ export function SubmitVersionForm({
         name="fileAttachmentIds"
         value={JSON.stringify(uploaded.map((u) => u.id))}
       />
+
+      {showSubmitSuccess && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="rounded-2xl border border-green-500/30 bg-green-50 px-4 py-3 text-sm text-green-700 shadow-lift"
+        >
+          <div className="flex items-start gap-3">
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
+            <div>
+              <p className="font-semibold">ส่งงานสำเร็จแล้ว</p>
+              <p className="mt-0.5 text-xs text-green-700/80">
+                ระบบอัปเดตสถานะและประวัติการส่งล่าสุดให้แล้ว
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {(hasExistingCurrent || startCollapsed) && !isEditingExisting && (
         <button

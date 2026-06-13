@@ -13,6 +13,7 @@ import { requireRole } from "@/lib/auth/guards";
 import { getCourseOfferingForStudent } from "@/lib/course/queries";
 import { db } from "@/lib/db/client";
 import { CourseShell } from "@/components/course/course-shell";
+import { LeaveCourseDialog } from "@/components/course/leave-course-dialog";
 import { studentCourseTabs } from "../_tabs";
 import { getAttendanceStatsForStudent } from "@/lib/attendance/queries";
 import { listTimetableSlots } from "@/lib/attendance/timetable";
@@ -340,6 +341,8 @@ export default async function StudentCourseOverviewPage({ params }: PageProps) {
             </ul>
           )}
         </section>
+
+        <LeaveCourseDialog courseId={id} courseName={course.name} />
       </div>
     </CourseShell>
   );

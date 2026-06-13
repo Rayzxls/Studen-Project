@@ -10,6 +10,7 @@ import {
   CourseShowcaseCard,
   CourseShowcaseEmpty,
 } from "@/components/dashboard/primitives";
+import { StudentCourseCardMenu } from "@/components/course/course-card-menu";
 
 export const dynamic = "force-dynamic";
 
@@ -108,6 +109,12 @@ export default async function StudentCoursesPage() {
                       { value: e.course.creditHours, label: "หน่วยกิต" },
                     ]}
                     actionLabel="เข้าวิชา"
+                    menu={
+                      <StudentCourseCardMenu
+                        courseId={courseId}
+                        courseName={e.course.name}
+                      />
+                    }
                   />
                 );
               })}

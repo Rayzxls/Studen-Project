@@ -29,6 +29,7 @@ export const CreateAnnouncementSchema = z
     body: z.string().min(1).max(BODY_MAX),
     fileAttachmentIds: z.array(z.string().min(1)).default([]),
     linkUrls: z.array(LinkUrlSchema).max(MAX_LINK_URLS).default([]),
+    id: z.string().min(1).max(64).optional(),
   })
   .transform((v) => ({
     ...v,

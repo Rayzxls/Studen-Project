@@ -33,6 +33,20 @@ function parseLinkUrls(raw: string): string[] {
     .filter(Boolean);
 }
 
+function parseFileAttachmentIds(raw: FormDataEntryValue | null): string[] {
+  if (typeof raw !== "string" || raw.trim().length === 0) return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? parsed.filter(
+          (id): id is string => typeof id === "string" && id.length > 0
+        )
+      : [];
+  } catch {
+    return [];
+  }
+}
+
 export type ComposeAnnouncementState = BaseState;
 
 export async function composeAnnouncementAction(
@@ -45,7 +59,16 @@ export async function composeAnnouncementAction(
   const title = String(formData.get("title") ?? "").trim();
   const body = String(formData.get("body") ?? "").trim();
   const linkUrls = parseLinkUrls(String(formData.get("linkUrls") ?? ""));
+  const ownerId = String(formData.get("ownerId") ?? "").trim();
+  const fileAttachmentIds = parseFileAttachmentIds(
+    formData.get("fileAttachmentIds")
+  );
   if (!courseId) return { error: "missing_course_id" };
+  if (fileAttachmentIds.length > 0 && ownerId.length === 0) {
+    return {
+      fieldErrors: { fileAttachmentIds: "missing_attachment_owner_id" },
+    };
+  }
   if (body.length === 0) {
     return { fieldErrors: { body: "ระบุเนื้อหาประกาศ" } };
   }
@@ -53,10 +76,11 @@ export async function composeAnnouncementAction(
     await createAnnouncement(
       {
         courseOfferingId: courseId,
+        id: ownerId.length > 0 ? ownerId : undefined,
         title: title.length === 0 ? null : title,
         body,
         linkUrls,
-        fileAttachmentIds: [],
+        fileAttachmentIds,
       },
       {
         actorUserId: session.user.id,
@@ -88,7 +112,16 @@ export async function composeAssignmentAction(
   const isScored = formData.get("isScored") === "on";
   const fullScoreRaw = String(formData.get("fullScore") ?? "");
   const linkUrls = parseLinkUrls(String(formData.get("linkUrls") ?? ""));
+  const ownerId = String(formData.get("ownerId") ?? "").trim();
+  const fileAttachmentIds = parseFileAttachmentIds(
+    formData.get("fileAttachmentIds")
+  );
   if (!courseId) return { error: "missing_course_id" };
+  if (fileAttachmentIds.length > 0 && ownerId.length === 0) {
+    return {
+      fieldErrors: { fileAttachmentIds: "missing_attachment_owner_id" },
+    };
+  }
   if (title.length === 0) {
     return { fieldErrors: { title: "ตั้งชื่อการบ้าน" } };
   }
@@ -103,6 +136,7 @@ export async function composeAssignmentAction(
     await createAssignment(
       {
         courseOfferingId: courseId,
+        id: ownerId.length > 0 ? ownerId : undefined,
         title,
         description,
         dueAt: dueAtStr ? new Date(dueAtStr) : null,
@@ -114,6 +148,7 @@ export async function composeAssignmentAction(
         isScored,
         fullScore,
         linkUrls,
+        fileAttachmentIds,
       },
       {
         actorUserId: session.user.id,
@@ -142,7 +177,16 @@ export async function composeMaterialAction(
   const title = String(formData.get("title") ?? "").trim();
   const body = String(formData.get("body") ?? "").trim();
   const linkUrls = parseLinkUrls(String(formData.get("linkUrls") ?? ""));
+  const ownerId = String(formData.get("ownerId") ?? "").trim();
+  const fileAttachmentIds = parseFileAttachmentIds(
+    formData.get("fileAttachmentIds")
+  );
   if (!courseId) return { error: "missing_course_id" };
+  if (fileAttachmentIds.length > 0 && ownerId.length === 0) {
+    return {
+      fieldErrors: { fileAttachmentIds: "missing_attachment_owner_id" },
+    };
+  }
   if (title.length === 0) {
     return { fieldErrors: { title: "ตั้งชื่อเอกสาร" } };
   }
@@ -150,10 +194,11 @@ export async function composeMaterialAction(
     await createMaterial(
       {
         courseOfferingId: courseId,
+        id: ownerId.length > 0 ? ownerId : undefined,
         title,
         body,
         linkUrls,
-        fileAttachmentIds: [],
+        fileAttachmentIds,
       },
       {
         actorUserId: session.user.id,

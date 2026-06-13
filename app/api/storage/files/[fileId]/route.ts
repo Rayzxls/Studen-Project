@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { assert } from "@/lib/auth/guards";
+import { assert, requireAuth } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { Forbidden, NotFound, errorResponse } from "@/lib/errors";
 import {
@@ -76,10 +76,69 @@ async function assertCanReadFile(
     return;
   }
   if (ownerType === "ASSIGNMENT") {
-    await assert.canMutateAssignment(ownerId);
+    const row = await db.assignment.findUnique({
+      where: { id: ownerId },
+      select: {
+        courseOfferingId: true,
+        course: { select: { teacherId: true } },
+      },
+    });
+    if (!row) throw new NotFound("assignment_not_found");
+    await assertCanReadCourseFile(row.courseOfferingId, row.course.teacherId);
+    return;
+  }
+  if (ownerType === "MATERIAL") {
+    const row = await db.material.findUnique({
+      where: { id: ownerId },
+      select: {
+        courseOfferingId: true,
+        course: { select: { teacherId: true } },
+      },
+    });
+    if (!row) throw new NotFound("material_not_found");
+    await assertCanReadCourseFile(row.courseOfferingId, row.course.teacherId);
+    return;
+  }
+  if (ownerType === "ANNOUNCEMENT") {
+    const row = await db.announcement.findUnique({
+      where: { id: ownerId },
+      select: {
+        courseOfferingId: true,
+        course: { select: { teacherId: true } },
+      },
+    });
+    if (!row) throw new NotFound("announcement_not_found");
+    await assertCanReadCourseFile(row.courseOfferingId, row.course.teacherId);
     return;
   }
   throw new Forbidden("file_owner_type_not_readable");
+}
+
+async function assertCanReadCourseFile(
+  courseOfferingId: string,
+  teacherId: string
+): Promise<void> {
+  const session = await requireAuth();
+  if (session.user.role === "ADMIN") return;
+  if (session.user.role === "TEACHER" && session.user.id === teacherId) return;
+  if (session.user.role === "STUDENT") {
+    const enrollment = await db.enrollment.findUnique({
+      where: {
+        studentId_courseOfferingId: {
+          studentId: session.user.id,
+          courseOfferingId,
+        },
+      },
+      select: { removedAt: true, course: { select: { archivedAt: true } } },
+    });
+    if (
+      enrollment?.removedAt === null &&
+      enrollment.course.archivedAt === null
+    ) {
+      return;
+    }
+  }
+  throw new Forbidden();
 }
 
 function isInlinePreviewMime(mimeType: string): boolean {

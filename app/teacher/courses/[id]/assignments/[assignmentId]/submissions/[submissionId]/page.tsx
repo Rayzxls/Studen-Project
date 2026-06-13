@@ -5,6 +5,7 @@ import { assert } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { CommentsThread } from "@/components/comment/comments-thread";
 import { SubmissionFilePreview } from "@/components/assignment/submission-file-preview";
+import { SafeExternalLinkButton } from "@/components/link/safe-external-link-button";
 
 /**
  * Teacher per-submission detail — Phase 9 · P9-2
@@ -165,9 +166,12 @@ export default async function TeacherSubmissionDetailPage({
                         key={i}
                         className="text-[11px] text-blue-700 hover:underline"
                       >
-                        <a href={href} target="_blank" rel="noreferrer">
+                        <SafeExternalLinkButton
+                          href={href}
+                          className="text-left"
+                        >
                           {href}
-                        </a>
+                        </SafeExternalLinkButton>
                       </li>
                     ))}
                   </ul>

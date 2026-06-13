@@ -9,10 +9,11 @@ import {
   Sparkles,
   TrendingUp,
 } from "lucide-react";
-import type { FeedItem, FeedKind } from "@/lib/feed/aggregator";
+import type { FeedAttachment, FeedItem, FeedKind } from "@/lib/feed/aggregator";
 import { resolveCourseFeedHref } from "@/lib/feed/navigation";
 import { EntryStagger } from "@/components/motion/entry-stagger";
 import { UserAvatar } from "@/components/profile/user-avatar";
+import { FeedAttachmentPreview } from "@/components/feed/feed-attachment-preview";
 
 /**
  * Course Feed — Phase 11.8 Instagram-style redesign.
@@ -188,9 +189,8 @@ function FeedCard({
   const dueSoon = dueAt !== null && isWithin48h(dueAt);
 
   return (
-    <Link
-      href={href}
-      className="card group block overflow-hidden p-0 hover:no-underline"
+    <article
+      className="card group overflow-hidden p-0"
       style={{
         transition:
           "transform var(--duration-spring-standard) var(--ease-spring), box-shadow var(--duration-spring-standard) var(--ease-spring)",
@@ -296,16 +296,105 @@ function FeedCard({
       )}
 
       {/* Footer — soft action CTA */}
+      <FeedAttachmentPreview
+        attachments={item.attachments ?? []}
+        linkUrls={item.linkUrls ?? []}
+      />
+
       <footer className="mt-5 flex items-center justify-between border-t border-black/[0.05] px-5 py-3 text-xs">
         <span className="font-medium text-black/55">
           {ctaLabel(item.kind, role)}
         </span>
-        <span className="inline-flex items-center gap-1 text-blue-700 transition-transform group-hover:translate-x-0.5">
+        <Link
+          href={href}
+          className="inline-flex items-center gap-1 text-blue-700 transition-transform hover:translate-x-0.5 hover:no-underline"
+        >
           ดูเพิ่มเติม
           <span aria-hidden="true">→</span>
-        </span>
+        </Link>
       </footer>
-    </Link>
+    </article>
+  );
+}
+
+function _AttachmentPreview({
+  attachments,
+}: {
+  attachments: FeedAttachment[];
+}) {
+  if (attachments.length === 0) return null;
+
+  const images = attachments.filter((file) =>
+    file.mimeType.startsWith("image/")
+  );
+  const documents = attachments.filter(
+    (file) => !file.mimeType.startsWith("image/")
+  );
+  const visibleImages = images.slice(0, 4);
+  const hiddenImageCount = Math.max(0, images.length - visibleImages.length);
+
+  return (
+    <div className="px-5 pt-4">
+      {visibleImages.length > 0 && (
+        <div
+          className={
+            "grid max-w-[560px] overflow-hidden rounded-2xl border border-black/[0.06] bg-black/[0.03] " +
+            (visibleImages.length === 1 ? "grid-cols-1" : "grid-cols-2")
+          }
+        >
+          {visibleImages.map((file, index) => (
+            <a
+              key={file.id}
+              href={fileHref(file.id)}
+              className="relative aspect-video overflow-hidden bg-black/[0.04]"
+              aria-label={`เปิดรูป ${file.originalFilename}`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={fileHref(file.id)}
+                alt={file.originalFilename}
+                className="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.02]"
+              />
+              {hiddenImageCount > 0 && index === visibleImages.length - 1 && (
+                <span className="absolute inset-0 flex items-center justify-center bg-black/45 text-lg font-semibold text-white">
+                  +{hiddenImageCount}
+                </span>
+              )}
+            </a>
+          ))}
+        </div>
+      )}
+
+      {documents.length > 0 && (
+        <div
+          className={
+            visibleImages.length > 0
+              ? "mt-2 max-w-[560px] space-y-2"
+              : "max-w-[560px] space-y-2"
+          }
+        >
+          {documents.map((file) => (
+            <a
+              key={file.id}
+              href={fileHref(file.id)}
+              className="flex items-center gap-3 rounded-xl border border-black/[0.06] bg-black/[0.025] px-3 py-2.5 text-sm hover:bg-blue-50/70 hover:no-underline"
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-black/55">
+                <FileText className="h-4 w-4" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-medium text-black">
+                  {file.originalFilename}
+                </span>
+                <span className="block text-xs text-black/40">
+                  {formatBytes(file.sizeBytes)}
+                </span>
+              </span>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -455,6 +544,16 @@ function fmtThaiDateShort(d: Date): string {
     month: "short",
     year: "numeric",
   }).format(d);
+}
+
+function fileHref(fileId: string): string {
+  return `/api/storage/files/${fileId}`;
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function fmtRelative(d: Date): string {

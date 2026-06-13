@@ -70,6 +70,7 @@ export const assert = {
       name: string;
       classCode: string;
       codeActive: boolean;
+      archivedAt: Date | null;
     };
   }> {
     const session = await requireAuth();
@@ -81,9 +82,11 @@ export const assert = {
         name: true,
         classCode: true,
         codeActive: true,
+        archivedAt: true,
       },
     });
     if (!course) throw new NotFound("course_not_found");
+    if (course.archivedAt !== null) throw new NotFound("course_not_found");
     if (!can.ownsCourse(session, course)) throw new Forbidden();
     return { session, course };
   },
@@ -128,10 +131,15 @@ export const assert = {
         courseOfferingId: true,
         enrolledAt: true,
         removedAt: true,
+        course: { select: { archivedAt: true } },
       },
     });
 
-    if (!enrollment || !can.isActiveCourseMember(session, enrollment)) {
+    if (
+      !enrollment ||
+      enrollment.course.archivedAt !== null ||
+      !can.isActiveCourseMember(session, enrollment)
+    ) {
       throw new Forbidden();
     }
 
@@ -492,8 +500,45 @@ export const assert = {
         where: { id: ownerId },
         select: { course: { select: { teacherId: true } } },
       });
-      if (!assignment) throw new NotFound("assignment_not_found");
+      if (!assignment) {
+        await assertDraftUploadOwner(session, ownerId);
+        return session;
+      }
       if (!can.uploadToAssignment(session, assignment)) {
+        throw new Forbidden();
+      }
+      return session;
+    }
+    if (ownerType === "MATERIAL") {
+      const material = await db.material.findUnique({
+        where: { id: ownerId },
+        select: { course: { select: { teacherId: true } } },
+      });
+      if (!material) {
+        await assertDraftUploadOwner(session, ownerId);
+        return session;
+      }
+      if (
+        session.user.role !== "TEACHER" ||
+        session.user.id !== material.course.teacherId
+      ) {
+        throw new Forbidden();
+      }
+      return session;
+    }
+    if (ownerType === "ANNOUNCEMENT") {
+      const announcement = await db.announcement.findUnique({
+        where: { id: ownerId },
+        select: { course: { select: { teacherId: true } } },
+      });
+      if (!announcement) {
+        await assertDraftUploadOwner(session, ownerId);
+        return session;
+      }
+      if (
+        session.user.role !== "TEACHER" ||
+        session.user.id !== announcement.course.teacherId
+      ) {
         throw new Forbidden();
       }
       return session;
@@ -553,4 +598,32 @@ async function resolveOwningCourseTeacherId(
   // MATERIAL / ANNOUNCEMENT — Phase 7+. Return null so admins can still
   // moderate while teachers cannot until the host model exists.
   return null;
+}
+
+const DRAFT_OWNER_SEPARATOR = "_d_";
+
+function courseIdFromDraftOwnerId(ownerId: string): string | null {
+  const index = ownerId.indexOf(DRAFT_OWNER_SEPARATOR);
+  if (index <= 0) return null;
+  const courseId = ownerId.slice(0, index);
+  const nonce = ownerId.slice(index + DRAFT_OWNER_SEPARATOR.length);
+  if (!/^[a-zA-Z0-9_-]{1,64}$/.test(courseId)) return null;
+  if (!/^[a-zA-Z0-9_-]{12,32}$/.test(nonce)) return null;
+  return courseId;
+}
+
+async function assertDraftUploadOwner(
+  session: Session,
+  ownerId: string
+): Promise<void> {
+  if (session.user.role !== "TEACHER") throw new Forbidden();
+  const courseOfferingId = courseIdFromDraftOwnerId(ownerId);
+  if (!courseOfferingId) throw new NotFound("owner_not_found");
+  const course = await db.courseOffering.findUnique({
+    where: { id: courseOfferingId },
+    select: { teacherId: true, archivedAt: true },
+  });
+  if (!course || course.archivedAt !== null)
+    throw new NotFound("course_not_found");
+  if (course.teacherId !== session.user.id) throw new Forbidden();
 }

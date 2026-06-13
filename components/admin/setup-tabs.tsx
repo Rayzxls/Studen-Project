@@ -10,6 +10,7 @@ import {
   Copy,
   GraduationCap,
   Layers,
+  Pencil,
   Plus,
   Trash2,
   UserPlus,
@@ -24,6 +25,9 @@ import {
   deleteAcademicYearAction,
   deleteClassAction,
   deleteTermAction,
+  updateAcademicYearAction,
+  updateClassAction,
+  updateTermAction,
   type CreateAcademicYearState,
   type CreateClassState,
   type CreateSingleTeacherState,
@@ -31,6 +35,9 @@ import {
   type DeleteAcademicYearState,
   type DeleteClassState,
   type DeleteTermState,
+  type UpdateAcademicYearState,
+  type UpdateClassState,
+  type UpdateTermState,
 } from "@/app/admin/setup/actions";
 
 // ─────────────────────────────────────────────────────────────
@@ -91,6 +98,9 @@ const INITIAL_TEACHER: CreateSingleTeacherState = {};
 const INITIAL_DEL_AY: DeleteAcademicYearState = {};
 const INITIAL_DEL_TERM: DeleteTermState = {};
 const INITIAL_DEL_CLASS: DeleteClassState = {};
+const INITIAL_UPD_AY: UpdateAcademicYearState = {};
+const INITIAL_UPD_TERM: UpdateTermState = {};
+const INITIAL_UPD_CLASS: UpdateClassState = {};
 
 export function SetupTabs({
   activeTab,
@@ -221,16 +231,19 @@ function YearsTab({ years }: { years: SetupData["years"] }) {
                     {y._count.terms} ภาคเรียน · {y._count.classes} ห้องเรียน
                   </p>
                 </div>
-                <form action={delAction}>
-                  <input type="hidden" name="id" value={y.id} />
-                  <button
-                    type="submit"
-                    className="rounded-lg p-2 text-black/40 hover:bg-red-50 hover:text-red-700"
-                    title="ลบปีการศึกษานี้"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </form>
+                <div className="flex items-center gap-1">
+                  <EditAcademicYearDialog year={y} />
+                  <form action={delAction}>
+                    <input type="hidden" name="id" value={y.id} />
+                    <button
+                      type="submit"
+                      className="rounded-lg p-2 text-black/40 hover:bg-red-50 hover:text-red-700"
+                      title="ลบปีการศึกษานี้"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </form>
+                </div>
               </li>
             ))}
           </ul>
@@ -367,15 +380,19 @@ function TermsTab({
                     {t._count.courses} วิชา
                   </p>
                 </div>
-                <form action={delAction}>
-                  <input type="hidden" name="id" value={t.id} />
-                  <button
-                    type="submit"
-                    className="rounded-lg p-2 text-black/40 hover:bg-red-50 hover:text-red-700"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </form>
+                <div className="flex items-center gap-1">
+                  <EditTermDialog term={t} />
+                  <form action={delAction}>
+                    <input type="hidden" name="id" value={t.id} />
+                    <button
+                      type="submit"
+                      className="rounded-lg p-2 text-black/40 hover:bg-red-50 hover:text-red-700"
+                      title="ลบภาคเรียนนี้"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </form>
+                </div>
               </li>
             ))}
           </ul>
@@ -522,15 +539,19 @@ function ClassesTab({
                     · {c._count.students} นักเรียน · {c._count.courses} วิชา
                   </p>
                 </div>
-                <form action={delAction}>
-                  <input type="hidden" name="id" value={c.id} />
-                  <button
-                    type="submit"
-                    className="rounded-lg p-2 text-black/40 hover:bg-red-50 hover:text-red-700"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </form>
+                <div className="flex items-center gap-1">
+                  <EditClassDialog cls={c} teachers={teachers} />
+                  <form action={delAction}>
+                    <input type="hidden" name="id" value={c.id} />
+                    <button
+                      type="submit"
+                      className="rounded-lg p-2 text-black/40 hover:bg-red-50 hover:text-red-700"
+                      title="ลบห้องเรียนนี้"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </form>
+                </div>
               </li>
             ))}
           </ul>
@@ -684,6 +705,284 @@ function TeachersTab({ teachers }: { teachers: SetupData["teachers"] }) {
   );
 }
 
+function EditAcademicYearDialog({
+  year,
+}: {
+  year: SetupData["years"][number];
+}) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [state, action] = useActionState(
+    updateAcademicYearAction,
+    INITIAL_UPD_AY
+  );
+
+  useEffect(() => {
+    if (state.ok) dialogRef.current?.close();
+  }, [state.ok]);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => dialogRef.current?.showModal()}
+        className="rounded-lg p-2 text-black/40 hover:bg-blue-50 hover:text-blue-700"
+        title="แก้ไขปีการศึกษา"
+      >
+        <Pencil className="h-4 w-4" />
+      </button>
+      <dialog
+        ref={dialogRef}
+        className="w-[min(92vw,420px)] rounded-2xl bg-white p-0 shadow-2xl backdrop:bg-black/40"
+      >
+        <form action={action} className="space-y-4 p-5">
+          <input type="hidden" name="id" value={year.id} />
+          <div>
+            <h3 className="text-base font-semibold text-black">
+              แก้ไขปีการศึกษา
+            </h3>
+            <p className="text-xs text-black/50">
+              ใช้สำหรับปรับชื่อปีและสถานะปีปัจจุบัน
+            </p>
+          </div>
+          <div>
+            <label className="text-xs text-black/60">ปีการศึกษา</label>
+            <input
+              type="text"
+              name="name"
+              required
+              maxLength={8}
+              defaultValue={year.name}
+              className="input"
+            />
+          </div>
+          <label className="flex items-center gap-2 text-sm text-black/70">
+            <input
+              type="checkbox"
+              name="isActive"
+              defaultChecked={year.isActive}
+              className="h-4 w-4"
+            />
+            ใช้งานเป็นปีปัจจุบัน
+          </label>
+          {state.fieldErrors?.name && (
+            <p className="text-xs text-red-700">{state.fieldErrors.name}</p>
+          )}
+          {state.error && (
+            <p className="text-xs text-red-700">
+              {translateError(state.error)}
+            </p>
+          )}
+          <DialogActions />
+        </form>
+      </dialog>
+    </>
+  );
+}
+
+function EditTermDialog({ term }: { term: SetupData["terms"][number] }) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [state, action] = useActionState(updateTermAction, INITIAL_UPD_TERM);
+
+  useEffect(() => {
+    if (state.ok) dialogRef.current?.close();
+  }, [state.ok]);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => dialogRef.current?.showModal()}
+        className="rounded-lg p-2 text-black/40 hover:bg-blue-50 hover:text-blue-700"
+        title="แก้ไขภาคเรียน"
+      >
+        <Pencil className="h-4 w-4" />
+      </button>
+      <dialog
+        ref={dialogRef}
+        className="w-[min(92vw,460px)] rounded-2xl bg-white p-0 shadow-2xl backdrop:bg-black/40"
+      >
+        <form action={action} className="space-y-4 p-5">
+          <input type="hidden" name="id" value={term.id} />
+          <div>
+            <h3 className="text-base font-semibold text-black">
+              แก้ไขภาคเรียน
+            </h3>
+            <p className="text-xs text-black/50">
+              {term.academicYear.name} · ปรับเลขเทอมและช่วงวันที่
+            </p>
+          </div>
+          <div>
+            <label className="text-xs text-black/60">ภาคเรียนที่</label>
+            <select
+              name="number"
+              required
+              defaultValue={String(term.number)}
+              className="input"
+            >
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3 (ฤดูร้อน)</option>
+            </select>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="text-xs text-black/60">วันเริ่มต้น</label>
+              <input
+                type="date"
+                name="startDate"
+                required
+                defaultValue={dateInputValue(term.startDate)}
+                className="input"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-black/60">วันสิ้นสุด</label>
+              <input
+                type="date"
+                name="endDate"
+                required
+                defaultValue={dateInputValue(term.endDate)}
+                className="input"
+              />
+            </div>
+          </div>
+          <label className="flex items-center gap-2 text-sm text-black/70">
+            <input
+              type="checkbox"
+              name="isActive"
+              defaultChecked={term.isActive}
+              className="h-4 w-4"
+            />
+            ใช้งานเป็นภาคเรียนปัจจุบัน
+          </label>
+          {state.fieldErrors?.startDate && (
+            <p className="text-xs text-red-700">
+              {state.fieldErrors.startDate}
+            </p>
+          )}
+          {state.fieldErrors?.endDate && (
+            <p className="text-xs text-red-700">{state.fieldErrors.endDate}</p>
+          )}
+          {state.fieldErrors?.number && (
+            <p className="text-xs text-red-700">{state.fieldErrors.number}</p>
+          )}
+          {state.error && (
+            <p className="text-xs text-red-700">
+              {translateError(state.error)}
+            </p>
+          )}
+          <DialogActions />
+        </form>
+      </dialog>
+    </>
+  );
+}
+
+function EditClassDialog({
+  cls,
+  teachers,
+}: {
+  cls: SetupData["classes"][number];
+  teachers: SetupData["teachers"];
+}) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [state, action] = useActionState(updateClassAction, INITIAL_UPD_CLASS);
+
+  useEffect(() => {
+    if (state.ok) dialogRef.current?.close();
+  }, [state.ok]);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => dialogRef.current?.showModal()}
+        className="rounded-lg p-2 text-black/40 hover:bg-blue-50 hover:text-blue-700"
+        title="แก้ไขห้องเรียน"
+      >
+        <Pencil className="h-4 w-4" />
+      </button>
+      <dialog
+        ref={dialogRef}
+        className="w-[min(92vw,500px)] rounded-2xl bg-white p-0 shadow-2xl backdrop:bg-black/40"
+      >
+        <form action={action} className="space-y-4 p-5">
+          <input type="hidden" name="id" value={cls.id} />
+          <div>
+            <h3 className="text-base font-semibold text-black">
+              แก้ไขห้องเรียน
+            </h3>
+            <p className="text-xs text-black/50">
+              ปี {cls.academicYear.name} · ปรับชื่อห้อง ชั้นปี และครูประจำชั้น
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="text-xs text-black/60">ชื่อห้อง</label>
+              <input
+                type="text"
+                name="name"
+                required
+                defaultValue={cls.name}
+                className="input"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-black/60">ชั้นปี</label>
+              <input
+                type="text"
+                name="gradeLevel"
+                required
+                defaultValue={cls.gradeLevel}
+                className="input"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="text-xs text-black/60">ครูประจำชั้น</label>
+            <select
+              name="homeroomTeacherId"
+              defaultValue={cls.homeroomTeacher?.userId ?? ""}
+              className="input"
+            >
+              <option value="">ไม่กำหนด</option>
+              {teachers.map((teacher) => {
+                const assignedElsewhere =
+                  teacher.homeroomOf !== null &&
+                  teacher.homeroomOf.id !== cls.id;
+                return (
+                  <option
+                    key={teacher.userId}
+                    value={teacher.userId}
+                    disabled={assignedElsewhere}
+                  >
+                    {teacher.firstName} {teacher.lastName}
+                    {assignedElsewhere ? ` (${teacher.homeroomOf?.name})` : ""}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+          {state.fieldErrors?.name && (
+            <p className="text-xs text-red-700">{state.fieldErrors.name}</p>
+          )}
+          {state.fieldErrors?.gradeLevel && (
+            <p className="text-xs text-red-700">
+              {state.fieldErrors.gradeLevel}
+            </p>
+          )}
+          {state.error && (
+            <p className="text-xs text-red-700">
+              {translateError(state.error)}
+            </p>
+          )}
+          <DialogActions />
+        </form>
+      </dialog>
+    </>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────
 // Shared
 // ─────────────────────────────────────────────────────────────
@@ -699,6 +998,39 @@ function SubmitBtn({ label }: { label: string }) {
       <Plus className="mr-1 inline h-4 w-4" />
       {pending ? "กำลังบันทึก…" : label}
     </button>
+  );
+}
+
+function SaveBtn() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      {pending ? "กำลังบันทึก…" : "บันทึก"}
+    </button>
+  );
+}
+
+function DialogActions() {
+  return (
+    <div className="flex justify-end gap-2 border-t border-black/[0.06] pt-4">
+      <button
+        type="button"
+        onClick={(event) => {
+          const dialog = event.currentTarget.closest(
+            "dialog"
+          ) as HTMLDialogElement | null;
+          dialog?.close();
+        }}
+        className="rounded-xl border border-black/[0.08] px-4 py-2 text-sm text-black/60 hover:bg-black/[0.03]"
+      >
+        ยกเลิก
+      </button>
+      <SaveBtn />
+    </div>
   );
 }
 
@@ -754,4 +1086,8 @@ function fmtDate(d: Date): string {
     month: "short",
     year: "numeric",
   }).format(new Date(d));
+}
+
+function dateInputValue(d: Date): string {
+  return new Date(d).toISOString().slice(0, 10);
 }

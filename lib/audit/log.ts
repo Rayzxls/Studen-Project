@@ -31,8 +31,10 @@ export type AuditEvent =
   | "CLASS_CODE_EXPIRY_SET"
   // Course Membership lifecycle (Phase 2 join · Phase 3 remove/restore · ADR-0013)
   | "COURSE_MEMBER_JOINED"
+  | "COURSE_MEMBER_LEFT"
   | "COURSE_MEMBER_REMOVED"
   | "COURSE_MEMBER_RESTORED_BY_REJOIN"
+  | "COURSE_OFFERING_ARCHIVED"
   // Scoring (Phase 5) — past-tense per Pattern 10; pre-publish CUD not audited (Verbose tier)
   | "SCORE_ITEM_PUBLISHED"
   | "SCORE_EDIT_AFTER_PUBLISH"

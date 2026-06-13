@@ -44,8 +44,23 @@ export async function createAnnouncement(
       throw new Forbidden("not_course_owner");
     }
 
+    if (parsed.fileAttachmentIds.length > 0 && !parsed.id) {
+      throw new ValidationError({
+        fileAttachmentIds: "missing_attachment_owner_id",
+      });
+    }
+    if (parsed.fileAttachmentIds.length > 0 && parsed.id) {
+      await assertOwnedFiles(tx, {
+        ownerType: "ANNOUNCEMENT",
+        ownerId: parsed.id,
+        uploadedById: ctx.actorUserId,
+        fileAttachmentIds: parsed.fileAttachmentIds,
+      });
+    }
+
     const announcement = await tx.announcement.create({
       data: {
+        ...(parsed.id && { id: parsed.id }),
         courseOfferingId: parsed.courseOfferingId,
         title: parsed.title,
         body: parsed.body,
@@ -186,4 +201,32 @@ export async function softDeleteAnnouncement(
       sourceEntityId: announcementId,
     });
   }, TX_OPTS);
+}
+
+async function assertOwnedFiles(
+  tx: Prisma.TransactionClient,
+  args: {
+    ownerType: "ANNOUNCEMENT";
+    ownerId: string;
+    uploadedById: string;
+    fileAttachmentIds: string[];
+  }
+): Promise<void> {
+  const rows = await tx.fileAttachment.findMany({
+    where: {
+      id: { in: args.fileAttachmentIds },
+      ownerType: args.ownerType,
+      ownerId: args.ownerId,
+      uploadedById: args.uploadedById,
+      deletedAt: null,
+    },
+    select: { id: true },
+  });
+  const found = new Set(rows.map((r) => r.id));
+  const missing = args.fileAttachmentIds.filter((id) => !found.has(id));
+  if (missing.length > 0) {
+    throw new ValidationError({
+      fileAttachmentIds: `file_not_owned_by_announcement — ${missing.join(",")}`,
+    });
+  }
 }

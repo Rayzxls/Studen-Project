@@ -402,6 +402,53 @@ html[data-theme="cream"] {
     box-shadow: var(--shadow-inset);
   }
 
+  /* Assignment detail surfaces — theme-aware replacement for old light-only
+     gradients used by the Instagram-style assignment page. */
+  .assignment-brief-panel {
+    background:
+      linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--color-blue-50) 64%, var(--color-surface)),
+        color-mix(in srgb, var(--color-surface) 88%, var(--color-ink) 3%)
+      );
+    color: var(--color-ink-soft);
+    box-shadow: inset 0 0 0 1px var(--color-hairline);
+  }
+
+  .comment-empty-social {
+    border: 1px dashed var(--color-hairline-strong);
+    background:
+      linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--color-blue-50) 58%, var(--color-surface)),
+        color-mix(in srgb, var(--color-surface) 90%, var(--color-ink) 4%)
+      );
+    color: var(--color-ink-mute);
+  }
+
+  .comment-item-social {
+    background: color-mix(in srgb, var(--color-ink) 3%, transparent);
+  }
+
+  .comment-composer-social {
+    color: var(--color-ink);
+    background: color-mix(in srgb, var(--color-surface) 92%, var(--color-bg));
+    box-shadow:
+      inset 0 0 0 1px var(--color-hairline-strong),
+      0 10px 30px rgba(15, 23, 42, 0.06);
+  }
+
+  .comment-composer-social::placeholder {
+    color: var(--color-ink-faint);
+  }
+
+  .comment-composer-social:focus {
+    outline: none;
+    box-shadow:
+      inset 0 0 0 2px var(--color-blue-500),
+      0 0 0 5px rgba(10, 132, 255, 0.14);
+  }
+
   /* Image card — full-bleed media inside rounded-2xl. */
   .card-image {
     @apply relative overflow-hidden rounded-2xl;

@@ -251,6 +251,7 @@ export function CourseShowcaseCard({
   avatarAlt = "",
   stats,
   actionLabel,
+  menu,
 }: {
   href: string;
   title: string;
@@ -264,6 +265,7 @@ export function CourseShowcaseCard({
   avatarAlt?: string;
   stats: [CourseShowcaseStat, CourseShowcaseStat, CourseShowcaseStat];
   actionLabel: string;
+  menu?: React.ReactNode;
 }) {
   const color = getCourseSlotColors(classId);
   const noticeClass =
@@ -274,104 +276,115 @@ export function CourseShowcaseCard({
         : "text-black/45";
 
   return (
-    <Link
-      href={href}
-      className="group block overflow-hidden rounded-[28px] bg-white text-center shadow-[0_18px_48px_rgba(15,23,42,0.08)] ring-1 ring-black/[0.05] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_22px_56px_rgba(15,23,42,0.12)] hover:no-underline"
-    >
-      <div className="relative h-32 overflow-hidden">
-        <Image
-          src="/brand/cloud-banner.webp"
-          alt=""
-          fill
-          sizes="(max-width: 768px) 100vw, 360px"
-          className="object-cover"
-        />
-        <div
-          aria-hidden
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.88) 100%)",
-          }}
-        />
-        {badge && (
-          <span className="absolute right-4 top-4 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-black/55 shadow-sm backdrop-blur">
-            {badge}
-          </span>
-        )}
-      </div>
-
-      <div className="-mt-11 px-6 pb-7">
-        <span
-          className="relative z-10 mx-auto grid h-[86px] w-[86px] place-items-center rounded-full p-1 shadow-[0_12px_30px_rgba(15,23,42,0.16)]"
-          style={{
-            background: `linear-gradient(135deg, #0a84ff 0%, ${color.bg} 100%)`,
-          }}
-        >
-          <span className="grid h-full w-full place-items-center overflow-hidden rounded-full bg-white">
-            {avatarUserId ? (
-              <UserAvatar
-                userId={avatarUserId}
-                hasImage={hasAvatar}
-                size={74}
-                alt={avatarAlt}
-                className="h-[74px] w-[74px] ring-0"
-              />
-            ) : (
-              <Image
-                src="/brand/beagle-avatar.webp"
-                alt=""
-                width={74}
-                height={74}
-                className="h-[74px] w-[74px] object-cover"
-              />
-            )}
-          </span>
-        </span>
-
-        <h3
-          className="mt-4 truncate text-2xl font-semibold text-black"
-          style={{ letterSpacing: "-0.02em" }}
-        >
-          {title}
-        </h3>
-        <p className="mt-0.5 truncate text-sm font-medium text-black/35">
-          {subtitle}
-        </p>
-        {notice && (
-          <p className={`mt-3 text-sm font-medium ${noticeClass}`}>{notice}</p>
-        )}
-
-        <dl className="mt-6 grid grid-cols-3 overflow-hidden rounded-2xl bg-black/[0.035]">
-          {stats.map((stat, index) => (
-            <div
-              key={stat.label}
+    <article className="group relative rounded-[28px] bg-white text-center shadow-[0_18px_48px_rgba(15,23,42,0.08)] ring-1 ring-black/[0.05] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_22px_56px_rgba(15,23,42,0.12)]">
+      {menu && <div className="absolute right-4 top-4 z-20">{menu}</div>}
+      <Link
+        href={href}
+        className="block overflow-hidden rounded-[28px] hover:no-underline"
+      >
+        <div className="relative h-32 overflow-hidden">
+          <Image
+            src="/brand/cloud-banner.webp"
+            alt=""
+            fill
+            sizes="(max-width: 768px) 100vw, 360px"
+            className="object-cover"
+          />
+          <div
+            aria-hidden
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.88) 100%)",
+            }}
+          />
+          {badge && (
+            <span
               className={
-                "px-3 py-4" + (index > 0 ? " border-l border-black/[0.06]" : "")
+                "absolute top-4 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-black/55 shadow-sm backdrop-blur " +
+                (menu ? "left-4" : "right-4")
               }
             >
-              <dt className="text-[11px] font-medium text-black/35">
-                {stat.label}
-              </dt>
-              <dd
-                className="text-xl font-semibold leading-none text-black"
-                style={{ letterSpacing: "-0.02em" }}
-              >
-                {stat.value}
-              </dd>
-            </div>
-          ))}
-        </dl>
+              {badge}
+            </span>
+          )}
+        </div>
 
-        <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700">
-          {actionLabel}
-          <ArrowRight
-            className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
-            aria-hidden="true"
-          />
-        </span>
-      </div>
-    </Link>
+        <div className="-mt-11 px-6 pb-7">
+          <span
+            className="relative z-10 mx-auto grid h-[86px] w-[86px] place-items-center rounded-full p-1 shadow-[0_12px_30px_rgba(15,23,42,0.16)]"
+            style={{
+              background: `linear-gradient(135deg, #0a84ff 0%, ${color.bg} 100%)`,
+            }}
+          >
+            <span className="grid h-full w-full place-items-center overflow-hidden rounded-full bg-white">
+              {avatarUserId ? (
+                <UserAvatar
+                  userId={avatarUserId}
+                  hasImage={hasAvatar}
+                  size={74}
+                  alt={avatarAlt}
+                  className="h-[74px] w-[74px] ring-0"
+                />
+              ) : (
+                <Image
+                  src="/brand/beagle-avatar.webp"
+                  alt=""
+                  width={74}
+                  height={74}
+                  className="h-[74px] w-[74px] object-cover"
+                />
+              )}
+            </span>
+          </span>
+
+          <h3
+            className="mt-4 truncate text-2xl font-semibold text-black"
+            style={{ letterSpacing: "-0.02em" }}
+          >
+            {title}
+          </h3>
+          <p className="mt-0.5 truncate text-sm font-medium text-black/35">
+            {subtitle}
+          </p>
+          {notice && (
+            <p className={`mt-3 text-sm font-medium ${noticeClass}`}>
+              {notice}
+            </p>
+          )}
+
+          <dl className="mt-6 grid grid-cols-3 overflow-hidden rounded-2xl bg-black/[0.035]">
+            {stats.map((stat, index) => (
+              <div
+                key={stat.label}
+                className={
+                  "px-3 py-4" +
+                  (index > 0 ? " border-l border-black/[0.06]" : "")
+                }
+              >
+                <dt className="text-[11px] font-medium text-black/35">
+                  {stat.label}
+                </dt>
+                <dd
+                  className="text-xl font-semibold leading-none text-black"
+                  style={{ letterSpacing: "-0.02em" }}
+                >
+                  {stat.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+
+          <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700">
+            {actionLabel}
+            <ArrowRight
+              className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+              aria-hidden="true"
+            />
+          </span>
+        </div>
+      </Link>
+    </article>
   );
 }
 

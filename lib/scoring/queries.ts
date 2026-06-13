@@ -278,7 +278,7 @@ export async function getStudentTermSnapshot(
     where: {
       studentId: studentUserId,
       removedAt: null,
-      course: { termId },
+      course: { termId, archivedAt: null },
     },
     select: {
       id: true,

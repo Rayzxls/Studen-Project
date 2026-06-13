@@ -10,6 +10,7 @@ import {
   Link2 as LinkIcon,
   MessageSquare,
   MoreVertical,
+  Paperclip,
 } from "lucide-react";
 import type { SubmissionStatus } from "@prisma/client";
 import { requireRole } from "@/lib/auth/guards";
@@ -18,6 +19,8 @@ import { SubmitVersionForm } from "@/components/assignment/submit-version-form";
 import { WithdrawSubmissionButton } from "@/components/assignment/withdraw-submission-button";
 import { CommentsThread } from "@/components/comment/comments-thread";
 import { ensureSubmission } from "@/lib/assignment/submission";
+import { AssignmentAttachmentGallery } from "@/components/assignment/assignment-attachment-gallery";
+import { SafeExternalLinkButton } from "@/components/link/safe-external-link-button";
 
 export const dynamic = "force-dynamic";
 
@@ -91,6 +94,7 @@ export default async function StudentAssignmentDetailPage({
       title: true,
       description: true,
       linkUrls: true,
+      fileAttachmentIds: true,
       dueAt: true,
       allowText: true,
       allowFile: true,
@@ -108,6 +112,28 @@ export default async function StudentAssignmentDetailPage({
     },
   });
   if (!assignment || assignment.courseOfferingId !== courseId) notFound();
+
+  const assignmentFileIds = jsonStringArray(assignment.fileAttachmentIds);
+  const assignmentFileRows =
+    assignmentFileIds.length > 0
+      ? await db.fileAttachment.findMany({
+          where: { id: { in: assignmentFileIds }, deletedAt: null },
+          select: {
+            id: true,
+            originalFilename: true,
+            sizeBytes: true,
+            mimeType: true,
+          },
+        })
+      : [];
+  const assignmentFileById = new Map(
+    assignmentFileRows.map((file) => [file.id, file])
+  );
+  const assignmentFiles = assignmentFileIds
+    .map((fileId) => assignmentFileById.get(fileId))
+    .filter((file): file is (typeof assignmentFileRows)[number] =>
+      Boolean(file)
+    );
 
   if (!assignment.submissionClosed) {
     await ensureSubmission(assignmentId, enrollment.id);
@@ -208,7 +234,7 @@ export default async function StudentAssignmentDetailPage({
               <div className="p-5">
                 <div className="flex items-start gap-3">
                   <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-blue-500 p-[2px]">
-                    <div className="grid h-full w-full place-items-center rounded-full bg-white">
+                    <div className="grid h-full w-full place-items-center rounded-full bg-surface">
                       <FileText
                         className="h-5 w-5 text-blue-500"
                         aria-hidden="true"
@@ -246,10 +272,30 @@ export default async function StudentAssignmentDetailPage({
                 </a>
 
                 {assignment.description && (
-                  <div className="mt-5 whitespace-pre-wrap rounded-[22px] bg-gradient-to-br from-[#eef7fc] via-white to-[#eff0fe] p-4 text-[15px] leading-7 text-black/75 ring-1 ring-black/[0.04]">
+                  <div className="assignment-brief-panel mt-5 whitespace-pre-wrap rounded-[22px] p-4 text-[15px] leading-7">
                     {assignment.description}
                   </div>
                 )}
+
+                <AssignmentDetailSummary
+                  dueLabel={dueLabel}
+                  fullScore={
+                    assignment.isScored
+                      ? (assignment.scoreItem?.fullScore ?? null)
+                      : null
+                  }
+                  allowText={assignment.allowText}
+                  allowFile={assignment.allowFile}
+                  allowLink={assignment.allowLink}
+                  attachmentCount={assignmentFiles.length}
+                  linkCount={
+                    Array.isArray(assignment.linkUrls)
+                      ? assignment.linkUrls.length
+                      : 0
+                  }
+                />
+
+                <AssignmentAttachmentGallery files={assignmentFiles} />
               </div>
             </section>
 
@@ -257,15 +303,13 @@ export default async function StudentAssignmentDetailPage({
               assignment.linkUrls.length > 0 && (
                 <div className="mt-4 space-y-3">
                   {(assignment.linkUrls as string[]).map((href, index) => (
-                    <a
+                    <SafeExternalLinkButton
                       key={`${href}-${index}`}
                       href={href}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="block truncate rounded-2xl bg-white px-4 py-3 text-sm text-blue-700 shadow-lift"
+                      className="block w-full truncate rounded-2xl border border-black/[0.08] bg-black/[0.025] px-4 py-3 text-left text-sm font-medium text-blue-700 shadow-lift transition hover:border-blue-500/30 hover:bg-black/[0.04] hover:no-underline"
                     >
                       {href}
-                    </a>
+                    </SafeExternalLinkButton>
                   ))}
                 </div>
               )}
@@ -350,7 +394,7 @@ export default async function StudentAssignmentDetailPage({
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="flex min-w-0 items-start gap-3">
                     <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-blue-500 p-[2px]">
-                      <div className="grid h-full w-full place-items-center rounded-full bg-white">
+                      <div className="grid h-full w-full place-items-center rounded-full bg-surface">
                         <FileText
                           className="h-5 w-5 text-[#0a84ff]"
                           aria-hidden="true"
@@ -387,10 +431,30 @@ export default async function StudentAssignmentDetailPage({
                 </div>
 
                 {assignment.description && (
-                  <div className="mt-6 whitespace-pre-wrap rounded-[24px] bg-gradient-to-br from-[#eef7fc] via-white to-[#eff0fe] p-5 text-[15px] leading-7 text-black/80 ring-1 ring-black/[0.04]">
+                  <div className="assignment-brief-panel mt-6 whitespace-pre-wrap rounded-[24px] p-5 text-[15px] leading-7">
                     {assignment.description}
                   </div>
                 )}
+
+                <AssignmentDetailSummary
+                  dueLabel={dueLabel}
+                  fullScore={
+                    assignment.isScored
+                      ? (assignment.scoreItem?.fullScore ?? null)
+                      : null
+                  }
+                  allowText={assignment.allowText}
+                  allowFile={assignment.allowFile}
+                  allowLink={assignment.allowLink}
+                  attachmentCount={assignmentFiles.length}
+                  linkCount={
+                    Array.isArray(assignment.linkUrls)
+                      ? assignment.linkUrls.length
+                      : 0
+                  }
+                />
+
+                <AssignmentAttachmentGallery files={assignmentFiles} />
 
                 {Array.isArray(assignment.linkUrls) &&
                   assignment.linkUrls.length > 0 && (
@@ -403,14 +467,12 @@ export default async function StudentAssignmentDetailPage({
                         {(assignment.linkUrls as string[]).map(
                           (href, index) => (
                             <li key={`${href}-${index}`}>
-                              <a
+                              <SafeExternalLinkButton
                                 href={href}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="block truncate rounded-2xl bg-blue-50 px-3 py-2 text-sm text-blue-700 underline-offset-2 transition hover:bg-blue-100 hover:underline"
+                                className="block w-full truncate rounded-2xl border border-black/[0.08] bg-black/[0.025] px-3 py-2 text-left text-sm font-medium text-blue-700 underline-offset-2 transition hover:border-blue-500/30 hover:bg-black/[0.04] hover:no-underline"
                               >
                                 {href}
-                              </a>
+                              </SafeExternalLinkButton>
                             </li>
                           )
                         )}
@@ -556,14 +618,12 @@ export default async function StudentAssignmentDetailPage({
                           <ul className="mt-3 space-y-1">
                             {(version.links as string[]).map((href, index) => (
                               <li key={`${href}-${index}`}>
-                                <a
+                                <SafeExternalLinkButton
                                   href={href}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="block truncate text-[11px] text-blue-700 hover:underline"
+                                  className="block w-full truncate text-left text-[11px] text-blue-700 hover:underline"
                                 >
                                   {href}
-                                </a>
+                                </SafeExternalLinkButton>
                               </li>
                             ))}
                           </ul>
@@ -578,4 +638,73 @@ export default async function StudentAssignmentDetailPage({
       </div>
     </>
   );
+}
+
+function AssignmentDetailSummary({
+  dueLabel,
+  fullScore,
+  allowText,
+  allowFile,
+  allowLink,
+  attachmentCount,
+  linkCount,
+}: {
+  dueLabel: string;
+  fullScore: number | null;
+  allowText: boolean;
+  allowFile: boolean;
+  allowLink: boolean;
+  attachmentCount: number;
+  linkCount: number;
+}) {
+  const submitMethods = [
+    allowText ? "ข้อความ" : null,
+    allowFile ? "ไฟล์" : null,
+    allowLink ? "ลิงก์" : null,
+  ].filter((item): item is string => Boolean(item));
+
+  return (
+    <div className="mt-5 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="rounded-2xl border border-black/[0.06] bg-black/[0.025] px-4 py-3">
+        <p className="flex items-center gap-1.5 text-xs font-medium text-black/45">
+          <CalendarClock className="h-3.5 w-3.5" aria-hidden="true" />
+          กำหนดส่ง
+        </p>
+        <p className="mt-1 text-sm font-semibold text-black">{dueLabel}</p>
+      </div>
+      <div className="rounded-2xl border border-black/[0.06] bg-black/[0.025] px-4 py-3">
+        <p className="flex items-center gap-1.5 text-xs font-medium text-black/45">
+          <FileText className="h-3.5 w-3.5" aria-hidden="true" />
+          คะแนน
+        </p>
+        <p className="mt-1 text-sm font-semibold text-black">
+          {fullScore === null ? "ไม่นับคะแนน" : `${fullScore} คะแนน`}
+        </p>
+      </div>
+      <div className="rounded-2xl border border-black/[0.06] bg-black/[0.025] px-4 py-3">
+        <p className="flex items-center gap-1.5 text-xs font-medium text-black/45">
+          <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+          ส่งได้ด้วย
+        </p>
+        <p className="mt-1 text-sm font-semibold text-black">
+          {submitMethods.join(" / ")}
+        </p>
+      </div>
+      <div className="rounded-2xl border border-black/[0.06] bg-black/[0.025] px-4 py-3">
+        <p className="flex items-center gap-1.5 text-xs font-medium text-black/45">
+          <Paperclip className="h-3.5 w-3.5" aria-hidden="true" />
+          ไฟล์ประกอบ
+        </p>
+        <p className="mt-1 text-sm font-semibold text-black">
+          {attachmentCount + linkCount} รายการ
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function jsonStringArray(v: unknown): string[] {
+  return Array.isArray(v)
+    ? v.filter((item): item is string => typeof item === "string")
+    : [];
 }

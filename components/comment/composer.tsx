@@ -55,7 +55,7 @@ export function CommentComposer({
         rows={isSocial ? 3 : 2}
         className={
           isSocial
-            ? "w-full resize-none rounded-[24px] border-0 bg-white px-5 py-4 text-sm text-black shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08),0_10px_30px_rgba(15,23,42,0.06)] placeholder:text-black/35 focus:outline-none focus:shadow-[inset_0_0_0_2px_rgba(10,132,255,0.65),0_0_0_5px_rgba(10,132,255,0.14)]"
+            ? "comment-composer-social w-full resize-none rounded-[24px] border-0 px-5 py-4 text-sm"
             : "input"
         }
         placeholder={placeholder ?? "เขียนความคิดเห็น…"}

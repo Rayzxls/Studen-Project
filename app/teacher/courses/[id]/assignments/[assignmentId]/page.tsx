@@ -14,6 +14,7 @@ import { CommentsThread } from "@/components/comment/comments-thread";
 import { ReviewPanel } from "@/components/assignment/review-panel";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { SubmissionFilePreview } from "@/components/assignment/submission-file-preview";
+import { SafeExternalLinkButton } from "@/components/link/safe-external-link-button";
 
 /**
  * Teacher Assignment Review Workspace — Phase 11.
@@ -377,14 +378,12 @@ export default async function AssignmentReviewWorkspacePage({
                         className="h-3 w-3 shrink-0 text-black/40"
                         aria-hidden="true"
                       />
-                      <a
+                      <SafeExternalLinkButton
                         href={href}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="truncate text-xs text-blue-700 hover:underline"
+                        className="truncate rounded-md px-1 py-0.5 text-left text-xs font-medium text-blue-700 underline-offset-2 transition hover:bg-black/[0.04] hover:no-underline"
                       >
                         {href}
-                      </a>
+                      </SafeExternalLinkButton>
                     </li>
                   ))}
                 </ul>
@@ -578,14 +577,12 @@ export default async function AssignmentReviewWorkspacePage({
                                     className="h-3 w-3 shrink-0 text-black/40"
                                     aria-hidden="true"
                                   />
-                                  <a
+                                  <SafeExternalLinkButton
                                     href={href}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="truncate text-xs text-blue-700 hover:underline"
+                                    className="truncate rounded-md px-1 py-0.5 text-left text-xs font-medium text-blue-700 underline-offset-2 transition hover:bg-black/[0.04] hover:no-underline"
                                   >
                                     {href}
-                                  </a>
+                                  </SafeExternalLinkButton>
                                 </li>
                               ))}
                             </ul>

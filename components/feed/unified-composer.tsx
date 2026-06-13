@@ -7,7 +7,6 @@ import {
   FileText,
   Link2,
   Megaphone,
-  Paperclip,
   Plus,
   X,
   type LucideIcon,
@@ -20,6 +19,7 @@ import {
   type ComposeAssignmentState,
   type ComposeMaterialState,
 } from "@/app/teacher/courses/[id]/feed/actions";
+import { TeacherAttachmentUploader } from "@/components/attachment/teacher-attachment-uploader";
 
 /**
  * Unified Course Feed composer — Phase 10C · ADR-0025 § 3 (redesigned).
@@ -70,8 +70,20 @@ const INITIAL_MAT: ComposeMaterialState = {};
 export function UnifiedComposer({ courseId }: { courseId: string }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [chip, setChip] = useState<ChipKey>("announcement");
+  const [ownerIds, setOwnerIds] = useState<Record<ChipKey, string>>({
+    announcement: "",
+    assignment: "",
+    material: "",
+  });
 
-  const open = () => dialogRef.current?.showModal();
+  const open = () => {
+    setOwnerIds({
+      announcement: createDraftOwnerId(courseId),
+      assignment: createDraftOwnerId(courseId),
+      material: createDraftOwnerId(courseId),
+    });
+    dialogRef.current?.showModal();
+  };
   const close = () => dialogRef.current?.close();
 
   const active = CHIPS.find((c) => c.key === chip)!;
@@ -152,13 +164,25 @@ export function UnifiedComposer({ courseId }: { courseId: string }) {
           {/* Scrollable body */}
           <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-4">
             {chip === "announcement" && (
-              <AnnouncementForm courseId={courseId} close={close} />
+              <AnnouncementForm
+                courseId={courseId}
+                ownerId={ownerIds.announcement}
+                close={close}
+              />
             )}
             {chip === "assignment" && (
-              <AssignmentForm courseId={courseId} close={close} />
+              <AssignmentForm
+                courseId={courseId}
+                ownerId={ownerIds.assignment}
+                close={close}
+              />
             )}
             {chip === "material" && (
-              <MaterialForm courseId={courseId} close={close} />
+              <MaterialForm
+                courseId={courseId}
+                ownerId={ownerIds.material}
+                close={close}
+              />
             )}
           </div>
         </div>
@@ -173,9 +197,11 @@ export function UnifiedComposer({ courseId }: { courseId: string }) {
 
 function AnnouncementForm({
   courseId,
+  ownerId,
   close,
 }: {
   courseId: string;
+  ownerId: string;
   close: () => void;
 }) {
   const [state, action] = useActionState(
@@ -183,6 +209,7 @@ function AnnouncementForm({
     INITIAL_ANN
   );
   const formRef = useRef<HTMLFormElement>(null);
+  const [attachmentBusy, setAttachmentBusy] = useState(false);
   useDeferredClose(state.ok, close, formRef);
   return (
     <form ref={formRef} action={action} className="space-y-4">
@@ -208,9 +235,15 @@ function AnnouncementForm({
         />
       </Field>
       <LinksField error={state.fieldErrors?.linkUrls} idPrefix="ann" />
-      <AttachSoon />
+      <TeacherAttachmentUploader
+        key={ownerId}
+        ownerType="ANNOUNCEMENT"
+        ownerId={ownerId}
+        error={state.fieldErrors?.fileAttachmentIds}
+        onBusyChange={setAttachmentBusy}
+      />
       {state.error && <FormError error={state.error} />}
-      <Actions close={close} label="โพสต์ประกาศ" />
+      <Actions close={close} label="โพสต์ประกาศ" disabled={attachmentBusy} />
     </form>
   );
 }
@@ -221,13 +254,16 @@ function AnnouncementForm({
 
 function AssignmentForm({
   courseId,
+  ownerId,
   close,
 }: {
   courseId: string;
+  ownerId: string;
   close: () => void;
 }) {
   const [state, action] = useActionState(composeAssignmentAction, INITIAL_ASN);
   const [isScored, setIsScored] = useState(false);
+  const [attachmentBusy, setAttachmentBusy] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   useDeferredClose(state.ok, close, formRef);
   return (
@@ -324,9 +360,15 @@ function AssignmentForm({
         <ClipboardList className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
         นักเรียนส่งงานได้ทั้ง ข้อความ · ไฟล์/รูป · ลิงก์ ในหน้าการบ้าน
       </p>
-      <AttachSoon />
+      <TeacherAttachmentUploader
+        key={ownerId}
+        ownerType="ASSIGNMENT"
+        ownerId={ownerId}
+        error={state.fieldErrors?.fileAttachmentIds}
+        onBusyChange={setAttachmentBusy}
+      />
       {state.error && <FormError error={state.error} />}
-      <Actions close={close} label="โพสต์การบ้าน" />
+      <Actions close={close} label="โพสต์การบ้าน" disabled={attachmentBusy} />
     </form>
   );
 }
@@ -337,13 +379,16 @@ function AssignmentForm({
 
 function MaterialForm({
   courseId,
+  ownerId,
   close,
 }: {
   courseId: string;
+  ownerId: string;
   close: () => void;
 }) {
   const [state, action] = useActionState(composeMaterialAction, INITIAL_MAT);
   const formRef = useRef<HTMLFormElement>(null);
+  const [attachmentBusy, setAttachmentBusy] = useState(false);
   useDeferredClose(state.ok, close, formRef);
   return (
     <form ref={formRef} action={action} className="space-y-4">
@@ -373,9 +418,15 @@ function MaterialForm({
         />
       </Field>
       <LinksField error={state.fieldErrors?.linkUrls} idPrefix="mat" />
-      <AttachSoon />
+      <TeacherAttachmentUploader
+        key={ownerId}
+        ownerType="MATERIAL"
+        ownerId={ownerId}
+        error={state.fieldErrors?.fileAttachmentIds}
+        onBusyChange={setAttachmentBusy}
+      />
       {state.error && <FormError error={state.error} />}
-      <Actions close={close} label="โพสต์เอกสาร" />
+      <Actions close={close} label="โพสต์เอกสาร" disabled={attachmentBusy} />
     </form>
   );
 }
@@ -446,24 +497,6 @@ function LinksField({
   );
 }
 
-/** Disabled placeholder for the deferred file-upload pipeline (ADR-0021). */
-function AttachSoon({
-  label = "แนบไฟล์ / รูป · เร็วๆ นี้",
-}: {
-  label?: string;
-}) {
-  return (
-    <div
-      aria-disabled="true"
-      title="ฟีเจอร์แนบไฟล์กำลังจะมา"
-      className="flex cursor-not-allowed items-center gap-2 rounded-xl border border-dashed border-black/15 bg-black/[0.015] px-3 py-2.5 text-xs text-black/35"
-    >
-      <Paperclip className="h-4 w-4 shrink-0" aria-hidden="true" />
-      {label}
-    </div>
-  );
-}
-
 function FormError({ error }: { error: string }) {
   return (
     <p className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">
@@ -472,26 +505,40 @@ function FormError({ error }: { error: string }) {
   );
 }
 
-function Actions({ close, label }: { close: () => void; label: string }) {
+function Actions({
+  close,
+  label,
+  disabled,
+}: {
+  close: () => void;
+  label: string;
+  disabled?: boolean;
+}) {
   return (
     <div className="flex justify-end gap-2 pt-1">
       <button type="button" onClick={close} className="btn-secondary btn-sm">
         ยกเลิก
       </button>
-      <SubmitButton label={label} />
+      <SubmitButton label={label} disabled={disabled} />
     </div>
   );
 }
 
-function SubmitButton({ label }: { label: string }) {
+function SubmitButton({
+  label,
+  disabled,
+}: {
+  label: string;
+  disabled?: boolean;
+}) {
   const { pending } = useFormStatus();
   return (
     <button
       type="submit"
-      disabled={pending}
+      disabled={pending || disabled}
       className="btn-primary btn-sm disabled:cursor-not-allowed disabled:opacity-50"
     >
-      {pending ? "กำลังโพสต์…" : label}
+      {pending ? "กำลังโพสต์…" : disabled ? "กำลังอัปโหลดไฟล์…" : label}
     </button>
   );
 }
@@ -509,4 +556,13 @@ function useDeferredClose(
     }, 0);
     return () => clearTimeout(t);
   }, [ok, close, formRef]);
+}
+
+function createDraftOwnerId(courseId: string): string {
+  const bytes = new Uint8Array(12);
+  crypto.getRandomValues(bytes);
+  const nonce = Array.from(bytes, (byte) =>
+    byte.toString(16).padStart(2, "0")
+  ).join("");
+  return `${courseId}_d_${nonce}`;
 }

@@ -23,6 +23,10 @@ import {
   CourseShowcaseEmpty,
 } from "@/components/dashboard/primitives";
 import {
+  StudentCourseCardMenu,
+  TeacherCourseCardMenu,
+} from "@/components/course/course-card-menu";
+import {
   DueWorkBlock,
   RecentScoresBlock,
   ReturnedWorkBlock,
@@ -278,6 +282,12 @@ async function StudentDashboard({
                     { value: "1", label: "ครู" },
                   ]}
                   actionLabel="เข้าวิชา"
+                  menu={
+                    <StudentCourseCardMenu
+                      courseId={courseId}
+                      courseName={e.course.name}
+                    />
+                  }
                 />
               );
             })}
@@ -387,6 +397,12 @@ async function TeacherDashboard({
                   { value: c.draftScoreItems, label: "ร่างคะแนน" },
                 ]}
                 actionLabel="ดูข้อมูล"
+                menu={
+                  <TeacherCourseCardMenu
+                    courseId={c.courseId}
+                    courseName={c.courseName}
+                  />
+                }
               />
             ))}
           </div>

@@ -9,6 +9,7 @@ import {
   CourseShowcaseCard,
   CourseShowcaseEmpty,
 } from "@/components/dashboard/primitives";
+import { TeacherCourseCardMenu } from "@/components/course/course-card-menu";
 
 export const dynamic = "force-dynamic";
 
@@ -93,6 +94,12 @@ export default async function TeacherCoursesPage() {
                     { value: c.codeActive ? "เปิด" : "ปิด", label: "รับเข้า" },
                   ]}
                   actionLabel="ดูข้อมูล"
+                  menu={
+                    <TeacherCourseCardMenu
+                      courseId={c.id}
+                      courseName={c.name}
+                    />
+                  }
                 />
               ))}
             </div>

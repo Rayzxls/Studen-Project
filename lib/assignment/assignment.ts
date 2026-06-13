@@ -70,8 +70,24 @@ export async function createAssignment(
     }
 
     // Materialise the Assignment with scoreItemId=null first.
+    const assignmentId = parsed.id;
+    if (parsed.fileAttachmentIds.length > 0 && !assignmentId) {
+      throw new ValidationError({
+        fileAttachmentIds: "missing_attachment_owner_id",
+      });
+    }
+    if (parsed.fileAttachmentIds.length > 0 && assignmentId) {
+      await assertOwnedFiles(tx, {
+        ownerType: "ASSIGNMENT",
+        ownerId: assignmentId,
+        uploadedById: ctx.actorUserId,
+        fileAttachmentIds: parsed.fileAttachmentIds,
+      });
+    }
+
     const assignment = await tx.assignment.create({
       data: {
+        ...(assignmentId && { id: assignmentId }),
         courseOfferingId: parsed.courseOfferingId,
         title: parsed.title,
         description: parsed.description,
@@ -83,6 +99,7 @@ export async function createAssignment(
         autoCloseAtDue: parsed.autoCloseAtDue,
         isScored: parsed.isScored,
         linkUrls: parsed.linkUrls as Prisma.InputJsonValue,
+        fileAttachmentIds: parsed.fileAttachmentIds as Prisma.InputJsonValue,
         createdById: ctx.actorUserId,
       },
     });
@@ -361,6 +378,9 @@ function buildPlainFieldsPatch(
   if (parsed.allowText !== undefined) data.allowText = parsed.allowText;
   if (parsed.allowFile !== undefined) data.allowFile = parsed.allowFile;
   if (parsed.allowLink !== undefined) data.allowLink = parsed.allowLink;
+  if (parsed.fileAttachmentIds !== undefined) {
+    data.fileAttachmentIds = parsed.fileAttachmentIds as Prisma.InputJsonValue;
+  }
   if (parsed.submissionClosed !== undefined) {
     data.submissionClosed = parsed.submissionClosed;
   }
@@ -368,4 +388,32 @@ function buildPlainFieldsPatch(
     data.autoCloseAtDue = parsed.autoCloseAtDue;
   }
   return data;
+}
+
+async function assertOwnedFiles(
+  tx: Prisma.TransactionClient,
+  args: {
+    ownerType: "ASSIGNMENT";
+    ownerId: string;
+    uploadedById: string;
+    fileAttachmentIds: string[];
+  }
+): Promise<void> {
+  const rows = await tx.fileAttachment.findMany({
+    where: {
+      id: { in: args.fileAttachmentIds },
+      ownerType: args.ownerType,
+      ownerId: args.ownerId,
+      uploadedById: args.uploadedById,
+      deletedAt: null,
+    },
+    select: { id: true },
+  });
+  const found = new Set(rows.map((r) => r.id));
+  const missing = args.fileAttachmentIds.filter((id) => !found.has(id));
+  if (missing.length > 0) {
+    throw new ValidationError({
+      fileAttachmentIds: `file_not_owned_by_assignment — ${missing.join(",")}`,
+    });
+  }
 }

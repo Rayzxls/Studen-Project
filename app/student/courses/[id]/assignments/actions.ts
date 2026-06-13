@@ -27,6 +27,7 @@ export type SubmitVersionState = {
   fieldErrors?: Record<string, string>;
   error?: string;
   ok?: boolean;
+  submittedAt?: string;
 };
 
 export async function submitVersionAction(
@@ -90,7 +91,7 @@ export async function submitVersionAction(
   }
 
   revalidatePath(`/student/courses/${courseId}/assignments/${assignmentId}`);
-  return { ok: true };
+  return { ok: true, submittedAt: new Date().toISOString() };
 }
 
 export type WithdrawSubmissionState = {

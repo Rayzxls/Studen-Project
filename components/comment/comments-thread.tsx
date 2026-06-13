@@ -131,7 +131,7 @@ export async function CommentsThread({
           <span
             className={
               isSocial
-                ? "grid h-full w-full place-items-center rounded-full bg-white"
+                ? "grid h-full w-full place-items-center rounded-full bg-surface"
                 : ""
             }
           >
@@ -168,7 +168,7 @@ export async function CommentsThread({
         <p
           className={
             isSocial
-              ? "mx-5 rounded-[22px] border border-dashed border-black/10 bg-gradient-to-br from-[#eef7fc] to-[#eff0fe] p-8 text-center text-sm text-black/45 sm:mx-6"
+              ? "comment-empty-social mx-5 rounded-[22px] p-8 text-center text-sm sm:mx-6"
               : "rounded-xl border border-dashed border-black/15 p-6 text-center text-sm text-black/50"
           }
         >
@@ -201,9 +201,7 @@ export async function CommentsThread({
               <li
                 key={c.id}
                 className={
-                  isSocial
-                    ? "rounded-[24px] bg-gradient-to-br from-black/[0.025] to-black/[0.01] p-3"
-                    : "py-3"
+                  isSocial ? "comment-item-social rounded-[24px] p-3" : "py-3"
                 }
               >
                 <div className="flex items-start justify-between gap-3">
