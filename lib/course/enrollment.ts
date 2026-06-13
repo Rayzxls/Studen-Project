@@ -62,12 +62,14 @@ export async function enrollByClassCode(params: {
       name: true,
       codeActive: true,
       codeExpiresAt: true,
+      archivedAt: true,
       class: { select: { name: true } },
       teacher: { select: { firstName: true, lastName: true } },
     },
   });
 
   if (!course) throw new NotFound("class_code_invalid");
+  if (course.archivedAt) throw new Forbidden("course_archived");
   if (!course.codeActive) throw new Forbidden("class_code_disabled");
   if (course.codeExpiresAt && course.codeExpiresAt < new Date()) {
     throw new Forbidden("class_code_expired");
@@ -347,6 +349,98 @@ export async function removeMember(params: {
 }
 
 /**
+ * Student leaves a CourseOffering voluntarily. This reuses the same
+ * Enrollment soft-delete lifecycle as teacher removal so submissions, scores,
+ * attendance, and audit history stay intact.
+ */
+export async function leaveCourseAsStudent(params: {
+  courseOfferingId: string;
+  studentUserId: string;
+  reason: string;
+  ipAddress?: string;
+  userAgent?: string;
+}): Promise<void> {
+  const reason = params.reason.trim();
+  if (reason.length < REASON_MIN) {
+    throw new ValidationError({
+      reason: `เหตุผลสั้นเกินไป (อย่างน้อย ${REASON_MIN} ตัวอักษร)`,
+    });
+  }
+  if (reason.length > REASON_MAX) {
+    throw new ValidationError({
+      reason: `เหตุผลยาวเกินไป (ไม่เกิน ${REASON_MAX} ตัวอักษร)`,
+    });
+  }
+
+  await db.$transaction(async (tx) => {
+    const enrollment = await tx.enrollment.findUnique({
+      where: {
+        studentId_courseOfferingId: {
+          studentId: params.studentUserId,
+          courseOfferingId: params.courseOfferingId,
+        },
+      },
+      select: {
+        id: true,
+        studentId: true,
+        courseOfferingId: true,
+        removedAt: true,
+        course: {
+          select: {
+            name: true,
+            archivedAt: true,
+          },
+        },
+      },
+    });
+
+    if (!enrollment) throw new NotFound("enrollment_not_found");
+    if (enrollment.removedAt !== null) throw new Conflict("already_removed");
+    if (enrollment.course.archivedAt !== null) {
+      throw new Conflict("course_archived");
+    }
+
+    const now = new Date();
+    await tx.enrollment.update({
+      where: { id: enrollment.id },
+      data: {
+        removedAt: now,
+        removedById: params.studentUserId,
+        removedReason: reason,
+      },
+    });
+
+    await audit(
+      {
+        actorId: params.studentUserId,
+        actorRole: "STUDENT",
+        action: "COURSE_MEMBER_LEFT",
+        targetType: "Enrollment",
+        targetId: enrollment.id,
+        targetLabel: enrollment.course.name,
+        reason,
+        ipAddress: params.ipAddress,
+        userAgent: params.userAgent,
+        before: { removedAt: null },
+        after: {
+          courseOfferingId: enrollment.courseOfferingId,
+          studentId: enrollment.studentId,
+          removedAt: now.toISOString(),
+          removedById: params.studentUserId,
+          removedReason: reason,
+        },
+      },
+      tx
+    );
+
+    await suppressNotificationsForRemovedMember(tx, {
+      recipientId: enrollment.studentId,
+      courseOfferingId: enrollment.courseOfferingId,
+    });
+  }, TX_OPTS);
+}
+
+/**
  * Active members of a CourseOffering (i.e. `removedAt IS NULL`).
  *
  * ADR-0013 § Negative Consequences makes this the canonical read path —
@@ -417,7 +511,11 @@ export async function getActiveMembersForStudent(courseOfferingId: string) {
 /** List a student's enrollments (active only — soft-deleted hidden). */
 export async function listStudentCourses(studentUserId: string) {
   return db.enrollment.findMany({
-    where: { studentId: studentUserId, removedAt: null },
+    where: {
+      studentId: studentUserId,
+      removedAt: null,
+      course: { archivedAt: null },
+    },
     orderBy: { enrolledAt: "desc" },
     select: {
       id: true,
@@ -432,7 +530,14 @@ export async function listStudentCourses(studentUserId: string) {
           classCode: true,
           class: { select: { id: true, name: true } },
           term: { select: { name: true } },
-          teacher: { select: { firstName: true, lastName: true } },
+          teacher: {
+            select: {
+              userId: true,
+              firstName: true,
+              lastName: true,
+              user: { select: { profileImageId: true } },
+            },
+          },
         },
       },
     },
@@ -442,7 +547,7 @@ export async function listStudentCourses(studentUserId: string) {
 /** List a teacher's CourseOfferings (member count = active members only). */
 export async function listTeacherCourses(teacherUserId: string) {
   return db.courseOffering.findMany({
-    where: { teacherId: teacherUserId },
+    where: { teacherId: teacherUserId, archivedAt: null },
     orderBy: { createdAt: "desc" },
     select: {
       id: true,
@@ -455,6 +560,14 @@ export async function listTeacherCourses(teacherUserId: string) {
       createdAt: true,
       class: { select: { id: true, name: true } },
       term: { select: { name: true } },
+      teacher: {
+        select: {
+          userId: true,
+          firstName: true,
+          lastName: true,
+          user: { select: { profileImageId: true } },
+        },
+      },
       _count: { select: { enrollments: { where: { removedAt: null } } } },
     },
   });

@@ -26,6 +26,13 @@ enum Role {
   STUDENT
 }
 
+enum ThemeMode {
+  SYSTEM
+  LIGHT
+  DARK
+  CREAM
+}
+
 model User {
   id             String    @id @default(cuid())
   role           Role
@@ -38,6 +45,17 @@ model User {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   deletedAt      DateTime? // soft delete
+
+  // Learning-identity profile (Phase 13) — NOT social media.
+  // displayName: optional friendly name for personal UI (dashboard greeting,
+  // profile heading) only. Real name stays authoritative everywhere else
+  // (comments, review, grades, attendance, admin, audit). May duplicate.
+  displayName String?
+  // Pointer to the current PROFILE_IMAGE FileAttachment (cropped 512×512).
+  // Null = default avatar. Plain string (no FK) — FileAttachment is the
+  // polymorphic table looked up via (ownerType, ownerId).
+  profileImageId String?
+  themeMode      ThemeMode @default(SYSTEM)
 
   admin                 Admin?
   teacher               Teacher?
@@ -188,6 +206,9 @@ model CourseOffering {
   codeExpiresAt  DateTime?
   gradeRulesJson Json? // override default grade thresholds
   createdAt      DateTime  @default(now())
+  archivedAt     DateTime?
+  archivedById   String?
+  archivedReason String?
 
   enrollments    Enrollment[]
   timetableSlots TimetableSlot[]
@@ -200,6 +221,7 @@ model CourseOffering {
   @@index([classCode])
   @@index([teacherId])
   @@index([classId, termId])
+  @@index([archivedAt])
 }
 
 model Enrollment {
@@ -212,7 +234,7 @@ model Enrollment {
 
   // Phase 3 — soft-delete + audit trail (ADR-0013)
   removedAt     DateTime?
-  removedById   String? // User.id of the teacher who removed (or admin for moderation)
+  removedById   String? // User.id of the actor who removed/left the course
   removedReason String? // Min 5 chars enforced at API boundary
 
   attendanceRecords AttendanceRecord[]
@@ -393,6 +415,10 @@ model Assignment {
   // allowLink (whether students MAY submit links). JSON string[] of URLs.
   linkUrls Json @default("[]")
 
+  // Teacher-attached worksheet/example files on the assignment brief.
+  // FileAttachment rows use ownerType=ASSIGNMENT + ownerId=this Assignment.id.
+  fileAttachmentIds Json @default("[]")
+
   dueAt     DateTime? // UTC instant; null = "ส่งเมื่อพร้อม"
   allowText Boolean   @default(true)
   allowFile Boolean   @default(true)
@@ -482,6 +508,7 @@ enum FileOwnerType {
   ANNOUNCEMENT // teacher post (Phase 7 — reserved)
   SUBMISSION // student-submitted file — attached to parent Submission (P7-0a); SubmissionVersion.fileAttachmentIds is the per-version pointer array
   COMMENT // file embedded in a comment (Phase 7 — reserved)
+  PROFILE_IMAGE // user's own cropped avatar — ownerId = User.id (Phase 13)
 }
 
 // Polymorphic file attachment table — ownerType + ownerId rather than a per-owner FK.

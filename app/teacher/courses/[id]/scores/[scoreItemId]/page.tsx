@@ -77,7 +77,7 @@ export default async function ScoreItemGridPage({ params }: PageProps) {
               >
                 {grid.item.name}
                 {isPublished ? (
-                  <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700">
+                  <span className="ml-2 rounded-full bg-green-500 px-2 py-0.5 text-xs font-semibold text-white shadow-sm ring-1 ring-black/10">
                     เผยแพร่แล้ว
                   </span>
                 ) : (

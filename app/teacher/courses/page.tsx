@@ -1,14 +1,17 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Plus, BookOpen, Users } from "lucide-react";
+import { ChevronLeft, Plus } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
+import { db } from "@/lib/db/client";
 import { listTeacherCourses } from "@/lib/course/enrollment";
 import { TopNav } from "@/components/layout/top-nav";
-import { CourseColorChip } from "@/components/course/course-color-chip";
-import { EntryStagger } from "@/components/motion/entry-stagger";
-import { Tilt3D } from "@/components/motion/tilt-3d";
+import { StudentBottomNav } from "@/components/layout/student-bottom-nav";
+import {
+  CourseShowcaseCard,
+  CourseShowcaseEmpty,
+} from "@/components/dashboard/primitives";
+import { TeacherCourseCardMenu } from "@/components/course/course-card-menu";
 
-// Auth-gated DB-fetching page — skip static prerender.
 export const dynamic = "force-dynamic";
 
 export default async function TeacherCoursesPage() {
@@ -19,102 +22,99 @@ export default async function TeacherCoursesPage() {
     redirect("/dashboard");
   }
 
-  const courses = await listTeacherCourses(session.user.id);
+  const [courses, me] = await Promise.all([
+    listTeacherCourses(session.user.id),
+    db.user.findUnique({
+      where: { id: session.user.id },
+      select: { profileImageId: true },
+    }),
+  ]);
+  const hasAvatar = Boolean(me?.profileImageId);
 
   return (
     <div className="min-h-screen bg-bg">
       <TopNav session={session} />
 
-      <main className="mx-auto max-w-6xl animate-fade-in px-6 py-10">
-        <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+      <main className="mx-auto max-w-6xl animate-fade-in px-4 py-8 sm:px-6 md:py-10">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-1 text-xs font-medium text-black/50 transition hover:text-black hover:no-underline"
+        >
+          <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />
+          กลับไป Dashboard
+        </Link>
+
+        <div className="mt-5 flex flex-wrap items-end justify-between gap-4">
           <div>
             <div className="badge mb-2">ครูผู้สอน</div>
             <h1
-              className="text-3xl font-medium text-black md:text-4xl"
+              className="text-3xl font-semibold text-black md:text-4xl"
               style={{ letterSpacing: "-0.03em" }}
             >
               วิชาที่สอน
             </h1>
-            <p className="mt-1 text-sm text-black/60">
-              จัดการรายวิชาทั้งหมดของคุณ — สร้างรหัสเข้าห้อง, ดูสมาชิก
+            <p className="mt-1 text-sm text-black/55">
+              จัดการรายวิชา รหัสเข้าห้อง และสมาชิกในรูปแบบการ์ดเดียวกับหน้า
+              Dashboard
             </p>
           </div>
           <Link href="/teacher/courses/new" className="btn-primary btn-sm">
-            <Plus className="h-4 w-4" />
+            <Plus className="h-4 w-4" aria-hidden="true" />
             สร้างวิชาใหม่
           </Link>
         </div>
 
-        {courses.length === 0 ? (
-          <div className="card-flat p-10 text-center">
-            <BookOpen className="mx-auto mb-3 h-10 w-10 text-black/20" />
-            <h2
-              className="font-medium text-black"
-              style={{ letterSpacing: "-0.02em" }}
-            >
-              ยังไม่มีวิชาที่สอน
-            </h2>
-            <p className="mt-1 text-sm text-black/60">
-              เริ่มต้นด้วยการสร้างวิชาแรกของคุณ
-            </p>
-            <Link href="/teacher/courses/new" className="btn-primary mt-5">
-              <Plus className="h-4 w-4" />
-              สร้างวิชาใหม่
-            </Link>
-          </div>
-        ) : (
-          <EntryStagger className="grid gap-4 md:grid-cols-2">
-            {courses.map((c) => (
-              <Tilt3D key={c.id} maxDeg={6}>
-                <Link
+        <section className="mt-7">
+          {courses.length === 0 ? (
+            <CourseShowcaseEmpty
+              href="/teacher/courses/new"
+              title="ยังไม่มีวิชาที่สอน"
+              hint="สร้างวิชาแรก แล้วแชร์รหัสห้องให้นักเรียนเข้าร่วม"
+              actionLabel="สร้างวิชา"
+            />
+          ) : (
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              {courses.map((c) => (
+                <CourseShowcaseCard
+                  key={c.id}
                   href={`/teacher/courses/${c.id}`}
-                  className="card relative flex p-5 hover:no-underline"
-                >
-                  {/* Teacher list — 4px course colour marker (ADR-0028 § 8). */}
-                  <CourseColorChip
-                    classId={c.class.id}
-                    variant="marker"
-                    className="mr-4"
-                  />
-                  <div className="flex-1">
-                    <div className="mb-3 flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <h3
-                          className="font-medium text-black"
-                          style={{ letterSpacing: "-0.01em" }}
-                        >
-                          {c.name}
-                        </h3>
-                        <p className="mt-0.5 text-sm text-black/60">
-                          ห้อง {c.class.name} · {c.term.name} · {c.creditHours}{" "}
-                          หน่วยกิต
-                        </p>
-                      </div>
-                      <span
-                        className={
-                          "shrink-0 " +
-                          (c.codeActive ? "badge-info badge" : "badge")
-                        }
-                      >
-                        {c.codeActive ? "เปิดรับ" : "ปิดรับ"}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between border-t border-black/[0.06] pt-3 text-xs">
-                      <span className="font-mono text-black/60">
-                        {c.classCode}
-                      </span>
-                      <span className="inline-flex items-center gap-1 text-black/60">
-                        <Users className="h-3.5 w-3.5" />
-                        {c._count.enrollments} คน
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              </Tilt3D>
-            ))}
-          </EntryStagger>
-        )}
+                  title={c.name}
+                  subtitle={c.class.name}
+                  badge={yearLabelFromTerm(c.term.name)}
+                  classId={c.class.id}
+                  avatarUserId={session.user.id}
+                  hasAvatar={hasAvatar}
+                  avatarAlt={`ครู ${c.teacher.firstName} ${c.teacher.lastName}`}
+                  notice={
+                    c.codeActive ? `รหัส ${c.classCode}` : "ปิดรับนักเรียน"
+                  }
+                  noticeTone={c.codeActive ? "success" : "muted"}
+                  stats={[
+                    { value: c._count.enrollments, label: "นักเรียน" },
+                    { value: c.creditHours, label: "หน่วยกิต" },
+                    { value: c.codeActive ? "เปิด" : "ปิด", label: "รับเข้า" },
+                  ]}
+                  actionLabel="ดูข้อมูล"
+                  menu={
+                    <TeacherCourseCardMenu
+                      courseId={c.id}
+                      courseName={c.name}
+                    />
+                  }
+                />
+              ))}
+            </div>
+          )}
+        </section>
+        <div className="h-20 md:hidden" />
       </main>
+
+      <StudentBottomNav role="teacher" />
     </div>
   );
+}
+
+function yearLabelFromTerm(termName: string): string {
+  const year = termName.match(/\d{4}/)?.[0];
+  return year ? `ปี ${year}` : termName;
 }

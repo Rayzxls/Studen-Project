@@ -42,8 +42,10 @@ const ACTION_LABEL_TH: Record<AuditEvent, string> = {
   CLASS_CODE_EXPIRY_SET: "ตั้งเวลาหมดอายุ Class Code",
   // Course Membership
   COURSE_MEMBER_JOINED: "นักเรียนเข้าห้อง",
+  COURSE_MEMBER_LEFT: "นักเรียนออกจากวิชา",
   COURSE_MEMBER_REMOVED: "นำนักเรียนออกจากห้อง",
   COURSE_MEMBER_RESTORED_BY_REJOIN: "นักเรียนกลับเข้าห้องอัตโนมัติ",
+  COURSE_OFFERING_ARCHIVED: "ครูยกเลิกวิชา",
   // Scoring
   SCORE_ITEM_PUBLISHED: "เผยแพร่รายการคะแนน",
   SCORE_EDIT_AFTER_PUBLISH: "แก้คะแนนหลังเผยแพร่",
@@ -54,6 +56,12 @@ const ACTION_LABEL_TH: Record<AuditEvent, string> = {
   // Assignment + Submission
   ASSIGNMENT_UPDATED: "ยกเลิกการนับคะแนนของการบ้าน",
   SUBMISSION_RETURNED: "ส่งงานกลับให้นักเรียนแก้",
+  SUBMISSION_WITHDRAWN: "นักเรียนยกเลิกการส่งงาน",
+  // Profile (Phase 13)
+  DISPLAY_NAME_CHANGED: "เปลี่ยนชื่อที่แสดง",
+  PROFILE_IMAGE_CHANGED: "เปลี่ยนรูปโปรไฟล์",
+  PROFILE_IMAGE_DELETED: "ลบรูปโปรไฟล์ของตัวเอง",
+  PROFILE_IMAGE_RESET_BY_ADMIN: "Admin รีเซ็ตรูปโปรไฟล์",
   // Moderation
   COMMENT_MODERATED: "ลบข้อความโดยผู้ดูแล",
   // Material + Announcement

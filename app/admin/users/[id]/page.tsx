@@ -5,9 +5,10 @@ import { requireRole } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { renderAuditLog } from "@/lib/audit/render";
 import { ResetPasswordCard } from "@/components/admin/reset-password-card";
+import { ResetProfileImageCard } from "@/components/admin/reset-profile-image-card";
+import { UserAvatar } from "@/components/profile/user-avatar";
 import { currentTerm, getStudentStats } from "@/lib/dashboard/queries";
 import { getStudentTermSnapshot } from "@/lib/scoring/queries";
-import { termGpa } from "@/lib/scoring/term-gpa";
 import { gradeForCourseOffering } from "@/lib/scoring/calc";
 import { DEFAULT_GRADE_THRESHOLDS } from "@/lib/scoring/constants";
 import { getAttendanceStatsForStudent } from "@/lib/attendance/queries";
@@ -36,6 +37,7 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
       role: true,
       mustResetPwd: true,
       isActive: true,
+      profileImageId: true,
       createdAt: true,
       updatedAt: true,
       deletedAt: true,
@@ -103,7 +105,6 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
   const term = await currentTerm();
 
   let studentStats = null;
-  let gpaResult = null;
   let courseDetailsList: {
     courseId: string;
     attendanceRate: number | null;
@@ -119,7 +120,6 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
       getStudentTermSnapshot(user.id, term.id),
     ]);
     studentStats = stats;
-    gpaResult = termGpa(snapshot.bundles);
 
     const detailsPromises = snapshot.rows.map(async (r, i) => {
       const b = snapshot.bundles[i]!;
@@ -237,17 +237,24 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
 
       <header className="card p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1
-              className="text-2xl font-medium text-black"
-              style={{ letterSpacing: "-0.02em" }}
-            >
-              {displayName}
-            </h1>
-            <p className="mt-1 flex items-center gap-2 text-sm text-black/60">
-              <Mail className="h-3.5 w-3.5" />
-              {user.teacher?.email ?? user.identifier}
-            </p>
+          <div className="flex items-center gap-4">
+            <UserAvatar
+              userId={user.id}
+              hasImage={user.profileImageId !== null}
+              size={56}
+            />
+            <div>
+              <h1
+                className="text-2xl font-medium text-black"
+                style={{ letterSpacing: "-0.02em" }}
+              >
+                {displayName}
+              </h1>
+              <p className="mt-1 flex items-center gap-2 text-sm text-black/60">
+                <Mail className="h-3.5 w-3.5" />
+                {user.teacher?.email ?? user.identifier}
+              </p>
+            </div>
           </div>
           <div className="flex flex-wrap gap-2">
             <RoleBadge role={user.role} />
@@ -276,7 +283,14 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
 
       {/* Reset password card — full reveal-once flow */}
       {!isSelf && !user.deletedAt && (
-        <ResetPasswordCard userId={user.id} displayName={displayName} />
+        <div id="reset-password" className="scroll-mt-24">
+          <ResetPasswordCard userId={user.id} displayName={displayName} />
+        </div>
+      )}
+
+      {/* Avatar moderation — only when the target actually has one */}
+      {!isSelf && !user.deletedAt && user.profileImageId !== null && (
+        <ResetProfileImageCard userId={user.id} userName={displayName} />
       )}
       {isSelf && (
         <div className="card-flat p-4 text-xs text-black/50">
@@ -373,16 +387,6 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
                   studentStats.attendanceRate !== null
                     ? `${studentStats.attendanceRate}%`
                     : "—"
-                }
-              />
-            )}
-            {gpaResult && (
-              <Row
-                label="เกรดเฉลี่ย (GPA เทอมนี้)"
-                value={
-                  gpaResult.value !== null
-                    ? gpaResult.value.toFixed(2)
-                    : "ยังไม่คำนวณ (รอประกาศคะแนน)"
                 }
               />
             )}

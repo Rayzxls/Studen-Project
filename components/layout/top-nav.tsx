@@ -1,8 +1,12 @@
 import Link from "next/link";
 import type { Role } from "@prisma/client";
+import { Palette, LogOut, UserRound } from "lucide-react";
 import { signOut } from "@/lib/auth";
+import { db } from "@/lib/db/client";
 import { Bell } from "@/components/notification/bell";
 import { BeagleLogo } from "@/components/landing/beagle-logo";
+import { UserAvatar } from "@/components/profile/user-avatar";
+import { ThemeModeControl } from "@/components/theme/theme-mode-control";
 
 /**
  * Shared app chrome — Phase 7 · P7-5
@@ -43,8 +47,15 @@ export async function TopNav({
   showRoleBadge = false,
   maxWidth = "max-w-6xl",
 }: TopNavProps) {
-  const showSignOut = Boolean(session);
   const showBellResolved = showBell && Boolean(session);
+
+  // Avatar-only account entry (Phase 13) — no name in the chrome.
+  const me = session
+    ? await db.user.findUnique({
+        where: { id: session.user.id },
+        select: { profileImageId: true, themeMode: true },
+      })
+    : null;
 
   return (
     <header className="glass-nav sticky top-0 z-30 border-b border-black/[0.06] print:hidden">
@@ -73,17 +84,60 @@ export async function TopNav({
           {showBellResolved && session && (
             <Bell userId={session.user.id} role={session.user.role} />
           )}
-          {showSignOut && (
-            <form
-              action={async () => {
-                "use server";
-                await signOut({ redirectTo: "/login" });
-              }}
-            >
-              <button type="submit" className="btn-ghost btn-sm">
-                ออกจากระบบ
-              </button>
-            </form>
+          {session && (
+            <details className="group relative ml-1">
+              <summary
+                className="grid h-10 w-10 cursor-pointer list-none place-items-center rounded-full transition-colors hover:bg-black/[0.04] [&::-webkit-details-marker]:hidden"
+                aria-label="เมนูบัญชีผู้ใช้"
+              >
+                <UserAvatar
+                  userId={session.user.id}
+                  hasImage={Boolean(me?.profileImageId)}
+                  size={32}
+                />
+              </summary>
+              <div className="absolute right-0 z-40 mt-1.5 w-52 overflow-hidden rounded-2xl border border-black/[0.08] bg-white p-1.5 shadow-lift">
+                <Link
+                  href="/profile"
+                  className="flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-sm text-black transition-colors hover:bg-black/[0.04] hover:no-underline"
+                >
+                  <UserRound
+                    className="h-4 w-4 text-black/45"
+                    aria-hidden="true"
+                  />
+                  โปรไฟล์
+                </Link>
+                <div className="rounded-xl px-2.5 py-2">
+                  <div className="mb-2 flex items-center gap-2 text-xs font-medium text-black/55">
+                    <Palette className="h-4 w-4" aria-hidden="true" />
+                    ธีม
+                  </div>
+                  <ThemeModeControl
+                    initialMode={me?.themeMode ?? "SYSTEM"}
+                    density="compact"
+                  />
+                </div>
+                <span className="hidden" title="โหมดมืดกำลังมาเร็ว ๆ นี้">
+                  <Palette className="h-4 w-4" aria-hidden="true" />
+                  ธีม · เร็ว ๆ นี้
+                </span>
+                <div className="my-1 border-t border-black/[0.06]" />
+                <form
+                  action={async () => {
+                    "use server";
+                    await signOut({ redirectTo: "/login" });
+                  }}
+                >
+                  <button
+                    type="submit"
+                    className="flex min-h-10 w-full items-center gap-2.5 rounded-xl px-3 text-left text-sm text-red-700 transition-colors hover:bg-red-50"
+                  >
+                    <LogOut className="h-4 w-4" aria-hidden="true" />
+                    ออกจากระบบ
+                  </button>
+                </form>
+              </div>
+            </details>
           )}
         </div>
       </div>

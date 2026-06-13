@@ -15,6 +15,7 @@ export interface StudentListItem {
   className: string | null;
   isActive: boolean;
   createdAt: Date;
+  hasAvatar: boolean;
   enrolledCount: number;
 }
 
@@ -66,7 +67,9 @@ export async function listStudents(
         studentId: true,
         firstName: true,
         lastName: true,
-        user: { select: { isActive: true, createdAt: true } },
+        user: {
+          select: { isActive: true, createdAt: true, profileImageId: true },
+        },
         class: { select: { name: true } },
         _count: { select: { enrollments: true } },
       },
@@ -82,6 +85,7 @@ export async function listStudents(
       className: s.class?.name ?? null,
       isActive: s.user.isActive,
       createdAt: s.user.createdAt,
+      hasAvatar: s.user.profileImageId !== null,
       enrolledCount: s._count.enrollments,
     })),
     total,

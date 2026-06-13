@@ -27,12 +27,22 @@
 .DS_Store
 *.pem
 Thumbs.db
+__pycache__/
+*.pyc
 
 # debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+
+# local agent dev-server logs + scratch dirs
+next-dev-*.log
+next-dev-*.err.log
+vite-dev-*.log
+vite-dev-*.err.log
+.local-storage/
+.codex/
 
 # env files (commit only .env.example)
 .env*

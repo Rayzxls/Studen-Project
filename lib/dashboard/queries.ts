@@ -89,7 +89,7 @@ export async function getTeacherStats(
     };
   }
   const courses = await db.courseOffering.findMany({
-    where: { teacherId: teacherUserId, termId: term.id },
+    where: { teacherId: teacherUserId, termId: term.id, archivedAt: null },
     select: {
       id: true,
       _count: { select: { enrollments: { where: { removedAt: null } } } },
@@ -155,7 +155,7 @@ export async function getStudentStats(
     where: {
       studentId: studentUserId,
       removedAt: null,
-      course: { termId: term.id },
+      course: { termId: term.id, archivedAt: null },
     },
     select: { id: true, courseOfferingId: true },
   });
@@ -251,7 +251,7 @@ export async function getTeacherTodaySchedule(
   const slots = await db.timetableSlot.findMany({
     where: {
       dayOfWeek,
-      course: { teacherId: teacherUserId, termId: term.id },
+      course: { teacherId: teacherUserId, termId: term.id, archivedAt: null },
     },
     orderBy: { startTime: "asc" },
     select: {
@@ -297,6 +297,7 @@ export async function getStudentTodaySchedule(
       dayOfWeek,
       course: {
         termId: term.id,
+        archivedAt: null,
         enrollments: { some: { studentId: studentUserId, removedAt: null } },
       },
     },

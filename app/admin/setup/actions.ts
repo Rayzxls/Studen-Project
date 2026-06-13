@@ -10,6 +10,9 @@ import {
   deleteAcademicYear,
   deleteTerm,
   deleteClass,
+  updateAcademicYear,
+  updateClass,
+  updateTerm,
 } from "@/lib/admin/setup";
 import { createSingleTeacher } from "@/lib/admin/teacher-create-single";
 import { HttpError, ValidationError } from "@/lib/errors";
@@ -65,6 +68,35 @@ export async function createAcademicYearAction(
 }
 
 export type DeleteAcademicYearState = BaseState;
+
+export type UpdateAcademicYearState = BaseState;
+
+export async function updateAcademicYearAction(
+  _prev: UpdateAcademicYearState,
+  formData: FormData
+): Promise<UpdateAcademicYearState> {
+  const session = await requireRole(["ADMIN"]);
+  const meta = await getRequestMeta();
+  const id = String(formData.get("id") ?? "");
+  const name = String(formData.get("name") ?? "");
+  const isActive = formData.get("isActive") === "on";
+  try {
+    await updateAcademicYear(
+      { id, name, isActive },
+      {
+        actorUserId: session.user.id,
+        ipAddress: meta.ipAddress ?? undefined,
+        userAgent: meta.userAgent ?? undefined,
+      }
+    );
+  } catch (err) {
+    if (err instanceof ValidationError) return { fieldErrors: err.errors };
+    if (err instanceof HttpError) return { error: err.message };
+    throw err;
+  }
+  revalidatePath("/admin/setup");
+  return { ok: true };
+}
 
 export async function deleteAcademicYearAction(
   _prev: DeleteAcademicYearState,
@@ -137,6 +169,48 @@ export async function createTermAction(
 
 export type DeleteTermState = BaseState;
 
+export type UpdateTermState = BaseState;
+
+export async function updateTermAction(
+  _prev: UpdateTermState,
+  formData: FormData
+): Promise<UpdateTermState> {
+  const session = await requireRole(["ADMIN"]);
+  const meta = await getRequestMeta();
+  const id = String(formData.get("id") ?? "");
+  const number = Number.parseInt(String(formData.get("number") ?? "0"), 10);
+  const startStr = String(formData.get("startDate") ?? "");
+  const endStr = String(formData.get("endDate") ?? "");
+  const isActive = formData.get("isActive") === "on";
+  if (!startStr || !endStr) {
+    return {
+      fieldErrors: { startDate: "ระบุวันที่เริ่มต้น/สิ้นสุด" },
+    };
+  }
+  try {
+    await updateTerm(
+      {
+        id,
+        number,
+        startDate: new Date(startStr),
+        endDate: new Date(endStr),
+        isActive,
+      },
+      {
+        actorUserId: session.user.id,
+        ipAddress: meta.ipAddress ?? undefined,
+        userAgent: meta.userAgent ?? undefined,
+      }
+    );
+  } catch (err) {
+    if (err instanceof ValidationError) return { fieldErrors: err.errors };
+    if (err instanceof HttpError) return { error: err.message };
+    throw err;
+  }
+  revalidatePath("/admin/setup");
+  return { ok: true };
+}
+
 export async function deleteTermAction(
   _prev: DeleteTermState,
   formData: FormData
@@ -197,6 +271,38 @@ export async function createClassAction(
 }
 
 export type DeleteClassState = BaseState;
+
+export type UpdateClassState = BaseState;
+
+export async function updateClassAction(
+  _prev: UpdateClassState,
+  formData: FormData
+): Promise<UpdateClassState> {
+  const session = await requireRole(["ADMIN"]);
+  const meta = await getRequestMeta();
+  const id = String(formData.get("id") ?? "");
+  const name = String(formData.get("name") ?? "");
+  const gradeLevel = String(formData.get("gradeLevel") ?? "");
+  const homeroomTeacherIdRaw = String(formData.get("homeroomTeacherId") ?? "");
+  const homeroomTeacherId =
+    homeroomTeacherIdRaw === "" ? null : homeroomTeacherIdRaw;
+  try {
+    await updateClass(
+      { id, name, gradeLevel, homeroomTeacherId },
+      {
+        actorUserId: session.user.id,
+        ipAddress: meta.ipAddress ?? undefined,
+        userAgent: meta.userAgent ?? undefined,
+      }
+    );
+  } catch (err) {
+    if (err instanceof ValidationError) return { fieldErrors: err.errors };
+    if (err instanceof HttpError) return { error: err.message };
+    throw err;
+  }
+  revalidatePath("/admin/setup");
+  return { ok: true };
+}
 
 export async function deleteClassAction(
   _prev: DeleteClassState,

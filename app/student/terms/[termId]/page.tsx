@@ -19,7 +19,7 @@ interface PageProps {
  * Specific term view — accessed from the history dropdown on the default
  * page. We re-validate that the student is allowed to view this term
  * (must have any enrollment, active OR removed). Removed-enrollment Terms
- * still show up in the list — the live GPA filters back down to active.
+ * still show up in the list — the course rows filter back down to active.
  */
 export default async function StudentTermPage({ params }: PageProps) {
   let session;

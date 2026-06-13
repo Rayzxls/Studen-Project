@@ -2,13 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
-import {
-  getActiveAcademicYear,
-  getClassesByYear,
-  getTermsByYear,
-  getTeacherRecentClassIds,
-  getTeacherHomeroomClassId,
-} from "@/lib/course/queries";
+import { getActiveAcademicYear, getTermsByYear } from "@/lib/course/queries";
 import { TopNav } from "@/components/layout/top-nav";
 import { CreateCourseForm } from "./form";
 
@@ -45,12 +39,7 @@ export default async function NewCoursePage() {
     );
   }
 
-  const [classes, terms, recentClassIds, homeroomClassId] = await Promise.all([
-    getClassesByYear(year.id),
-    getTermsByYear(year.id),
-    getTeacherRecentClassIds(session.user.id),
-    getTeacherHomeroomClassId(session.user.id),
-  ]);
+  const terms = await getTermsByYear(year.id);
 
   return (
     <div className="min-h-screen bg-bg">
@@ -73,16 +62,12 @@ export default async function NewCoursePage() {
           สร้างวิชาใหม่
         </h1>
         <p className="mt-1 text-sm text-black/60">
-          ตั้งชื่อ + กำหนดหน่วยกิตเอง — ระบบสร้างรหัสห้องให้อัตโนมัติ
+          ตั้งชื่อวิชา กรอกชั้น/ห้อง และกำหนดหน่วยกิตเอง —
+          ระบบสร้างรหัสห้องให้อัตโนมัติ
         </p>
 
         <div className="mt-8">
-          <CreateCourseForm
-            classes={classes}
-            terms={terms}
-            recentClassIds={recentClassIds}
-            homeroomClassId={homeroomClassId}
-          />
+          <CreateCourseForm terms={terms} />
         </div>
       </main>
     </div>

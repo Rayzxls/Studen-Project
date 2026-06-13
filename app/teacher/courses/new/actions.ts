@@ -22,8 +22,8 @@ export async function createCourseAction(
     name: String(formData.get("name") ?? ""),
     subjectCode: String(formData.get("subjectCode") ?? ""),
     gradeLevel: String(formData.get("gradeLevel") ?? ""),
+    roomName: String(formData.get("roomName") ?? ""),
     creditHours: Number(formData.get("creditHours") ?? 0),
-    classId: String(formData.get("classId") ?? ""),
     termId: String(formData.get("termId") ?? ""),
   };
 
@@ -46,8 +46,8 @@ export async function createCourseAction(
       name: parsed.data.name,
       subjectCode: parsed.data.subjectCode || undefined,
       gradeLevel: parsed.data.gradeLevel,
+      roomName: parsed.data.roomName,
       creditHours: parsed.data.creditHours,
-      classId: parsed.data.classId,
       termId: parsed.data.termId,
       ipAddress: meta.ipAddress ?? undefined,
       userAgent: meta.userAgent ?? undefined,

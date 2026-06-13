@@ -7,6 +7,7 @@ import {
   setClassCodeActive,
   setClassCodeExpiry,
 } from "@/lib/course/class-code";
+import { archiveCourseOffering } from "@/lib/course/archive";
 import {
   createTimetableSlot,
   deleteTimetableSlot,
@@ -21,6 +22,12 @@ export type ClassCodeActionState = {
 };
 
 export type TimetableSlotActionState = {
+  fieldErrors?: Record<string, string>;
+  error?: string;
+  ok?: boolean;
+};
+
+export type ArchiveCourseState = {
   fieldErrors?: Record<string, string>;
   error?: string;
   ok?: boolean;
@@ -222,6 +229,37 @@ export async function deleteSlotAction(
     throw err;
   }
 
+  revalidateAll(courseId);
+  return { ok: true };
+}
+
+export async function archiveCourseAction(
+  _prev: ArchiveCourseState,
+  formData: FormData
+): Promise<ArchiveCourseState> {
+  const session = await requireRole(["TEACHER"]);
+  const meta = await getRequestMeta();
+
+  const courseId = readCourseId(formData);
+  const reason = String(formData.get("reason") ?? "");
+  if (!courseId) return { error: "missing_course_id" };
+
+  try {
+    await archiveCourseOffering({
+      courseOfferingId: courseId,
+      actorUserId: session.user.id,
+      reason,
+      ipAddress: meta.ipAddress ?? undefined,
+      userAgent: meta.userAgent ?? undefined,
+    });
+  } catch (err) {
+    if (err instanceof ValidationError) return { fieldErrors: err.errors };
+    if (err instanceof HttpError) return { error: err.message };
+    throw err;
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/teacher/courses");
   revalidateAll(courseId);
   return { ok: true };
 }

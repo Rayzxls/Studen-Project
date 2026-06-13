@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth/guards";
-import { submitVersion } from "@/lib/assignment/submission";
+import { submitVersion, withdrawSubmission } from "@/lib/assignment/submission";
 import { getRequestMeta } from "@/lib/utils/request";
 import { HttpError, ValidationError } from "@/lib/errors";
 
@@ -27,6 +27,7 @@ export type SubmitVersionState = {
   fieldErrors?: Record<string, string>;
   error?: string;
   ok?: boolean;
+  submittedAt?: string;
 };
 
 export async function submitVersionAction(
@@ -85,6 +86,43 @@ export async function submitVersionAction(
     );
   } catch (err) {
     if (err instanceof ValidationError) return { fieldErrors: err.errors };
+    if (err instanceof HttpError) return { error: err.message };
+    throw err;
+  }
+
+  revalidatePath(`/student/courses/${courseId}/assignments/${assignmentId}`);
+  return { ok: true, submittedAt: new Date().toISOString() };
+}
+
+export type WithdrawSubmissionState = {
+  error?: string;
+  ok?: boolean;
+};
+
+export async function withdrawSubmissionAction(
+  _prev: WithdrawSubmissionState,
+  formData: FormData
+): Promise<WithdrawSubmissionState> {
+  const session = await requireRole(["STUDENT"]);
+  const meta = await getRequestMeta();
+
+  const courseId = String(formData.get("courseId") ?? "");
+  const assignmentId = String(formData.get("assignmentId") ?? "");
+  const submissionId = String(formData.get("submissionId") ?? "");
+  if (!courseId || !assignmentId || !submissionId) {
+    return { error: "missing_context_id" };
+  }
+
+  try {
+    await withdrawSubmission(
+      { assignmentId, submissionId },
+      {
+        actorUserId: session.user.id,
+        ipAddress: meta.ipAddress ?? undefined,
+        userAgent: meta.userAgent ?? undefined,
+      }
+    );
+  } catch (err) {
     if (err instanceof HttpError) return { error: err.message };
     throw err;
   }

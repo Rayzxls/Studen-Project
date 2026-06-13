@@ -121,6 +121,30 @@ export async function markNotificationRead(args: {
 }
 
 /**
+ * Mark a bounded set of visible bell rows read. The recipient predicate keeps
+ * the operation scoped to the signed-in user, and unread/read rows are
+ * idempotent so client retries are harmless.
+ */
+export async function markVisibleNotificationsRead(args: {
+  notificationIds: string[];
+  recipientId: string;
+}): Promise<number> {
+  const ids = Array.from(new Set(args.notificationIds)).filter(Boolean);
+  if (ids.length === 0) return 0;
+
+  const result = await db.notification.updateMany({
+    where: {
+      id: { in: ids },
+      recipientId: args.recipientId,
+      readAt: null,
+      suppressedAt: null,
+    },
+    data: { readAt: new Date() },
+  });
+  return result.count;
+}
+
+/**
  * Mark every unread notification for a recipient read. Q10.1 = A:
  * global scope across all courses — no per-course filter.
  */

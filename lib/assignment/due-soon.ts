@@ -44,6 +44,7 @@ export async function getDueSoonForStudent(
       // duplicate scope query — the join filters down to "courses this
       // student belongs to right now").
       course: {
+        archivedAt: null,
         term: { isActive: true },
         enrollments: {
           some: { studentId: studentUserId, removedAt: null },

@@ -39,8 +39,23 @@ export interface FeedItem {
   bodyPreview?: string | null;
   /** Display name of the teacher who posted ("ครูสมชาย ใจดี"). */
   authorName?: string | null;
+  /** Real user id for rendering the author's profile avatar. */
+  authorUserId?: string | null;
+  /** True when the author has uploaded a profile image. */
+  authorHasAvatar?: boolean;
   /** Total count of file attachments + link URLs on the source. */
   attachmentCount?: number;
+  /** File attachments rendered inline in course feed cards. */
+  attachments?: FeedAttachment[];
+  /** Reference links rendered inline in course feed cards. */
+  linkUrls?: string[];
+}
+
+export interface FeedAttachment {
+  id: string;
+  originalFilename: string;
+  sizeBytes: number;
+  mimeType: string;
 }
 
 export interface FeedCursor {
@@ -128,11 +143,20 @@ async function aggregateFeed(
               courseOfferingId: true,
               title: true,
               description: true,
+              fileAttachmentIds: true,
+              linkUrls: true,
               dueAt: true,
               createdAt: true,
               course: {
                 select: {
-                  teacher: { select: { firstName: true, lastName: true } },
+                  teacher: {
+                    select: {
+                      userId: true,
+                      firstName: true,
+                      lastName: true,
+                      user: { select: { profileImageId: true } },
+                    },
+                  },
                 },
               },
             },
@@ -162,6 +186,8 @@ async function aggregateFeed(
               postedAt: true,
               postedBy: {
                 select: {
+                  id: true,
+                  profileImageId: true,
                   teacher: { select: { firstName: true, lastName: true } },
                   admin: { select: { firstName: true, lastName: true } },
                 },
@@ -193,6 +219,8 @@ async function aggregateFeed(
               postedAt: true,
               postedBy: {
                 select: {
+                  id: true,
+                  profileImageId: true,
                   teacher: { select: { firstName: true, lastName: true } },
                   admin: { select: { firstName: true, lastName: true } },
                 },
@@ -224,7 +252,14 @@ async function aggregateFeed(
               publishedAt: true,
               course: {
                 select: {
-                  teacher: { select: { firstName: true, lastName: true } },
+                  teacher: {
+                    select: {
+                      userId: true,
+                      firstName: true,
+                      lastName: true,
+                      user: { select: { profileImageId: true } },
+                    },
+                  },
                 },
               },
             },
@@ -232,6 +267,25 @@ async function aggregateFeed(
         : Promise.resolve(emptyResult),
     ]
   );
+
+  const fileIds = uniqueStrings([
+    ...assignments.flatMap((a) => jsonStringArray(a.fileAttachmentIds)),
+    ...materials.flatMap((m) => jsonStringArray(m.fileAttachmentIds)),
+    ...announcements.flatMap((an) => jsonStringArray(an.fileAttachmentIds)),
+  ]);
+  const fileRows =
+    fileIds.length > 0
+      ? await db.fileAttachment.findMany({
+          where: { id: { in: fileIds }, deletedAt: null },
+          select: {
+            id: true,
+            originalFilename: true,
+            sizeBytes: true,
+            mimeType: true,
+          },
+        })
+      : [];
+  const fileById = new Map(fileRows.map((file) => [file.id, file]));
 
   const merged: FeedItem[] = [
     ...assignments.map(
@@ -244,7 +298,12 @@ async function aggregateFeed(
         detail: a.dueAt ? a.dueAt.toISOString() : null,
         bodyPreview: truncatePreview(a.description),
         authorName: teacherFullName(a.course?.teacher),
-        attachmentCount: 0,
+        authorUserId: a.course?.teacher?.userId ?? null,
+        authorHasAvatar: Boolean(a.course?.teacher?.user.profileImageId),
+        attachments: attachmentsFor(a.fileAttachmentIds, fileById),
+        linkUrls: jsonStringArray(a.linkUrls),
+        attachmentCount:
+          jsonArrayLength(a.fileAttachmentIds) + jsonArrayLength(a.linkUrls),
       })
     ),
     ...materials.map(
@@ -258,6 +317,10 @@ async function aggregateFeed(
         authorName:
           teacherFullName(m.postedBy?.teacher) ??
           adminFullName(m.postedBy?.admin),
+        authorUserId: m.postedBy?.id ?? null,
+        authorHasAvatar: Boolean(m.postedBy?.profileImageId),
+        attachments: attachmentsFor(m.fileAttachmentIds, fileById),
+        linkUrls: jsonStringArray(m.linkUrls),
         attachmentCount:
           jsonArrayLength(m.fileAttachmentIds) + jsonArrayLength(m.linkUrls),
       })
@@ -273,6 +336,10 @@ async function aggregateFeed(
         authorName:
           teacherFullName(an.postedBy?.teacher) ??
           adminFullName(an.postedBy?.admin),
+        authorUserId: an.postedBy?.id ?? null,
+        authorHasAvatar: Boolean(an.postedBy?.profileImageId),
+        attachments: attachmentsFor(an.fileAttachmentIds, fileById),
+        linkUrls: jsonStringArray(an.linkUrls),
         attachmentCount:
           jsonArrayLength(an.fileAttachmentIds) + jsonArrayLength(an.linkUrls),
       })
@@ -286,6 +353,8 @@ async function aggregateFeed(
         title: s.name,
         bodyPreview: null,
         authorName: teacherFullName(s.course?.teacher),
+        authorUserId: s.course?.teacher?.userId ?? null,
+        authorHasAvatar: Boolean(s.course?.teacher?.user.profileImageId),
         attachmentCount: 0,
       })
     ),
@@ -349,4 +418,31 @@ function truncatePreview(body: string | null | undefined): string | null {
 /** Count items inside Prisma Json column when it's an array. */
 function jsonArrayLength(v: unknown): number {
   return Array.isArray(v) ? v.length : 0;
+}
+
+function jsonStringArray(v: unknown): string[] {
+  return Array.isArray(v)
+    ? v.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
+function uniqueStrings(values: string[]): string[] {
+  return [...new Set(values)];
+}
+
+function attachmentsFor(
+  rawIds: unknown,
+  fileById: Map<
+    string,
+    {
+      id: string;
+      originalFilename: string;
+      sizeBytes: number;
+      mimeType: string;
+    }
+  >
+): FeedAttachment[] {
+  return jsonStringArray(rawIds)
+    .map((id) => fileById.get(id))
+    .filter((file): file is FeedAttachment => Boolean(file));
 }

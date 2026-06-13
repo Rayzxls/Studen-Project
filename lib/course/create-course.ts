@@ -15,20 +15,16 @@ export async function createCourseOffering(params: {
   name: string;
   subjectCode?: string;
   gradeLevel: string;
+  roomName: string;
   creditHours: number;
-  classId: string;
   termId: string;
   ipAddress?: string;
   userAgent?: string;
 }): Promise<{ id: string; classCode: string }> {
-  const [klass, term, teacher] = await Promise.all([
-    db.class.findUnique({
-      where: { id: params.classId },
-      select: { id: true, name: true },
-    }),
+  const [term, teacher] = await Promise.all([
     db.term.findUnique({
       where: { id: params.termId },
-      select: { id: true },
+      select: { id: true, academicYearId: true },
     }),
     db.teacher.findUnique({
       where: { userId: params.teacherUserId },
@@ -36,27 +32,48 @@ export async function createCourseOffering(params: {
     }),
   ]);
 
-  if (!klass) throw new NotFound("class_not_found");
   if (!term) throw new NotFound("term_not_found");
   if (!teacher) throw new NotFound("teacher_not_found");
+
+  const gradeLevel = normalizeGradeLevel(params.gradeLevel);
+  const roomName = normalizeRoomName(params.roomName);
+  const className = formatClassName(gradeLevel, roomName);
 
   // Generate class code hint from subject code (if provided) + class name digits
   const codeHint = params.subjectCode
     ? params.subjectCode.split("-")[0]
     : params.name.replace(/[^A-Za-z0-9]/g, "").slice(0, 4);
-  const hint = `${codeHint}${klass.name.replace(/[^0-9]/g, "")}`;
+  const hint = `${codeHint}${className.replace(/[^0-9]/g, "")}`;
   const classCode = await generateUniqueClassCode(hint);
 
   try {
     const created = await db.$transaction(async (tx) => {
+      const klass = await tx.class.upsert({
+        where: {
+          academicYearId_name: {
+            academicYearId: term.academicYearId,
+            name: className,
+          },
+        },
+        create: {
+          academicYearId: term.academicYearId,
+          name: className,
+          gradeLevel,
+        },
+        update: {
+          gradeLevel,
+        },
+        select: { id: true, name: true },
+      });
+
       const course = await tx.courseOffering.create({
         data: {
           teacherId: params.teacherUserId,
-          classId: params.classId,
+          classId: klass.id,
           termId: params.termId,
           name: params.name,
           subjectCode: params.subjectCode || null,
-          gradeLevel: params.gradeLevel,
+          gradeLevel,
           creditHours: params.creditHours,
           classCode,
           codeActive: true,
@@ -76,9 +93,11 @@ export async function createCourseOffering(params: {
           after: {
             name: params.name,
             subjectCode: params.subjectCode ?? null,
-            gradeLevel: params.gradeLevel,
+            gradeLevel,
+            roomName,
             creditHours: params.creditHours,
-            classId: params.classId,
+            classId: klass.id,
+            className: klass.name,
             termId: params.termId,
             classCode,
           },
@@ -99,4 +118,23 @@ export async function createCourseOffering(params: {
     }
     throw err;
   }
+}
+
+function normalizeGradeLevel(value: string): string {
+  const trimmed = value.trim().replace(/\s+/g, "");
+  const match = trimmed.match(/^(?:ม\.?|มธยม|มัธยม)(\d+)$/i);
+  if (match) return `ม.${match[1]}`;
+  return trimmed;
+}
+
+function normalizeRoomName(value: string): string {
+  return value
+    .trim()
+    .replace(/^ห้อง\s*/i, "")
+    .replace(/\s+/g, "");
+}
+
+function formatClassName(gradeLevel: string, roomName: string): string {
+  if (roomName.includes("/")) return roomName;
+  return `${gradeLevel}/${roomName}`;
 }

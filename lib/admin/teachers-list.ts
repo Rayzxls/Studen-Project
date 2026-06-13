@@ -13,6 +13,7 @@ export interface TeacherListItem {
   email: string;
   isActive: boolean;
   createdAt: Date;
+  hasAvatar: boolean;
   homeroomOf: string | null;
   courseCount: number;
 }
@@ -63,7 +64,9 @@ export async function listTeachers(
         firstName: true,
         lastName: true,
         email: true,
-        user: { select: { isActive: true, createdAt: true } },
+        user: {
+          select: { isActive: true, createdAt: true, profileImageId: true },
+        },
         homeroomOf: { select: { name: true } },
         _count: { select: { courses: true } },
       },
@@ -78,6 +81,7 @@ export async function listTeachers(
       email: t.email,
       isActive: t.user.isActive,
       createdAt: t.user.createdAt,
+      hasAvatar: t.user.profileImageId !== null,
       homeroomOf: t.homeroomOf?.name ?? null,
       courseCount: t._count.courses,
     })),

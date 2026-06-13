@@ -16,12 +16,14 @@ export function CommentComposer({
   scope,
   revalidate,
   placeholder,
+  variant = "default",
 }: {
   ownerType: CommentOwnerType;
   ownerId: string;
   scope: CommentScope;
   revalidate: string;
   placeholder?: string;
+  variant?: "default" | "social";
 }) {
   const [state, formAction, isPending] = useActionState<
     CommentActionState,
@@ -33,8 +35,14 @@ export function CommentComposer({
     if (state.ok) formRef.current?.reset();
   }, [state.ok]);
 
+  const isSocial = variant === "social";
+
   return (
-    <form ref={formRef} action={formAction} className="mt-3 space-y-2">
+    <form
+      ref={formRef}
+      action={formAction}
+      className={isSocial ? "mt-5 space-y-3" : "mt-3 space-y-2"}
+    >
       <input type="hidden" name="ownerType" value={ownerType} />
       <input type="hidden" name="ownerId" value={ownerId} />
       <input type="hidden" name="scope" value={scope} />
@@ -44,8 +52,12 @@ export function CommentComposer({
         required
         minLength={1}
         maxLength={2000}
-        rows={2}
-        className="input"
+        rows={isSocial ? 3 : 2}
+        className={
+          isSocial
+            ? "comment-composer-social w-full resize-none rounded-[24px] border-0 px-5 py-4 text-sm"
+            : "input"
+        }
         placeholder={placeholder ?? "เขียนความคิดเห็น…"}
       />
       {state.fieldErrors?.body && (
@@ -55,7 +67,11 @@ export function CommentComposer({
       <div className="flex justify-end">
         <button
           type="submit"
-          className="btn-primary btn-sm"
+          className={
+            isSocial
+              ? "inline-flex items-center justify-center rounded-full bg-blue-500 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_14px_32px_rgba(10,132,255,0.18)] transition hover:bg-blue-600 hover:shadow-[0_18px_40px_rgba(10,132,255,0.22)] disabled:cursor-not-allowed disabled:opacity-50"
+              : "btn-primary btn-sm"
+          }
           disabled={isPending}
         >
           {isPending ? "กำลังโพสต์…" : "โพสต์ความคิดเห็น"}

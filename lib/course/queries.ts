@@ -46,7 +46,7 @@ export async function getTeacherRecentClassIds(
   limit = 5
 ): Promise<string[]> {
   const courses = await db.courseOffering.findMany({
-    where: { teacherId: teacherUserId },
+    where: { teacherId: teacherUserId, archivedAt: null },
     orderBy: { createdAt: "desc" },
     select: { classId: true },
     take: 30,
@@ -77,7 +77,7 @@ export async function getCourseOfferingForTeacher(
   teacherUserId: string
 ) {
   return db.courseOffering.findFirst({
-    where: { id: courseOfferingId, teacherId: teacherUserId },
+    where: { id: courseOfferingId, teacherId: teacherUserId, archivedAt: null },
     select: {
       id: true,
       name: true,
@@ -90,7 +90,14 @@ export async function getCourseOfferingForTeacher(
       createdAt: true,
       class: { select: { id: true, name: true } },
       term: { select: { name: true } },
-      teacher: { select: { firstName: true, lastName: true } },
+      teacher: {
+        select: {
+          userId: true,
+          firstName: true,
+          lastName: true,
+          user: { select: { profileImageId: true } },
+        },
+      },
       enrollments: {
         orderBy: { enrolledAt: "asc" },
         select: {
@@ -127,6 +134,7 @@ export async function getCourseOfferingForStudent(
   return db.courseOffering.findFirst({
     where: {
       id: courseOfferingId,
+      archivedAt: null,
       enrollments: {
         some: { studentId: studentUserId, removedAt: null },
       },
@@ -140,7 +148,14 @@ export async function getCourseOfferingForStudent(
       createdAt: true,
       class: { select: { id: true, name: true } },
       term: { select: { name: true } },
-      teacher: { select: { firstName: true, lastName: true } },
+      teacher: {
+        select: {
+          userId: true,
+          firstName: true,
+          lastName: true,
+          user: { select: { profileImageId: true } },
+        },
+      },
     },
   });
 }

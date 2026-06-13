@@ -4,6 +4,8 @@ import { ChevronLeft } from "lucide-react";
 import { assert } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { CommentsThread } from "@/components/comment/comments-thread";
+import { SubmissionFilePreview } from "@/components/assignment/submission-file-preview";
+import { SafeExternalLinkButton } from "@/components/link/safe-external-link-button";
 
 /**
  * Teacher per-submission detail — Phase 9 · P9-2
@@ -66,11 +68,32 @@ export default async function TeacherSubmissionDetailPage({
           submittedAt: true,
           textContent: true,
           links: true,
+          fileAttachmentIds: true,
         },
       },
     },
   });
   if (!submission) notFound();
+
+  const fileIds = new Set<string>();
+  for (const version of submission.versions) {
+    for (const fileId of (version.fileAttachmentIds as string[] | null) ?? []) {
+      fileIds.add(fileId);
+    }
+  }
+  const files =
+    fileIds.size > 0
+      ? await db.fileAttachment.findMany({
+          where: { id: { in: Array.from(fileIds) }, deletedAt: null },
+          select: {
+            id: true,
+            originalFilename: true,
+            sizeBytes: true,
+            mimeType: true,
+          },
+        })
+      : [];
+  const fileById = new Map(files.map((file) => [file.id, file]));
 
   const fullName = `${submission.enrollment.student.firstName} ${submission.enrollment.student.lastName}`;
 
@@ -143,12 +166,25 @@ export default async function TeacherSubmissionDetailPage({
                         key={i}
                         className="text-[11px] text-blue-700 hover:underline"
                       >
-                        <a href={href} target="_blank" rel="noreferrer">
+                        <SafeExternalLinkButton
+                          href={href}
+                          className="text-left"
+                        >
                           {href}
-                        </a>
+                        </SafeExternalLinkButton>
                       </li>
                     ))}
                   </ul>
+                )}
+                {((v.fileAttachmentIds as string[] | null) ?? []).length >
+                  0 && (
+                  <SubmissionFilePreview
+                    files={((v.fileAttachmentIds as string[] | null) ?? [])
+                      .map((fileId) => fileById.get(fileId))
+                      .filter((file): file is NonNullable<typeof file> =>
+                        Boolean(file)
+                      )}
+                  />
                 )}
               </li>
             ))}

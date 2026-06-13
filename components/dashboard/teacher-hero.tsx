@@ -7,6 +7,7 @@ import {
 } from "@/lib/dashboard/queries";
 import { AnimatedStat } from "@/components/dashboard/animated-stat";
 import { CourseColorChip } from "@/components/course/course-color-chip";
+import { UserAvatar } from "@/components/profile/user-avatar";
 
 /**
  * TeacherHero — Phase 11D · ADR-0028 § 8 (teacher = medium vibrancy).
@@ -24,9 +25,11 @@ import { CourseColorChip } from "@/components/course/course-color-chip";
 export async function TeacherHero({
   teacherUserId,
   name,
+  hasAvatar = false,
 }: {
   teacherUserId: string;
   name: string;
+  hasAvatar?: boolean;
 }) {
   const [stats, today] = await Promise.all([
     getTeacherStats(teacherUserId),
@@ -66,12 +69,15 @@ export async function TeacherHero({
           </span>
         </div>
 
-        <h1
-          className="mt-4 text-3xl font-semibold text-black md:text-4xl"
-          style={{ letterSpacing: "-0.03em" }}
-        >
-          สวัสดี, {name}
-        </h1>
+        <div className="mt-4 flex items-center gap-3">
+          <UserAvatar userId={teacherUserId} hasImage={hasAvatar} size={44} />
+          <h1
+            className="text-3xl font-semibold text-black md:text-4xl"
+            style={{ letterSpacing: "-0.03em" }}
+          >
+            สวัสดี, {name}
+          </h1>
+        </div>
         <p className="mt-1 text-sm text-black/60">
           {today.length === 0
             ? "วันนี้ไม่มีคาบเรียนตามตาราง"

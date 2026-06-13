@@ -53,10 +53,13 @@ export default async function StudentScoresPage({ params }: PageProps) {
     .map((it) => ({ scoreItemId: it.id, value: it.myValue as number }));
 
   const percent = weightedTotal(calcItems, calcEntries);
-  // Per-course grade is only meaningful when publish is COMPLETE for the
-  // course (matches term-GPA contract). Preview otherwise stays null.
+  // เกรดรายวิชา is only meaningful when publish is COMPLETE for this
+  // course — never fake a final grade from partial data (CONTEXT §
+  // Learning Results). Until then the running % renders with a
+  // "กำลังอัปเดต" badge.
   const isComplete = totalItems > 0 && publishedItems === totalItems;
   const grade = isComplete && percent !== null ? gradeFor(percent) : null;
+  const hasAnyPublished = publishedItems > 0;
 
   return (
     <CourseShell
@@ -71,16 +74,21 @@ export default async function StudentScoresPage({ params }: PageProps) {
         <div className="card p-6">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-medium text-black/50">
-                คะแนนรวมจากรายการที่เผยแพร่
+              <p className="flex items-center gap-2 text-xs font-medium text-black/50">
+                คะแนนรวมของวิชานี้
+                {hasAnyPublished && !isComplete && (
+                  <span className="inline-flex rounded-full bg-orange-50 px-2 py-0.5 text-[11px] font-medium text-orange-700">
+                    กำลังอัปเดต
+                  </span>
+                )}
               </p>
               <p className="mt-1 text-3xl font-bold tracking-tight text-black">
-                {formatPercent(percent)}
+                {hasAnyPublished ? formatPercent(percent) : "ยังไม่มีคะแนน"}
               </p>
-              {!isComplete && (
-                <p className="mt-1 text-xs text-orange-700">
-                  ยังเผยแพร่ไม่ครบ ({publishedItems}/{totalItems} รายการ) —
-                  เกรดวิชาจะแสดงเมื่อครูเผยแพร่ครบทุกรายการ
+              {hasAnyPublished && !isComplete && (
+                <p className="mt-1 text-xs text-black/50">
+                  คิดจากคะแนนที่ครูประกาศแล้ว —
+                  เกรดวิชาจะแสดงเมื่อครูประกาศครบทุกรายการ
                 </p>
               )}
             </div>
@@ -89,7 +97,7 @@ export default async function StudentScoresPage({ params }: PageProps) {
               <p
                 className={
                   "mt-1 text-3xl font-bold tracking-tight " +
-                  (grade !== null ? "text-green-700" : "text-black/30")
+                  (grade !== null ? "text-blue-700" : "text-black/30")
                 }
               >
                 {grade !== null ? formatGpa(grade) : "—"}

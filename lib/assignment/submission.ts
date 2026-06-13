@@ -8,6 +8,9 @@
  *                        materialises the Submission row on first call.
  *                        Sets previous currentVersion.isCurrent=false and
  *                        recomputes Submission.status forward-only.
+ *     withdrawSubmission — student withdraws the current submission from the
+ *                        teacher review queue while preserving version
+ *                        history.
  *
  *   Teacher-facing
  *     returnSubmission — workflow signal: inserts a PRIVATE Comment,
@@ -156,7 +159,18 @@ export async function submitVersion(
   input: SubmitVersionInput & { assignmentId: string },
   ctx: ActorCtx
 ): Promise<SubmissionVersion> {
-  const parsed = SubmitVersionSchema.parse(input);
+  const parsedResult = SubmitVersionSchema.safeParse(input);
+  if (!parsedResult.success) {
+    throw new ValidationError(
+      Object.fromEntries(
+        parsedResult.error.issues.map((issue) => [
+          issue.path.join(".") || "_",
+          issue.message,
+        ])
+      )
+    );
+  }
+  const parsed = parsedResult.data;
 
   const now = new Date();
 
@@ -298,6 +312,122 @@ export async function submitVersion(
     });
 
     return created;
+  }, TX_OPTS);
+}
+
+/**
+ * Withdraw the current submitted version without deleting the audit trail.
+ *
+ * The Submission row remains, every SubmissionVersion remains visible in
+ * history, and the current marker is cleared so teacher-facing grids no longer
+ * treat the row as ready to review. The student may submit a new version later
+ * while the submission window remains open.
+ *
+ * Allowed only while the work is actually sitting in the review queue
+ * (SUBMITTED / LATE_SUBMITTED): GRADED is final, and RETURNED work is
+ * already out of the queue — the student's path there is resubmit, not
+ * withdraw (CONTEXT § Student Assignment Workspace).
+ *
+ * Audit: SUBMISSION_WITHDRAWN (Important) — the withdrawal changes what the
+ * teacher's review queue shows, so it must be traceable even though it is a
+ * student self-action. No teacher notification yet — that would need a new
+ * NotificationKind enum value (schema migration), deferred deliberately.
+ */
+export async function withdrawSubmission(
+  input: { assignmentId: string; submissionId: string },
+  ctx: ActorCtx
+): Promise<void> {
+  const now = new Date();
+
+  await db.$transaction(async (tx) => {
+    const submission = await tx.submission.findUnique({
+      where: { id: input.submissionId },
+      select: {
+        id: true,
+        status: true,
+        assignmentId: true,
+        versions: {
+          where: { isCurrent: true },
+          select: { id: true },
+          take: 1,
+        },
+        enrollment: {
+          select: {
+            studentId: true,
+            removedAt: true,
+            courseOfferingId: true,
+            student: { select: { firstName: true, lastName: true } },
+          },
+        },
+        assignment: {
+          select: {
+            id: true,
+            title: true,
+            submissionClosed: true,
+            autoCloseAtDue: true,
+            dueAt: true,
+            courseOfferingId: true,
+            course: { select: { name: true } },
+          },
+        },
+      },
+    });
+    if (!submission) throw new NotFound("submission_not_found");
+    if (submission.assignmentId !== input.assignmentId) {
+      throw new Forbidden("submission_assignment_mismatch");
+    }
+    if (
+      submission.enrollment.studentId !== ctx.actorUserId ||
+      submission.enrollment.removedAt !== null ||
+      submission.enrollment.courseOfferingId !==
+        submission.assignment.courseOfferingId
+    ) {
+      throw new Forbidden("not_active_enrollment");
+    }
+    if (submission.status === "GRADED") {
+      throw new Conflict("submission_already_graded");
+    }
+    if (submission.status === "RETURNED") {
+      throw new Conflict("submission_returned_resubmit_instead");
+    }
+
+    const window = checkSubmissionWindow({
+      submissionClosed: submission.assignment.submissionClosed,
+      autoCloseAtDue: submission.assignment.autoCloseAtDue,
+      dueAt: submission.assignment.dueAt,
+      now,
+    });
+    if (!window.open) {
+      throw new Conflict(window.reason);
+    }
+    if (submission.versions.length === 0) {
+      throw new Conflict("no_current_submission");
+    }
+
+    await tx.submissionVersion.updateMany({
+      where: { submissionId: submission.id, isCurrent: true },
+      data: { isCurrent: false },
+    });
+    await tx.submission.update({
+      where: { id: submission.id },
+      data: { status: "DRAFT" },
+    });
+
+    await audit(
+      {
+        actorId: ctx.actorUserId,
+        actorRole: "STUDENT",
+        action: "SUBMISSION_WITHDRAWN",
+        targetType: "Submission",
+        targetId: submission.id,
+        targetLabel: `${submission.enrollment.student.firstName} ${submission.enrollment.student.lastName} — ${submission.assignment.title} (วิชา${submission.assignment.course.name})`,
+        ipAddress: ctx.ipAddress,
+        userAgent: ctx.userAgent,
+        before: { status: submission.status },
+        after: { status: "DRAFT" },
+      },
+      tx
+    );
   }, TX_OPTS);
 }
 

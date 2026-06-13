@@ -42,5 +42,6 @@ export {
   listNotificationsForRecipient,
   countUnreadNotifications,
   markNotificationRead,
+  markVisibleNotificationsRead,
   markAllNotificationsRead,
 } from "./queries";
