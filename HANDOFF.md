@@ -1,5 +1,157 @@
 # HANDOFF — Studennnn
 
+## 🔥 LATEST UPDATE — 2026-06-13 · Beagle Classroom current state
+
+> อ่าน section นี้ก่อน เพราะข้อมูลด้านล่างบางส่วนเป็น handoff เก่าจากหลาย phase และอาจไม่ตรงกับสถานะล่าสุดทั้งหมด
+
+### Repo / branch state
+
+- Repo หลักที่กำลังทำงาน: `D:\Studennnn`
+- Commit ล่าสุดที่ปิดงานแล้ว: `028e2a5 feat(classroom): improve course feed and workflows`
+- หลัง commit นี้ยังมีงานค้าง uncommitted 3 ไฟล์ เป็นงาน mobile FAB ล่าสุด:
+  - `app/dashboard/page.tsx`
+  - `app/teacher/courses/page.tsx`
+  - `components/layout/student-bottom-nav.tsx`
+- Validation ล่าสุดหลังปรับ FAB เหลือ 40px:
+  - `npm.cmd run typecheck` ผ่าน
+- Validation ก่อนหน้าในชุดงานเดียวกัน:
+  - `npm.cmd run typecheck` ผ่าน
+  - `npm.cmd run lint` ผ่านแบบมี warning เดิมจำนวนมาก แต่ไม่มี error
+  - `npm.cmd run build` ผ่าน
+
+### ✅ Health ล่าสุด (verified 2026-06-13 by Claude — รันจริง)
+
+| เช็ค | ผล |
+|------|-----|
+| `pnpm typecheck` | **0 errors** |
+| `pnpm lint` | **0 errors** · 255 warnings (baseline เดิม + 1 ใหม่ `c2 unused` จาก WIP FAB) |
+| `pnpm build` | **ผ่าน** |
+| `pnpm test` (unit) | **428/429 ผ่าน** — ดู "Known issue" ด้านล่าง |
+
+**⚠️ Known issue — unit test fail 1 ตัว (ไม่ใช่ regression ของงานใหม่):**
+`tests/unit/validation.test.ts > SignupStudentSchema > rejects without turnstile token`
+— test เก่าคาดว่า `turnstileToken: ""` ต้อง reject แต่ schema ถูกตั้งใจแก้เป็น
+`z.string().optional().default("")` ตั้งแต่ commit `e25421a` (แก้ signup deadlock ตอน Turnstile ไม่ได้ตั้ง key)
+→ **ต้องแก้/ลบ test ให้ตรง schema ใหม่ ไม่ใช่แก้ schema** เป็น stale test ตกค้างเท่านั้น
+
+### 🗂️ Feature ledger — งานถึงไหนแล้ว (commit → ฟีเจอร์, ใหม่→เก่า)
+
+**DONE + committed บน `phase-11`:**
+
+| Commit | ฟีเจอร์ | สถานะ verify |
+|--------|---------|--------------|
+| `028e2a5` | Course feed/workflow, assignment submission UX, file upload+preview (`/api/storage/files/[fileId]`), not-found page, link handling | typecheck/lint/build ผ่าน |
+| `a958791` | Theme bootstrap render ผ่าน `next/script` (กัน flash) | — |
+| `d0bdbf5` | ซ่อน class gallery ออกจาก admin dashboard | — |
+| `ee7988b` | ครูสร้าง **class label** เองตอนสร้างวิชา (`lib/course/create-course.ts`) | — |
+| `02c7f4b` | **Teacher** แยกหน้า scores / attendance ออกจาก overview | — |
+| `f8a7871` `0ca9ece` `bd67bcf` | **Admin Observer View (read-only)** — `/admin/classes` index + `/admin/courses/[id]` (feed/assignments/attendance/members/scores) ⚠️ HANDOFF เก่าเขียนว่า "ยังไม่ implement" — **ตอนนี้ทำแล้ว** | — |
+| `b91fb11` `f0c71de` `914a571` | Admin nav reorg + teachers page = management hub + `/admin/teachers/new` + student management actions | — |
+| `c746bc0` `94778e3` `dc34c0d` | **Batch 1+2: Profile + Theme/Dark mode** (displayName fallback, avatar crop 512² upload/delete + audit, change password, 4 โหมด SYSTEM/LIGHT/DARK/CREAM, transition 180ms, ไม่ audit theme) | Claude verify ครบ + QA browser |
+| `52165cb` `9dedb13` `898b3ee` `266a538` | Dashboard reshape 3 role, student assignment workspace, `SUBMISSION_WITHDRAWN` audit, per-course grade mental model | Claude verify |
+
+**IN-PROGRESS (uncommitted, 3 ไฟล์):** mobile FAB nav — ทำเสร็จ typecheck ผ่าน ยังไม่ commit (ดู section ถัดไป)
+
+**ยังไม่ทำ / debt ที่ Codex เลือกหยิบได้:**
+- Profile/Theme = **0 test coverage** (47 test files ไม่มีตัวไหนครอบ `lib/profile/*`, `lib/theme/*`, presign PROFILE_IMAGE scope guard, displayName fallback)
+- Teacher notification ตอนนักเรียน withdraw — ต้องเพิ่มค่าใน `NotificationKind` enum (Prisma migration)
+- Dark mode QA — ยังไม่ไล่ contrast WCAG AA ทุกหน้า + หน้า `/login` ใน 4 โหมด
+- `components/dashboard/teacher-hero.tsx` อาจไม่ถูกใช้แล้ว (เช็คก่อนลบ)
+- Security: rotate DB password + admin password (หลุดในแชต)
+
+### Mobile navigation decision ล่าสุด
+
+ผู้ใช้ไม่ต้องการ mobile bottom nav แบบ 4 เมนูแล้ว:
+
+- เอา `ฟีด / ห้องเรียน / ผลการเรียน / แจ้งเตือน` ออกจาก bottom nav
+- ให้เหลือปุ่ม `+` กลางล่างจอเท่านั้น
+- ขนาดล่าสุดที่ผู้ใช้ขอ: `40px`
+- นักเรียนกด `+` → ไป `/join` เพื่อเข้าร่วมชั้นเรียน
+- ครูกด `+` → ไป `/teacher/courses/new` เพื่อสร้างห้องเรียน
+- หน้า `/dashboard` render FAB สำหรับทั้ง `STUDENT` และ `TEACHER`
+- หน้า `/teacher/courses` render FAB สำหรับครูด้วย
+- หน้า `/student/courses` ใช้ default student FAB อยู่แล้ว
+
+Implementation:
+
+- `components/layout/student-bottom-nav.tsx`
+  - component เดิมชื่อ `StudentBottomNav` ถูกเปลี่ยนจาก 4-item nav เป็น single centered FAB
+  - รับ prop `role?: "student" | "teacher"`
+  - ใช้ `h-10 w-10` และ icon `h-5 w-5`
+- `app/dashboard/page.tsx`
+  - เพิ่ม mobile spacer และ FAB สำหรับ Student/Teacher
+- `app/teacher/courses/page.tsx`
+  - เพิ่ม FAB role teacher และ mobile spacer
+
+### Product direction / decisions ที่ควรถือเป็น source ล่าสุด
+
+- ระบบยังเป็น role-based: Student / Teacher / Admin
+- ผู้ใช้อยากให้ UX ไม่งงระหว่างนักเรียนกับครู
+- Student dashboard และ Teacher dashboard ควรเป็น professional operating dashboard ไม่ใช่ activity feed
+- Course cards เป็น surface สำคัญกลาง Dashboard และ course list
+- Admin ไม่ควรต้องสร้างห้องเรียนรายห้องแทนครู
+- ครูควรสร้าง/จัดการห้องเรียนเอง
+- Admin ควรเห็น overview และ observer/read-only view ของข้อมูลได้ เหมือนเป็นครูอีกคน แต่ซ่อน action ที่ทำไม่ได้
+- Activity ล่าสุดไม่ควรอยู่ใน dashboard หลัก ให้ไปอยู่ใน Audit / Activity Review
+- Profile/avatar ใช้รูปจริงได้ แต่ตอนนี้มี default/shared avatar ได้ก่อน
+- Theme:
+  - default เป็น System
+  - ไม่มี accent color option
+  - Dark mode ต้องระวัง contrast สีเทากับ text
+- External URL/link ควรเปิด browser tab ใหม่ ไม่พา Beagle Classroom ไปหน้า external ใน tab เดิม
+- Assignment detail:
+  - Feed card ไม่ต้องโชว์รูปใหญ่
+  - detail page ควรโชว์รายละเอียดงาน/รูป/ไฟล์เต็มกว่า feed
+  - การส่งงานควร refresh/ให้ feedback ชัดเจนว่าส่งแล้ว
+
+### Recent committed scope in `028e2a5`
+
+Commit `028e2a5` รวมงานใหญ่หลายส่วน:
+
+- Course feed UX และ workflow
+- Assignment submission UX
+- Teacher/student attachment upload and preview
+- Preview modal / file preview improvements
+- Link handling improvements
+- Dashboard/course card changes
+- Admin/teacher observer/read-only related improvements
+- Profile/theme polish
+- QA ผ่าน typecheck/lint/build ก่อน commit
+
+ใช้คำสั่งนี้ดูรายละเอียดแทนการคัด diff ยาวในเอกสาร:
+
+```bash
+git show --stat 028e2a5
+git show --name-only 028e2a5
+```
+
+### Next step ที่ Claude ควรทำทันที
+
+1. ตรวจ 3 uncommitted files ด้านบน
+2. QA mobile Student และ Teacher:
+   - Student mobile dashboard เหลือ `+` เดียว → `/join`
+   - Teacher mobile dashboard เหลือ `+` เดียว → `/teacher/courses/new`
+   - ไม่มี bottom nav 4 เมนู
+3. Run:
+
+```bash
+npm.cmd run typecheck
+npm.cmd run lint
+npm.cmd run build
+```
+
+4. ถ้าผู้ใช้โอเค ให้ commit งาน mobile FAB ชุดนี้
+
+### Suggested skills for Claude/Codex continuation
+
+- `build-web-apps:frontend-testing-debugging` สำหรับ QA UI/mobile
+- `browser:control-in-app-browser` สำหรับทดสอบ localhost และ screenshot
+- `build-web-apps:react-best-practices` เมื่อแก้ React/Next component
+- `grill-with-docs` เมื่อต้องคุย decision ใหม่และอัปเดตเอกสาร
+- `diagnose` เมื่อเจอบัค UI/console/hydration
+
+---
+
 > เอกสารนี้ใช้สำหรับเริ่ม **session ใหม่** กับ AI assistant แล้วต่อยอดได้ทันที
 > อ่านไฟล์นี้ + `CLAUDE.md` + `CONTEXT.md` ก่อนเริ่มงาน
 
