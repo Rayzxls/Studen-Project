@@ -59,6 +59,40 @@
 - `components/dashboard/teacher-hero.tsx` อาจไม่ถูกใช้แล้ว (เช็คก่อนลบ)
 - Security: rotate DB password + admin password (หลุดในแชต)
 
+### 🔍 Codex deep-read — อ่าน diff จริงทุก commit (Claude, 2026-06-13)
+
+งานที่ Codex (`Rayxls`) เขียนต่อจากงาน profile/theme ของ Claude (`c746bc0..028e2a5`, 11 commits)
+— ไล่อ่าน diff จริงแล้ว ไม่ใช่แค่ commit message:
+
+**🟥 DOMAIN CHANGE ที่ต้องระวัง — `ee7988b` "ครูสร้าง class labels"**
+- `lib/course/create-course.ts`: ตัด param `classId` ออก, เพิ่ม `roomName` — ตอนสร้างวิชา **ครู upsert `Class` เองได้แล้ว** (`academicYearId_name` unique → create-or-reuse) ผ่าน `normalizeGradeLevel` + `normalizeRoomName` + `formatClassName`
+- ⚠️ **ขัดกับ CONTEXT.md เดิม** ที่เขียนว่า "Class โรงเรียนกำหนด — ไม่ใช่ครูสร้างเอง" → **CONTEXT.md ยังไม่อัปเดต** ต้องตัดสินใจ: แก้ doc ให้ตรง code หรือ revert behavior
+- `lib/validation/course.ts` เปลี่ยน schema รับ `roomName` แทน `classId`
+
+**Admin features ใหม่ (ส่วนใหญ่ของงาน Codex):**
+- `914a571` — admin sidebar reorg
+- `f0c71de` — `/admin/teachers` = **management hub** + `/admin/teachers/new` (`createTeacherAction` + reveal-once temp password ผ่าน flash cookie `lib/admin/teacher-created-flash.ts` + redirect pattern)
+- `b91fb11` — `/admin/students` เพิ่มคอลัมน์ "จัดการ" = ลิงก์ **ดูข้อมูล + Reset Password** (เป็น `<Link>` อย่างเดียว ✅ ไม่ใช่ data input — ยังตรงกฎ "Admin ไม่ใส่ข้อมูล")
+- `bd67bcf` — `/admin/classes` index (335 บรรทัด) + `/admin/courses/[id]` base
+- `0ca9ece` — **Admin Course Observer (read-only)** — `app/admin/courses/[id]/layout.tsx` มี badge "Admin Observer · อ่านอย่างเดียว", tabs (`_tabs.ts`): ภาพรวม/ฟีด/สมาชิก/เช็คชื่อ/คะแนน/งาน/ตั้งค่า — admin ดูได้เหมือนครูแต่ไม่มี mutation
+- `f8a7871` — observer: แยกหน้า scores/attendance เป็น page ของตัวเอง
+- `d0bdbf5` — ลบ class gallery (251 บรรทัด) ออกจาก `/admin/dashboard` + 2 บรรทัดใน sidebar
+
+**Teacher:**
+- `02c7f4b` — แยก scores/attendance ออกจาก `overview` (overview เดิม 443 บรรทัดหดลง)
+
+**Theme + storage + misc — `028e2a5` (commit ใหญ่สุด):**
+- 🆕 `app/api/storage/files/[fileId]/route.ts` — **serving route auth-gated** (`assertCanReadFile` dispatch ตาม ownerType: SUBMISSION→`canViewSubmission` ฯลฯ) + inline/attachment disposition + local-dev/signed-R2 · runtime nodejs · cache-control private
+- `app/globals.css` +47 บรรทัด — CSS class theme-aware (`.assignment-brief-panel`, `.comment-*-social`) ใช้ `color-mix` + token → **dark-mode ใช้ได้** (เดิม light-only gradient)
+- `app/not-found.tsx` ใหม่, assignment detail polish, `app/admin/setup/actions.ts`
+- `a958791` — theme bootstrap `<script>` → next `<Script>` (กัน hydration/flash)
+
+**สรุป gotchas สำหรับ session หน้า:**
+1. ครูสร้าง Class เองได้แล้ว (upsert) — ขัด CONTEXT.md เดิม, doc ยังไม่ตาม
+2. ไฟล์ทุกชนิด serve ผ่าน `/api/storage/files/[fileId]` (auth-gated) — อย่าทำ public URL
+3. Admin = observer read-only ที่ `/admin/courses/[id]` — ห้ามเผลอใส่ mutation ฝั่ง admin
+4. มี `Class.academicYearId_name` unique constraint ที่ create-course พึ่งพา
+
 ### Mobile navigation decision ล่าสุด
 
 ผู้ใช้ไม่ต้องการ mobile bottom nav แบบ 4 เมนูแล้ว:
