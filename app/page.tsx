@@ -1,25 +1,34 @@
-import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, GraduationCap, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { BeagleLogo, BeagleWordmark } from "@/components/landing/beagle-logo";
+import { CourseAnatomyShowcase } from "@/components/landing/course-anatomy-showcase";
 import { FloatingCards } from "@/components/landing/floating-cards";
-import { ProductMockup } from "@/components/landing/product-mockup";
 import { ShowcaseBento } from "@/components/landing/showcase-bento";
-import { Immersive3D } from "@/components/landing/immersive-3d";
+import { HowItWorks } from "@/components/landing/how-it-works";
+import { PrivacyShowcase } from "@/components/landing/privacy-showcase";
+import { LandingFaq } from "@/components/landing/faq";
+import { AuroraShowcase } from "@/components/landing/aurora-showcase";
 
 /**
- * Beagle Classroom — landing page (Phase 12).
+ * Beagle Classroom — landing page (Phase 12, T1 Showcase per ADR-0029).
  *
- * Two product-owner-specified focus sections:
- *   1. Hero — "คิด วางแผน ติดตาม ครบในที่เดียว" with an R3F 3D backdrop
- *      (ADR-0029 T1) + floating product mini-cards parallaxing to the
- *      pointer (ChronoTask reference, in our brand).
- *   2. Showcase bento — what the system does, with live-styled mocks.
+ * Narrative arc. Sections 1–2 are the product-owner-locked focus and stay
+ * fixed; everything below is the rebuilt body:
+ *   1. Hero — "คิด วางแผน ติดตาม ครบในที่เดียว" + floating product
+ *      mini-cards parallaxing to the pointer.
+ *   2. Product illustration — the dashboard mock orbited by feature cards.
+ *   3. Feature bento — what the system does, with live-styled mocks.
+ *   4. How it works — the three-step setup flow.
+ *   5. Privacy showcase — the L1-visibility / audit / PDPA differentiator
+ *      on the page's one premium dark band.
+ *   6. Aurora showpiece — a pure brand moment: cursor-pooled aurora of
+ *      brand light, theme-adaptive, no information.
+ *   7. FAQ — the questions schools actually ask.
  *
- * Plus glass nav, closing CTA, footer. Real interactivity throughout;
- * all motion is reduced-motion-safe via the primitives.
+ * Plus glass nav, closing CTA, footer. All motion is reduced-motion-safe
+ * via the shared primitives (Tilt3D, EntryStagger, AmbientBackground).
  */
 
 export default async function HomePage() {
@@ -27,7 +36,20 @@ export default async function HomePage() {
   if (session?.user) redirect("/dashboard");
 
   return (
-    <main className="flex flex-col overflow-x-hidden bg-bg">
+    <main
+      className="relative flex flex-col overflow-x-hidden"
+      style={{
+        backgroundColor: "var(--color-bg)",
+        // Graph-paper grid that backs the whole page (theme-adaptive blue
+        // hairlines), plus a faint blue wash at the top edge.
+        backgroundImage:
+          "linear-gradient(to right, color-mix(in srgb, var(--color-blue-500) 9%, transparent) 1px, transparent 1px)," +
+          "linear-gradient(to bottom, color-mix(in srgb, var(--color-blue-500) 9%, transparent) 1px, transparent 1px)," +
+          "radial-gradient(120% 60% at 50% 0%, color-mix(in srgb, var(--color-blue-500) 6%, transparent) 0%, transparent 60%)",
+        backgroundSize: "88px 88px, 88px 88px, 100% 100%",
+        backgroundRepeat: "repeat, repeat, no-repeat",
+      }}
+    >
       {/* ── Glass nav ───────────────────────────────────────────── */}
       <nav className="glass-nav fixed inset-x-0 top-0 z-50 border-b border-black/[0.06]">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
@@ -40,17 +62,17 @@ export default async function HomePage() {
               ฟีเจอร์
             </a>
             <a
-              href="#roles"
+              href="#how"
               className="text-sm font-medium text-black/60 transition-colors hover:text-black"
             >
-              บทบาท
+              วิธีใช้งาน
             </a>
-            <Link
-              href="/privacy"
+            <a
+              href="#faq"
               className="text-sm font-medium text-black/60 transition-colors hover:text-black"
             >
-              ความเป็นส่วนตัว
-            </Link>
+              คำถามที่พบบ่อย
+            </a>
           </div>
           <Link href="/login" className="btn-primary btn-sm">
             เข้าสู่ระบบ
@@ -92,94 +114,38 @@ export default async function HomePage() {
       </section>
 
       {/* ── Section 2 — Product illustration (ChronoTask-style cards) ── */}
-      <section id="overview" className="relative overflow-hidden px-6 py-20">
-        <div className="mx-auto max-w-2xl text-center">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
-            <Sparkles className="h-3.5 w-3.5" />
-            ดีไซน์ที่คิดมาเพื่อห้องเรียน
-          </span>
-          <h2
-            className="mt-4 text-4xl font-semibold text-black md:text-5xl"
-            style={{ letterSpacing: "-0.03em", lineHeight: 1.1 }}
-          >
-            ทุกข้อมูลของห้องเรียน
-            <br />
-            อยู่ตรงหน้าในมุมเดียว
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-black/60">
-            สรุปการสอบ ตารางเรียนวันนี้ อัตราการเข้าเรียน การแจ้งเตือนงาน
-            และการเชื่อมต่อแอป — เห็นครบในหน้าจอเดียว
-          </p>
-        </div>
-
-        {/* Desktop: feature cards illustration with the live product
-            mockup filling the empty centre. */}
-        <div className="relative mx-auto mt-10 hidden max-w-6xl md:block">
-          <Image
-            src="/landing/hero-cards.webp"
-            alt="ตัวอย่างการ์ดในระบบ Beagle Classroom — สรุปการสอบ ตารางเรียน อัตรามาเรียน และการแจ้งเตือน"
-            width={1672}
-            height={941}
-            className="h-auto w-full select-none"
-          />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <ProductMockup className="w-[34%] min-w-[18rem]" />
-          </div>
-        </div>
-
-        {/* Mobile: the product mockup leads; the dense card illustration
-            sits below at full width. */}
-        <div className="md:hidden">
-          <ProductMockup className="mx-auto mt-8 max-w-sm" />
-          <Image
-            src="/landing/hero-cards.webp"
-            alt="ตัวอย่างการ์ดในระบบ Beagle Classroom"
-            width={1672}
-            height={941}
-            className="mt-8 h-auto w-full select-none"
-          />
-        </div>
-      </section>
+      <CourseAnatomyShowcase />
 
       {/* ── Section 3 — Feature bento ───────────────────────────── */}
       <ShowcaseBento />
 
-      {/* ── Section 4 — Immersive 3D (glass crystal + sparkles) ──── */}
-      <Immersive3D />
+      {/* ── Section 4 — How it works (three-step setup) ─────────── */}
+      <HowItWorks />
 
-      {/* ── Roles strip ─────────────────────────────────────────── */}
-      <section id="roles" className="px-6 py-20">
-        <div className="mx-auto grid max-w-6xl gap-4 md:grid-cols-3">
-          <RoleCard
-            icon={<GraduationCap className="h-5 w-5" />}
-            tone="blue"
-            title="ครูเจ้าของห้อง"
-            body="สร้างวิชา แชร์รหัสห้อง เช็คชื่อ ตรวจงาน กรอกคะแนน ออกเกรด — workspace เดียวต่อเทอม"
-          />
-          <RoleCard
-            icon={<Sparkles className="h-5 w-5" />}
-            tone="green"
-            title="นักเรียน"
-            body="ดูคะแนนตัวเอง อัตรามาเรียน เดดไลน์ และส่งงานจากมือถือ เห็นเฉพาะของตัวเอง"
-          />
-          <RoleCard
-            icon={<ShieldCheck className="h-5 w-5" />}
-            tone="violet"
-            title="ผู้ดูแล"
-            body="ภาพรวมทั้งโรงเรียน ตรวจ audit log นำเข้า CSV รีเซ็ตรหัสผ่าน — ไม่ยุ่งกับข้อมูลแทนใคร"
-          />
-        </div>
-      </section>
+      {/* ── Section 5 — Privacy showcase (premium dark band) ─────── */}
+      <PrivacyShowcase />
+
+      {/* ── Section 6 — Aurora showpiece (pure brand moment) ─────── */}
+      <AuroraShowcase />
+
+      {/* ── Section 7 — FAQ ─────────────────────────────────────── */}
+      <LandingFaq />
 
       {/* ── Closing CTA ─────────────────────────────────────────── */}
       <section className="px-6 pb-24">
-        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-blue-500 px-8 py-16 text-center shadow-card md:py-20">
+        <div
+          className="relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] px-8 py-16 text-center shadow-card md:py-20"
+          style={{
+            background:
+              "linear-gradient(135deg, #0a84ff 0%, #0070eb 55%, #0a5fd0 100%)",
+          }}
+        >
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-0"
             style={{
               background:
-                "radial-gradient(50% 60% at 80% 10%, rgba(255,255,255,0.22) 0%, transparent 55%), radial-gradient(40% 50% at 15% 90%, rgba(0,0,0,0.18) 0%, transparent 60%)",
+                "radial-gradient(50% 60% at 80% 8%, rgba(255,255,255,0.26) 0%, transparent 55%), radial-gradient(42% 52% at 14% 96%, rgba(0,0,0,0.20) 0%, transparent 60%)",
             }}
           />
           <div className="relative z-10">
@@ -193,15 +159,23 @@ export default async function HomePage() {
               เริ่มต้นใช้งาน Beagle Classroom วันนี้ — ไม่ต้องติดตั้ง
               เข้าได้ทุกอุปกรณ์
             </p>
-            <Link
-              href="/login"
-              className="group mt-8 inline-flex items-center gap-2 rounded-full bg-white py-2.5 pl-6 pr-2.5 text-base font-medium text-blue-700 transition-transform hover:scale-[0.98]"
-            >
-              เข้าสู่ระบบ
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50">
-                <ArrowRight className="h-4 w-4 text-blue-700 transition-transform group-hover:translate-x-0.5" />
-              </span>
-            </Link>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+              <Link
+                href="/login"
+                className="group inline-flex items-center gap-2 rounded-full bg-white py-2.5 pl-6 pr-2.5 text-base font-medium text-blue-700 transition-transform hover:scale-[0.98]"
+              >
+                เริ่มใช้งานฟรี
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50">
+                  <ArrowRight className="h-4 w-4 text-blue-700 transition-transform group-hover:translate-x-0.5" />
+                </span>
+              </Link>
+              <a
+                href="#faq"
+                className="rounded-full bg-white/10 px-6 py-2.5 text-base font-medium text-white ring-1 ring-inset ring-white/25 transition-colors hover:bg-white/15"
+              >
+                อ่านคำถามที่พบบ่อย
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -274,42 +248,5 @@ function HeroCopy() {
         </a>
       </div>
     </>
-  );
-}
-
-function RoleCard({
-  icon,
-  title,
-  body,
-  tone,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  body: string;
-  tone: "blue" | "green" | "violet";
-}) {
-  const chip = {
-    blue: "bg-blue-50 text-blue-700",
-    green: "bg-green-50 text-green-700",
-    violet: "bg-[#eff0fe] text-[#3730a3]",
-  }[tone];
-  return (
-    <div className="card p-7 transition-shadow hover:shadow-lift">
-      <span
-        className={
-          "inline-flex h-11 w-11 items-center justify-center rounded-2xl " +
-          chip
-        }
-      >
-        {icon}
-      </span>
-      <h3
-        className="mt-4 text-lg font-semibold text-black"
-        style={{ letterSpacing: "-0.02em" }}
-      >
-        {title}
-      </h3>
-      <p className="mt-2 text-sm leading-relaxed text-black/60">{body}</p>
-    </div>
   );
 }

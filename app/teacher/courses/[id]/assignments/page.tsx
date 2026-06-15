@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { SubmissionStatus } from "@prisma/client";
 import { FileText } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
 import { getCourseOfferingForTeacher } from "@/lib/course/queries";
@@ -67,6 +68,26 @@ export default async function AssignmentsListPage({ params }: PageProps) {
     },
     orderBy: { createdAt: "desc" },
   });
+  const pendingGroups =
+    assignments.length > 0
+      ? await db.submission.groupBy({
+          by: ["assignmentId"],
+          where: {
+            assignmentId: { in: assignments.map((a) => a.id) },
+            status: {
+              in: [SubmissionStatus.SUBMITTED, SubmissionStatus.LATE_SUBMITTED],
+            },
+          },
+          _count: { _all: true },
+        })
+      : [];
+  const pendingCountByAssignment = new Map(
+    pendingGroups.map((g) => [g.assignmentId, g._count._all])
+  );
+  const totalPendingReview = pendingGroups.reduce(
+    (sum, g) => sum + g._count._all,
+    0
+  );
 
   return (
     <CourseShell
@@ -91,6 +112,15 @@ export default async function AssignmentsListPage({ params }: PageProps) {
                 : `${assignments.length} รายการ`}
             </p>
           </div>
+          {totalPendingReview > 0 && (
+            <Link
+              href={`/teacher/courses/${id}/assignments/${pendingGroups[0]?.assignmentId}?filter=pending`}
+              className="inline-flex items-center gap-2 rounded-full bg-orange-500/10 px-3 py-1.5 text-xs font-semibold text-orange-700 ring-1 ring-orange-500/15 transition hover:bg-orange-500/15 hover:no-underline"
+            >
+              รอตรวจทั้งหมด {totalPendingReview} ชิ้น
+              <span aria-hidden="true">→</span>
+            </Link>
+          )}
           <CreateAssignmentDialog courseId={id} />
         </div>
 
@@ -107,6 +137,7 @@ export default async function AssignmentsListPage({ params }: PageProps) {
         ) : (
           <ul className="divide-y divide-black/5">
             {assignments.map((a) => {
+              const pendingReview = pendingCountByAssignment.get(a.id) ?? 0;
               const dueLabel = a.dueAt
                 ? new Intl.DateTimeFormat("th-TH-u-ca-buddhist", {
                     timeZone: "Asia/Bangkok",
@@ -143,6 +174,11 @@ export default async function AssignmentsListPage({ params }: PageProps) {
                             เผยแพร่
                           </span>
                         )}
+                        {pendingReview > 0 && (
+                          <span className="rounded-md bg-orange-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-orange-700 ring-1 ring-orange-500/15">
+                            รอตรวจ {pendingReview}
+                          </span>
+                        )}
                         {a.submissionClosed && (
                           <span className="rounded-md bg-red-50 px-1.5 py-0.5 text-[10px] font-medium text-red-700">
                             ปิดการส่ง
@@ -162,6 +198,14 @@ export default async function AssignmentsListPage({ params }: PageProps) {
                     </div>
                   </Link>
                   <div className="flex items-center gap-2">
+                    {pendingReview > 0 && (
+                      <Link
+                        href={`/teacher/courses/${id}/assignments/${a.id}?filter=pending`}
+                        className="self-center rounded-full bg-orange-500/10 px-2.5 py-1 text-xs font-semibold text-orange-700 ring-1 ring-orange-500/15 transition hover:bg-orange-500/15 hover:no-underline"
+                      >
+                        ไปตรวจ
+                      </Link>
+                    )}
                     <span className="self-center px-2 text-xs text-black/40">
                       {a._count.submissions} ส่งแล้ว →
                     </span>
