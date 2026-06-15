@@ -1,5 +1,32 @@
 # HANDOFF — Studennnn
 
+## 🚀 PRODUCTION OPS — 2026-06-13 ล่าสุด (อ่านก่อนสุด)
+
+> รอบนี้ **ปล่อยขึ้น production จริงแล้ว** + ตั้ง R2 + แก้ perf — สรุปให้ Codex/session ใหม่ตามทัน
+
+**Deploy ที่เกิดขึ้นจริง:**
+- ✅ **PR #4 (phase-11 → main) merged แล้ว** → `main` = `1a0c934` · Vercel auto-deploy production สำเร็จ
+- Production URL: `https://studen-project.vercel.app` รันโค้ดล่าสุด (profile/theme/admin observer/dashboard/FAB ครบ) — verify แล้ว route ใหม่ live, dark mode ทำงาน, avatar upload ทำงาน
+- prod DB schema **already in sync** (push ไปก่อน merge — dev=prod ใช้ Neon ตัวเดียวกัน)
+
+**R2 (Cloudflare) ตั้งเสร็จแล้ว — avatar/ไฟล์อัปบน prod ใช้ได้จริง:**
+- bucket `beagle-classroom-prod` (Public Access **Disabled** — เสิร์ฟผ่าน signed URL เท่านั้น) · CORS ตั้ง origin production แล้ว
+- Vercel env ตั้งครบ 4 ตัว (Production scope): `R2_ACCOUNT_ID` `R2_ACCESS_KEY_ID` `R2_SECRET_ACCESS_KEY` `R2_BUCKET_NAME` · **secret อยู่ใน Vercel เท่านั้น ไม่เข้า repo**
+- หมายเหตุโค้ด: `R2_PUBLIC_URL` ใน `docs/DEPLOY.md` **ไม่ได้ใช้จริง** (โค้ดใช้ 4 ตัวข้างบน) — ควรลบออกจาก doc
+
+**⚡ Perf fix (สำคัญ — เคยช้ามาก):**
+- ต้นเหตุ: Vercel function รันที่ `iad1` (US East) แต่ Neon DB อยู่ `ap-southeast-1` (สิงคโปร์) → ทุก query วิ่งข้ามทวีป ~450ms × หลาย query/หน้า
+- ✅ **แก้แล้ว: เปลี่ยน Vercel Function Region → Singapore (sin1)** (Settings → Functions) ให้ตรงกับ DB → เร็วขึ้นมาก
+- ⏳ ยังเหลือ: Neon free-tier **cold start** (หลับหลัง ~5 นาที idle, ตื่น 1-3 วิ) — แก้ด้วย Neon paid หรือ keep-alive ping (ยังไม่ทำ) · และ `force-dynamic` ทุกหน้า = ไม่มี cache (refactor ทีหลัง)
+
+**🟥 Gotchas ที่ session ใหม่/Codex ต้องรู้:**
+1. **dev = prod ใช้ Neon DB ตัวเดียวกัน** — `prisma db push` / แก้ data ใด ๆ ที่ `.env.local` = กระทบ prod จริง ระวัง
+2. **avatar/ไฟล์ที่อัปตอน dev mode → ไป `.local-storage` ในเครื่อง ไม่ขึ้น R2** → บน prod จะ "รูปแตก" (DB มี pointer แต่ R2 ไม่มีไฟล์). รอบนี้เจอ avatar ผี 2 อัน (อัปตอน dev) → **เคลียร์ profileImageId เป็น null แล้ว** ทั้ง 2 บัญชี (กลับไปใช้ default). ของจริงต้องอัปบน prod เท่านั้นถึงขึ้น R2
+3. มีบัญชี test ค้างใน prod: student `990137` (ทดสอบ เอฟเอบี — Claude สมัครตอน verify FAB), student `36901234` (ธนภัทร), teacher `0940817471@hotmail.com` (wrw wqdq)
+4. Vercel region ตอนนี้ = **sin1** · admin login: `Rayzxls` / (รหัสอยู่ใน session เก่า — ควร rotate)
+
+---
+
 ## 🔥 LATEST UPDATE — 2026-06-13 · Beagle Classroom current state
 
 > อ่าน section นี้ก่อน เพราะข้อมูลด้านล่างบางส่วนเป็น handoff เก่าจากหลาย phase และอาจไม่ตรงกับสถานะล่าสุดทั้งหมด

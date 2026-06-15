@@ -1,355 +1,352 @@
 "use client";
 
+import type { CSSProperties } from "react";
+import { useState } from "react";
 import {
-  BarChart3,
+  ArrowRight,
   CalendarCheck2,
-  LayoutGrid,
-  MessagesSquare,
-  ShieldCheck,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardCheck,
+  Clock3,
+  FileText,
+  LockKeyhole,
+  Send,
   Sparkles,
+  UsersRound,
 } from "lucide-react";
-import { Tilt3D } from "@/components/motion/tilt-3d";
 
-/**
- * ShowcaseBento — Section 2 of the Beagle Classroom landing.
- *
- * Apple-style bento grid presenting what the system actually does, each
- * tile carrying a small live-styled mock of the real UI (gradebook,
- * attendance ring, feed post, dashboard KPIs, course-colour grid, audit).
- * Tiles tilt on hover (Tilt3D) and reveal on scroll-in (EntryStagger).
- */
+type ScenarioTone = "blue" | "amber" | "teal" | "coral";
+type ScenarioVisual = "attendance" | "review" | "submit" | "publish";
+
+type Scenario = {
+  eyebrow: string;
+  title: string;
+  body: string;
+  metric: string;
+  cta: string;
+  tone: ScenarioTone;
+  visual: ScenarioVisual;
+};
+
+const SCENARIOS: Scenario[] = [
+  {
+    eyebrow: "เริ่มคาบ",
+    title: "ครูเห็นคาบวันนี้ก่อนเริ่มสอน",
+    body: "เปิดคาบ เช็คชื่อ และรู้ทันทีว่าใครต้องตาม โดยไม่ต้องเปิดหลายหน้า",
+    metric: "มา 28 · ขาด 2 · ลา 1",
+    cta: "ดูคาบเรียน",
+    tone: "blue",
+    visual: "attendance",
+  },
+  {
+    eyebrow: "งานค้างตรวจ",
+    title: "งานที่ส่งใหม่ถูกดันขึ้นมาให้ตรวจต่อ",
+    body: "ครูเห็นว่างานค้างอยู่ชิ้นไหน ใครส่งแล้ว และตรวจคนถัดไปได้ต่อเนื่อง",
+    metric: "รอตรวจ 6 งาน",
+    cta: "ตรวจงานต่อ",
+    tone: "amber",
+    visual: "review",
+  },
+  {
+    eyebrow: "ฝั่งนักเรียน",
+    title: "ส่งงานแล้วรู้สถานะทันที",
+    body: "นักเรียนเห็นว่าส่งแล้ว แก้ไขได้ และย้อนดูประวัติการส่งของตัวเองชัดเจน",
+    metric: "ส่งแล้ว · แก้ไขได้",
+    cta: "ดูงานของฉัน",
+    tone: "teal",
+    visual: "submit",
+  },
+  {
+    eyebrow: "ประกาศคะแนน",
+    title: "คะแนนถึงนักเรียนแบบเป็นส่วนตัว",
+    body: "เมื่อครูเผยแพร่ คะแนนและหมายเหตุจะแสดงเฉพาะเจ้าของงานเท่านั้น",
+    metric: "15/15 · เห็นเฉพาะฉัน",
+    cta: "ดูผลลัพธ์",
+    tone: "coral",
+    visual: "publish",
+  },
+];
+
 export function ShowcaseBento() {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const moveCard = (direction: -1 | 1) => {
+    setActiveIndex((current) => {
+      const next = current + direction;
+      if (next < 0) return SCENARIOS.length - 1;
+      if (next >= SCENARIOS.length) return 0;
+      return next;
+    });
+  };
+
   return (
-    <section id="features" className="relative px-6 py-24">
+    <section id="features" className="scenario-carousel-section px-6 py-24">
       <div className="mx-auto max-w-6xl">
-        <div className="mx-auto mb-14 max-w-2xl text-center">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+        <div className="scenario-carousel-heading mx-auto max-w-2xl text-center">
+          <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold">
             <Sparkles className="h-3.5 w-3.5" />
-            ทุกอย่างของห้องเรียน ในที่เดียว
+            เส้นทางการใช้งานจริง
           </span>
-          <h2
-            className="mt-4 text-4xl font-semibold text-black md:text-5xl"
-            style={{ letterSpacing: "-0.03em", lineHeight: 1.1 }}
-          >
-            ระบบของเรา ทำอะไรได้บ้าง
+          <h2 className="mt-4 text-balance text-4xl font-semibold md:text-5xl">
+            หนึ่งคาบเรียน ไหลเป็นเรื่องเดียว
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-black/60">
-            เช็คชื่อ กรอกคะแนน ส่งงาน ฟีดประกาศ และผลการเรียน รวมเป็น workspace
-            เดียวที่ครูเป็นเจ้าของ นักเรียนเห็นเฉพาะของตัวเอง
+          <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed">
+            เลื่อนดูจังหวะสำคัญตั้งแต่ครูเปิดคาบ นักเรียนส่งงาน จนถึงประกาศคะแนน
+            ผ่านการ์ดสถานการณ์ที่ช่วยให้เห็นภาพการใช้จริงในห้องเรียน
           </p>
         </div>
 
-        {/* Plain grid (not EntryStagger) so each Tilt3D — which carries the
-            col-span — is the direct grid item and the bento layout
-            resolves. Tilt hover is the per-tile interaction. */}
-        <div className="grid grid-cols-1 gap-4 md:auto-rows-[15rem] md:grid-cols-6">
-          {/* Gradebook — wide hero tile */}
-          <BentoTile className="md:col-span-4 md:row-span-1" tone="green">
-            <TileHead
-              icon={<BarChart3 className="h-4 w-4" />}
-              tone="green"
-              eyebrow="กรอกคะแนน"
-              title="เกรดคำนวณให้อัตโนมัติ"
-            />
-            <MockGradebook />
-          </BentoTile>
+        <div className="scenario-carousel-shell mt-12">
+          <button
+            type="button"
+            className="scenario-carousel-control scenario-carousel-control-left"
+            aria-label="เลื่อนการ์ดก่อนหน้า"
+            onClick={() => moveCard(-1)}
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
 
-          {/* Attendance — square */}
-          <BentoTile className="md:col-span-2" tone="blue">
-            <TileHead
-              icon={<CalendarCheck2 className="h-4 w-4" />}
-              tone="blue"
-              eyebrow="เช็คชื่อ"
-              title="มาเรียนกี่ %"
-            />
-            <MockAttendance />
-          </BentoTile>
+          <div
+            className="scenario-carousel-rail scenario-carousel-stack"
+            aria-label="ตัวอย่างสถานการณ์การใช้งาน Beagle Classroom"
+          >
+            {SCENARIOS.map((scenario, index) => (
+              <ScenarioCard
+                key={scenario.title}
+                scenario={scenario}
+                index={index}
+                activeIndex={activeIndex}
+                onSelect={() => setActiveIndex(index)}
+              />
+            ))}
+          </div>
 
-          {/* Feed — square */}
-          <BentoTile className="md:col-span-2" tone="orange">
-            <TileHead
-              icon={<MessagesSquare className="h-4 w-4" />}
-              tone="orange"
-              eyebrow="ฟีดห้องเรียน"
-              title="ประกาศ การบ้าน เอกสาร"
-            />
-            <MockFeed />
-          </BentoTile>
+          <button
+            type="button"
+            className="scenario-carousel-control scenario-carousel-control-right"
+            aria-label="เลื่อนการ์ดถัดไป"
+            onClick={() => moveCard(1)}
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        </div>
 
-          {/* Course colours — wide */}
-          <BentoTile className="md:col-span-4" tone="violet">
-            <TileHead
-              icon={<LayoutGrid className="h-4 w-4" />}
-              tone="violet"
-              eyebrow="แต่ละวิช มีสีของตัวเอง"
-              title="หาห้องเรียนเจอได้ในพริบตา"
+        <div className="scenario-carousel-dots" aria-label="เลือกการ์ด">
+          {SCENARIOS.map((scenario, index) => (
+            <button
+              key={scenario.title}
+              type="button"
+              className={
+                index === activeIndex
+                  ? "scenario-carousel-dot is-active"
+                  : "scenario-carousel-dot"
+              }
+              aria-label={`ไปที่การ์ด ${index + 1}: ${scenario.eyebrow}`}
+              aria-current={index === activeIndex ? "true" : undefined}
+              onClick={() => setActiveIndex(index)}
             />
-            <MockCourseColors />
-          </BentoTile>
-
-          {/* Audit — wide */}
-          <BentoTile className="md:col-span-3" tone="blue">
-            <TileHead
-              icon={<ShieldCheck className="h-4 w-4" />}
-              tone="blue"
-              eyebrow="ตรวจสอบได้ทุกการแก้ไข"
-              title="Audit log ทุก mutation"
-            />
-            <p className="mt-2 text-sm leading-relaxed text-black/55">
-              ครูแก้คะแนนหลังเผยแพร่ต้องระบุเหตุผล ระบบบันทึกทุกครั้ง
-              โรงเรียนย้อนดูได้เสมอ
-            </p>
-          </BentoTile>
-
-          {/* Dashboards — wide */}
-          <BentoTile className="md:col-span-3" tone="green">
-            <TileHead
-              icon={<Sparkles className="h-4 w-4" />}
-              tone="green"
-              eyebrow="แดชบอร์ดของแต่ละบทบาท"
-              title="ครู · นักเรียน · ผู้ดูแล"
-            />
-            <MockKpis />
-          </BentoTile>
+          ))}
         </div>
       </div>
     </section>
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Tile shell
-// ─────────────────────────────────────────────────────────────
-
-type Tone = "blue" | "green" | "orange" | "violet";
-
-function BentoTile({
-  children,
-  className,
-  tone,
+function ScenarioCard({
+  scenario,
+  index,
+  activeIndex,
+  onSelect,
 }: {
-  children: React.ReactNode;
-  className?: string;
-  tone: Tone;
+  scenario: Scenario;
+  index: number;
+  activeIndex: number;
+  onSelect: () => void;
 }) {
-  const glow: Record<Tone, string> = {
-    blue: "rgba(10,132,255,0.10)",
-    green: "rgba(52,199,89,0.10)",
-    orange: "rgba(255,149,0,0.10)",
-    violet: "rgba(122,122,229,0.12)",
-  };
-  return (
-    <Tilt3D maxDeg={5} className={className}>
-      <div
-        className="relative flex h-full flex-col overflow-hidden rounded-3xl border border-black/[0.05] bg-white p-6 shadow-card"
-        style={{
-          backgroundImage: `radial-gradient(120% 80% at 100% 0%, ${glow[tone]} 0%, transparent 55%)`,
-        }}
-      >
-        {children}
-      </div>
-    </Tilt3D>
-  );
-}
+  const offset = getCircularOffset(index, activeIndex, SCENARIOS.length);
+  const depth = Math.abs(offset);
+  const isActive = offset === 0;
+  const isVisible = depth <= 2;
+  const stackStyle = {
+    "--scenario-x": `${offset * 116}px`,
+    "--scenario-y": `${depth * 16}px`,
+    "--scenario-z": `${-depth * 70}px`,
+    "--scenario-rotate": `${offset * -3.5}deg`,
+    "--scenario-hover-rotate": `${offset * -2.5}deg`,
+    "--scenario-scale": `${1 - Math.min(depth * 0.075, 0.2)}`,
+    "--scenario-opacity": `${!isVisible ? 0 : 1 - depth * 0.14}`,
+    "--scenario-blur": `${depth > 1 ? 1.2 : 0}px`,
+    "--scenario-hover-blur": `${depth > 1 ? 0.65 : 0}px`,
+    zIndex: 20 - depth,
+  } as CSSProperties;
 
-function TileHead({
-  icon,
-  eyebrow,
-  title,
-  tone,
-}: {
-  icon: React.ReactNode;
-  eyebrow: string;
-  title: string;
-  tone: Tone;
-}) {
-  const chip: Record<Tone, string> = {
-    blue: "bg-blue-50 text-blue-700",
-    green: "bg-green-50 text-green-700",
-    orange: "bg-orange-50 text-orange-700",
-    violet: "bg-[#eff0fe] text-[#3730a3]",
-  };
   return (
-    <div className="mb-3">
-      <span
-        className={
-          "inline-flex h-8 w-8 items-center justify-center rounded-xl " +
-          chip[tone]
+    <article
+      className={`scenario-card scenario-card-${scenario.tone}${
+        isActive ? " is-active" : ""
+      }`}
+      aria-label={`${index + 1}. ${scenario.title}`}
+      aria-hidden={!isVisible}
+      style={stackStyle}
+      data-offset={offset}
+      data-active={isActive ? "true" : "false"}
+      role={!isActive && isVisible ? "button" : undefined}
+      tabIndex={!isActive && isVisible ? 0 : -1}
+      onClick={() => {
+        if (!isActive) onSelect();
+      }}
+      onKeyDown={(event) => {
+        if (isActive) return;
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect();
         }
-      >
-        {icon}
-      </span>
-      <p className="mt-3 text-[11px] font-medium text-black/45">{eyebrow}</p>
-      <h3
-        className="text-lg font-semibold text-black"
-        style={{ letterSpacing: "-0.02em" }}
-      >
-        {title}
-      </h3>
-    </div>
+      }}
+    >
+      <div className="scenario-card-copy">
+        <span className="scenario-card-eyebrow">{scenario.eyebrow}</span>
+        <h3>{scenario.title}</h3>
+        <p>{scenario.body}</p>
+        <div className="scenario-card-meta">
+          <span>{scenario.metric}</span>
+          <span className="inline-flex items-center gap-1">
+            {scenario.cta}
+            <ArrowRight className="h-3.5 w-3.5" />
+          </span>
+        </div>
+      </div>
+      <ScenarioVisual type={scenario.visual} />
+    </article>
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Mock UI fragments — styled to mirror the real product surfaces
-// ─────────────────────────────────────────────────────────────
+function getCircularOffset(index: number, activeIndex: number, total: number) {
+  let offset = index - activeIndex;
+  const half = total / 2;
+  if (offset > half) offset -= total;
+  if (offset < -half) offset += total;
+  return offset;
+}
 
-function MockGradebook() {
-  const rows = [
-    { name: "รายวินทร์ ก.", score: 92, tone: "bg-green-500" },
-    { name: "ธนกร พ.", score: 78, tone: "bg-blue-500" },
-    { name: "ปาลิดา ส.", score: 64, tone: "bg-orange-500" },
-  ];
-  return (
-    <div className="mt-auto space-y-2">
-      {rows.map((r) => (
-        <div
-          key={r.name}
-          className="flex items-center gap-3 rounded-xl bg-black/[0.02] px-3 py-2"
-        >
-          <span className="flex-1 text-xs font-medium text-black/70">
-            {r.name}
-          </span>
-          <div className="h-1.5 w-28 overflow-hidden rounded-full bg-black/[0.06]">
-            <div
-              className={"h-full rounded-full " + r.tone}
-              style={{ width: `${r.score}%` }}
-            />
+function ScenarioVisual({ type }: { type: ScenarioVisual }) {
+  if (type === "attendance") {
+    return (
+      <div className="scenario-visual scenario-phone">
+        <div className="scenario-phone-bar" />
+        <div className="scenario-phone-screen">
+          <div className="scenario-screen-header">
+            <CalendarCheck2 className="h-4 w-4" />
+            <span>คาบวันนี้</span>
           </div>
-          <span className="w-8 text-right text-xs font-semibold text-black">
-            {r.score}
-          </span>
+          <div className="scenario-attendance-grid">
+            <MiniMetric label="มา" value="28" />
+            <MiniMetric label="ขาด" value="2" />
+            <MiniMetric label="ลา" value="1" />
+          </div>
+          {["ธนภัทร พิลาดี", "วรินทร์ แก้วใส", "กานต์ชนก มีสุข"].map(
+            (name, index) => (
+              <div className="scenario-mini-row" key={name}>
+                <span className="scenario-avatar">{name[0]}</span>
+                <span>{name}</span>
+                <span className={index === 1 ? "is-warning" : "is-ok"}>
+                  {index === 1 ? "ขาด" : "มา"}
+                </span>
+              </div>
+            )
+          )}
         </div>
-      ))}
-    </div>
-  );
-}
+      </div>
+    );
+  }
 
-function MockAttendance() {
-  return (
-    <div className="mt-auto flex items-center justify-center">
-      <div className="relative h-28 w-28">
-        <svg viewBox="0 0 36 36" className="h-28 w-28 -rotate-90">
-          <circle
-            cx="18"
-            cy="18"
-            r="15"
-            fill="none"
-            stroke="rgba(0,0,0,0.06)"
-            strokeWidth="3.5"
-          />
-          <circle
-            cx="18"
-            cy="18"
-            r="15"
-            fill="none"
-            stroke="#0a84ff"
-            strokeWidth="3.5"
-            strokeDasharray="94.2"
-            strokeDashoffset="11.3"
-            strokeLinecap="round"
-          />
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span
-            className="text-2xl font-semibold text-black"
-            style={{ letterSpacing: "-0.02em" }}
-          >
-            88%
-          </span>
-          <span className="text-[10px] text-black/45">มาเรียน</span>
+  if (type === "review") {
+    return (
+      <div className="scenario-visual scenario-board">
+        <div className="scenario-board-top">
+          <ClipboardCheck className="h-5 w-5" />
+          <div>
+            <strong>คิวตรวจงาน</strong>
+            <span>ต่อจากคนล่าสุดทันที</span>
+          </div>
         </div>
+        <div className="scenario-stack">
+          {[
+            ["การบ้านบทที่ 1", "รุ่น 1 · ส่งสาย"],
+            ["สรุปบทเรียน", "แนบรูป 2 ไฟล์"],
+            ["ใบงานกลุ่ม", "รอตรวจ"],
+          ].map(([title, meta], index) => (
+            <div className="scenario-review-row" key={title}>
+              <span className="scenario-number">{index + 1}</span>
+              <div>
+                <strong>{title}</strong>
+                <span>{meta}</span>
+              </div>
+              <CheckCircle2 className="ml-auto h-4 w-4" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (type === "submit") {
+    return (
+      <div className="scenario-visual scenario-submit-sheet">
+        <div className="scenario-sheet-handle" />
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <strong>งานของคุณ</strong>
+            <span>สถานะล่าสุด</span>
+          </div>
+          <span className="scenario-status-good">ส่งแล้ว</span>
+        </div>
+        <div className="scenario-upload-row">
+          <FileText className="h-5 w-5" />
+          <div>
+            <strong>summary.pdf</strong>
+            <span>อัปโหลดแล้ว · 420 KB</span>
+          </div>
+        </div>
+        <button type="button" className="scenario-fake-button">
+          <Send className="h-4 w-4" />
+          ส่งใหม่แทนเวอร์ชันเดิม
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="scenario-visual scenario-score-card">
+      <div className="scenario-score-lock">
+        <LockKeyhole className="h-5 w-5" />
+        เห็นเฉพาะเจ้าของงาน
+      </div>
+      <div className="scenario-score-main">
+        <span>คะแนนของฉัน</span>
+        <strong>15/15</strong>
+      </div>
+      <div className="scenario-feedback">
+        <Clock3 className="h-4 w-4" />
+        <span>เผยแพร่เมื่อ 13 มิ.ย. · ครูบันทึก audit แล้ว</span>
+      </div>
+      <div className="scenario-mini-row">
+        <span className="scenario-avatar">
+          <UsersRound className="h-4 w-4" />
+        </span>
+        <span>เพื่อนร่วมห้อง</span>
+        <span className="is-muted">ไม่แสดง</span>
       </div>
     </div>
   );
 }
 
-function MockFeed() {
+function MiniMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="mt-auto space-y-2">
-      <div className="rounded-xl border border-black/[0.05] bg-white px-3 py-2">
-        <div className="flex items-center gap-2">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-orange-100 text-[9px] font-semibold text-orange-700">
-            สใ
-          </span>
-          <span className="text-[11px] font-medium text-black">ครูสมชาย</span>
-          <span className="ml-auto rounded-full bg-orange-50 px-1.5 py-0.5 text-[8px] font-medium text-orange-700">
-            ประกาศ
-          </span>
-        </div>
-        <p className="mt-1.5 text-[10px] leading-relaxed text-black/55">
-          พรุ่งนี้สอบเก็บคะแนนบทที่ 3 นะครับ
-        </p>
-      </div>
-      <div className="rounded-xl border border-black/[0.05] bg-white px-3 py-2">
-        <div className="flex items-center gap-2">
-          <span className="rounded-full bg-blue-50 px-1.5 py-0.5 text-[8px] font-medium text-blue-700">
-            การบ้าน
-          </span>
-          <span className="text-[10px] text-black/55">แบบฝึกหัด 3.2</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function MockCourseColors() {
-  const colors = [
-    "#f56c7c",
-    "#f58e6e",
-    "#e8a646",
-    "#94c944",
-    "#3cb4ac",
-    "#5eaedb",
-    "#7a7ae5",
-    "#b574d6",
-  ];
-  const names = [
-    "ภาษาไทย",
-    "สังคม",
-    "คณิต",
-    "วิทย์",
-    "อังกฤษ",
-    "ศิลปะ",
-    "พละ",
-    "เทคโน",
-  ];
-  return (
-    <div className="mt-auto grid grid-cols-4 gap-2">
-      {colors.map((c, i) => (
-        <div
-          key={c}
-          className="overflow-hidden rounded-xl border border-black/[0.05] bg-white"
-        >
-          <div className="h-7" style={{ background: c }} />
-          <p className="px-2 py-1 text-[9px] font-medium text-black/60">
-            {names[i]}
-          </p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function MockKpis() {
-  const kpis = [
-    { label: "วิชาที่สอน", value: "6", tone: "text-blue-700" },
-    { label: "นักเรียน", value: "182", tone: "text-black" },
-    { label: "งานรอตรวจ", value: "3", tone: "text-orange-700" },
-  ];
-  return (
-    <div className="mt-auto grid grid-cols-3 gap-2">
-      {kpis.map((k) => (
-        <div key={k.label} className="rounded-xl bg-black/[0.02] p-3">
-          <p className="text-[10px] text-black/45">{k.label}</p>
-          <p
-            className={"mt-1 text-xl font-semibold " + k.tone}
-            style={{ letterSpacing: "-0.02em" }}
-          >
-            {k.value}
-          </p>
-        </div>
-      ))}
+    <div className="scenario-mini-metric">
+      <strong>{value}</strong>
+      <span>{label}</span>
     </div>
   );
 }

@@ -133,7 +133,7 @@ export function SubmissionFilePreview({
                     <button
                       type="button"
                       onClick={() => go(-1)}
-                      className="absolute left-0 top-1/2 z-10 inline-flex h-11 w-11 -translate-x-2 -translate-y-1/2 items-center justify-center rounded-full bg-white/14 text-white backdrop-blur transition hover:bg-white/24 sm:-translate-x-16"
+                      className="absolute left-3 top-1/2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/14 text-white shadow-lg backdrop-blur transition hover:bg-white/24 sm:left-6"
                       aria-label="ไฟล์ก่อนหน้า"
                     >
                       <ChevronLeft className="h-6 w-6" aria-hidden="true" />
@@ -141,7 +141,7 @@ export function SubmissionFilePreview({
                     <button
                       type="button"
                       onClick={() => go(1)}
-                      className="absolute right-0 top-1/2 z-10 inline-flex h-11 w-11 translate-x-2 -translate-y-1/2 items-center justify-center rounded-full bg-white/14 text-white backdrop-blur transition hover:bg-white/24 sm:translate-x-16"
+                      className="absolute right-3 top-1/2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/14 text-white shadow-lg backdrop-blur transition hover:bg-white/24 sm:right-6"
                       aria-label="ไฟล์ถัดไป"
                     >
                       <ChevronRight className="h-6 w-6" aria-hidden="true" />

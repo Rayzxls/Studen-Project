@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { CheckCircle2, FileText } from "lucide-react";
+import {
+  CheckCircle2,
+  ClipboardCheck,
+  FileText,
+  PencilLine,
+} from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
 import { getCourseOfferingForTeacher } from "@/lib/course/queries";
 import { db } from "@/lib/db/client";
@@ -37,8 +42,10 @@ export default async function ScoresListPage({ params }: PageProps) {
         id: true,
         name: true,
         fullScore: true,
+        source: true,
         position: true,
         publishedAt: true,
+        assignment: { select: { id: true } },
         _count: { select: { entries: true } },
       },
       orderBy: [{ position: "asc" }, { id: "asc" }],
@@ -102,7 +109,8 @@ export default async function ScoresListPage({ params }: PageProps) {
               </h2>
               <p className="mt-1 text-xs text-black/50">
                 แยกให้เห็นว่านักเรียนได้คะแนนจากส่วนไหนบ้าง ·
-                กดชื่อรายการคะแนนเพื่อเข้าไปกรอก/แก้คะแนน
+                งานส่งให้ไปตรวจในหน้าตรวจงาน
+                ส่วนคะแนนครูกรอกเองยังแก้ได้ในสมุดคะแนน
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -131,20 +139,26 @@ export default async function ScoresListPage({ params }: PageProps) {
                 <thead>
                   <tr>
                     <th className="sticky left-0 z-10 bg-surface">นักเรียน</th>
-                    {items.map((item) => (
-                      <th key={item.id} className="text-right">
-                        <Link
-                          href={`/teacher/courses/${id}/scores/${item.id}`}
-                          className="block max-w-[140px] truncate text-black hover:underline"
-                        >
-                          {item.name}
-                        </Link>
-                        <span className="mt-0.5 block text-[10px] font-normal text-ink-soft">
-                          /{item.fullScore} ·{" "}
-                          {item.publishedAt ? "ประกาศแล้ว" : "ร่าง"}
-                        </span>
-                      </th>
-                    ))}
+                    {items.map((item) => {
+                      const target = scoreItemTarget(id, item);
+                      return (
+                        <th key={item.id} className="text-right">
+                          <span className="mb-1 inline-flex rounded-full bg-black/[0.04] px-2 py-0.5 text-[10px] font-medium text-ink-soft">
+                            {scoreItemKindLabel(item)}
+                          </span>
+                          <Link
+                            href={target.href}
+                            className="block max-w-[140px] truncate text-black hover:underline"
+                          >
+                            {item.name}
+                          </Link>
+                          <span className="mt-0.5 block text-[10px] font-normal text-ink-soft">
+                            /{item.fullScore} ·{" "}
+                            {item.publishedAt ? "ประกาศแล้ว" : "ร่าง"}
+                          </span>
+                        </th>
+                      );
+                    })}
                     <th className="text-right">คะแนนรวม</th>
                     <th className="text-right">%</th>
                     <th className="text-right">เกรด</th>
@@ -219,18 +233,37 @@ export default async function ScoresListPage({ params }: PageProps) {
             <ul className="divide-y divide-black/[0.06]">
               {items.map((item) => {
                 const published = item.publishedAt !== null;
+                const target = scoreItemTarget(id, item);
+                const isAssignmentLinked = item.source === "ASSIGNMENT_LINKED";
                 return (
                   <li
                     key={item.id}
                     className="-mx-2 flex items-center gap-2 px-2"
                   >
                     <Link
-                      href={`/teacher/courses/${id}/scores/${item.id}`}
+                      href={target.href}
                       className="-mx-2 flex flex-1 items-center justify-between gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-slate-50/60"
                     >
                       <div className="min-w-0">
-                        <p className="flex items-center gap-2 truncate text-sm font-medium text-black">
-                          {item.name}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="truncate text-sm font-medium text-black">
+                            {item.name}
+                          </p>
+                          <span
+                            className={
+                              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 " +
+                              (isAssignmentLinked
+                                ? "bg-blue-500/10 text-blue-700 ring-blue-500/15"
+                                : "bg-black/[0.04] text-ink-soft ring-black/[0.06]")
+                            }
+                          >
+                            {isAssignmentLinked ? (
+                              <ClipboardCheck className="h-3 w-3" />
+                            ) : (
+                              <PencilLine className="h-3 w-3" />
+                            )}
+                            {scoreItemKindLabel(item)}
+                          </span>
                           {published ? (
                             <span className="rounded-full bg-green-500 px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm ring-1 ring-black/10">
                               เผยแพร่แล้ว
@@ -240,12 +273,16 @@ export default async function ScoresListPage({ params }: PageProps) {
                               ร่าง
                             </span>
                           )}
-                        </p>
+                        </div>
                         <p className="mt-0.5 text-xs text-black/50">
                           คะแนนเต็ม {item.fullScore} · บันทึกคะแนนแล้ว{" "}
-                          {item._count.entries.toLocaleString("th-TH")} รายการ
+                          {item._count.entries.toLocaleString("th-TH")} รายการ ·{" "}
+                          {target.hint}
                         </p>
                       </div>
+                      <span className="shrink-0 rounded-full bg-blue-500/10 px-3 py-1 text-xs font-semibold text-blue-700 ring-1 ring-blue-500/10">
+                        {target.actionLabel}
+                      </span>
                     </Link>
                     <div className="flex shrink-0 items-center gap-1">
                       {!published && (
@@ -275,6 +312,32 @@ export default async function ScoresListPage({ params }: PageProps) {
       </div>
     </CourseShell>
   );
+}
+
+type ScoreItemListItem = {
+  id: string;
+  source: "MANUAL" | "ASSIGNMENT_LINKED";
+  assignment: { id: string } | null;
+};
+
+function scoreItemKindLabel(item: ScoreItemListItem): string {
+  return item.source === "ASSIGNMENT_LINKED" ? "งานส่ง" : "คะแนนครูกรอกเอง";
+}
+
+function scoreItemTarget(courseId: string, item: ScoreItemListItem) {
+  if (item.source === "ASSIGNMENT_LINKED" && item.assignment) {
+    return {
+      href: `/teacher/courses/${courseId}/assignments/${item.assignment.id}`,
+      actionLabel: "ไปตรวจงาน",
+      hint: "ตรวจไฟล์ คอมเมนต์ และยืนยันคะแนนในหน้าตรวจงาน",
+    };
+  }
+
+  return {
+    href: `/teacher/courses/${courseId}/scores/${item.id}`,
+    actionLabel: "กรอกคะแนน",
+    hint: "กรอกหรือแก้คะแนนได้ในสมุดคะแนน",
+  };
 }
 
 function EmptyState() {
