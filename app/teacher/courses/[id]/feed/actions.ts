@@ -6,6 +6,7 @@ import { getRequestMeta } from "@/lib/utils/request";
 import { createAssignment } from "@/lib/assignment/assignment";
 import { createMaterial } from "@/lib/material/material";
 import { createAnnouncement } from "@/lib/announcement/announcement";
+import { ZodError } from "zod";
 import { HttpError, ValidationError } from "@/lib/errors";
 
 /**
@@ -31,6 +32,18 @@ function parseLinkUrls(raw: string): string[] {
     .split(/\r?\n/)
     .map((s) => s.trim())
     .filter(Boolean);
+}
+
+/** Map a Zod issue tree to the composer's `fieldErrors` shape so a bad
+ *  input (e.g. a malformed link) surfaces inline instead of throwing an
+ *  uncaught ZodError that 500s the page. */
+function zodToFieldErrors(err: ZodError): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const issue of err.issues) {
+    const key = issue.path[0] != null ? String(issue.path[0]) : "_";
+    if (!out[key]) out[key] = issue.message;
+  }
+  return out;
 }
 
 function parseFileAttachmentIds(raw: FormDataEntryValue | null): string[] {
@@ -91,6 +104,7 @@ export async function composeAnnouncementAction(
   } catch (err) {
     if (err instanceof ValidationError) return { fieldErrors: err.errors };
     if (err instanceof HttpError) return { error: err.message };
+    if (err instanceof ZodError) return { fieldErrors: zodToFieldErrors(err) };
     throw err;
   }
   revalidatePath(`/teacher/courses/${courseId}/feed`);
@@ -159,6 +173,7 @@ export async function composeAssignmentAction(
   } catch (err) {
     if (err instanceof ValidationError) return { fieldErrors: err.errors };
     if (err instanceof HttpError) return { error: err.message };
+    if (err instanceof ZodError) return { fieldErrors: zodToFieldErrors(err) };
     throw err;
   }
   revalidatePath(`/teacher/courses/${courseId}/feed`);
@@ -209,6 +224,7 @@ export async function composeMaterialAction(
   } catch (err) {
     if (err instanceof ValidationError) return { fieldErrors: err.errors };
     if (err instanceof HttpError) return { error: err.message };
+    if (err instanceof ZodError) return { fieldErrors: zodToFieldErrors(err) };
     throw err;
   }
   revalidatePath(`/teacher/courses/${courseId}/feed`);
