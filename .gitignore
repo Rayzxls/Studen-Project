@@ -67,3 +67,7 @@ next-env.d.ts
 # Prisma (future phases)
 /prisma/*.db
 /prisma/*.db-journal
+
+# Playwright MCP + taste skill scratch output
+.playwright-mcp/
+taste-*.jpeg
