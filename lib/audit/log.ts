@@ -51,6 +51,7 @@ export type AuditEvent =
   | "ASSIGNMENT_UPDATED" // Important only when isScored:true→false toggle with reason ≥ 5
   | "SUBMISSION_RETURNED" // Important · reason = private comment body (≥ 5)
   | "SUBMISSION_WITHDRAWN" // Important · student pulls own work out of the review queue (history preserved)
+  | "SUBMISSION_VERSION_HIDDEN" // student soft-hides one past version from their own list (teacher + audit still see it)
   // Profile (Phase 13) — learning identity, not social media
   | "DISPLAY_NAME_CHANGED" // Important · self-service set/clear of User.displayName
   | "PROFILE_IMAGE_CHANGED" // Important · user uploads/replaces own avatar

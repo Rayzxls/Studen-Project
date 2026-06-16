@@ -17,6 +17,7 @@ import { requireRole } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { SubmitVersionForm } from "@/components/assignment/submit-version-form";
 import { WithdrawSubmissionButton } from "@/components/assignment/withdraw-submission-button";
+import { HideVersionButton } from "@/components/assignment/hide-version-button";
 import { CommentsThread } from "@/components/comment/comments-thread";
 import { ensureSubmission } from "@/lib/assignment/submission";
 import { AssignmentAttachmentGallery } from "@/components/assignment/assignment-attachment-gallery";
@@ -150,6 +151,9 @@ export default async function StudentAssignmentDetailPage({
       id: true,
       status: true,
       versions: {
+        // Student view hides versions they removed; the teacher's submission
+        // page selects all versions (history is preserved — ADR-0020).
+        where: { hiddenFromStudentAt: null },
         select: {
           id: true,
           versionNumber: true,
@@ -584,7 +588,7 @@ export default async function StudentAssignmentDetailPage({
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="text-xs font-medium text-black">
-                            เวอร์ชัน {version.versionNumber}
+                            การส่งครั้งที่ {version.versionNumber}
                           </p>
                           <p className="mt-1 text-[11px] text-black/45">
                             {new Intl.DateTimeFormat("th-TH-u-ca-buddhist", {
@@ -596,15 +600,28 @@ export default async function StudentAssignmentDetailPage({
                             }).format(version.submittedAt)}
                           </p>
                         </div>
-                        <div className="flex shrink-0 gap-1">
-                          {version.isCurrent && (
-                            <span className="badge badge-success">ล่าสุด</span>
-                          )}
+                        <div className="flex shrink-0 flex-col items-end gap-1.5">
+                          <div className="flex gap-1">
+                            {version.isCurrent && (
+                              <span className="badge badge-success">
+                                ล่าสุด
+                              </span>
+                            )}
+                            {!version.isCurrent && (
+                              <span className="badge">เก็บไว้</span>
+                            )}
+                            {version.isLate && (
+                              <span className="badge badge-warn">ส่งสาย</span>
+                            )}
+                          </div>
                           {!version.isCurrent && (
-                            <span className="badge">เก็บไว้</span>
-                          )}
-                          {version.isLate && (
-                            <span className="badge badge-warn">ส่งสาย</span>
+                            <HideVersionButton
+                              courseId={courseId}
+                              assignmentId={assignmentId}
+                              submissionId={submission.id}
+                              versionId={version.id}
+                              label={`การส่งครั้งที่ ${version.versionNumber}`}
+                            />
                           )}
                         </div>
                       </div>
