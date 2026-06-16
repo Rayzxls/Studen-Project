@@ -1,23 +1,23 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ChevronLeft, Link as LinkIcon } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
 import { getCourseOfferingForTeacher } from "@/lib/course/queries";
 import { db } from "@/lib/db/client";
-import { formatThaiDateShort } from "@/lib/attendance/format";
+import { getOrderedAttachments } from "@/lib/storage/attachments";
 import { CourseShell } from "@/components/course/course-shell";
+import { PostDetail } from "@/components/course/post-detail";
 import { EditAnnouncementDialog } from "@/components/announcement/edit-announcement-dialog";
 import { DeleteAnnouncementDialog } from "@/components/announcement/delete-announcement-dialog";
 import { CommentsThread } from "@/components/comment/comments-thread";
-import { SafeExternalLinkButton } from "@/components/link/safe-external-link-button";
 import { teacherCourseTabs } from "../../_tabs";
 
 /**
  * Teacher Announcement detail — Phase 7 · P7-7.
  *
- * Same shape as Material detail, but Announcement.title is nullable;
- * the page falls back to "ประกาศไม่มีหัวข้อ" placeholder when title
- * is empty. Comments thread is deferred to P7-8 (Q3 = B lock).
+ * Same shape as Material detail, but Announcement.title is nullable; the
+ * shared PostDetail renders the "ประกาศไม่มีหัวข้อ" placeholder and the
+ * files/images/links. Edit + Delete sit in the PostDetail actions slot.
  */
 
 export const dynamic = "force-dynamic";
@@ -51,6 +51,7 @@ export default async function TeacherAnnouncementDetailPage({
       title: true,
       body: true,
       linkUrls: true,
+      fileAttachmentIds: true,
       postedAt: true,
       postedBy: {
         select: {
@@ -64,12 +65,13 @@ export default async function TeacherAnnouncementDetailPage({
   const linkUrls = (
     Array.isArray(announcement.linkUrls) ? announcement.linkUrls : []
   ) as string[];
+  const attachments = await getOrderedAttachments(
+    announcement.fileAttachmentIds
+  );
 
   const posterName = announcement.postedBy.teacher
     ? `${announcement.postedBy.teacher.firstName} ${announcement.postedBy.teacher.lastName}`
     : "ครู";
-
-  const headline = announcement.title?.trim() || "ประกาศไม่มีหัวข้อ";
 
   return (
     <CourseShell
@@ -88,23 +90,17 @@ export default async function TeacherAnnouncementDetailPage({
           กลับไปรายการประกาศ
         </Link>
 
-        <div className="card p-6">
-          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h1
-                className={`text-2xl font-medium md:text-3xl ${
-                  announcement.title?.trim() ? "text-black" : "text-black/50"
-                }`}
-                style={{ letterSpacing: "-0.02em" }}
-              >
-                {headline}
-              </h1>
-              <p className="mt-1 text-xs text-black/50">
-                โดย {posterName} · โพสต์เมื่อ{" "}
-                {formatThaiDateShort(announcement.postedAt)}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
+        <PostDetail
+          kind="ANNOUNCEMENT"
+          title={announcement.title}
+          emptyTitle="ประกาศไม่มีหัวข้อ"
+          body={announcement.body}
+          posterName={posterName}
+          postedAt={announcement.postedAt}
+          attachments={attachments}
+          linkUrls={linkUrls}
+          actions={
+            <>
               <EditAnnouncementDialog
                 courseId={id}
                 announcementId={announcement.id}
@@ -116,35 +112,9 @@ export default async function TeacherAnnouncementDetailPage({
                 courseId={id}
                 announcementId={announcement.id}
               />
-            </div>
-          </div>
-
-          <div className="prose prose-sm mt-2 max-w-none whitespace-pre-wrap text-sm text-black/80">
-            {announcement.body}
-          </div>
-
-          {linkUrls.length > 0 && (
-            <div className="mt-5 rounded-xl border border-black/[0.06] bg-black/[0.02] p-4">
-              <p className="mb-2 text-xs font-medium text-black/60">ลิงก์</p>
-              <ul className="space-y-1.5">
-                {linkUrls.map((url, i) => (
-                  <li key={i}>
-                    <SafeExternalLinkButton
-                      href={url}
-                      className="inline-flex items-center gap-1.5 break-all text-left text-xs text-black hover:underline"
-                    >
-                      <LinkIcon
-                        className="h-3 w-3 shrink-0"
-                        aria-hidden="true"
-                      />
-                      {url}
-                    </SafeExternalLinkButton>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
+            </>
+          }
+        />
 
         <CommentsThread
           ownerType="ANNOUNCEMENT"
