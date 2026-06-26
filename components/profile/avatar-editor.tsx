@@ -32,9 +32,11 @@ type Phase =
 export function AvatarEditor({
   userId,
   hasImage,
+  version,
 }: {
   userId: string;
   hasImage: boolean;
+  version?: string | null;
 }) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -147,6 +149,7 @@ export function AvatarEditor({
       <UserAvatar
         userId={userId}
         hasImage={hasImage}
+        version={version}
         size={96}
         alt="รูปโปรไฟล์ของฉัน"
       />

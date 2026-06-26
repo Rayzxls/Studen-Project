@@ -91,6 +91,7 @@ export default async function AdminCourseObserverLayout({
               <UserAvatar
                 userId={course.teacher.userId}
                 hasImage={course.teacher.user.profileImageId !== null}
+                version={course.teacher.user.profileImageId}
                 size={64}
                 className="rounded-2xl ring-0"
               />

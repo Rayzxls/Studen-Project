@@ -87,6 +87,7 @@ export default async function ProfilePage() {
               <AvatarEditor
                 userId={user.id}
                 hasImage={user.profileImageId !== null}
+                version={user.profileImageId}
               />
             </div>
 

@@ -93,6 +93,7 @@ export async function TopNav({
                 <UserAvatar
                   userId={session.user.id}
                   hasImage={Boolean(me?.profileImageId)}
+                  version={me?.profileImageId}
                   size={32}
                 />
               </summary>
