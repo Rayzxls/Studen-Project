@@ -104,6 +104,7 @@ export default async function DashboardPage() {
             session={session}
             name={name}
             hasAvatar={hasAvatar}
+            avatarVersion={user.profileImageId}
             className={user.student?.class?.name ?? null}
           />
         )}
@@ -113,6 +114,7 @@ export default async function DashboardPage() {
             teacherUserId={session.user.id}
             name={name}
             hasAvatar={hasAvatar}
+            avatarVersion={user.profileImageId}
             homeroomName={user.teacher?.homeroomOf?.name ?? null}
           />
         )}
@@ -157,11 +159,13 @@ async function StudentDashboard({
   session,
   name,
   hasAvatar,
+  avatarVersion,
   className,
 }: {
   session: Session;
   name: string;
   hasAvatar: boolean;
+  avatarVersion: string | null;
   className: string | null;
 }) {
   const [actionCenter, courses] = await Promise.all([
@@ -210,6 +214,7 @@ async function StudentDashboard({
               <UserAvatar
                 userId={session.user.id}
                 hasImage={hasAvatar}
+                version={avatarVersion}
                 size={44}
                 className="ring-2 ring-white/40"
               />
@@ -325,11 +330,13 @@ async function TeacherDashboard({
   teacherUserId,
   name,
   hasAvatar,
+  avatarVersion,
   homeroomName,
 }: {
   teacherUserId: string;
   name: string;
   hasAvatar: boolean;
+  avatarVersion: string | null;
   homeroomName: string | null;
 }) {
   const [reviewQueue, classHealth, term] = await Promise.all([
@@ -350,6 +357,7 @@ async function TeacherDashboard({
         teacherUserId={teacherUserId}
         name={name}
         hasAvatar={hasAvatar}
+        avatarVersion={avatarVersion}
       />
 
       <section className="mt-6">

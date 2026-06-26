@@ -241,6 +241,7 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
             <UserAvatar
               userId={user.id}
               hasImage={user.profileImageId !== null}
+              version={user.profileImageId}
               size={56}
             />
             <div>

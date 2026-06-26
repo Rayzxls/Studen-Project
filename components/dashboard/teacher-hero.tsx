@@ -26,10 +26,12 @@ export async function TeacherHero({
   teacherUserId,
   name,
   hasAvatar = false,
+  avatarVersion = null,
 }: {
   teacherUserId: string;
   name: string;
   hasAvatar?: boolean;
+  avatarVersion?: string | null;
 }) {
   const [stats, today] = await Promise.all([
     getTeacherStats(teacherUserId),
@@ -70,7 +72,12 @@ export async function TeacherHero({
         </div>
 
         <div className="mt-4 flex items-center gap-3">
-          <UserAvatar userId={teacherUserId} hasImage={hasAvatar} size={44} />
+          <UserAvatar
+            userId={teacherUserId}
+            hasImage={hasAvatar}
+            version={avatarVersion}
+            size={44}
+          />
           <h1
             className="text-3xl font-semibold text-black md:text-4xl"
             style={{ letterSpacing: "-0.03em" }}

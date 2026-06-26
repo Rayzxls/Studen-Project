@@ -210,6 +210,7 @@ export async function CommentsThread({
                   <UserAvatar
                     userId={c.authorId}
                     hasImage={c.author.profileImageId !== null}
+                    version={c.author.profileImageId}
                     size={isSocial ? 36 : 32}
                   />
                   <div className="min-w-0 flex-1">
