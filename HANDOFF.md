@@ -27,6 +27,27 @@
 
 ---
 
+## 🆕 SESSION 2026-06-16 · classroom flows fixes + submission version hide
+
+> branch `phase-11` · pushed `5aef1fc..2043759` (5 commits) · working tree clean · typecheck/lint/unit (429) green
+
+**Shipped (each its own commit):**
+- `fix(admin)` — restored the **"ห้องเรียนทั้งหมด"** sidebar link (lost in `d0bdbf5`, which only meant to hide the dashboard gallery; `/admin/classes` page existed all along).
+- `feat(feed)` — announcement & material **detail pages now render file/image/link attachments** (they only fetched `linkUrls` before). New `lib/storage/attachments.ts` + `components/course/post-detail.tsx` (reuses the feed `FeedAttachmentPreview` + lightbox); all 4 student/teacher pages thinned onto it.
+- `fix(feed)` — teacher composer **no longer 500-crashes on a bad link**; `ZodError → fieldErrors` renders inline under the links field.
+- `feat(submission)` — students can **soft-hide a past version** from their own history (`SubmissionVersion.hiddenFromStudentAt`; teacher + audit still see it — ADR-0020). New `hideSubmissionVersion` mutation + `SUBMISSION_VERSION_HIDDEN` audit + `HideVersionButton`. Renamed **"เวอร์ชัน N" → "การส่งครั้งที่ N"**. Also fixed `submitVersion`'s ValidationError key (`path.join(".")` → `path[0]`) so an invalid submission link surfaces as `fieldErrors.links` (was silently `"links.0"`).
+
+**🟥 Must-know for next session / Codex:**
+1. **DB schema changed via `db push`** (added `SubmissionVersion.hiddenFromStudentAt`, nullable). Since **dev = prod share one Neon DB**, the column is **already on prod's DB** (additive/safe). Prod *code* gets it on the next `phase-11 → main` PR.
+2. **Migrations are drift-locked** — only `init_auth` exists; everything since is `db push`. `prisma migrate dev` wants to **reset (drop all data)** → **do NOT run it**; use `pnpm db:push`.
+3. **After any `db push` / schema change: delete `.next` + restart the dev server.** Turbopack bundles a stale Prisma client → this session a stale client made the assignment-detail query throw and render a phantom **404**. `rm -rf .next` + restart fixed it.
+4. A 404 on `/student/courses/<c>/assignments/<a>` for an account **not enrolled** in that course is **by design** (L1 enrollment guard), not a bug.
+5. **Landing**: `app/page.tsx` + `components/landing/*` currently **match `5aef1fc`** (no uncommitted landing changes). This session explored landing redesigns (orbit "how-it-works", aurora section, grid background, real-component showcase) but those are **not in the tree** — confirm with Codex whether that redesign should be present before redoing.
+6. **`CLAUDE.md` "Design System — Ink + Gold" is stale** — the live theme is **Calm Ledger v2** (ADR-0028, System Blue; gold retired in `globals.css`). Worth updating that section.
+7. Installed `taste` skill (`~/.claude/skills/taste`) + **Playwright MCP** (user config) — needs a Claude Code restart to activate.
+
+---
+
 ## 🔥 LATEST UPDATE — 2026-06-13 · Beagle Classroom current state
 
 > อ่าน section นี้ก่อน เพราะข้อมูลด้านล่างบางส่วนเป็น handoff เก่าจากหลาย phase และอาจไม่ตรงกับสถานะล่าสุดทั้งหมด

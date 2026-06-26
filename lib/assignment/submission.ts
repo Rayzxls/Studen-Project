@@ -164,7 +164,10 @@ export async function submitVersion(
     throw new ValidationError(
       Object.fromEntries(
         parsedResult.error.issues.map((issue) => [
-          issue.path.join(".") || "_",
+          // Key by the top-level field (e.g. "links"), not the full path
+          // ("links.0") — the form reads fieldErrors.links, so a per-item
+          // path would silently never surface.
+          issue.path[0] != null ? String(issue.path[0]) : "_",
           issue.message,
         ])
       )
@@ -425,6 +428,98 @@ export async function withdrawSubmission(
         userAgent: ctx.userAgent,
         before: { status: submission.status },
         after: { status: "DRAFT" },
+      },
+      tx
+    );
+  }, TX_OPTS);
+}
+
+// ─────────────────────────────────────────────────────────────
+// hideSubmissionVersion — student declutters own history (soft-hide)
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Soft-hide one past SubmissionVersion from the student's OWN history list
+ * (ADR-0020 — history is never destroyed; the teacher + audit trail keep
+ * seeing it). Only a non-current version owned by the acting student may be
+ * hidden; the current (live) submission cannot be hidden.
+ */
+export async function hideSubmissionVersion(
+  input: { assignmentId: string; submissionId: string; versionId: string },
+  ctx: ActorCtx
+): Promise<void> {
+  const now = new Date();
+
+  await db.$transaction(async (tx) => {
+    const version = await tx.submissionVersion.findUnique({
+      where: { id: input.versionId },
+      select: {
+        id: true,
+        versionNumber: true,
+        isCurrent: true,
+        hiddenFromStudentAt: true,
+        submission: {
+          select: {
+            id: true,
+            assignmentId: true,
+            enrollment: {
+              select: {
+                studentId: true,
+                removedAt: true,
+                courseOfferingId: true,
+                student: { select: { firstName: true, lastName: true } },
+              },
+            },
+            assignment: {
+              select: {
+                id: true,
+                title: true,
+                courseOfferingId: true,
+                course: { select: { name: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!version) throw new NotFound("submission_version_not_found");
+
+    const sub = version.submission;
+    if (
+      sub.id !== input.submissionId ||
+      sub.assignmentId !== input.assignmentId
+    ) {
+      throw new Forbidden("submission_version_mismatch");
+    }
+    if (
+      sub.enrollment.studentId !== ctx.actorUserId ||
+      sub.enrollment.removedAt !== null ||
+      sub.enrollment.courseOfferingId !== sub.assignment.courseOfferingId
+    ) {
+      throw new Forbidden("not_active_enrollment");
+    }
+    if (version.isCurrent) {
+      throw new Conflict("cannot_hide_current_version");
+    }
+    if (version.hiddenFromStudentAt !== null) return; // already hidden — idempotent
+
+    await tx.submissionVersion.update({
+      where: { id: version.id },
+      data: { hiddenFromStudentAt: now },
+    });
+
+    await audit(
+      {
+        actorId: ctx.actorUserId,
+        actorRole: "STUDENT",
+        action: "SUBMISSION_VERSION_HIDDEN",
+        targetType: "SubmissionVersion",
+        targetId: version.id,
+        targetLabel: `${sub.enrollment.student.firstName} ${sub.enrollment.student.lastName} — ${sub.assignment.title} (วิชา${sub.assignment.course.name}) · การส่งครั้งที่ ${version.versionNumber}`,
+        ipAddress: ctx.ipAddress,
+        userAgent: ctx.userAgent,
+        before: { hiddenFromStudentAt: null },
+        after: { hiddenFromStudentAt: now.toISOString() },
       },
       tx
     );

@@ -57,6 +57,7 @@ const ACTION_LABEL_TH: Record<AuditEvent, string> = {
   ASSIGNMENT_UPDATED: "ยกเลิกการนับคะแนนของการบ้าน",
   SUBMISSION_RETURNED: "ส่งงานกลับให้นักเรียนแก้",
   SUBMISSION_WITHDRAWN: "นักเรียนยกเลิกการส่งงาน",
+  SUBMISSION_VERSION_HIDDEN: "นักเรียนซ่อนการส่งครั้งก่อนจากรายการตัวเอง",
   // Profile (Phase 13)
   DISPLAY_NAME_CHANGED: "เปลี่ยนชื่อที่แสดง",
   PROFILE_IMAGE_CHANGED: "เปลี่ยนรูปโปรไฟล์",

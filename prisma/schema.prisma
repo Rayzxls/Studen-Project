@@ -494,6 +494,11 @@ model SubmissionVersion {
   isLate      Boolean // immutable — computed at submit-time vs Assignment.dueAt
   isCurrent   Boolean  @default(true)
 
+  // Student soft-hide (ADR-0020): when set, this version is filtered out of
+  // the student's OWN history list, but the teacher + audit trail still see
+  // it — history is never destroyed. Only non-current versions may be hidden.
+  hiddenFromStudentAt DateTime?
+
   @@unique([submissionId, versionNumber])
   @@index([submissionId, isCurrent]) // "find current version" query
 }

@@ -24,6 +24,17 @@ import sharp from "sharp";
 import type { AllowedMime } from "@/lib/assignment/constants";
 import type { VerifiedExt } from "./keys";
 
+/**
+ * sharp's default `failOn: "warning"` promotes libjpeg/libvips *warnings*
+ * (e.g. "VipsJpeg: Invalid SOS parameters for sequential JPEG") to thrown
+ * errors. Browser-canvas JPEGs (the avatar crop ships `canvas.toBlob`
+ * output) and phone exports routinely carry such warning-level quirks, and
+ * the libvips build on Vercel is stricter than typical dev machines — so a
+ * commit that works locally 500s in production. We re-encode every image
+ * anyway, so decode defensively and let the clean re-encode fix the bytes.
+ */
+const SHARP_OPTS = { failOn: "none" } as const;
+
 export interface ProcessImageResult {
   bytes: Buffer;
   finalMime: AllowedMime;
@@ -54,11 +65,14 @@ export async function processImageForStorage(args: {
 
   switch (args.verifiedMime) {
     case "image/jpeg": {
-      const out = await sharp(input).rotate().jpeg({ quality: 85 }).toBuffer();
+      const out = await sharp(input, SHARP_OPTS)
+        .rotate()
+        .jpeg({ quality: 85 })
+        .toBuffer();
       return { bytes: out, finalMime: "image/jpeg", finalExt: "jpg" };
     }
     case "image/png": {
-      const out = await sharp(input)
+      const out = await sharp(input, SHARP_OPTS)
         .rotate()
         .png({ compressionLevel: 9 })
         .toBuffer();
@@ -67,7 +81,10 @@ export async function processImageForStorage(args: {
     case "image/heic":
     case "image/heif": {
       // Transcode to JPEG — universal browser support.
-      const out = await sharp(input).rotate().jpeg({ quality: 85 }).toBuffer();
+      const out = await sharp(input, SHARP_OPTS)
+        .rotate()
+        .jpeg({ quality: 85 })
+        .toBuffer();
       return { bytes: out, finalMime: "image/jpeg", finalExt: "jpg" };
     }
     case "image/webp":
