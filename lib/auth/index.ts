@@ -7,6 +7,7 @@ import { audit } from "@/lib/audit/log";
 import { rateLimit } from "@/lib/auth/rate-limit";
 import { getRequestMeta } from "@/lib/utils/request";
 import { LoginSchema } from "@/lib/validation/schemas";
+import { isAccountAvailableForAuthentication } from "@/lib/account/status";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -56,7 +57,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
 
         // Generic failure (no enumeration)
-        if (!user || !user.isActive || user.deletedAt) {
+        if (
+          !user ||
+          !isAccountAvailableForAuthentication({
+            isActive: user.isActive,
+            deletedAt: user.deletedAt,
+          })
+        ) {
           await audit({
             action: "LOGIN_FAILED",
             targetType: "User",

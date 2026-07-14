@@ -1,64 +1,73 @@
-# Studennnn — Student Score, Attendance & Assignment Portal
+# Beagle Classroom - Classroom Management Web Application
 
-ระบบจัดการห้องเรียนสำหรับโรงเรียนเดียว (single-tenant) ที่รวม:
-- 📝 **Attendance** — เช็คชื่อรายคาบ
-- 🎯 **Scoring** — กรอกคะแนนแบบ weighted + auto grade
-- 📚 **Assignments** — สร้างการบ้าน, นักเรียนส่งงาน (text/file/link), ครูตรวจ + comment
-- 💬 **Feed** — timeline ของห้องเรียน (เหมือน Google Classroom Stream)
-- 📊 **Term Summary** — ผลการเรียนรายเทอม (print-ready transcript)
+ระบบจัดการห้องเรียนแบบ single-tenant ที่รวมงานหลักของครูและนักเรียนไว้ในพื้นที่เดียว:
 
-ออกแบบให้ **ครูเป็นผู้ใส่ข้อมูล** และ **Admin มีหน้าที่ตรวจสอบ** ไม่ใช่กรอกข้อมูลแทนใคร
+- **Attendance** - เปิดคาบ เช็กชื่อ 4 สถานะ และดูสถิติรายวิชา
+- **Scoring** - คะแนนรวมแบบ `sum(score) / sum(fullScore)` พร้อมเกรดรายวิชา
+- **Assignments** - ครูมอบหมายงาน นักเรียนส่งข้อความ/ไฟล์/ลิงก์ และครูตรวจแบบต่อเนื่อง
+- **Feed & Notifications** - ประกาศ เอกสาร การบ้าน คะแนน และการแจ้งเตือนของห้อง
+- **Learning Results** - นักเรียนดูคะแนนและเกรดของตนเอง พร้อมหน้าพิมพ์/PDF ผ่านเบราว์เซอร์
+- **Profile & Themes** - รูปประจำตัว ชื่อที่ใช้ในการเรียน รหัสผ่าน และธีม System/Light/Dark/Cream
 
-## Vision
+ระบบยึดหลักว่า **ครูเป็นเจ้าของข้อมูลการสอน** และ **Admin เป็นผู้สังเกตการณ์แบบ read-only** สำหรับข้อมูลการเรียนการสอน ไม่กรอกคะแนน เช็กชื่อ หรือสร้างงานแทนครู
 
-> ลดภาระ Admin ให้เหลือเพียงงาน audit และตรวจสอบข้อมูล โดยให้ครูจัดการห้องเรียนของตัวเองได้เต็มที่ และให้นักเรียนมีพื้นที่ดูคะแนน/ส่งงาน/รับ feedback ครบในที่เดียว
+## Product Direction
+
+Beagle Classroom เป็น Classroom Management System (CMS) สำหรับโรงเรียนเดียวในรุ่นปัจจุบัน โดยลดการสลับเครื่องมือของครูและทำให้นักเรียนเห็นเฉพาะข้อมูลที่ควรเห็น การขยายเป็น multi-tenant, subscription หรือ Global User เป็นงานอนาคตและยังไม่อยู่ใน production scope
 
 ## Roles
 
-| Role | สิ่งที่ทำได้ | สิ่งที่ทำไม่ได้ |
-|------|--------------|------------------|
-| **Admin** | ตรวจ audit log, ดูข้อมูลครู/นักเรียนทั้งหมด, import ครูผ่าน CSV, reset password (ครู), export log, moderate content | ไม่ใส่คะแนน, ไม่เช็คชื่อ, ไม่สร้าง assignment |
-| **Teacher** | สร้าง CourseOffering, เช็คชื่อ, ใส่คะแนน, publish, สร้าง Assignment/Announcement/Material, ตรวจ submission, generate Class Code/QR, reset password (นักเรียนใน course) | ไม่เห็นห้องของครูคนอื่น |
-| **Student** | สมัครเอง, join ห้องด้วย Class Code/QR/Link, ดูคะแนน (publish), ดูสถิติเข้าเรียน, ส่งงาน, comment, ดู Term Summary | ไม่เห็นข้อมูลคนอื่น |
-| **Homeroom Teacher** (attribute) | + เห็นภาพรวมห้องประจำชั้น ทุกวิชา | — |
+| Role | ทำได้ | ขอบเขตสำคัญ |
+|------|-------|--------------|
+| **Admin** | ดูภาพรวม ผู้ใช้ ห้องเรียน Audit Log และ Activity Review; import ครู/นักเรียน; reset password; export Audit CSV; moderation ที่กำหนด | เป็น read-only observer ของข้อมูลการสอน ห้ามกรอกคะแนน เช็กชื่อ สร้าง/แก้การบ้าน หรือสอนแทนครู |
+| **Teacher** | สร้างและดูแล CourseOffering, สมาชิก, ฟีด, งาน, คะแนน, เช็กชื่อ, รหัสเชิญ และส่งออก CSV สรุปคะแนน/การเข้าเรียน | แก้ไขและส่งออกรายงานได้เฉพาะวิชาที่ตนเป็นเจ้าของ |
+| **Student** | สมัคร/เข้าสู่ระบบ, เข้าร่วมวิชา, ดูฟีด, ส่งงาน, ดูคะแนน/เกรดและการเข้าเรียนของตน | L1 visibility: ห้ามเห็นคะแนน การเข้าเรียน งานส่ง หรือ private comment ของผู้อื่น |
+| **Homeroom Teacher** | ดูภาพรวมชั้นประจำชั้นตามสิทธิ์ | เป็น attribute เพิ่มเติม ไม่ใช่ role ใหม่ |
+
+## Current Scoring Language
+
+- `ScoreItem` มี `fullScore` และไม่มีช่อง weight แยก
+- คะแนนรวมรายวิชา = `sum(score) / sum(fullScore)` ของรายการที่ประกาศแล้ว
+- คะแนนและเกรดรายวิชาเป็นผลลัพธ์หลักสำหรับนักเรียน
+- Term GPA อาจคำนวณเพื่อรายงานรอง แต่ไม่ใช้เป็น KPI ขนาดใหญ่หรือ progress หลักบน Dashboard
+- การประกาศคะแนนเป็น one-way; การแก้คะแนนหลังประกาศต้องมีเหตุผลและ Audit Log
 
 ## Tech Stack
 
-- **Frontend:** Next.js 16 (App Router) + TypeScript + Tailwind v4 + IBM Plex Sans Thai + lucide-react
-- **Design system:** "Ink + Gold" (adopted from Father project) — ดู [docs/adr/0011](./docs/adr/0011-theme-ink-gold.md)
-- **Backend:** Next.js API Routes + Prisma + Zod + NextAuth v5 (Phase 1+)
-- **Database:** PostgreSQL (Neon) (Phase 1)
-- **File Storage:** Cloudflare R2 (Phase 6)
+- **Frontend:** Next.js 16 App Router, React, TypeScript, Tailwind CSS v4, Anuphan, lucide-react
+- **Design system:** Calm Ledger v2 - ดู [ADR-0014](./docs/adr/0014-theme-calm-ledger-supersedes-ink-gold.md), [ADR-0028](./docs/adr/0028-theme-calm-ledger-v2-color-friendly-and-material.md) และ [ADR-0029](./docs/adr/0029-world-class-interactive-task-modulated-motion.md)
+- **Backend:** Next.js Server Actions/API Routes, Prisma, Zod, NextAuth v5 Credentials
+- **Database:** PostgreSQL on Neon
+- **Private file storage:** Cloudflare R2 ผ่าน permission check และ signed/authenticated delivery เท่านั้น
 - **Hosting:** Vercel
-- **Language:** ไทยเท่านั้น
+- **Product language:** ภาษาไทย
 
 ## Documentation Index
 
-| ไฟล์ | เกี่ยวกับ |
+| ไฟล์ | ใช้เมื่อ |
 |------|----------|
-| [README.md](./README.md) | ภาพรวมโปรเจกต์ (ไฟล์นี้) |
-| [CLAUDE.md](./CLAUDE.md) | คำสั่งสำหรับ AI coding assistants |
-| [CONTEXT.md](./CONTEXT.md) | Glossary ของ domain terms |
-| [Architecture.md](./Architecture.md) | Tech stack, data model, system design |
-| [Security.md](./Security.md) | Auth, authorization, PDPA, audit, file security |
-| [Task.md](./Task.md) | Implementation roadmap แบ่งเป็น phase |
-| [Testing.md](./Testing.md) | Testing strategy + critical scenarios |
+| [CLAUDE.md](./CLAUDE.md) | กติกาสำหรับ AI coding assistants |
+| [CONTEXT.md](./CONTEXT.md) | คำศัพท์และความหมายของ domain ปัจจุบัน |
+| [Architecture.md](./Architecture.md) | โครงสร้างระบบและ data model |
+| [Security.md](./Security.md) | Authorization, PDPA, Audit และ file security |
+| [Testing.md](./Testing.md) | กลยุทธ์และเส้นทางทดสอบ |
+| [docs/PROPOSAL.md](./docs/PROPOSAL.md) | ข้อเสนอโครงงานที่ปรับให้ตรง product ปัจจุบัน |
+| [docs/NEXT-DEVELOPMENT-PLAN.md](./docs/NEXT-DEVELOPMENT-PLAN.md) | Roadmap ที่ใช้วางลำดับงานต่อจากระบบปัจจุบัน |
+| [Task.md](./Task.md) | Historical phase ledger; ไม่ใช่ roadmap ปัจจุบัน |
+| [HANDOFF.md](./HANDOFF.md) | สถานะล่าสุดและบันทึกส่งต่องาน |
 | [docs/adr/](./docs/adr/) | Architecture Decision Records |
 
 ## Quick Start
 
 ```bash
-# 1. ติดตั้ง dependencies
 pnpm install
-
-# 2. ตั้งค่า env vars
 cp .env.example .env.local
-
-# 3. รัน dev server
 pnpm dev
 ```
 
-เปิด http://localhost:3000
+เปิด `http://localhost:3000`
+
+> คำเตือน: การตั้งค่าปัจจุบันของโปรเจกต์อาจให้ local และ production ใช้ Neon ชุดเดียวกัน อ่าน [docs/DEPLOY.md](./docs/DEPLOY.md) ก่อนรันคำสั่งที่เปลี่ยน schema หรือข้อมูล
 
 ## Scripts
 
@@ -69,19 +78,13 @@ pnpm dev
 | `pnpm start` | Run production build |
 | `pnpm lint` | ESLint |
 | `pnpm typecheck` | TypeScript check |
-| `pnpm format` | Prettier format |
 | `pnpm test` | Vitest unit/integration tests |
 | `pnpm test:e2e` | Playwright E2E tests |
 
-## Current Phase
+## Current Status
 
-**Phase 0 — Scaffolding** ✅
-
-Next phases:
-- Phase 1: Auth & RBAC + Student self-register
-- Phase 2: Academic data + CSV import + Class Code/QR/Link
-- Phase 3-9: ดู [Task.md](./Task.md)
+ระบบ Core หลักถูก deploy แล้ว โดย Release A0 Documentation Alignment และ A1 Report/Export v1 ปิดงานแล้ว งานถัดไปคือ **A2 Critical-path QA gate** ตาม [docs/NEXT-DEVELOPMENT-PLAN.md](./docs/NEXT-DEVELOPMENT-PLAN.md) ก่อนเริ่ม Lesson Workspace, Quiz หรือ AI
 
 ## License
 
-Private — สำหรับใช้งานในโรงเรียนเป้าหมายเท่านั้น
+Private - สำหรับการทดลองและใช้งานกับกลุ่มเป้าหมายของโครงการ

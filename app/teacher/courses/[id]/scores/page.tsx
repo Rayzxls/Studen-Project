@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import {
   CheckCircle2,
   ClipboardCheck,
+  Download,
   FileText,
   PencilLine,
 } from "lucide-react";
@@ -114,6 +115,13 @@ export default async function ScoresListPage({ params }: PageProps) {
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              <a
+                href={`/teacher/courses/${id}/scores/export`}
+                className="btn-secondary btn-sm"
+              >
+                <Download className="h-4 w-4" />
+                ดาวน์โหลด CSV
+              </a>
               <CreateScoreItemForm courseId={id} />
               <span className="rounded-full bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200">
                 คะแนนเต็มรวม {fullScoreSum}

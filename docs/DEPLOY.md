@@ -4,6 +4,8 @@
 ขั้นที่ขึ้นต้นด้วย 🧑‍💻 = **คุณต้องทำเอง** (สมัคร cloud / กรอก secret / กด deploy)
 ขั้นที่ขึ้นต้นด้วย 🤖 = ผม (assistant) ช่วยทำให้ได้
 
+> **คำเตือนสถานะปัจจุบัน (2026-07-14):** local development และ production ชี้ไปที่ Neon database ชุดเดียวกัน การรัน `db push`, bootstrap, reset, seed หรือการทดสอบ mutation ในเครื่องจึงกระทบข้อมูล production ทันที ต้องสำรองข้อมูลและยืนยันขอบเขตก่อนทุกครั้ง เป้าหมายระยะถัดไปคือแยก dev/staging/prod แต่ห้ามสลับเองโดยไม่มีแผนย้ายข้อมูล
+
 ---
 
 ## 0. ตัดสินใจก่อน: เปิด signup สาธารณะไหม?
@@ -18,8 +20,8 @@
 
 | Service | ใช้ทำอะไร | ได้อะไรมา |
 |---------|-----------|-----------|
-| **Neon** (neon.tech) | Postgres production (แยกจาก dev) | `DATABASE_URL` |
-| **Cloudflare R2** (dash.cloudflare.com → R2) | เก็บไฟล์ที่นักเรียนส่ง | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL` |
+| **Neon** (neon.tech) | PostgreSQL (สถานะปัจจุบัน local/prod ใช้ชุดเดียวกัน) | `DATABASE_URL` |
+| **Cloudflare R2** (dash.cloudflare.com → R2) | เก็บไฟล์แบบ private | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME` |
 | **Vercel** (vercel.com) | hosting + HTTPS อัตโนมัติ | โดเมน `*.vercel.app` |
 
 > R2 ฟรี 10 GB — เกินพอ สร้าง bucket 1 อัน (เช่น `beagle-classroom-prod`) + API token แบบ **Object Read & Write**
@@ -51,9 +53,11 @@ openssl rand -base64 32
 
 ---
 
-## 3. Push schema เข้า prod DB
+## 3. Push schema เข้า database
 
 > โปรเจกต์ใช้ `prisma db push` มาตลอด (ไม่ใช้ migration files) — ทำตามนั้น
+>
+> **ห้ามรันตามตัวอย่างทันที:** เนื่องจาก local/prod ใช้ Neon ชุดเดียวกันในปัจจุบัน ต้องตรวจ diff, backup และได้รับการยืนยันก่อนทุกครั้ง คำสั่งนี้เป็น production mutation
 
 ```bash
 # ใส่ prod DATABASE_URL ชั่วคราว แล้ว push
@@ -105,11 +109,11 @@ DATABASE_URL="<prod-neon-url>" pnpm prisma db push
 
 | ตัวแปร | จำเป็น? | หมายเหตุ |
 |--------|---------|----------|
-| `DATABASE_URL` | ✅ | Neon prod |
+| `DATABASE_URL` | ✅ | Neon ชุดปัจจุบัน (local/prod shared จนกว่าจะมีแผนแยก environment) |
 | `AUTH_SECRET` | ✅ | `openssl rand -base64 32` |
 | `AUTH_URL` | ✅ | `https://YOUR-APP.vercel.app` |
 | `NEXT_PUBLIC_APP_URL` | ✅ | เหมือน AUTH_URL |
-| `R2_ACCOUNT_ID` / `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_BUCKET_NAME` / `R2_PUBLIC_URL` | ✅ | ไฟล์ที่นักเรียนส่งเก็บที่นี่ (code throw ถ้าไม่ครบ) |
+| `R2_ACCOUNT_ID` / `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_BUCKET_NAME` | ✅ | private R2; code throw ถ้าค่าไม่ครบ |
 | `UPSTASH_REDIS_REST_URL` / `_TOKEN` | ⬜ | เฉพาะถ้าเปิด signup สาธารณะ (rate-limit) |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` | ⬜ | เฉพาะถ้าเปิด signup สาธารณะ (CAPTCHA) |
 | `SENTRY_DSN` / `SENTRY_AUTH_TOKEN` | ⬜ | monitoring (optional) |
@@ -128,9 +132,9 @@ DATABASE_URL="<prod-neon-url>" pnpm prisma db push
 
 ---
 
-## หมายเหตุ / ข้อจำกัดที่ทราบ (ยัง defer)
+## หมายเหตุ / ข้อจำกัดที่ทราบ
 
-- **ครูแนบไฟล์/รูป ในกล่องสร้างงาน** ยัง disabled ("เร็วๆ นี้") — ครูแนบได้แค่ **ลิงก์**
-  (นักเรียน *ส่ง* ไฟล์ได้ปกติ) → ถ้าจำเป็นค่อยทำ file-upload pipeline เพิ่ม
-- ปุ่มย้อนกลับ 2 จุด (`/student/terms/[termId]`, หน้า detail นักเรียน) ยังไม่ขัดเกลา
-- Email: ไม่มี (notification เป็น in-app) → ลืมรหัสผ่าน = admin reset ให้ (มี temp-reveal)
+- local upload ใช้ `.local-storage` ขณะที่ production ใช้ R2 แต่ฐานข้อมูลอาจเป็น Neon ชุดเดียวกัน การสร้าง file pointer จาก local แล้วไปเปิดใน production (หรือกลับกัน) จึงอาจหา object ไม่พบ หลีกเลี่ยงการทดสอบไฟล์กับข้อมูล production จาก local
+- R2 ต้องเป็น private เสมอ การเปิดไฟล์ต้องผ่าน authorization และ signed/authenticated delivery; ห้ามเพิ่ม public bucket URL เพื่อแก้ปัญหาไฟล์หาย
+- ครูและนักเรียนแนบไฟล์/รูปได้ผ่าน uploader ปัจจุบัน ควร smoke test ทั้ง teacher post และ student submission หลัง deploy
+- Email notification ยังไม่มี ระบบใช้ in-app notification; ลืมรหัสผ่านให้ Admin reset เป็นรหัสชั่วคราวตาม flow ปัจจุบัน

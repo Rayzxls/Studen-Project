@@ -4,7 +4,7 @@ import { authConfig } from "@/lib/auth/config";
 const { auth } = NextAuth(authConfig);
 
 /**
- * Auth middleware + secure headers
+ * Auth proxy + secure headers
  * ดู Security.md § 8 (Secure Headers)
  */
 export default auth((req) => {

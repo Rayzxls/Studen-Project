@@ -1,10 +1,14 @@
 # Task.md — Implementation Roadmap
 
+> **Historical ledger:** ไฟล์นี้เก็บแผนและภาษาของแต่ละ phase ณ เวลาที่พัฒนา จึงมีคำเก่า เช่น weighted score, Ink + Gold และสถานะ Phase 7 ที่ถูก supersede แล้ว ห้ามใช้เป็น roadmap หรือกติกา product ปัจจุบัน
+>
+> ใช้ `docs/NEXT-DEVELOPMENT-PLAN.md` สำหรับลำดับงานปัจจุบัน, `CONTEXT.md` สำหรับคำศัพท์ปัจจุบัน, ADR ที่ accepted สำหรับ decision และ `HANDOFF.md` ส่วนบนสุดสำหรับสถานะล่าสุด
+
 แบ่งเป็น 9 phase เรียงตาม dependency — แต่ละ phase = shippable
 
 > Time estimate: solo dev ทำงาน focus ~4 ชม/วัน
 >
-> **สถานะปัจจุบัน:** Phase 0-6 ✅ DONE · Phase 7 = next · ดู `HANDOFF.md` สำหรับสรุป
+> **สถานะในช่วงที่สร้าง ledger นี้:** Phase 0-6 ✅ DONE · Phase 7 = next (ข้อมูลประวัติ ไม่ใช่สถานะปัจจุบัน)
 
 ---
 

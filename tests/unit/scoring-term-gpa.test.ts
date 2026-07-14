@@ -13,7 +13,10 @@
 
 import { describe, it, expect } from "vitest";
 import { termGpa, type TermCourseBundle } from "@/lib/scoring/term-gpa";
-import type { WeightedItem, WeightedEntry } from "@/lib/scoring/calc";
+import type {
+  ScoreItemForCalculation,
+  ScoreEntryForCalculation,
+} from "@/lib/scoring/calc";
 
 const D = new Date("2026-06-04T00:00:00Z");
 
@@ -21,21 +24,21 @@ function item(
   id: string,
   fullScore: number,
   publishedAt: Date | null = D
-): WeightedItem {
+): ScoreItemForCalculation {
   // Phase 10 cutover (ADR-0024): weight removed; fullScore alone encodes
   // per-item influence in the course grade.
   return { id, fullScore, publishedAt };
 }
 
-function entry(scoreItemId: string, value: number): WeightedEntry {
+function entry(scoreItemId: string, value: number): ScoreEntryForCalculation {
   return { scoreItemId, value };
 }
 
 function bundle(
   courseOfferingId: string,
   creditHours: number,
-  items: WeightedItem[],
-  entries: WeightedEntry[]
+  items: ScoreItemForCalculation[],
+  entries: ScoreEntryForCalculation[]
 ): TermCourseBundle {
   return { courseOfferingId, creditHours, items, entries };
 }
@@ -124,7 +127,6 @@ describe("termGpa", () => {
     // raw = (4×1 + 3.5×2 + 3×1.5) / (1+2+1.5) = (4 + 7 + 4.5) / 4.5 = 15.5/4.5 = 3.444...
     // rounded to 2 dp = 3.44
     const c1 = bundle("c1", 1.0, [item("a", 10, D)], [entry("a", 9)]);
-    const c2 = bundle("c2", 2.0, [item("b", 10, D)], [entry("b", 8)]); // 80% → 4.0... wait
     // Recompute: 8/10 = 80% → 4.0 (not 3.5). Use 7.5/10 = 75% → 3.5.
     const c2b = bundle("c2", 2.0, [item("b", 10, D)], [entry("b", 8)]);
     // Actually 8/10=80→4.0. Re-pick to land at 3.5: use 7/10 = 70% → 3.0. Hmm.

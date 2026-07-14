@@ -1,4 +1,8 @@
 import { db } from "@/lib/db/client";
+import {
+  deriveLegacyAccountStatus,
+  type AccountStatus,
+} from "@/lib/account/status";
 
 export interface TeacherListParams {
   search?: string;
@@ -11,7 +15,7 @@ export interface TeacherListItem {
   firstName: string;
   lastName: string;
   email: string;
-  isActive: boolean;
+  accountStatus: AccountStatus;
   createdAt: Date;
   hasAvatar: boolean;
   homeroomOf: string | null;
@@ -79,7 +83,10 @@ export async function listTeachers(
       firstName: t.firstName,
       lastName: t.lastName,
       email: t.email,
-      isActive: t.user.isActive,
+      accountStatus: deriveLegacyAccountStatus({
+        isActive: t.user.isActive,
+        deletedAt: null,
+      }),
       createdAt: t.user.createdAt,
       hasAvatar: t.user.profileImageId !== null,
       homeroomOf: t.homeroomOf?.name ?? null,

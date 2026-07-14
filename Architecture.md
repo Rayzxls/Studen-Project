@@ -1,6 +1,6 @@
 # Architecture.md
 
-System design ของระบบ Studennnn
+System design ของระบบ Beagle Classroom
 
 > สำหรับ glossary ของคำในเอกสารนี้ → [CONTEXT.md](./CONTEXT.md)
 > สำหรับ security detail → [Security.md](./Security.md)
@@ -12,7 +12,7 @@ System design ของระบบ Studennnn
 ```
 ┌──────────────────────────────────────────────────────────┐
 │                      Browser (Client)                     │
-│  Next.js App Router + React + R3F + Framer Motion        │
+│  Next.js App Router + React + Framer Motion              │
 │                                                           │
 │  - Public:  /, /login, /signup, /join                     │
 │  - Admin:   /admin/*                                      │
@@ -61,21 +61,17 @@ System design ของระบบ Studennnn
 
 | Layer | Choice | เหตุผล |
 |-------|--------|-------|
-| Framework | **Next.js 15** (App Router) | SSR + RSC + API routes ในที่เดียว |
+| Framework | **Next.js 16** (App Router) | SSR + RSC + Server Actions/API routes ในที่เดียว |
 | Language | **TypeScript** (strict) | data model ซับซ้อน, ต้อง type-safe |
-| Styling | **Tailwind CSS** + custom `@layer components` | adopted from Father (Ink+Gold theme) |
-| Font | **IBM Plex Sans Thai** (next/font/google) | formal + great Thai support |
-| Design system | **"Ink + Gold"** (Father port) | ดู [ADR-0011](./docs/adr/0011-theme-ink-gold.md) |
+| Styling | **Tailwind CSS v4** + semantic CSS tokens | รองรับ System/Light/Dark/Cream โดยไม่ hardcode สีต่อหน้า |
+| Font | **Anuphan** (`next/font/google`) | Thai + Latin family เดียวตาม Calm Ledger |
+| Design system | **Calm Ledger v2** | ADR-0014 + ADR-0028 + ADR-0029 |
 | Component primitives | **shadcn/ui** (where compatible) | accessibility baseline |
 | Icons | **lucide-react** | unified icon set |
-| 3D | **React Three Fiber + drei** | landing/login/404 เท่านั้น |
-| CSS-based 3D | `.tilt-card`, `.mesh-bg`, `.blob`, `.sheen` | "3D feel" ใน production-safe pages |
-| Animation 2D | **Framer Motion** + Tailwind keyframes | page transitions, hover, entry |
-| Server state | **TanStack Query** | cache, optimistic UI, retry |
-| Forms | **React Hook Form + Zod** | validation client+server |
-| Rich text | **Tiptap** (markdown subset) | safer than full WYSIWYG |
-| File upload | direct R2 presigned PUT | chunked + progress |
-| Realtime (phase 2) | Polling 30s (day 1) → SSE/WebSocket later | simplicity first |
+| Animation | **Framer Motion** + CSS transitions/keyframes | task-modulated motion และ reduced-motion fallback |
+| Server data | **React Server Components + Prisma** | query และ permission อยู่ฝั่ง server |
+| Forms/validation | **Server Actions/API + Zod** | validate ที่ boundary และไม่เชื่อ client identity |
+| File upload | direct private R2 presigned PUT | progress, max 20 MB, permission-gated delivery |
 
 ### Backend
 
@@ -580,8 +576,8 @@ app/
     └── admin/
 
 components/
-├── ui/                  # shadcn primitives
-├── 3d/                  # R3F (lazy)
+├── ui/                  # shared primitives
+├── motion/              # bounded interactive motion primitives
 ├── feed/                # FeedCard, FeedComposer, FeedFilter
 ├── assignment/          # AssignmentCard, SubmissionForm, GradeView
 ├── comment/             # CommentThread, CommentItem
@@ -635,72 +631,39 @@ prisma/
 
 ## 5. Frontend Design System
 
-Theme **"Ink + Gold"** adopted from Father project ดู [ADR-0011](./docs/adr/0011-theme-ink-gold.md) + [CLAUDE.md § Design System](./CLAUDE.md)
+ระบบปัจจุบันใช้ **Calm Ledger v2** ตาม ADR-0014, ADR-0028 และ ADR-0029 ส่วน Ink + Gold เป็นประวัติที่ถูก supersede แล้ว
 
-### Source files (copy ใน Phase 0)
+### Source of truth
 
-- `tailwind.config.ts` — theme tokens, keyframes, animations, perspective utilities
-- `app/globals.css`:
-  - `@layer base` — CSS vars, focus ring สีทอง, font smoothing
-  - `@layer components` — `.card`, `.btn-{primary/secondary/ghost/accent/danger}`, `.input`, `.badge-*`, `.table`, `.stat`
-  - `@layer utilities` — `.tilt-card`, `.mesh-bg`, `.glass`, `.sheen`, `.blob`, `.text-gradient-{gold/ink}`, perspective helpers
-  - `@media print` — A4 transcript stylesheet
+- `app/globals.css` — semantic theme tokens, shared component classes, motion tokens และ print styles
+- `app/layout.tsx` — Anuphan ผ่าน `--font-anuphan`
+- `DESIGN.md` — component/material/motion guidance
+- `lib/theme/course-color.ts` — course identity palette 8 slots
 
-### Palette
+### Theme และ colour channels
 
-| Token | Value | ใช้กับ |
-|-------|-------|--------|
-| `ink` | `#0F172A` | text primary, primary btn |
-| `ink-soft` | `#475569` | text secondary |
-| `accent` | `#B8860B` | gold accent, KPI, GPA |
-| `accent-soft` | `#FEF3C7` | badge bg, highlight |
-| `bg` warm | `#fafaf7` | hero / landing |
-| `bg` cool | `#f8fafc` | app pages |
-| `surface` | `#ffffff` | card |
-| `border` | `#e2e8f0` | divider |
+- Theme modes: `SYSTEM`, `LIGHT`, `DARK`, `CREAM`
+- System colours: blue action, green success, orange warning/due, red destructive
+- Course colours: 8 deterministic slots ใช้ระบุตัวตนของวิชา ไม่ใช้แทน status
+- Text/surface/border ใช้ semantic variables เพื่อรักษา contrast ทุก theme
+- R2/file surfaces และ data-entry controls ห้ามอาศัยสีเพียงอย่างเดียวในการสื่อสถานะ
 
-❌ ห้ามใช้ indigo/violet/purple/pink เป็น primary accent
-✅ rose/blue/emerald/amber = semantic badges เท่านั้น (error/info/success/warn)
+### Typography และ geometry
 
-### Typography
+- Anuphan family เดียว; น้ำหนักหลักไม่เกิน 600
+- Pill controls, `rounded-2xl` cards และลำดับระยะ 8/12/16/24/32 ตาม density ของงาน
+- Glass จำกัดไว้ที่ navigation/sheet/hero overlay ที่กำหนด ไม่ใช้กับตารางหรือข้อความยาว
 
-**IBM Plex Sans Thai** (via `next/font/google`) — weights 300-700, subsets `thai` + `latin`
-ตั้งเป็น `--font-plex` CSS var, fallback `system-ui`
-Headings: `tracking-tight font-bold`
-Body: `font-normal leading-relaxed`
+### Motion strategy
 
-### Signature Elements
+| Tier | Surface | Budget |
+|------|---------|--------|
+| T1 | Landing/showcase | interactive composition ที่มี static fallback |
+| T2 | Dashboard/course/feed | ambient + bounded hover/entry motion |
+| T3 | Content detail | entry/micro feedback เท่านั้น |
+| T4 | Score, attendance, review, audit, setup/forms | state feedback เท่านั้น; data entry is sacred |
 
-| Element | Purpose |
-|---------|---------|
-| `.btn-primary` | Black gradient + gold shimmer sweep on hover |
-| `.text-gradient-gold` | Animated gold gradient (GPA, weighted total, KPI) |
-| `.mesh-bg` | Hero background gold radial gradients |
-| `.tilt-card` | CSS perspective 3D (no WebGL) — JS pointermove sets `--rx --ry` |
-| `.sheen` | Hover sweep shine across card |
-| `.glass` | backdrop-blur 12px + saturate 140% |
-
-### Rendering Strategy
-
-| Page | Strategy | 3D Level |
-|------|---------|----------|
-| `/` Landing | Static + lazy 3D | A (R3F hero) + B (mesh-bg) |
-| `/login` `/signup` | Static + glass form | A (subtle bg) + B (glass) |
-| Dashboard (student/teacher/admin) | RSC + client mutations | B (tilt-card, stat-value-gold, sheen) |
-| Course Feed | RSC + Client tab | B (animate-slide-up on cards, sheen) |
-| Attendance / Score grid | RSC + Client table | B minimal (fade-in only, no tilt) |
-| Audit log | RSC + streaming | none — data density first |
-| 404 / 500 / Empty | Static | A (3D illustration, lazy) |
-| Loading transitions | Suspense | A (3D loader, lazy) |
-
-**3D Levels:**
-- **Level A** = WebGL/R3F — heavy, lazy-load only, `<Suspense fallback={<skeleton/>}>`
-- **Level B** = CSS-based (tilt-card, mesh-bg, blob, sheen, perspective) — light, runs anywhere
-
-**Hard rules:**
-- WebGL ห้ามอยู่ใน critical render path
-- หน้า production-critical (score grid, attendance, audit) = Level B only
-- ทุก `.tilt-card` ต้องมี `prefers-reduced-motion: reduce` fallback
+ทุก tier ต้องรองรับ `prefers-reduced-motion` และห้าม animation ทำให้ layout ขยับระหว่างทำงาน
 
 ### Mobile / Responsive
 
@@ -873,15 +836,15 @@ Vercel ──── auto deploy
 |---|----------|-------------|---------|
 | 0001 | Single-tenant (no `school_id`) | ❌ Hard | ✅ |
 | 0002 | Student auth via Student ID (not email) | 🟡 | ✅ |
-| 0003 | Admin มีสิทธิ์เต็มดูข้อมูล (super user) | ❌ trust+privacy | ✅ |
-| 0004 | Score weight invariant = 100% | 🟡 | 🔸 maybe |
-| 0005 | 3D เฉพาะจุด | ✅ Soft | ❌ skip |
+| 0003 | Admin มีสิทธิ์เต็มดูข้อมูล (super user) | ❌ trust+privacy | Superseded: Admin = read-only observer |
+| 0004 | Score weight invariant = 100% | 🟡 | Superseded by ADR-0024 sum-based scoring |
+| 0005 | 3D เฉพาะจุด | ✅ Soft | Deferred; ไม่มี WebGL dependency ใน runtime ปัจจุบัน |
 | 0006 | Soft delete + anonymize | 🟡 PDPA | ✅ |
 | 0007 | Assignment ↔ ScoreItem coupling (toggle "นับคะแนน") | 🟡 schema | ✅ |
 | 0008 | L1 Visibility (student เห็นแค่ของตัวเอง) | ❌ privacy+trust | ✅ |
 | 0009 | Comment polymorphic (no FK constraint, service-validated) | 🟡 | 🔸 maybe |
 | 0010 | Submission versioning (vs overwrite) | 🟡 | ✅ |
-| 0011 | Theme = Ink + Gold (adopted from Father) | 🟡 brand change | ✅ |
+| 0011 | Theme = Ink + Gold (adopted from Father) | 🟡 brand change | Superseded by ADR-0014/0028/0029 |
 
 ---
 
@@ -912,7 +875,7 @@ function termStatus(courseOfferings: CourseOffering[]): 'IN_PROGRESS' | 'COMPLET
 
 1. Permission: student ดูแค่ของตัวเอง; admin ดูได้ทั้งหมด
 2. Query: ทุก Enrollment ของ student ใน termId → JOIN CourseOffering (credit from CourseOffering directly, ADR-0012) + ScoreItems + ScoreEntries
-3. ต่อ CourseOffering: คำนวณ weighted total → grade (ใช้ rules ของ course หรือ default)
+3. ต่อ CourseOffering: คำนวณ Score Total (`Σscore / ΣfullScore`) → grade (ใช้ rules ของ course หรือ default)
 4. รวม: Term GPA + Term Status
 5. ถ้า `IN_PROGRESS` → GPA = `—`, badge "ยังไม่จบเทอม"
 6. Print button → CSS `@media print` (Father stylesheet) — ซ่อน nav, แสดง A4 transcript

@@ -3512,61 +3512,6 @@ details[open] > summary .faq-chevron {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   Compat shims — Ink+Gold / aubergine orphans retained as no-ops
-   so pages not yet swept under ADR-0028 still render. Each shim
-   maps the old name onto the new system. Remove per surface as
-   pages migrate.
-   ═══════════════════════════════════════════════════════════ */
-
-/* .card-dark (aubergine) — retired. Falls back to a tinted blue card
-   so any leftover consumer still renders coherently with the new system. */
-.card-dark {
-  @apply rounded-2xl p-7;
-  background: var(--color-blue-50);
-  color: var(--color-blue-700);
-}
-
-.mesh-bg {
-  background: var(--color-bg);
-}
-
-.blob {
-  display: none !important;
-}
-
-.sheen {
-  position: relative;
-  overflow: hidden;
-}
-
-/* Old .glass utility from Ink+Gold — flat white surface no-op (NOT the
-   new .glass-nav which is frosted chrome). */
-.glass {
-  background: var(--color-surface);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.text-gradient-gold,
-.text-gradient-ink {
-  color: var(--color-ink);
-  background: none;
-  -webkit-background-clip: initial;
-  background-clip: initial;
-  -webkit-text-fill-color: currentColor;
-}
-
-.tilt-card {
-  transform: none !important;
-}
-
-.perspective-1000,
-.perspective-1500,
-.preserve-3d {
-  perspective: none;
-  transform-style: flat;
-}
-
-/* ═══════════════════════════════════════════════════════════
    Print (A4 transcript) — kept from ADR-0014
    ═══════════════════════════════════════════════════════════ */
 

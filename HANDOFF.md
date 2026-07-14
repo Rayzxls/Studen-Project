@@ -1,4 +1,4 @@
-# HANDOFF — Studennnn
+# HANDOFF — Beagle Classroom
 
 ## 🚀 PRODUCTION OPS — 2026-06-13 ล่าสุด (อ่านก่อนสุด)
 
@@ -12,7 +12,7 @@
 **R2 (Cloudflare) ตั้งเสร็จแล้ว — avatar/ไฟล์อัปบน prod ใช้ได้จริง:**
 - bucket `beagle-classroom-prod` (Public Access **Disabled** — เสิร์ฟผ่าน signed URL เท่านั้น) · CORS ตั้ง origin production แล้ว
 - Vercel env ตั้งครบ 4 ตัว (Production scope): `R2_ACCOUNT_ID` `R2_ACCESS_KEY_ID` `R2_SECRET_ACCESS_KEY` `R2_BUCKET_NAME` · **secret อยู่ใน Vercel เท่านั้น ไม่เข้า repo**
-- หมายเหตุโค้ด: `R2_PUBLIC_URL` ใน `docs/DEPLOY.md` **ไม่ได้ใช้จริง** (โค้ดใช้ 4 ตัวข้างบน) — ควรลบออกจาก doc
+- หมายเหตุโค้ด: ระบบใช้ R2 env 4 ตัวข้างบนเท่านั้น; `R2_PUBLIC_URL` ถูกลบออกจาก `docs/DEPLOY.md` ใน A0 Documentation Alignment แล้ว
 
 **⚡ Perf fix (สำคัญ — เคยช้ามาก):**
 - ต้นเหตุ: Vercel function รันที่ `iad1` (US East) แต่ Neon DB อยู่ `ap-southeast-1` (สิงคโปร์) → ทุก query วิ่งข้ามทวีป ~450ms × หลาย query/หน้า
@@ -24,6 +24,76 @@
 2. **avatar/ไฟล์ที่อัปตอน dev mode → ไป `.local-storage` ในเครื่อง ไม่ขึ้น R2** → บน prod จะ "รูปแตก" (DB มี pointer แต่ R2 ไม่มีไฟล์). รอบนี้เจอ avatar ผี 2 อัน (อัปตอน dev) → **เคลียร์ profileImageId เป็น null แล้ว** ทั้ง 2 บัญชี (กลับไปใช้ default). ของจริงต้องอัปบน prod เท่านั้นถึงขึ้น R2
 3. มีบัญชี test ค้างใน prod: student `990137` (ทดสอบ เอฟเอบี — Claude สมัครตอน verify FAB), student `36901234` (ธนภัทร), teacher `0940817471@hotmail.com` (wrw wqdq)
 4. Vercel region ตอนนี้ = **sin1** · admin login: `Rayzxls` / (รหัสอยู่ใน session เก่า — ควร rotate)
+
+---
+
+## 🧭 PLANNING UPDATE — 2026-07-14 · Core → Lesson Workspace → Quiz → AI
+
+> **ยังไม่อนุมัติให้เริ่ม Production development ของ Lesson Workspace** รอบนี้ทำ Prototype และวางแผนเท่านั้น ห้าม `db push`, backfill, เปลี่ยน default route หรือ wire mutation จนกว่าผู้ใช้จะสั่งเริ่ม Dev ชัดเจน
+
+**แผนอ้างอิงหลัก:** `docs/NEXT-DEVELOPMENT-PLAN.md`
+
+**A4 Account Lifecycle implementation update (2026-07-15):** Neon QA ผ่าน
+additive migration/backfill แล้ว (latest verifier: `ACTIVE` 12, mismatch 0,
+lifecycle history 0 หลัง test cleanup) และเพิ่ม transaction
+จริงสำหรับ Suspend/Reactivate: re-check actor/state/last Admin ภายใน Serializable
+transaction, sync `accountStatus` + `isActive`, revoke session, เขียน
+`AccountLifecycleEvent` และ `AuditLog` แบบ atomic. หน้า Admin user detail มีฟอร์ม
+เหตุผลภายใน + ข้อความแจ้งผู้ใช้ + confirmation แล้ว แต่แสดงเฉพาะเมื่อ
+`ACCOUNT_LIFECYCLE_MUTATIONS_ENABLED=1`; ค่า default ยังปิดและ Production ยังไม่ได้
+migrate/enable. QA integration suspend→reactivate ผ่าน 1/1, unit 486/486,
+typecheck และ targeted ESLint ผ่าน. ห้าม migrate Production โดยไม่มี approval แยก.
+
+**A0 Documentation Alignment ปิดแล้ว (2026-07-14 · docs only):** ปรับ `README.md`, `CLAUDE.md`, `CONTEXT.md`, `docs/PROPOSAL.md`, `docs/DEPLOY.md`, `Task.md` และ roadmap ให้ตรง code/product ปัจจุบัน ไม่มีการแก้ code, schema หรือข้อมูล งานถัดไปตาม roadmap คือ A2 Critical-path QA → A3 Functional Completeness Audit
+
+**A3 static audit ปิด inventory แล้ว (2026-07-14 · read-only):** เพิ่ม `docs/FUNCTIONAL-COMPLETENESS-AUDIT.md` จำแนก Dashboard, Admin user lifecycle, QR/Invite, Moderation และ Profile เป็น Shipped / Intentionally Limited / Deferred / Removed from Proposal พร้อมหลักฐานและลำดับ follow-up โดยยังไม่ได้อ้างว่า deferred capability ถูกพัฒนาเสร็จ งานบังคับก่อน Feature ใหม่ยังเป็น A2 isolated QA → A3.1 correctness → A4 account/content-retention decisions
+
+**A3.1 correctness/UI consistency ปิดแล้ว:** แก้ `getAdminStats()` ให้จำนวนครู/นักเรียนใช้ความหมายเดียวกับหน้ารายการ Admin โดยไม่นับบัญชี soft-delete และ Student ที่ anonymized พร้อม unit regression test; เพิ่ม shared avatar ใน Teacher submission detail และ Teacher member management ส่วนตารางคะแนน/เช็กชื่อคง text-first และ Student peer list คง L1 projection ที่ไม่เปิด userId
+
+**A4 Account Lifecycle + Content Retention decision lock ปิดแล้ว (2026-07-14 · docs only):** ตกลง Account Status กลาง `ACTIVE / SUSPENDED / TERMINATED / ANONYMIZED`, คำขอยุติบัญชี, self/last-Admin protection, Teacher active-course guard, Student withdrawal/history preservation และ irreversible anonymization แล้ว รวมทั้งตกลงสร้าง Moderation Center แบบ case-based มี report aggregation, temporary hide, quarantine, restore และ one-time appeal; published/used entities ใช้ archive/soft-delete แทน hard-delete และ moderation ห้ามกระทบคะแนน งานถัดไปต้องเริ่มจาก Neon QA branch + backup/restore rehearsal ก่อน schema หรือ data mutation ดู ADR-0031, ADR-0032 และ `docs/MODERATION-CONTENT-MATRIX.md`
+
+**A0.1 Compatibility Cleanup ปิดแล้ว (2026-07-14):** ลบ Ink+Gold CSS compatibility shims ที่ไม่มี consumer, ลบ `weightedTotal`/`Weighted*` migration aliases และใช้ `scoreTotal` เป็นชื่อเดียว, ลบ `R2_PUBLIC_URL`, ถอด dependency Three.js/R3F และ type stubs ที่ไม่มี import, เปลี่ยน package name เป็น `beagle-classroom`, เปลี่ยน `middleware.ts` ที่ deprecated เป็น `proxy.ts` ตาม Next.js 16 และเก็บ unused import/test variable ที่ ESLint พบ ไม่มี schema/data command; typecheck, unit 429/429 และ production build ผ่าน
+
+**A1 Report/Export v1 ปิดแล้ว (2026-07-14 · ไม่มี schema/data mutation):**
+- เพิ่ม Teacher course score summary CSV ที่หน้า Scores: มี Score Item ทุกช่อง, สถานะร่าง/ประกาศ, คะแนนรวมจากรายการที่ประกาศ, %, และเกรดรายวิชา
+- เพิ่ม Teacher course attendance summary CSV ที่หน้า Attendance: มา/สาย/ลา/ขาด/ยังไม่เช็ก/เช็กแล้ว/คาบทั้งหมด/% รายคน
+- ทั้งสอง route บังคับ `ownsCourse` และ query ยืนยัน owner ซ้ำ; Admin/Student/ครูคนอื่น export ไม่ได้
+- CSV เป็น UTF-8 BOM + RFC 4180, ป้องกัน formula injection, `private, no-store`, และทุก export บันทึก `CLASS_ANALYTICS_EXPORTED` ระดับ Important
+- Student Learning Results ใช้ browser Print/PDF ต่อไป; Admin Audit ใช้ filtered CSV; server-generated Report Card PDF เลื่อนไป release ภายหลังอย่างชัดเจน
+- Unit/permission/route tests สำหรับงานนี้ผ่าน 81/81; งานถัดไปคือ A2 Critical-path QA gate
+
+**A2 Critical-path QA gate เริ่มแล้ว (2026-07-14 · ยังไม่ปิดงาน):**
+- Audit พบว่า Integration และ Playwright เดิมโหลด `DATABASE_URL` จาก `.env.local` แล้วสร้าง/ลบข้อมูลจริง ซึ่งไม่ปลอดภัยเพราะ dev=prod ใช้ Neon เดียวกัน
+- เพิ่ม fail-closed runner: `test:integration`, `test:all`, `test:e2e` ต้องมี `QA_DATABASE_URL` ที่เป็นฐานหรือ Neon branch แยก และจะบล็อก pooled/direct URL ของ branch เดียวกัน รวมถึงการข้าม runner
+- เพิ่ม `pnpm qa:safe` สำหรับ anonymous read-only HTTP smoke; ไม่ login และไม่แก้ข้อมูล
+- เพิ่ม regression tests สำหรับ database safety, Profile display-name fallback และ System/Dark/Cream theme contract
+- ปรับ `Testing.md` ให้ตรงระบบจริงแล้ว; ห้ามรัน mutating suites จนกว่าจะมี QA DB แยก
+- งานที่ยังเหลือก่อนปิด A2: provision QA DB, รัน Integration/E2E ที่ฐานนั้น, manual role/privacy/mobile/theme checklist และ production private-R2 upload/preview smoke
+- รอบนี้ไม่มี schema command, backfill หรือ data mutation และ Lesson Workspace ยังเป็น Prototype เท่านั้น
+- Playwright บังคับเปิด QA server แยกที่ port `3100` และ `reuseExistingServer: false` เพื่อไม่ให้ browser test ไปใช้ dev server port 3000 ที่ยังต่อ primary DB
+- Verification หลัง A3.1 ล่าสุด: typecheck ผ่าน, unit `454/454`, safe HTTP smoke `10/10`, targeted Admin Dashboard regression ผ่าน, ESLint เฉพาะไฟล์ A3.1 ผ่าน, production build ผ่าน และตรวจแล้วว่า `test:integration`, `dev:qa` และ `test:smoke` หยุดก่อนเริ่มเมื่อไม่มี `QA_DATABASE_URL`; QA server ถูกแยกไว้ที่พอร์ต `3100`
+
+ลำดับที่ตกลงล่าสุด:
+1. ปรับเอกสาร Core ให้ตรง code จริง: sum-based scoring, Admin read-only observer, Profile/Theme, Dashboard, Feed/Notification และ private file delivery
+2. ✅ ปิดขอบเขต Report/Export v1: Student Print/PDF + Teacher score/attendance CSV + Admin Audit CSV; Report Card PDF แบบ server-generated เลื่อนไปภายหลัง
+3. ทำ Critical-path QA gate: สมัคร/เข้าห้อง/โพสต์/ส่งงาน/ตรวจงาน/เผยแพร่คะแนน/เช็คชื่อ/อัปโหลดไฟล์ + role/privacy/theme/mobile/prod R2
+4. ทำ Lesson Workspace แบบ additive + feature flag + dry-run/backfill ก่อนเปลี่ยน navigation
+5. ทำ Quiz หลัง Lesson Workspace เพราะ Quiz ต้องสังกัด Lesson และใช้ Score Item contract เดิม
+6. ตรวจ identity/integration แยกต่างหาก: Google Login ต้องออกแบบ account linking ก่อน; integration อื่นต้องระบุระบบปลายทางจริง
+7. AI assistance เป็นลำดับท้าย และต้องมี human confirmation, privacy และ audit decisions ก่อน
+
+**Completion audit ที่ห้ามเรียกว่า "ครบ" จนกว่าจะตรวจรับ:** Dashboard trends/usage, Admin user deactivate/anonymize lifecycle, QR/invite E2E, moderation matrix ทุก content type และขอบเขต Profile personal information
+
+**ยังไม่ทำจริง:** Quiz, AI, Google Login, Chat Room, Reward, Meeting และ external integration นอก CSV/R2 ส่วน Subscription/global multi-tenant เป็น product track แยกจาก single-tenant school app นี้
+
+**Prototype reference (dev-only):**
+- Teacher = Variant B split workspace
+- Student = Variant C learning path + checkpoints
+- Teacher lesson detail prototype มี structured sections และปุ่ม "เปิดพื้นที่บทเรียน"
+- ชื่อ Lesson เป็น free-form; ไม่บังคับ "บทที่ 1"
+- Route prototype ต้องคง production 404 จนกว่าจะอนุมัติ implementation
+
+**Domain/architecture decision:** `docs/adr/0030-lesson-workspace-default-structure-feed-remains-timeline.md` บันทึกว่า Lesson Workspace จะเป็นโครงสร้างหลักในอนาคต ส่วน Feed ยังอยู่เป็น chronological timeline และ URL/ข้อมูลเดิมต้องไม่หาย
 
 ---
 

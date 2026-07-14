@@ -26,6 +26,13 @@ enum Role {
   STUDENT
 }
 
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  TERMINATED
+  ANONYMIZED
+}
+
 enum ThemeMode {
   SYSTEM
   LIGHT
@@ -34,41 +41,61 @@ enum ThemeMode {
 }
 
 model User {
-  id             String    @id @default(cuid())
+  id             String        @id @default(cuid())
   role           Role
-  identifier     String    @unique // email (admin/teacher) | studentId (student)
+  identifier     String        @unique // email (admin/teacher) | studentId (student)
   passwordHash   String
-  mustResetPwd   Boolean   @default(false)
-  isActive       Boolean   @default(true)
+  mustResetPwd   Boolean       @default(false)
+  accountStatus  AccountStatus @default(ACTIVE)
+  isActive       Boolean       @default(true)
   consentedAt    DateTime?
   consentVersion String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
   deletedAt      DateTime? // soft delete
 
   // Learning-identity profile (Phase 13) — NOT social media.
   // displayName: optional friendly name for personal UI (dashboard greeting,
   // profile heading) only. Real name stays authoritative everywhere else
   // (comments, review, grades, attendance, admin, audit). May duplicate.
-  displayName String?
+  displayName    String?
   // Pointer to the current PROFILE_IMAGE FileAttachment (cropped 512×512).
   // Null = default avatar. Plain string (no FK) — FileAttachment is the
   // polymorphic table looked up via (ownerType, ownerId).
   profileImageId String?
   themeMode      ThemeMode @default(SYSTEM)
 
-  admin                 Admin?
-  teacher               Teacher?
-  student               Student?
-  sessions              UserSession[]
-  auditLogsAsActor      AuditLog[]     @relation("ActorLogs")
-  commentsAuthored      Comment[]      @relation("CommentAuthor")
-  notifications         Notification[] @relation("NotificationRecipient") // Phase 7
-  materialsPosted       Material[]     @relation("MaterialAuthor") // Phase 7
-  announcementsPosted   Announcement[] @relation("AnnouncementAuthor") // Phase 7
+  admin                   Admin?
+  teacher                 Teacher?
+  student                 Student?
+  sessions                UserSession[]
+  auditLogsAsActor        AuditLog[]              @relation("ActorLogs")
+  commentsAuthored        Comment[]               @relation("CommentAuthor")
+  notifications           Notification[]          @relation("NotificationRecipient") // Phase 7
+  materialsPosted         Material[]              @relation("MaterialAuthor") // Phase 7
+  announcementsPosted     Announcement[]          @relation("AnnouncementAuthor") // Phase 7
+  lifecycleEventsAsTarget AccountLifecycleEvent[] @relation("LifecycleTarget")
+  lifecycleEventsAsActor  AccountLifecycleEvent[] @relation("LifecycleActor")
 
   @@index([role])
+  @@index([accountStatus])
   @@index([deletedAt])
+}
+
+model AccountLifecycleEvent {
+  id           String        @id @default(cuid())
+  targetUserId String
+  targetUser   User          @relation("LifecycleTarget", fields: [targetUserId], references: [id], onDelete: Restrict)
+  actorUserId  String
+  actorUser    User          @relation("LifecycleActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+  fromStatus   AccountStatus
+  toStatus     AccountStatus
+  reason       String
+  userMessage  String
+  createdAt    DateTime      @default(now())
+
+  @@index([targetUserId, createdAt])
+  @@index([actorUserId, createdAt])
 }
 
 model Admin {
@@ -699,7 +726,7 @@ model Material {
   linkUrls          Json @default("[]") // ≤ 5 URLs per Q12.4 lock
 
   postedById String
-  postedBy   User   @relation("MaterialAuthor", fields: [postedById], references: [id], onDelete: Restrict)
+  postedBy   User     @relation("MaterialAuthor", fields: [postedById], references: [id], onDelete: Restrict)
   postedAt   DateTime @default(now())
 
   // Soft-delete — `MATERIAL_DELETED` Important audit fires here per
@@ -728,7 +755,7 @@ model Announcement {
   linkUrls          Json @default("[]")
 
   postedById String
-  postedBy   User   @relation("AnnouncementAuthor", fields: [postedById], references: [id], onDelete: Restrict)
+  postedBy   User     @relation("AnnouncementAuthor", fields: [postedById], references: [id], onDelete: Restrict)
   postedAt   DateTime @default(now())
 
   deletedAt     DateTime?

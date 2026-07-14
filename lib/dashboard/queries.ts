@@ -334,9 +334,9 @@ export async function getStudentTodaySchedule(
 export interface AdminStats {
   /** Distinct Classes (homerooms) of the active AcademicYear. */
   classCount: number;
-  /** Total Teacher User rows (excluding anonymized). */
+  /** Total Teacher rows whose User account has not been soft-deleted. */
   teacherCount: number;
-  /** Total Student User rows (excluding anonymized). */
+  /** Total Student rows whose identity is active and not anonymized. */
   studentCount: number;
   /** AuditLog rows whose action falls in the Critical tier within the
    *  last 7 days. Phase 10B will surface this as a hero stat. */
@@ -360,8 +360,10 @@ export async function getAdminStats(): Promise<AdminStats> {
       academicYearId
         ? db.class.count({ where: { academicYearId } })
         : Promise.resolve(0),
-      db.teacher.count(),
-      db.student.count(),
+      db.teacher.count({ where: { user: { deletedAt: null } } }),
+      db.student.count({
+        where: { anonymized: false, user: { deletedAt: null } },
+      }),
       // The Critical tier list lives in `lib/audit/tier.ts`; importing here
       // would create a cycle (audit/tier could one day depend on dashboard
       // queries for KPI widgets). Inline the Critical-tier action list for

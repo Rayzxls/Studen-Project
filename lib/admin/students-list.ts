@@ -1,4 +1,8 @@
 import { db } from "@/lib/db/client";
+import {
+  deriveLegacyAccountStatus,
+  type AccountStatus,
+} from "@/lib/account/status";
 
 export interface StudentListParams {
   search?: string;
@@ -13,7 +17,7 @@ export interface StudentListItem {
   firstName: string;
   lastName: string;
   className: string | null;
-  isActive: boolean;
+  accountStatus: AccountStatus;
   createdAt: Date;
   hasAvatar: boolean;
   enrolledCount: number;
@@ -67,6 +71,7 @@ export async function listStudents(
         studentId: true,
         firstName: true,
         lastName: true,
+        anonymized: true,
         user: {
           select: { isActive: true, createdAt: true, profileImageId: true },
         },
@@ -83,7 +88,11 @@ export async function listStudents(
       firstName: s.firstName,
       lastName: s.lastName,
       className: s.class?.name ?? null,
-      isActive: s.user.isActive,
+      accountStatus: deriveLegacyAccountStatus({
+        isActive: s.user.isActive,
+        deletedAt: null,
+        studentAnonymized: s.anonymized,
+      }),
       createdAt: s.user.createdAt,
       hasAvatar: s.user.profileImageId !== null,
       enrolledCount: s._count.enrollments,

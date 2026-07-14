@@ -8,6 +8,7 @@ import {
 } from "@/lib/admin/teacher-created-flash";
 import { PaginationLinks } from "@/components/pagination";
 import { UserAvatar } from "@/components/profile/user-avatar";
+import { AccountStatusBadge } from "@/components/admin/account-status-badge";
 import { dismissTeacherCreatedFlashAction } from "./actions";
 
 interface PageProps {
@@ -160,11 +161,7 @@ export default async function AdminTeachersPage({ searchParams }: PageProps) {
                     {dateFmt.format(t.createdAt)}
                   </td>
                   <td>
-                    {t.isActive ? (
-                      <span className="badge">active</span>
-                    ) : (
-                      <span className="badge">disabled</span>
-                    )}
+                    <AccountStatusBadge status={t.accountStatus} />
                   </td>
                   <td>
                     <div className="flex flex-wrap gap-2">

@@ -1,6 +1,6 @@
 # Security.md
 
-Security baseline + PDPA compliance สำหรับ Studennnn
+Security baseline + PDPA compliance สำหรับ Beagle Classroom
 
 > ระบบเก็บข้อมูล **เยาวชน** → PDPA strict ขึ้น
 
@@ -369,7 +369,7 @@ const headers = {
   'Content-Security-Policy': [
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' challenges.cloudflare.com",
-    // dev only: 'unsafe-eval' for R3F HMR
+    // dev tooling may require 'unsafe-eval'; never add it to production CSP
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: *.r2.cloudflarestorage.com",
     "font-src 'self' data:",
@@ -388,7 +388,7 @@ const headers = {
 | Concern | Mitigation |
 |---------|------------|
 | SQL Injection | Prisma parameterized |
-| XSS | React escapes; rich text ใช้ Tiptap + sanitize-html allowlist |
+| XSS | React escapes text; ไม่มี rich-text HTML input; URL fields validate protocol before rendering |
 | CSRF | NextAuth token + SameSite=Lax |
 | Open Redirect | Whitelist redirect URLs |
 | Clickjacking | X-Frame-Options DENY + CSP frame-ancestors none |

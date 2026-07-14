@@ -4,6 +4,7 @@ import { listStudents } from "@/lib/admin/students-list";
 import { getActiveAcademicYear, getClassesByYear } from "@/lib/course/queries";
 import { PaginationLinks } from "@/components/pagination";
 import { UserAvatar } from "@/components/profile/user-avatar";
+import { AccountStatusBadge } from "@/components/admin/account-status-badge";
 
 interface PageProps {
   searchParams: Promise<{
@@ -136,11 +137,7 @@ export default async function AdminStudentsPage({ searchParams }: PageProps) {
                     {dateFmt.format(s.createdAt)}
                   </td>
                   <td>
-                    {s.isActive ? (
-                      <span className="badge">active</span>
-                    ) : (
-                      <span className="badge">disabled</span>
-                    )}
+                    <AccountStatusBadge status={s.accountStatus} />
                   </td>
                   <td>
                     <div className="flex flex-wrap gap-2">

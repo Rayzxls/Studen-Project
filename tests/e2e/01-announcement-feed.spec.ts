@@ -1,5 +1,10 @@
 import { test, expect } from "@playwright/test";
 import { PrismaClient } from "@prisma/client";
+import {
+  enrollStudent,
+  setupTestCourse,
+  type TestCourseContext,
+} from "../integration/permissions/_fixtures";
 import { signIn, signOut } from "./helpers";
 
 /**
@@ -16,12 +21,13 @@ import { signIn, signOut } from "./helpers";
  */
 
 const db = new PrismaClient();
+const PASSWORD = "Test1234!";
+let ctx: TestCourseContext | undefined;
 
-const STUDENT_ID = "60001";
-const STUDENT_PWD = "Student1234";
-const TEACHER_ID = "teacher@studennnn.local";
-const TEACHER_PWD = "Teacher1234!";
-const DEMO_CODE = "MATH4A-DEMO1";
+test.beforeAll(async () => {
+  ctx = await setupTestCourse();
+  await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
+});
 
 test.beforeEach(async () => {
   await db.rateLimitBucket.deleteMany({
@@ -30,24 +36,25 @@ test.beforeEach(async () => {
 });
 
 test.afterAll(async () => {
-  await db.$disconnect();
+  try {
+    await ctx?.cleanup();
+  } finally {
+    await db.$disconnect();
+  }
 });
 
 test("teacher posts announcement → student sees in feed + replies in thread", async ({
   page,
 }) => {
-  const course = await db.courseOffering.findUnique({
-    where: { classCode: DEMO_CODE },
-    select: { id: true },
-  });
-  expect(course).not.toBeNull();
-  const courseId = course!.id;
+  const courseId = ctx!.courseOfferingId;
+  const teacherIdentifier = `${ctx!.prefix}_t1@test.local`;
+  const studentIdentifier = `${ctx!.prefix}_s1`;
 
   const headline = `E2E ประกาศ ${Date.now()}`;
   const replyBody = `ขอบคุณครับ ${Date.now()}`;
 
   // 1) Teacher signs in + posts an announcement.
-  await signIn(page, TEACHER_ID, TEACHER_PWD);
+  await signIn(page, teacherIdentifier, PASSWORD);
 
   await page.goto(`/teacher/courses/${courseId}/announcements`);
   await expect(
@@ -67,14 +74,11 @@ test("teacher posts announcement → student sees in feed + replies in thread", 
 
   await signOut(page);
 
-  // 2) Student signs in. Bell badge should be at least 1; the dashboard
-  //    User Feed lists the new announcement.
-  await signIn(page, STUDENT_ID, STUDENT_PWD);
+  // 2) Student signs in and sees the new announcement in the course feed.
+  //    The bell remains available for notification coverage.
+  await signIn(page, studentIdentifier, PASSWORD);
 
-  await page.goto("/dashboard");
-  await expect(
-    page.getByRole("heading", { name: "กิจกรรมล่าสุด", level: 2 })
-  ).toBeVisible();
+  await page.goto(`/student/courses/${courseId}/feed`);
 
   // Scope to <main> so we don't match the headline rendered inside the
   // closed bell popover (which is in the DOM but visibility:hidden).
@@ -85,8 +89,13 @@ test("teacher posts announcement → student sees in feed + replies in thread", 
     page.getByRole("button", { name: "การแจ้งเตือน" })
   ).toBeVisible();
 
-  // 3) Click into the announcement detail via the feed row.
-  await feed.getByText(headline).first().click();
+  // 3) Open the detail action from the exact feed card we just created.
+  //    The headline is display text; navigation lives in the card footer.
+  const announcementCard = feed
+    .locator("article")
+    .filter({ hasText: headline });
+  await expect(announcementCard).toBeVisible();
+  await announcementCard.locator('a[href*="/announcements/"]').click();
   await page.waitForURL(
     new RegExp(`/student/courses/${courseId}/announcements/[^/]+`)
   );

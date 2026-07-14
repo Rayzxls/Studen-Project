@@ -1,15 +1,19 @@
 /**
  * Phase 1 End-to-End Smoke Test
- * Runs HTTP requests against a live dev server (http://localhost:3000)
+ * Runs mutating HTTP requests against an isolated QA server on port 3100.
  *
  * Usage:
- *   1. In one terminal: pnpm dev
- *   2. In another:      pnpm exec dotenv -e .env.local -- tsx scripts/smoke-test.ts
+ *   1. Configure a separate QA_DATABASE_URL.
+ *   2. In one terminal: pnpm dev:qa
+ *   3. In another:      pnpm test:smoke
  */
 
 import { PrismaClient } from "@prisma/client";
+import { assertIsolatedTestDatabase } from "@/tests/helpers/database-safety";
 
-const BASE = "http://localhost:3000";
+assertIsolatedTestDatabase();
+
+const BASE = "http://localhost:3100";
 const db = new PrismaClient();
 
 let passed = 0;

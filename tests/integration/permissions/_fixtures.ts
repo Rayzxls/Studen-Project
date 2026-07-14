@@ -2,21 +2,18 @@
  * Shared fixture helpers for integration permission tests.
  *
  * Each test file calls `setupTestCourse()` in `beforeEach` (or per-test) and
- * `cleanup()` in `afterEach`. Random IDs prevent collisions between parallel
- * test FILES (vitest runs files in separate processes by default). Within a
- * single file, tests run serially so per-test fixtures don't race either.
- *
- * Tests run against the same DB pointed to by DATABASE_URL — typically the
- * Neon dev branch in local + CI. Cleanup is best-effort but the random
- * `t_<timestamp>_<rand>` prefix makes orphans trivially identifiable.
+ * `cleanup()` in `afterEach`. Files use random IDs and tests run serially.
+ * Mutating tests may run only against the isolated QA database selected by the
+ * guarded package runner. Cleanup is best-effort; any orphan remains QA-only.
  */
 
 import { randomBytes } from "node:crypto";
 import { db } from "@/lib/db/client";
 import { hashPassword } from "@/lib/auth/password";
+import { assertIsolatedTestDatabase } from "@/tests/helpers/database-safety";
 
 // One-time hash for all test users — bcrypt cost 12 is ~500ms, do it once.
-const PASSWORD_HASH = await hashPassword("Test1234!");
+const passwordHashPromise = hashPassword("Test1234!");
 
 export type TestCourseContext = {
   prefix: string;
@@ -45,6 +42,8 @@ function rnd() {
  * and slow to create; only owns rows the test will mutate.
  */
 export async function setupTestCourse(): Promise<TestCourseContext> {
+  assertIsolatedTestDatabase();
+  const passwordHash = await passwordHashPromise;
   const prefix = rnd();
 
   // Reuse seed academic structure to keep fixtures lean.
@@ -70,7 +69,7 @@ export async function setupTestCourse(): Promise<TestCourseContext> {
   const teacherUser = await db.user.create({
     data: {
       identifier: `${prefix}_t1@test.local`,
-      passwordHash: PASSWORD_HASH,
+      passwordHash,
       role: "TEACHER",
       teacher: {
         create: {
@@ -85,7 +84,7 @@ export async function setupTestCourse(): Promise<TestCourseContext> {
   const otherTeacherUser = await db.user.create({
     data: {
       identifier: `${prefix}_t2@test.local`,
-      passwordHash: PASSWORD_HASH,
+      passwordHash,
       role: "TEACHER",
       teacher: {
         create: {
@@ -102,7 +101,7 @@ export async function setupTestCourse(): Promise<TestCourseContext> {
   const studentUser = await db.user.create({
     data: {
       identifier: `${prefix}_s1`,
-      passwordHash: PASSWORD_HASH,
+      passwordHash,
       role: "STUDENT",
       student: {
         create: {
@@ -118,7 +117,7 @@ export async function setupTestCourse(): Promise<TestCourseContext> {
   const otherStudentUser = await db.user.create({
     data: {
       identifier: `${prefix}_s2`,
-      passwordHash: PASSWORD_HASH,
+      passwordHash,
       role: "STUDENT",
       student: {
         create: {
@@ -229,6 +228,7 @@ export async function setupTestCourse(): Promise<TestCourseContext> {
       await db.comment.deleteMany({
         where: {
           OR: [
+            { authorId: { in: userIds } },
             { ownerType: "ASSIGNMENT", ownerId: { in: assignmentIds } },
             { ownerType: "SUBMISSION", ownerId: { in: submissionIds } },
             { ownerType: "MATERIAL", ownerId: { in: materialIds } },

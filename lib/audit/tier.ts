@@ -74,6 +74,7 @@ const IMPORTANT: ReadonlySet<string> = new Set([
   "COMMENT_MODERATED",
   // Phase 8 — read-side admin audit tools
   "ADMIN_AUDIT_EXPORTED",
+  "CLASS_ANALYTICS_EXPORTED",
 ]);
 
 /** Per-action default tier — does NOT account for the Admin × PRIVATE escalation. */
