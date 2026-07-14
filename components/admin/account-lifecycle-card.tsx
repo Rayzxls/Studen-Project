@@ -38,13 +38,7 @@ export function AccountLifecycleCard({
   return (
     <section className="card p-6" aria-labelledby="account-lifecycle-title">
       <div className="flex items-start gap-3">
-        <div
-          className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${
-            isSuspending
-              ? "bg-orange-100 text-orange-700"
-              : "bg-green-100 text-green-700"
-          }`}
-        >
+        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-blue-50 text-blue-700">
           {isSuspending ? (
             <PauseCircle className="h-5 w-5" />
           ) : (
@@ -54,7 +48,7 @@ export function AccountLifecycleCard({
         <div className="min-w-0">
           <h2
             id="account-lifecycle-title"
-            className="text-sm font-medium text-black/80"
+            className="text-sm font-medium text-black"
           >
             {isSuspending ? "ระงับบัญชีชั่วคราว" : "เปิดใช้งานบัญชีอีกครั้ง"}
           </h2>
@@ -81,7 +75,7 @@ export function AccountLifecycleCard({
             maxLength={1000}
             rows={3}
             placeholder="ระบุเหตุผลเพื่อบันทึกใน Audit Log"
-            className="mt-1.5 w-full resize-y rounded-lg border border-black/10 bg-white px-3 py-2 text-sm text-black outline-none transition-colors placeholder:text-black/35 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15"
+            className="input mt-1.5 min-h-24 resize-y text-sm"
           />
           {state.fieldErrors?.internalReason && (
             <span className="mt-1 block text-xs text-red-600">
@@ -101,7 +95,7 @@ export function AccountLifecycleCard({
             maxLength={500}
             rows={3}
             placeholder="อธิบายให้ผู้ใช้เข้าใจว่าเกิดอะไรขึ้นและต้องติดต่อใคร"
-            className="mt-1.5 w-full resize-y rounded-lg border border-black/10 bg-white px-3 py-2 text-sm text-black outline-none transition-colors placeholder:text-black/35 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15"
+            className="input mt-1.5 min-h-24 resize-y text-sm"
           />
           {state.fieldErrors?.userMessage && (
             <span className="mt-1 block text-xs text-red-600">
@@ -110,7 +104,7 @@ export function AccountLifecycleCard({
           )}
         </label>
 
-        <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-black/[0.08] bg-black/[0.02] p-3">
+        <label className="panel-inset flex cursor-pointer items-start gap-2 p-3">
           <input
             type="checkbox"
             name="confirmed"
@@ -133,7 +127,7 @@ export function AccountLifecycleCard({
         )}
 
         {state.ok && (
-          <div className="flex items-center gap-2 rounded-lg bg-green-50 p-3 text-xs text-green-700">
+          <div className="flex items-center gap-2 rounded-lg bg-blue-50 p-3 text-xs text-blue-700">
             <CheckCircle2 className="h-4 w-4" />
             บันทึกสถานะบัญชีเรียบร้อยแล้ว
           </div>
@@ -149,15 +143,7 @@ function SubmitButton({ isSuspending }: { isSuspending: boolean }) {
   const { pending } = useFormStatus();
 
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className={`inline-flex min-h-10 items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-        isSuspending
-          ? "bg-orange-600 hover:bg-orange-700"
-          : "bg-green-600 hover:bg-green-700"
-      }`}
-    >
+    <button type="submit" disabled={pending} className="btn-primary btn-sm">
       {isSuspending ? (
         <PauseCircle className="h-4 w-4" />
       ) : (
