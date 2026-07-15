@@ -25,6 +25,21 @@
 3. มีบัญชี test ค้างใน prod: student `990137` (ทดสอบ เอฟเอบี — Claude สมัครตอน verify FAB), student `36901234` (ธนภัทร), teacher `0940817471@hotmail.com` (wrw wqdq)
 4. Vercel region ตอนนี้ = **sin1** · admin login: `Rayzxls` / (รหัสอยู่ใน session เก่า — ควร rotate)
 
+### Production rollout update — 2026-07-15
+
+- ✅ PR #8 merged เข้า `main` ที่ `7c18813`; GitHub CI และ Vercel Production ผ่าน
+- ✅ Production ใช้ `prisma migrate deploy` ลง
+  `20260715010000_add_account_lifecycle_foundation` และ
+  `20260715020000_add_moderation_center_foundation` แล้ว ห้าม apply ซ้ำด้วย
+  `db push`
+- ✅ Post-migration aggregate verification: User `ACTIVE` 4, legacy mismatch 0,
+  lifecycle event 0, moderation case/report/event 0 และ migration status up to date
+- ⏸️ Behavior cutover ยังปิด: ต้องตั้ง Vercel Production env
+  `ACCOUNT_LIFECYCLE_MUTATIONS_ENABLED=1` และ
+  `MODERATION_CENTER_ENABLED=1` แล้ว redeploy ก่อน UI/mutation จะเปิด
+- ไม่มี Vercel CLI/token ในเครื่องรอบนี้ จึงไม่ได้เปลี่ยน environment variables
+  แทนผู้ใช้ และไม่ได้เปลี่ยนค่า default ใน code
+
 ---
 
 ## 🧭 PLANNING UPDATE — 2026-07-14 · Core → Lesson Workspace → Quiz → AI
@@ -41,8 +56,8 @@ temporary hide/quarantine, restore, resolve/dismiss และ one-time owner app
 ข้อจำกัดถูก enforce ที่ Feed/detail, signed-file route, attachment projection และ
 profile-image delivery โดยไม่แตะคะแนน การเข้าเรียน submission หรือสิทธิ์สอนของ
 Admin. Additive migration ลงเฉพาะ Neon QA, integration flow ผ่าน 1/1 และ policy
-unit ผ่าน 5/5; Production ยังไม่ได้ migrate/enable และต้องขอ approval แยก พร้อม
-manual theme/mobile/private-R2 acceptance ก่อน rollout.
+unit ผ่าน 5/5; Production migrate และ deploy code แล้วเมื่อ 2026-07-15 แต่ flag
+ยังปิด รอ Vercel environment cutover พร้อม manual theme/mobile/private-R2 acceptance.
 
 **A4 Account Lifecycle implementation update (2026-07-15):** Neon QA ผ่าน
 additive migration/backfill แล้ว (latest verifier: `ACTIVE` 12, mismatch 0,
@@ -51,8 +66,8 @@ lifecycle history 0 หลัง test cleanup) และเพิ่ม transact
 transaction, sync `accountStatus` + `isActive`, revoke session, เขียน
 `AccountLifecycleEvent` และ `AuditLog` แบบ atomic. หน้า Admin user detail มีฟอร์ม
 เหตุผลภายใน + ข้อความแจ้งผู้ใช้ + confirmation แล้ว แต่แสดงเฉพาะเมื่อ
-`ACCOUNT_LIFECYCLE_MUTATIONS_ENABLED=1`; ค่า default ยังปิดและ Production ยังไม่ได้
-migrate/enable. QA integration suspend→reactivate ผ่าน 1/1, unit 486/486,
+`ACCOUNT_LIFECYCLE_MUTATIONS_ENABLED=1`; ค่า default ยังปิด Production migrate
+และ deploy code แล้วแต่ยังไม่ enable. QA integration suspend→reactivate ผ่าน 1/1, unit 486/486,
 typecheck และ targeted ESLint ผ่าน. ห้าม migrate Production โดยไม่มี approval แยก.
 
 **A0 Documentation Alignment ปิดแล้ว (2026-07-14 · docs only):** ปรับ `README.md`, `CLAUDE.md`, `CONTEXT.md`, `docs/PROPOSAL.md`, `docs/DEPLOY.md`, `Task.md` และ roadmap ให้ตรง code/product ปัจจุบัน ไม่มีการแก้ code, schema หรือข้อมูล งานถัดไปตาม roadmap คือ A2 Critical-path QA → A3 Functional Completeness Audit

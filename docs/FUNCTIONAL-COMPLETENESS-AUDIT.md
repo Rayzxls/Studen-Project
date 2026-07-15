@@ -57,17 +57,17 @@ model or button exists.
 
 ## 4. Moderation coverage
 
-The first central Moderation Center slice was implemented and verified on isolated Neon QA on 2026-07-15. It is feature-flagged and has not been migrated or enabled in Production.
+The first central Moderation Center slice was implemented and verified on isolated Neon QA on 2026-07-15. Production code and schema shipped on 2026-07-15; the server-side feature flag remains disabled pending cutover acceptance.
 
 | Content type | Status | Current rule and remaining boundary |
 | --- | --- | --- |
-| Class-wide and private Comment | **QA-implemented** | Existing Teacher moderation remains; authenticated reports can aggregate into an Admin case with snapshot, temporary hide, restore, decision, audit, and owner appeal. |
-| Announcement and Material | **QA-implemented** | Owner soft-delete remains separate. Admin may restrict policy/safety content through a case without gaining Teacher editing privileges. |
+| Class-wide and private Comment | **Production-deployed, disabled** | Existing Teacher moderation remains; authenticated reports can aggregate into an Admin case with snapshot, temporary hide, restore, decision, audit, and owner appeal after flag cutover. |
+| Announcement and Material | **Production-deployed, disabled** | Owner soft-delete remains separate. Admin may restrict policy/safety content through a case without gaining Teacher editing privileges after flag cutover. |
 | Assignment content | **Partial** | Admin case restriction is QA-implemented and never mutates scores/submissions. The older destructive owner delete path still needs archive-first replacement before content retention is complete. |
-| File Attachment | **QA-implemented** | A quarantined file is removed from normal attachment projection and denied before signed delivery; Admin retains evidence access. Private-R2 manual acceptance remains open. |
-| Profile image | **QA-implemented** | Existing audited avatar reset remains. A moderation restriction makes normal delivery fall back to the default avatar while preserving evidence for Admin review. |
-| Restore/appeal workflow | **QA-implemented** | Admin can restore/dismiss temporary restrictions; the content owner gets one appeal within seven days and the case returns to review. |
-| Unified moderation queue | **QA-implemented** | Admin-only Active/History/All queue with reports, immutable snapshot, timeline, restrictions, and decisions. Production rollout remains unapproved. |
+| File Attachment | **Production-deployed, disabled** | A quarantined file is removed from normal attachment projection and denied before signed delivery; Admin retains evidence access. Private-R2 manual acceptance remains open. |
+| Profile image | **Production-deployed, disabled** | Existing audited avatar reset remains. A moderation restriction makes normal delivery fall back to the default avatar while preserving evidence for Admin review. |
+| Restore/appeal workflow | **Production-deployed, disabled** | Admin can restore/dismiss temporary restrictions; the content owner gets one appeal within seven days and the case returns to review. |
+| Unified moderation queue | **Production-deployed, disabled** | Admin-only Active/History/All queue with reports, immutable snapshot, timeline, restrictions, and decisions. Vercel flag cutover remains open. |
 
 ## 5. Profile scope
 

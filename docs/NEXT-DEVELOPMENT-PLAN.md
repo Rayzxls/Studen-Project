@@ -2,7 +2,7 @@
 
 **Updated:** 2026-07-15
 **Sequence:** Core completion -> Lesson Workspace -> Quiz -> Identity/Integrations -> AI -> Optional product modules  
-**Current state:** A0 Documentation Alignment, A1 Report/Export v1, the A2 automated QA gate, and A3/A3.1 static correctness work are complete. A2 manual acceptance remains open. A4 Account Lifecycle and the first operational Moderation Center slice now have additive persistence, isolated Neon QA migrations/integration tests, audited transactions, and feature-flagged Admin surfaces. Production schema migrations and behavior enablement remain unapproved. The Lesson Workspace prototype is approved as a direction reference, but production development has not been approved yet.
+**Current state:** A0 Documentation Alignment, A1 Report/Export v1, the A2 automated QA gate, and A3/A3.1 static correctness work are complete. A2 manual acceptance remains open. A4 Account Lifecycle and the first operational Moderation Center slice now have additive persistence, isolated Neon QA migrations/integration tests, audited transactions, and feature-flagged Admin surfaces. Production code and schema migrations shipped on 2026-07-15; behavior enablement remains pending Vercel flags and post-cutover smoke testing. The Lesson Workspace prototype is approved as a direction reference, but production development has not been approved yet.
 
 ## Why this order
 
@@ -20,7 +20,7 @@ This matrix prevents an implemented screen or database field from being mistaken
 | Report and export | Student Learning Results has browser Print to PDF; Teacher score and attendance summaries have course-level CSV; Admin Audit has filtered CSV | V1 shipped: full report-card PDF generation is explicitly deferred pending a separate layout, identity, signature, and authorization decision |
 | Admin user management | Create/import Teacher, list users, reset password, reset avatar, and user drill-down exist | Partial: deactivate, restore, delete-request, and anonymize workflows are not complete even though `User.deletedAt` and `Student.anonymized` exist |
 | QR and invite link | Class Code, `qrcode.react`, `ClassCodeCard`, and join route exist | Implemented foundation, not accepted until QR scan, invite copy, expiry, deactivate, regenerate, mobile, and rejoin flows pass QA |
-| Moderation | Existing Teacher comment moderation plus a case-based Admin queue for reports, evidence snapshots, temporary restrictions, decisions, restore, and one-time appeal | QA-implemented behind `MODERATION_CENTER_ENABLED`; production migration/enablement and manual all-theme/mobile/private-R2 acceptance remain open |
+| Moderation | Existing Teacher comment moderation plus a case-based Admin queue for reports, evidence snapshots, temporary restrictions, decisions, restore, and one-time appeal | Code/schema deployed behind `MODERATION_CENTER_ENABLED`; flag cutover and manual all-theme/mobile/private-R2 acceptance remain open |
 | Profile personal information | Avatar, display name, read-only real identity, password, and theme exist | Intentionally minimal learning identity; a full personal profile requires a privacy/scope decision, not an automatic expansion |
 | Quiz / Testing | No domain model or route found | Not implemented; planned after Lesson Workspace |
 | AI Assistant | No model-provider integration found | Not implemented; planned only after stable Lesson/Quiz contracts |
@@ -181,8 +181,8 @@ its intentionally narrow L1 projection.
 Status: decision lock and pure policy foundation completed 2026-07-14. The
 additive schema, lifecycle-history model, legacy backfill, guarded QA-only
 migration, atomic Prisma repository, and feature-flagged Admin suspend/reactivate
-surface were completed and verified on QA on 2026-07-15. Production has not
-been migrated and the mutation flag remains disabled by default. See ADR-0031.
+surface were completed and verified on QA on 2026-07-15. Production migrated
+successfully on 2026-07-15 and the mutation flag remains disabled. See ADR-0031.
 
 - `lib/account/lifecycle-policy.ts` defines and unit-tests the transition contract without database writes.
 - `lib/account/status.ts` defines deterministic legacy-to-canonical compatibility
@@ -226,7 +226,7 @@ been migrated and the mutation flag remains disabled by default. See ADR-0031.
 
 #### Moderation coverage
 
-Status: decision lock completed 2026-07-14. The first operational slice was implemented and integration-tested on isolated Neon QA on 2026-07-15 behind `MODERATION_CENTER_ENABLED`. Production migration/enablement is not approved. See ADR-0032 and `MODERATION-CONTENT-MATRIX.md`.
+Status: decision lock completed 2026-07-14. The first operational slice was implemented and integration-tested on isolated Neon QA on 2026-07-15 behind `MODERATION_CENTER_ENABLED`. Production code/schema shipped on 2026-07-15; the flag remains disabled pending cutover acceptance. See ADR-0032 and `MODERATION-CONTENT-MATRIX.md`.
 
 - The first slice provides one case-based Moderation Center for content reports, file/profile safety, resolved history, and one-time appeals. Account Lifecycle requests remain a separate workflow.
 - A Report does not hide content automatically. Admin or an authorized Teacher may temporarily hide content during review with reason and audit.
@@ -243,7 +243,7 @@ Status: decision lock completed 2026-07-14. The first operational slice was impl
 - Added authenticated reporting for Announcement, Material, Assignment, Comment, File Attachment, and Profile Image targets, plus one owner appeal within seven days.
 - Enforced restrictions at Feed/detail queries, signed-file delivery, attachment projection, and profile-image delivery. Admin can still inspect evidence; normal users receive hidden content, denied files, or the default avatar as appropriate.
 - Unit policy tests passed 5/5 and the isolated QA integration test passed the report aggregation, deduplication, snapshot, hide, decision, appeal, event, audit, and cleanup flow.
-- Remaining before production rollout: production migration approval, feature-flag approval, Admin/Teacher/Student manual acceptance in System/Dark/Cream and mobile/desktop, and private-R2 quarantine/restore smoke testing.
+- Remaining before behavior rollout: Vercel feature-flag cutover, Admin/Teacher/Student manual acceptance in System/Dark/Cream and mobile/desktop, and private-R2 quarantine/restore smoke testing.
 
 #### A4 implementation order
 
