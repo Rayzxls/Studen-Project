@@ -17,9 +17,11 @@ import { SafeExternalLinkButton } from "@/components/link/safe-external-link-but
 export function FeedAttachmentPreview({
   attachments,
   linkUrls = [],
+  fileBasePath = "/api/storage/files",
 }: {
   attachments: FeedAttachment[];
   linkUrls?: string[];
+  fileBasePath?: string;
 }) {
   const images = useMemo(
     () => attachments.filter((file) => file.mimeType.startsWith("image/")),
@@ -58,7 +60,7 @@ export function FeedAttachmentPreview({
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={fileHref(file.id)}
+                src={fileHref(file.id, fileBasePath)}
                 alt={file.originalFilename}
                 className="h-full w-full object-contain transition-transform duration-300 hover:scale-[1.02]"
               />
@@ -133,6 +135,7 @@ export function FeedAttachmentPreview({
         <ImagePreviewDialog
           images={images}
           activeIndex={activeIndex}
+          fileBasePath={fileBasePath}
           onChange={setActiveIndex}
           onClose={() => setActiveIndex(null)}
         />
@@ -141,6 +144,7 @@ export function FeedAttachmentPreview({
       {activeDocument && (
         <DocumentPreviewDialog
           file={activeDocument}
+          fileBasePath={fileBasePath}
           onClose={() => setActiveDocument(null)}
         />
       )}
@@ -151,11 +155,13 @@ export function FeedAttachmentPreview({
 function ImagePreviewDialog({
   images,
   activeIndex,
+  fileBasePath,
   onChange,
   onClose,
 }: {
   images: FeedAttachment[];
   activeIndex: number;
+  fileBasePath: string;
   onChange: (nextIndex: number) => void;
   onClose: () => void;
 }) {
@@ -200,7 +206,7 @@ function ImagePreviewDialog({
         <div className="absolute left-0 top-0 z-10 flex max-w-[calc(100%-4rem)] items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-xs font-medium text-white backdrop-blur">
           <span className="truncate">{active.originalFilename}</span>
           <a
-            href={fileHref(active.id)}
+            href={fileHref(active.id, fileBasePath)}
             target="_blank"
             rel="noreferrer"
             className="inline-flex shrink-0 items-center gap-1 text-white/75 hover:text-white hover:no-underline"
@@ -234,7 +240,7 @@ function ImagePreviewDialog({
 
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={fileHref(active.id)}
+          src={fileHref(active.id, fileBasePath)}
           alt={active.originalFilename}
           className="h-full w-full object-contain"
         />
@@ -263,9 +269,11 @@ function ImagePreviewDialog({
 
 function DocumentPreviewDialog({
   file,
+  fileBasePath,
   onClose,
 }: {
   file: FeedAttachment;
+  fileBasePath: string;
   onClose: () => void;
 }) {
   useEffect(() => {
@@ -307,7 +315,7 @@ function DocumentPreviewDialog({
           </div>
           <div className="flex shrink-0 items-center gap-1">
             <a
-              href={fileHref(file.id)}
+              href={fileHref(file.id, fileBasePath)}
               target="_blank"
               rel="noreferrer"
               className="inline-flex h-9 w-9 items-center justify-center rounded-full text-black/55 transition hover:bg-black/[0.05] hover:text-black"
@@ -316,7 +324,7 @@ function DocumentPreviewDialog({
               <ExternalLink className="h-4 w-4" aria-hidden="true" />
             </a>
             <a
-              href={fileHref(file.id)}
+              href={fileHref(file.id, fileBasePath)}
               download={file.originalFilename}
               className="inline-flex h-9 w-9 items-center justify-center rounded-full text-black/55 transition hover:bg-black/[0.05] hover:text-black"
               title="ดาวน์โหลด"
@@ -337,7 +345,7 @@ function DocumentPreviewDialog({
         <div className="grid min-h-0 flex-1 place-items-center bg-black/[0.03] p-3">
           {file.mimeType === "application/pdf" ? (
             <iframe
-              src={fileHref(file.id)}
+              src={fileHref(file.id, fileBasePath)}
               title={file.originalFilename}
               className="h-full min-h-[65vh] w-full rounded-2xl bg-white"
             />
@@ -352,7 +360,7 @@ function DocumentPreviewDialog({
               </p>
               <div className="mt-4 flex justify-center gap-2">
                 <a
-                  href={fileHref(file.id)}
+                  href={fileHref(file.id, fileBasePath)}
                   target="_blank"
                   rel="noreferrer"
                   className="btn-primary btn-sm"
@@ -361,7 +369,7 @@ function DocumentPreviewDialog({
                   เปิดไฟล์
                 </a>
                 <a
-                  href={fileHref(file.id)}
+                  href={fileHref(file.id, fileBasePath)}
                   download={file.originalFilename}
                   className="btn-ghost btn-sm"
                 >
@@ -378,8 +386,8 @@ function DocumentPreviewDialog({
   );
 }
 
-function fileHref(fileId: string): string {
-  return `/api/storage/files/${fileId}`;
+function fileHref(fileId: string, fileBasePath: string): string {
+  return `${fileBasePath}/${fileId}`;
 }
 
 function formatLinkLabel(href: string): string {

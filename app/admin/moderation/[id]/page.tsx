@@ -1,15 +1,12 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import type { Prisma } from "@prisma/client";
-import {
-  ChevronLeft,
-  ExternalLink,
-  FileSearch,
-  Flag,
-  ShieldCheck,
-} from "lucide-react";
+import { ChevronLeft, FileSearch, Flag, ShieldCheck } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
 import { ModerationCaseActions } from "@/components/admin/moderation-case-actions";
+import { FeedAttachmentPreview } from "@/components/feed/feed-attachment-preview";
+import type { FeedAttachment } from "@/lib/feed/aggregator";
+import { moderationEvidenceFileIds } from "@/lib/moderation/evidence";
 import { moderationCenterEnabled } from "@/lib/moderation/feature-flags";
 import { getModerationCaseDetail } from "@/lib/moderation/queries";
 
@@ -75,7 +72,11 @@ export default async function ModerationCasePage({
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-5">
-          <EvidencePreview snapshot={item.targetSnapshot} />
+          <EvidencePreview
+            caseId={item.id}
+            snapshot={item.targetSnapshot}
+            attachments={item.evidenceAttachments}
+          />
 
           <section className="card p-5">
             <h2 className="text-base font-semibold text-black">
@@ -142,7 +143,15 @@ export default async function ModerationCasePage({
   );
 }
 
-function EvidencePreview({ snapshot }: { snapshot: Prisma.JsonValue }) {
+function EvidencePreview({
+  caseId,
+  snapshot,
+  attachments,
+}: {
+  caseId: string;
+  snapshot: Prisma.JsonValue;
+  attachments: FeedAttachment[];
+}) {
   const record =
     snapshot && typeof snapshot === "object" && !Array.isArray(snapshot)
       ? snapshot
@@ -150,9 +159,12 @@ function EvidencePreview({ snapshot }: { snapshot: Prisma.JsonValue }) {
   const title = textValue(record, "title");
   const body = textValue(record, "body") || textValue(record, "description");
   const links = stringList(record, "linkUrls");
-  const fileIds = stringList(record, "fileAttachmentIds");
-  const targetFileId = textValue(record, "fileAttachmentId");
   const filename = textValue(record, "originalFilename");
+  const capturedFileCount = moderationEvidenceFileIds(snapshot).length;
+  const unavailableFileCount = Math.max(
+    0,
+    capturedFileCount - attachments.length
+  );
 
   return (
     <section className="card p-5">
@@ -174,16 +186,16 @@ function EvidencePreview({ snapshot }: { snapshot: Prisma.JsonValue }) {
             ไฟล์: <strong>{filename}</strong>
           </p>
         )}
-        {targetFileId && (
-          <a
-            href={`/api/storage/files/${targetFileId}`}
-            target="_blank"
-            rel="noreferrer"
-            className="btn-secondary btn-sm w-fit"
-          >
-            <ExternalLink className="h-4 w-4" />
-            เปิดไฟล์หลักฐาน
-          </a>
+        {attachments.length > 0 && (
+          <div className="rounded-xl border border-hairline bg-surface py-3">
+            <p className="px-5 text-xs font-medium text-ink-soft">
+              ไฟล์หลักฐาน {attachments.length} รายการ · กดเพื่อเปิดดู
+            </p>
+            <FeedAttachmentPreview
+              attachments={attachments}
+              fileBasePath={`/api/admin/moderation/cases/${caseId}/files`}
+            />
+          </div>
         )}
         {links.length > 0 && (
           <div className="space-y-2">
@@ -201,9 +213,9 @@ function EvidencePreview({ snapshot }: { snapshot: Prisma.JsonValue }) {
             ))}
           </div>
         )}
-        {fileIds.length > 0 && (
+        {unavailableFileCount > 0 && (
           <p className="text-xs text-ink-soft">
-            มีไฟล์แนบใน snapshot {fileIds.length} รายการ
+            มีไฟล์หลักฐาน {unavailableFileCount} รายการที่ไม่พบ metadata
           </p>
         )}
         {!title && !body && !filename && links.length === 0 && (

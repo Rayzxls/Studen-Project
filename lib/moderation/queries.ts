@@ -3,6 +3,7 @@ import type {
   ModerationTargetType,
 } from "@prisma/client";
 import { db } from "@/lib/db/client";
+import { moderationEvidenceFileIds } from "./evidence";
 import { moderationCenterEnabled } from "./feature-flags";
 
 export type ModerationQueueFilter = "active" | "history" | "all";
@@ -56,7 +57,7 @@ export async function getModerationQueue(filter: ModerationQueueFilter) {
 export async function getModerationCaseDetail(caseId: string) {
   if (!moderationCenterEnabled()) return null;
 
-  return db.moderationCase.findUnique({
+  const item = await db.moderationCase.findUnique({
     where: { id: caseId },
     include: {
       ownerUser: {
@@ -103,6 +104,32 @@ export async function getModerationCaseDetail(caseId: string) {
       },
     },
   });
+  if (!item) return null;
+
+  const evidenceFileIds = moderationEvidenceFileIds(item.targetSnapshot);
+  const evidenceFiles =
+    evidenceFileIds.length === 0
+      ? []
+      : await db.fileAttachment.findMany({
+          where: { id: { in: evidenceFileIds } },
+          select: {
+            id: true,
+            originalFilename: true,
+            sizeBytes: true,
+            mimeType: true,
+          },
+        });
+  const evidenceFileById = new Map(
+    evidenceFiles.map((file) => [file.id, file])
+  );
+
+  return {
+    ...item,
+    evidenceAttachments: evidenceFileIds.flatMap((id) => {
+      const file = evidenceFileById.get(id);
+      return file ? [file] : [];
+    }),
+  };
 }
 
 export async function getModerationRestrictions(
