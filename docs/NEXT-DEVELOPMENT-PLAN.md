@@ -330,12 +330,16 @@ Status: implemented on `phase-11` and accepted on isolated Neon QA on 2026-07-15
 
 ### B5. Feed, notifications, and route transition
 
+Status: implemented on `phase-11` and verified locally plus isolated Neon QA on 2026-07-15. Feed remains the default course landing and Production rollout remains unapproved.
+
 - Feed continues to project canonical Announcement, Material, Assignment, and score events chronologically.
 - Notifications deep-link to the content item inside its Lesson when applicable; creating an empty Lesson sends no notification.
 - Existing Feed and detail URLs remain valid.
 - Change the default course landing from Feed to Lessons only after parity QA passes; rollback means disabling the flag and returning to Feed-first navigation.
 
 **Exit gate:** Feed item counts and links match the pre-release baseline, bookmarks still work, and the flag can restore the old default without a data rollback.
+
+**Completion record:** Feed projection and default course redirects remain unchanged. New Lesson-linked Assignment, Material, submission grade/return, and relevant comment notifications snapshot the optional Lesson id and, only while the fail-closed Lesson read flag is enabled, deep-link to stable Assignment/Material anchors inside Student or Teacher Lesson detail. Legacy notifications, Announcements, and flag-off navigation retain their original direct detail URLs, so existing bookmarks remain valid and rollback needs no data mutation. Empty Lesson creation still has no notification producer. Full unit `528/528`, targeted isolated-Neon integration `19/19`, TypeScript, targeted ESLint, and production build passed. No Production schema, data, flags, default routes, or deployment changed.
 
 ### B6. Admin observer and rollout
 

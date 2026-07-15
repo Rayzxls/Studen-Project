@@ -5,6 +5,7 @@ import {
 } from "@/lib/notification";
 import { buildNotificationPreview } from "@/lib/notification/preview";
 import { resolveNotificationHref } from "@/lib/notification/navigation";
+import { lessonWorkspaceEnabled } from "@/lib/lesson/feature-flags";
 import { BellClient, type BellClientItem } from "./bell-client";
 
 /**
@@ -25,6 +26,7 @@ import { BellClient, type BellClientItem } from "./bell-client";
  *  - empty state (Q10.1 lock = A illustrated)
  */
 export async function Bell({ userId, role }: { userId: string; role: Role }) {
+  const useLessonWorkspace = lessonWorkspaceEnabled();
   const [unreadCount, page] = await Promise.all([
     countUnreadNotifications(userId),
     listNotificationsForRecipient({ recipientId: userId }),
@@ -38,6 +40,7 @@ export async function Bell({ userId, role }: { userId: string; role: Role }) {
       courseOfferingId: n.courseOfferingId,
       sourceEntityId: n.sourceEntityId,
       payload: n.payloadJson,
+      lessonWorkspaceEnabled: useLessonWorkspace,
     }),
     createdAtIso: n.createdAt.toISOString(),
     readAtIso: n.readAt?.toISOString() ?? null,

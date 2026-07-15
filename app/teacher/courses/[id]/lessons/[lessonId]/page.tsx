@@ -166,7 +166,8 @@ export default async function TeacherLessonDetailPage({
               {lesson.assignments.map((assignment) => (
                 <article
                   key={assignment.id}
-                  className="border-b border-hairline py-4 last:border-0"
+                  id={`assignment-${assignment.id}`}
+                  className="scroll-mt-28 border-b border-hairline py-4 last:border-0 target:rounded-lg target:outline target:outline-2 target:outline-offset-4 target:outline-blue-500"
                 >
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
@@ -226,7 +227,8 @@ export default async function TeacherLessonDetailPage({
               {lesson.materials.map((material) => (
                 <article
                   key={material.id}
-                  className="border-b border-hairline py-4 last:border-0"
+                  id={`material-${material.id}`}
+                  className="scroll-mt-28 border-b border-hairline py-4 last:border-0 target:rounded-lg target:outline target:outline-2 target:outline-offset-4 target:outline-blue-500"
                 >
                   <Link
                     href={`/teacher/courses/${id}/materials/${material.id}`}

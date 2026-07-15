@@ -6,7 +6,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { resolveFeedHref } from "@/lib/feed/navigation";
+import { resolveCourseFeedHref, resolveFeedHref } from "@/lib/feed/navigation";
 
 const COURSE = "course-abc";
 
@@ -49,5 +49,29 @@ describe("resolveFeedHref", () => {
         itemId: "announcement-1",
       })
     ).toBe(`/student/courses/${COURSE}/announcements/announcement-1`);
+  });
+});
+
+describe("resolveCourseFeedHref — B5 compatibility", () => {
+  it("keeps the Student Feed Assignment URL bookmark-compatible", () => {
+    expect(
+      resolveCourseFeedHref({
+        kind: "ASSIGNMENT",
+        courseOfferingId: COURSE,
+        itemId: "assignment-1",
+        role: "STUDENT",
+      })
+    ).toBe(`/student/courses/${COURSE}/assignments/assignment-1`);
+  });
+
+  it("keeps the Teacher Feed Material URL bookmark-compatible", () => {
+    expect(
+      resolveCourseFeedHref({
+        kind: "MATERIAL",
+        courseOfferingId: COURSE,
+        itemId: "material-1",
+        role: "TEACHER",
+      })
+    ).toBe(`/teacher/courses/${COURSE}/materials/material-1`);
   });
 });

@@ -40,6 +40,41 @@ afterEach(async () => {
 });
 
 describe("createMaterial — MATERIAL_POSTED broadcast", () => {
+  it("snapshots the linked Lesson id for lesson-aware navigation", async () => {
+    await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
+    const lesson = await db.lesson.create({
+      data: {
+        courseOfferingId: ctx.courseOfferingId,
+        title: "บททดสอบ Notification",
+        position: 0,
+        createdById: ctx.teacherUserId,
+      },
+    });
+    const material = await createMaterial(
+      {
+        courseOfferingId: ctx.courseOfferingId,
+        lessonId: lesson.id,
+        title: "Lesson-linked material",
+        body: "",
+        fileAttachmentIds: [],
+        linkUrls: [],
+      },
+      { actorUserId: ctx.teacherUserId }
+    );
+
+    const row = await db.notification.findFirstOrThrow({
+      where: {
+        recipientId: ctx.studentUserId,
+        sourceEntityType: "MATERIAL",
+        sourceEntityId: material.id,
+      },
+      select: { payloadJson: true },
+    });
+    expect((row.payloadJson as Record<string, unknown>).lessonId).toBe(
+      lesson.id
+    );
+  });
+
   it("fans out to every active enrollment, excludes removed students", async () => {
     await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
     const removed = await enrollStudent(

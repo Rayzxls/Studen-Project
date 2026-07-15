@@ -37,6 +37,43 @@ afterEach(async () => {
 });
 
 describe("createAssignment — atomic ScoreItem coupling (ADR-0019 § 1)", () => {
+  it("snapshots the linked Lesson id in ASSIGNMENT_POSTED", async () => {
+    await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
+    const lesson = await db.lesson.create({
+      data: {
+        courseOfferingId: ctx.courseOfferingId,
+        title: "บททดสอบ Notification",
+        position: 0,
+        createdById: ctx.teacherUserId,
+      },
+    });
+    const assignment = await createAssignment(
+      {
+        courseOfferingId: ctx.courseOfferingId,
+        lessonId: lesson.id,
+        title: "Lesson-linked assignment",
+        description: "",
+        allowText: true,
+        allowFile: false,
+        allowLink: false,
+        isScored: false,
+      },
+      { actorUserId: ctx.teacherUserId }
+    );
+
+    const row = await db.notification.findFirstOrThrow({
+      where: {
+        recipientId: ctx.studentUserId,
+        sourceEntityType: "ASSIGNMENT",
+        sourceEntityId: assignment.id,
+      },
+      select: { payloadJson: true },
+    });
+    expect((row.payloadJson as Record<string, unknown>).lessonId).toBe(
+      lesson.id
+    );
+  });
+
   it("creates Assignment without ScoreItem when isScored=false", async () => {
     const a = await createAssignment(
       {

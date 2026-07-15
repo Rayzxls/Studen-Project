@@ -259,7 +259,9 @@ export async function createComment(
       // Resolve the Submission's parent Assignment title for the snapshot.
       const sub = await tx.submission.findUniqueOrThrow({
         where: { id: parsed.ownerId },
-        select: { assignment: { select: { id: true, title: true } } },
+        select: {
+          assignment: { select: { id: true, title: true, lessonId: true } },
+        },
       });
       await fanOutTargeted(tx, {
         kind: "COMMENT_REPLIED",
@@ -270,6 +272,7 @@ export async function createComment(
         payload: {
           courseId: owner.courseOfferingId,
           courseName: course.name,
+          lessonId: sub.assignment.lessonId,
           entityKind: "SUBMISSION",
           // For SUBMISSION PRIVATE the bell deep-links to the parent
           // Assignment detail page rather than the Submission row.
@@ -284,23 +287,26 @@ export async function createComment(
       // Dispatch by ownerType to pull the right entity title + author.
       let entityTitle: string | null = null;
       let entityAuthorId: string | null = null;
+      let lessonId: string | null = null;
       let entityKind: "ASSIGNMENT" | "MATERIAL" | "ANNOUNCEMENT";
 
       if (parsed.ownerType === "ASSIGNMENT") {
         const asg = await tx.assignment.findUniqueOrThrow({
           where: { id: parsed.ownerId },
-          select: { title: true, createdById: true },
+          select: { title: true, createdById: true, lessonId: true },
         });
         entityTitle = asg.title;
         entityAuthorId = asg.createdById;
+        lessonId = asg.lessonId;
         entityKind = "ASSIGNMENT";
       } else if (parsed.ownerType === "MATERIAL") {
         const mat = await tx.material.findUniqueOrThrow({
           where: { id: parsed.ownerId },
-          select: { title: true, postedById: true },
+          select: { title: true, postedById: true, lessonId: true },
         });
         entityTitle = mat.title;
         entityAuthorId = mat.postedById;
+        lessonId = mat.lessonId;
         entityKind = "MATERIAL";
       } else if (parsed.ownerType === "ANNOUNCEMENT") {
         const ann = await tx.announcement.findUniqueOrThrow({
@@ -327,6 +333,7 @@ export async function createComment(
         payload: {
           courseId: owner.courseOfferingId,
           courseName: course.name,
+          lessonId,
           entityKind,
           entityOwnerId: parsed.ownerId,
           entityTitle,

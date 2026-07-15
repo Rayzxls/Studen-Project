@@ -9,18 +9,15 @@
  *  - Deep link when the snapshot carries enough to address the entity
  *    (SCORE_ITEM_PUBLISHED → scores tab; ASSIGNMENT_POSTED →
  *    assignment detail since sourceEntityId IS the assignment id).
- *  - Fall back to course root (or a tab one level up) when the
- *    snapshot lacks the addressing id. This is the case for
- *    MATERIAL_POSTED / ANNOUNCEMENT_POSTED (no UI route yet — P7-7/8)
- *    and for SUBMISSION_* / COMMENT_REPLIED whose payloads currently
- *    do not include the parent Assignment id.
+ *  - When Lesson Workspace is enabled and the immutable notification
+ *    snapshot includes a Lesson id, open the content checkpoint inside
+ *    that Lesson. Legacy rows and a disabled flag keep their direct entity URL.
+ *  - Fall back to course root (or a tab one level up) only when the snapshot
+ *    lacks enough addressing data.
  *
  * Fallback strategy = better than a broken deep-link: the user still
  * lands in the relevant course and can navigate one step further.
  *
- * TODO (later phase): enrich SubmissionGraded/Returned/CommentReplied
- * payloads with assignmentId/entityOwnerId at fan-out time so the bell
- * can deep-link to the assignment detail page.
  */
 
 import type { NotificationKind, Role } from "@prisma/client";
@@ -42,12 +39,28 @@ export interface ResolveNotificationHrefArgs {
   courseOfferingId: string | null;
   sourceEntityId: string;
   payload: unknown;
+  lessonWorkspaceEnabled?: boolean;
+}
+
+function lessonContentHref(args: {
+  role: "STUDENT" | "TEACHER";
+  courseOfferingId: string;
+  lessonId: string | null;
+  anchor: string;
+  fallback: string;
+  enabled: boolean;
+}): string {
+  if (!args.enabled || !args.lessonId) return args.fallback;
+  const rolePath = args.role === "STUDENT" ? "student" : "teacher";
+  return `/${rolePath}/courses/${args.courseOfferingId}/lessons/${args.lessonId}#${args.anchor}`;
 }
 
 export function resolveNotificationHref(
   args: ResolveNotificationHrefArgs
 ): string {
   const { kind, role, courseOfferingId, sourceEntityId } = args;
+  const lessonId = payloadString(args.payload, "lessonId");
+  const useLessonWorkspace = args.lessonWorkspaceEnabled === true;
 
   // Ultimate fallback when the course context is missing.
   if (!courseOfferingId) return DASHBOARD;
@@ -67,9 +80,23 @@ export function resolveNotificationHref(
         switch (entityKind) {
           case "ASSIGNMENT":
           case "SUBMISSION":
-            return `/teacher/courses/${courseOfferingId}/assignments/${entityOwnerId}`;
+            return lessonContentHref({
+              role: "TEACHER",
+              courseOfferingId,
+              lessonId,
+              anchor: `assignment-${entityOwnerId}`,
+              fallback: `/teacher/courses/${courseOfferingId}/assignments/${entityOwnerId}`,
+              enabled: useLessonWorkspace,
+            });
           case "MATERIAL":
-            return `/teacher/courses/${courseOfferingId}/materials/${entityOwnerId}`;
+            return lessonContentHref({
+              role: "TEACHER",
+              courseOfferingId,
+              lessonId,
+              anchor: `material-${entityOwnerId}`,
+              fallback: `/teacher/courses/${courseOfferingId}/materials/${entityOwnerId}`,
+              enabled: useLessonWorkspace,
+            });
           case "ANNOUNCEMENT":
             return `/teacher/courses/${courseOfferingId}/announcements/${entityOwnerId}`;
           default:
@@ -90,7 +117,14 @@ export function resolveNotificationHref(
     case "ASSIGNMENT_POSTED":
       // sourceEntityId IS the assignment id by construction (fan-out
       // passes assignment.id to sourceEntityId for this kind).
-      return `/student/courses/${courseOfferingId}/assignments/${sourceEntityId}`;
+      return lessonContentHref({
+        role: "STUDENT",
+        courseOfferingId,
+        lessonId,
+        anchor: `assignment-${sourceEntityId}`,
+        fallback: `/student/courses/${courseOfferingId}/assignments/${sourceEntityId}`,
+        enabled: useLessonWorkspace,
+      });
 
     case "SUBMISSION_GRADED":
     case "SUBMISSION_RETURNED": {
@@ -98,14 +132,27 @@ export function resolveNotificationHref(
       // to assignment detail; fall back to the assignments list for
       // legacy rows that pre-date the enrichment.
       const aid = payloadString(args.payload, "assignmentId");
-      return aid
-        ? `/student/courses/${courseOfferingId}/assignments/${aid}`
-        : `/student/courses/${courseOfferingId}/assignments`;
+      if (!aid) return `/student/courses/${courseOfferingId}/assignments`;
+      return lessonContentHref({
+        role: "STUDENT",
+        courseOfferingId,
+        lessonId,
+        anchor: `assignment-${aid}`,
+        fallback: `/student/courses/${courseOfferingId}/assignments/${aid}`,
+        enabled: useLessonWorkspace,
+      });
     }
 
     case "MATERIAL_POSTED": {
       // P7-8 student Material detail route is live now.
-      return `/student/courses/${courseOfferingId}/materials/${sourceEntityId}`;
+      return lessonContentHref({
+        role: "STUDENT",
+        courseOfferingId,
+        lessonId,
+        anchor: `material-${sourceEntityId}`,
+        fallback: `/student/courses/${courseOfferingId}/materials/${sourceEntityId}`,
+        enabled: useLessonWorkspace,
+      });
     }
 
     case "ANNOUNCEMENT_POSTED": {
@@ -122,9 +169,23 @@ export function resolveNotificationHref(
       switch (entityKind) {
         case "ASSIGNMENT":
         case "SUBMISSION":
-          return `/student/courses/${courseOfferingId}/assignments/${entityOwnerId}`;
+          return lessonContentHref({
+            role: "STUDENT",
+            courseOfferingId,
+            lessonId,
+            anchor: `assignment-${entityOwnerId}`,
+            fallback: `/student/courses/${courseOfferingId}/assignments/${entityOwnerId}`,
+            enabled: useLessonWorkspace,
+          });
         case "MATERIAL":
-          return `/student/courses/${courseOfferingId}/materials/${entityOwnerId}`;
+          return lessonContentHref({
+            role: "STUDENT",
+            courseOfferingId,
+            lessonId,
+            anchor: `material-${entityOwnerId}`,
+            fallback: `/student/courses/${courseOfferingId}/materials/${entityOwnerId}`,
+            enabled: useLessonWorkspace,
+          });
         case "ANNOUNCEMENT":
           return `/student/courses/${courseOfferingId}/announcements/${entityOwnerId}`;
         default:

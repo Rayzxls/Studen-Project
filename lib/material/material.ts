@@ -96,6 +96,7 @@ export async function createMaterial(
       payload: {
         courseId: parsed.courseOfferingId,
         courseName: course.name,
+        lessonId: parsed.lessonId ?? null,
         title: parsed.title,
         postedByName: `${teacher.firstName} ${teacher.lastName}`,
       },

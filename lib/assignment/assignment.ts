@@ -140,6 +140,7 @@ export async function createAssignment(
       payload: {
         courseId: parsed.courseOfferingId,
         courseName: courseRow.name,
+        lessonId: parsed.lessonId ?? null,
         assignmentTitle: parsed.title,
         dueAt: parsed.dueAt?.toISOString() ?? null,
       },

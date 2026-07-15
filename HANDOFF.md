@@ -1,5 +1,14 @@
 # HANDOFF — Beagle Classroom
 
+## LESSON WORKSPACE B5 — 2026-07-15
+
+- Feed/notification parity is complete on `phase-11`. Feed remains the chronological canonical projection and the default Student/Teacher course landing; no route cutover was made.
+- New Assignment, Material, submission grade/return, and relevant comment notification snapshots now carry an optional `lessonId`. When the fail-closed Lesson read flag is enabled, the bell opens the exact Assignment or Material checkpoint inside its Lesson.
+- Legacy notifications without `lessonId`, all course-wide Announcements, and every notification while the flag is disabled keep the existing direct detail URL. Existing Feed links and bookmarks are unchanged.
+- Student and Teacher Lesson detail pages expose stable `assignment-{id}` and `material-{id}` anchors with visible keyboard/target focus. Creating an empty Lesson still emits no notification because Lesson mutations have no notification producer.
+- Verification passed: TypeScript, targeted ESLint, production build, full unit `528/528`, and targeted isolated-Neon integration `19/19`. Full-repository lint remains blocked by pre-existing generated `.next-qa` and bundled `.claude` skill files, not B5 files.
+- Production schema, data, flags, default routes, deployment, and `main` remain untouched. B6 Admin observer/pilot rollout is next and requires separate approval; disabling the Lesson flag restores legacy notification navigation without data rollback.
+
 ## LESSON WORKSPACE B4 — 2026-07-15
 
 - Student Learning Path is complete on `phase-11`: the Student course tabs now expose a dedicated Lesson list and Lesson detail while Feed remains the default course experience.

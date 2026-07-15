@@ -144,8 +144,9 @@ export default async function StudentLessonDetailPage({ params }: PageProps) {
                 {lesson.materials.map((material) => (
                   <Link
                     key={material.id}
+                    id={`material-${material.id}`}
                     href={`/student/courses/${id}/materials/${material.id}`}
-                    className="group flex items-center justify-between gap-3 py-4 first:pt-1 last:pb-1"
+                    className="group flex scroll-mt-28 items-center justify-between gap-3 py-4 first:pt-1 last:pb-1 target:rounded-lg target:outline target:outline-2 target:outline-offset-4 target:outline-blue-500"
                   >
                     <span className="flex min-w-0 items-center gap-3">
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
@@ -182,8 +183,9 @@ export default async function StudentLessonDetailPage({ params }: PageProps) {
                 {lesson.assignments.map((assignment) => (
                   <Link
                     key={assignment.id}
+                    id={`assignment-${assignment.id}`}
                     href={`/student/courses/${id}/assignments/${assignment.id}`}
-                    className="group flex items-center justify-between gap-3 py-4 first:pt-1 last:pb-1"
+                    className="group flex scroll-mt-28 items-center justify-between gap-3 py-4 first:pt-1 last:pb-1 target:rounded-lg target:outline target:outline-2 target:outline-offset-4 target:outline-blue-500"
                   >
                     <span className="min-w-0">
                       <span className="block truncate font-medium text-ink">
