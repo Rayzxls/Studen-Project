@@ -72,7 +72,7 @@ export default async function StudentLessonDetailPage({ params }: PageProps) {
               <p className="text-sm font-medium text-blue-700">
                 {lesson.state === "ARCHIVED"
                   ? "บทเรียนที่จบแล้ว"
-                  : `บทเรียนลำดับ ${lesson.position + 1}`}
+                  : "เส้นทางบทเรียน"}
               </p>
               <h2 className="mt-1 text-2xl font-semibold text-ink">
                 {lesson.title}

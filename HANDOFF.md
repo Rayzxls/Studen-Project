@@ -1,5 +1,12 @@
 # HANDOFF — Beagle Classroom
 
+## LESSON WORKSPACE STUDENT PROTOTYPE C PARITY — 2026-07-16
+
+- The real Student Lesson list now uses the approved Prototype C learning-path presentation instead of a generic vertical card list. It includes a continuous Lesson path, per-Lesson state marker, real Material/Assignment checkpoints, current-Student progress, next task, overdue state, and restrained entrance/progress motion with reduced-motion support.
+- The Student contract is unchanged: every active Lesson remains directly openable, progress is submitted Assignments divided by total Assignments, opening a Material does not count as completion, and the projection still selects only the caller's Enrollment submissions. Student Lesson detail no longer labels free-form Lessons with a fixed ordinal title.
+- Isolated Neon QA accepted Light and Dark desktop plus Cream and Dark iPhone 390 px list/detail renders with zero horizontal overflow. Temporary users, course, Lessons, Materials, Assignments, and Submission were removed after the run.
+- Verification passed: targeted ESLint, TypeScript, full unit `543/543`, and Production build. Feed remains the default course landing; Lesson flags and Production rollout state are unchanged.
+
 ## LESSON WORKSPACE B6 ACCEPTANCE FOLLOW-UP — 2026-07-16
 
 - Teacher Lesson list is now aligned with the approved Prototype B interaction model: course header, free-form Lesson creation modal, left Lesson structure, right selected-Lesson summary, reorder controls, archived section, and direct entry to the existing real Lesson detail workspace. Announcement remains course-wide in Feed and is not presented as Lesson-owned data.
