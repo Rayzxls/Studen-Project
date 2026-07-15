@@ -1,5 +1,14 @@
 # HANDOFF — Beagle Classroom
 
+## LESSON WORKSPACE B2 — 2026-07-15
+
+- Added a fail-closed compatibility planner. Its default and package-script behavior is read-only dry-run; `--apply` requires the exact `LESSON_BACKFILL_CONFIRM` token and an identity-checked `QA_DATABASE_URL`.
+- Existing unassigned Assignment/Material rows map to one deterministic fallback Lesson named `เนื้อหาเดิม` per CourseOffering. Announcement remains course-wide.
+- Apply uses one Serializable transaction, preserves content ids, writes one `LESSON_CONTENT_MOVED` Audit row per link, and verifies Assignment, Material, Submission, Score Entry, Comment, File Attachment, and Notification counts before commit.
+- Isolated Neon QA result: 1 affected course, 1 Lesson created, 1 Assignment linked, 0 Materials linked. Entity counts were unchanged; Lesson +1 and Audit +1 matched the plan.
+- Repeated dry-run is a no-op and the verifier reports 0 unassigned Assignment/Material rows and 0 cross-course links.
+- Production migration/backfill remains unapproved and has not run. B3 Teacher workflow/UI has not started.
+
 ## LESSON WORKSPACE B1 — 2026-07-15
 
 - Implemented the additive Lesson domain under `CourseOffering`.

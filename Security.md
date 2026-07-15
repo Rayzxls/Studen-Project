@@ -339,6 +339,11 @@ Response = 429 + `Retry-After`
 - `LESSON_DELETED` (เฉพาะบทเรียนว่าง)
 - `LESSON_CONTENT_MOVED` (เก็บ before/after Lesson id และชื่อ)
 
+B2 compatibility backfill writes one `LESSON_CONTENT_MOVED` event per linked
+Assignment or Material with a null system actor, deterministic before/after
+Lesson ids, and a fixed migration reason. The guarded script never stores file
+URLs, submission text, scores, or personal data in this audit payload.
+
 ### Not logged (verbose)
 
 - Page views (Vercel Analytics)

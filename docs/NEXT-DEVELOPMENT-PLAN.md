@@ -285,9 +285,11 @@ Status: implemented and verified on isolated Neon QA on 2026-07-15. Production m
 
 **Exit gate:** additive schema and pure permission/domain tests pass without changing current UI or default routes.
 
-**Verification record:** QA migration status is current; the invariant verifier reports zero Lessons, zero linked legacy content, and zero cross-course Assignment or Material links. Unit tests pass 507/507, TypeScript passes, and targeted B1 ESLint passes. The existing Feed remains the default experience.
+**Verification record:** Before B2, QA migration status was current and the B1 invariant verifier reported zero Lessons, zero linked legacy content, and zero cross-course Assignment or Material links. Unit tests passed 507/507, TypeScript passed, and targeted B1 ESLint passed. The existing Feed remains the default experience.
 
 ### B2. Compatibility and backfill
+
+Status: deterministic dry-run and guarded transaction implemented and applied on isolated Neon QA on 2026-07-15. Production remains untouched and requires a separate reviewed dry-run and explicit approval.
 
 - Create an idempotent dry-run script that reports exactly what will change.
 - Create "เนื้อหาเดิม" for existing Materials and Assignments where needed.
@@ -296,6 +298,8 @@ Status: implemented and verified on isolated Neon QA on 2026-07-15. Production m
 - Enforce required Lesson membership only after the backfill report has zero orphaned Materials or Assignments.
 
 **Exit gate:** before/after entity counts match, no orphaned content exists, and running the backfill twice produces no additional changes.
+
+**QA verification record:** one fallback Lesson named "เนื้อหาเดิม" was created for one affected course and one existing Assignment was linked. Assignment, Material, Submission, Score Entry, Comment, File Attachment, and Notification counts stayed unchanged; one expected Lesson and one Important Audit row were added. The repeated dry-run reports zero changes and the cross-course/unassigned-content verifier reports zero violations.
 
 ### B3. Teacher workflow
 

@@ -36,6 +36,14 @@ async function main(): Promise<void> {
       db,
       `SELECT COUNT(*)::bigint AS count FROM "Material" WHERE "lessonId" IS NOT NULL`
     );
+    const unassignedAssignmentCount = await count(
+      db,
+      `SELECT COUNT(*)::bigint AS count FROM "Assignment" WHERE "lessonId" IS NULL`
+    );
+    const unassignedMaterialCount = await count(
+      db,
+      `SELECT COUNT(*)::bigint AS count FROM "Material" WHERE "lessonId" IS NULL`
+    );
     const crossCourseAssignmentCount = await count(
       db,
       `SELECT COUNT(*)::bigint AS count
@@ -57,6 +65,8 @@ async function main(): Promise<void> {
           lessonCount: lessonCount.toString(),
           linkedAssignmentCount: linkedAssignmentCount.toString(),
           linkedMaterialCount: linkedMaterialCount.toString(),
+          unassignedAssignmentCount: unassignedAssignmentCount.toString(),
+          unassignedMaterialCount: unassignedMaterialCount.toString(),
           crossCourseAssignmentCount: crossCourseAssignmentCount.toString(),
           crossCourseMaterialCount: crossCourseMaterialCount.toString(),
         },
@@ -67,7 +77,9 @@ async function main(): Promise<void> {
 
     if (
       crossCourseAssignmentCount !== BigInt(0) ||
-      crossCourseMaterialCount !== BigInt(0)
+      crossCourseMaterialCount !== BigInt(0) ||
+      unassignedAssignmentCount !== BigInt(0) ||
+      unassignedMaterialCount !== BigInt(0)
     ) {
       process.exitCode = 1;
     }

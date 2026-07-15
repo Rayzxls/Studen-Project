@@ -90,11 +90,11 @@ The first central Moderation Center slice was implemented and verified on isolat
    Moderation Center slice pass isolated QA. Replace destructive Assignment
    deletion, complete manual moderation acceptance, then request a separate
    production migration/feature-flag approval.
-4. **Release B Lesson Workspace:** B1 additive persistence, read projection,
-   permissions, feature flags, and audit contracts pass isolated Neon QA.
-   Continue with B2 only after reviewing its dry-run/backfill plan. Keep the
-   existing Feed as the chronological view and do not migrate Production
-   without separate approval.
+4. **Release B Lesson Workspace:** B1 foundation and B2 deterministic legacy
+   content backfill pass isolated Neon QA. Counts and relationships are
+   preserved, the second dry-run is a no-op, and cross-course links are zero.
+   Keep the existing Feed as the chronological view. B3 Teacher mutations and
+   every Production migration/backfill still require separate approval.
 
 ## Audit conclusion
 
