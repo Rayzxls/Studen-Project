@@ -20,8 +20,8 @@ import { getCourseOfferingForTeacher } from "@/lib/course/queries";
 import {
   getLessonWorkspaceForViewer,
   getTeacherLessonDetail,
-  lessonWorkspaceEnabled,
-  lessonWorkspaceMutationsEnabled,
+  lessonWorkspaceCourseEnabled,
+  lessonWorkspaceCourseMutationsEnabled,
 } from "@/lib/lesson";
 import { teacherCourseTabs } from "../../_tabs";
 import {
@@ -42,7 +42,6 @@ export default async function TeacherLessonDetailPage({
   params,
   searchParams,
 }: PageProps) {
-  if (!lessonWorkspaceEnabled()) notFound();
   let session;
   try {
     session = await requireRole(["TEACHER"]);
@@ -50,6 +49,7 @@ export default async function TeacherLessonDetailPage({
     redirect("/dashboard");
   }
   const { id, lessonId } = await params;
+  if (!lessonWorkspaceCourseEnabled(id)) notFound();
   const { notice } = await searchParams;
   const [course, lesson, workspace] = await Promise.all([
     getCourseOfferingForTeacher(id, session.user.id),
@@ -70,7 +70,7 @@ export default async function TeacherLessonDetailPage({
     .map((item) => ({ id: item.id, title: item.title }));
   const moveTargets = lessonOptions.filter((item) => item.id !== lesson.id);
   const canMutate =
-    lessonWorkspaceMutationsEnabled() && lesson.state === "ACTIVE";
+    lessonWorkspaceCourseMutationsEnabled(id) && lesson.state === "ACTIVE";
   const isEmpty =
     lesson.assignments.length === 0 && lesson.materials.length === 0;
 

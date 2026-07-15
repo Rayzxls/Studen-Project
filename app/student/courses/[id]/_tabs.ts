@@ -1,5 +1,5 @@
 import type { CourseTab } from "@/components/course/tab-nav";
-import { lessonWorkspaceEnabled } from "@/lib/lesson";
+import { lessonWorkspaceCourseEnabled } from "@/lib/lesson";
 
 /**
  * Student CourseOffering tab list — Phase 10C reshape per ADR-0025.
@@ -12,7 +12,7 @@ import { lessonWorkspaceEnabled } from "@/lib/lesson";
  */
 export const studentCourseTabs = (courseId: string): CourseTab[] => [
   { label: "ฟีด", href: `/student/courses/${courseId}/feed` },
-  ...(lessonWorkspaceEnabled()
+  ...(lessonWorkspaceCourseEnabled(courseId)
     ? [{ label: "บทเรียน", href: `/student/courses/${courseId}/lessons` }]
     : []),
   { label: "งาน", href: `/student/courses/${courseId}/assignments` },

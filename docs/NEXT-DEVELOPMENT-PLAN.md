@@ -343,11 +343,23 @@ Status: implemented on `phase-11` and verified locally plus isolated Neon QA on 
 
 ### B6. Admin observer and rollout
 
+**Status:** Admin observer and course-level pilot controls are implemented on `phase-11` and accepted on local isolated QA on 2026-07-15. Production rollout, pilot approval, and the default-route change remain open and unapproved.
+
 - Admin sees Lesson structure, progress summaries, and content in read-only mode.
 - Pilot with one CourseOffering before wider rollout.
 - Run theme, accessibility, mobile, performance, permission, migration, and production smoke QA.
 
 **Exit gate:** pilot approval, no P0/P1 defects, rollback rehearsal complete, and documentation updated from planning to shipped state.
+
+**Implementation record:** Admin course navigation now includes feature-flagged Lesson list/detail routes for aggregate observation. Admin can see Lesson content and aggregate submitted, missing, late, pending-grading, and completion values but cannot see Student identities, scores, attendance, private comments, Submission versions, or submitted files. The query rejects non-Admin viewers before database access and the UI renders no teaching mutations. `LESSON_WORKSPACE_PILOT_COURSE_IDS` provides an exact CourseOffering allowlist across tabs, routes, mutations, Feed composer coupling, and notification deep links; an explicitly empty allowlist disables every course. TypeScript, targeted ESLint, production build, full unit `540/540`, and desktop/iPhone local visual QA passed without horizontal overflow. This completes the B6 implementation slice, not the Production exit gate.
+
+**Production pilot sequence (still requires approval):**
+
+1. Deploy the already-reviewed additive Lesson migration and run the guarded compatibility backfill/verification against Production only after backup and explicit approval.
+2. Set `LESSON_WORKSPACE_ENABLED=1`, keep the default-route flag off, and set `LESSON_WORKSPACE_PILOT_COURSE_IDS` to exactly one approved CourseOffering id. Enable mutations only after the Teacher owner and existing content pass read-only smoke QA.
+3. Verify Teacher, Student, and Admin permissions; Light/Dark/Cream; desktop/mobile; notification deep links; Feed parity; private file delivery; and performance on that course.
+4. Rehearse rollback by disabling the Lesson flags and confirming Feed/direct detail URLs still work with no data rollback.
+5. Widen the allowlist only after pilot sign-off. Do not remove the allowlist or switch the default course landing until a separate approval records the result.
 
 ## Release C: Quiz
 

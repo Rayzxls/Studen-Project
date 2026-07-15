@@ -1,5 +1,14 @@
 # HANDOFF — Beagle Classroom
 
+## LESSON WORKSPACE B6 — 2026-07-15
+
+- Admin Lesson observer is implemented on `phase-11`. The Admin course shell now exposes a feature-flagged `บทเรียน` tab with aggregate list and detail routes for active or archived courses.
+- Admin can read Lesson titles/descriptions, Assignment/Material content, active-student totals, submitted/missing/late/pending-grading counts, and aggregate completion. The projection does not select Student identity, scores, attendance, Submission versions, private comments, or submitted files. No teaching mutation actions are rendered, and non-Admin query callers are rejected before a database read.
+- Added optional `LESSON_WORKSPACE_PILOT_COURSE_IDS`. When absent, the existing read flag keeps all-course behavior; when present, only exact comma-separated CourseOffering ids are enabled; an explicitly empty value enables no courses. The same course gate controls tabs, routes, mutations, Feed composer requirements, and Lesson-aware notification links.
+- Verification passed: TypeScript, targeted ESLint, production build, full unit `540/540`, and local QA on desktop plus iPhone 390 px. Admin list/detail had no horizontal overflow, no private identity, and no mutation controls. The temporary QA Admin was deleted after the run.
+- The three local 400 responses observed during visual QA were existing missing Teacher avatar objects caused by the documented local-storage/R2 pointer mismatch, not Lesson routes. No database repair was attempted.
+- Production migration/backfill/flags/pilot/default-route/deployment remain untouched. B6 code is complete, but Production rollout acceptance is still open: choose one CourseOffering id, configure fail-closed flags, redeploy, run production permission/theme/mobile/performance smoke, rehearse flag-off rollback, then widen only after approval. Feed remains the default landing.
+
 ## LESSON WORKSPACE B5 — 2026-07-15
 
 - Feed/notification parity is complete on `phase-11`. Feed remains the chronological canonical projection and the default Student/Teacher course landing; no route cutover was made.
@@ -7,7 +16,7 @@
 - Legacy notifications without `lessonId`, all course-wide Announcements, and every notification while the flag is disabled keep the existing direct detail URL. Existing Feed links and bookmarks are unchanged.
 - Student and Teacher Lesson detail pages expose stable `assignment-{id}` and `material-{id}` anchors with visible keyboard/target focus. Creating an empty Lesson still emits no notification because Lesson mutations have no notification producer.
 - Verification passed: TypeScript, targeted ESLint, production build, full unit `528/528`, and targeted isolated-Neon integration `19/19`. Full-repository lint remains blocked by pre-existing generated `.next-qa` and bundled `.claude` skill files, not B5 files.
-- Production schema, data, flags, default routes, deployment, and `main` remain untouched. B6 Admin observer/pilot rollout is next and requires separate approval; disabling the Lesson flag restores legacy notification navigation without data rollback.
+- Production schema, data, flags, default routes, deployment, and `main` remain untouched. B6 Admin observer code is now complete; Production pilot rollout still requires separate approval. Disabling the Lesson flag restores legacy navigation without data rollback.
 
 ## LESSON WORKSPACE B4 — 2026-07-15
 

@@ -99,7 +99,7 @@ describe("Student Lesson privacy boundary", () => {
     const result = await getStudentLessonWorkspace({
       courseOfferingId: "course-1",
       studentId: "student-self",
-      env: { ...process.env, LESSON_WORKSPACE_ENABLED: "1" },
+      env: { LESSON_WORKSPACE_ENABLED: "1" },
     });
 
     expect(result.lessons).toEqual([]);
@@ -127,7 +127,7 @@ describe("Student Lesson privacy boundary", () => {
       getStudentLessonWorkspace({
         courseOfferingId: "course-1",
         studentId: "student-removed",
-        env: { ...process.env, LESSON_WORKSPACE_ENABLED: "1" },
+        env: { LESSON_WORKSPACE_ENABLED: "1" },
       })
     ).rejects.toMatchObject({ code: "lesson_workspace_forbidden" });
     expect(mocks.findLessons).not.toHaveBeenCalled();

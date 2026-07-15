@@ -15,8 +15,8 @@ import { requireRole } from "@/lib/auth/guards";
 import { getCourseOfferingForTeacher } from "@/lib/course/queries";
 import {
   getLessonWorkspaceForViewer,
-  lessonWorkspaceEnabled,
-  lessonWorkspaceMutationsEnabled,
+  lessonWorkspaceCourseEnabled,
+  lessonWorkspaceCourseMutationsEnabled,
 } from "@/lib/lesson";
 import { teacherCourseTabs } from "../_tabs";
 import { createLessonAction, reorderLessonAction } from "./actions";
@@ -32,8 +32,6 @@ export default async function TeacherLessonsPage({
   params,
   searchParams,
 }: PageProps) {
-  if (!lessonWorkspaceEnabled()) notFound();
-
   let session;
   try {
     session = await requireRole(["TEACHER"]);
@@ -41,6 +39,7 @@ export default async function TeacherLessonsPage({
     redirect("/dashboard");
   }
   const { id } = await params;
+  if (!lessonWorkspaceCourseEnabled(id)) notFound();
   const { notice } = await searchParams;
   const [course, workspace] = await Promise.all([
     getCourseOfferingForTeacher(id, session.user.id),
@@ -57,7 +56,7 @@ export default async function TeacherLessonsPage({
   const archived = workspace.lessons.filter(
     (lesson) => lesson.state === "ARCHIVED"
   );
-  const canMutate = lessonWorkspaceMutationsEnabled();
+  const canMutate = lessonWorkspaceCourseMutationsEnabled(id);
 
   return (
     <CourseShell

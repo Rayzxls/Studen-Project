@@ -16,7 +16,7 @@ import { assert } from "@/lib/auth/guards";
 import { getCourseOfferingForStudent } from "@/lib/course/queries";
 import {
   getStudentLessonWorkspace,
-  lessonWorkspaceEnabled,
+  lessonWorkspaceCourseEnabled,
   studentSubmissionStatusLabel,
   type StudentLessonAssignment,
 } from "@/lib/lesson";
@@ -29,8 +29,8 @@ type PageProps = {
 };
 
 export default async function StudentLessonDetailPage({ params }: PageProps) {
-  if (!lessonWorkspaceEnabled()) notFound();
   const { id, lessonId } = await params;
+  if (!lessonWorkspaceCourseEnabled(id)) notFound();
 
   let guard;
   try {

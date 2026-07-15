@@ -12,8 +12,8 @@ import { UnifiedComposer } from "@/components/feed/unified-composer";
 import { teacherCourseTabs } from "../_tabs";
 import {
   getLessonWorkspaceForViewer,
-  lessonWorkspaceEnabled,
-  lessonWorkspaceMutationsEnabled,
+  lessonWorkspaceCourseEnabled,
+  lessonWorkspaceCourseMutationsEnabled,
 } from "@/lib/lesson";
 
 // Auth-gated DB-fetching page — skip static prerender.
@@ -43,7 +43,7 @@ export default async function TeacherCourseFeedPage({
   const filter = normalizeFilter(type);
   const kindFilter = feedKindsForFilter(filter);
   const page = await getCourseFeed(id, undefined, kindFilter ?? undefined);
-  const lessonWorkspace = lessonWorkspaceEnabled()
+  const lessonWorkspace = lessonWorkspaceCourseEnabled(id)
     ? await getLessonWorkspaceForViewer({
         courseOfferingId: id,
         viewer: { id: session.user.id, role: session.user.role },
@@ -67,7 +67,7 @@ export default async function TeacherCourseFeedPage({
           <UnifiedComposer
             courseId={id}
             lessonOptions={lessonOptions}
-            requireLesson={lessonWorkspaceMutationsEnabled()}
+            requireLesson={lessonWorkspaceCourseMutationsEnabled(id)}
           />
         </div>
         <CourseFeedView

@@ -15,7 +15,7 @@ import { assert } from "@/lib/auth/guards";
 import { getCourseOfferingForStudent } from "@/lib/course/queries";
 import {
   getStudentLessonWorkspace,
-  lessonWorkspaceEnabled,
+  lessonWorkspaceCourseEnabled,
   type StudentLessonItem,
 } from "@/lib/lesson";
 import { studentCourseTabs } from "../_tabs";
@@ -25,8 +25,8 @@ export const dynamic = "force-dynamic";
 type PageProps = { params: Promise<{ id: string }> };
 
 export default async function StudentLessonsPage({ params }: PageProps) {
-  if (!lessonWorkspaceEnabled()) notFound();
   const { id } = await params;
+  if (!lessonWorkspaceCourseEnabled(id)) notFound();
 
   let guard;
   try {

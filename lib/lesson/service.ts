@@ -4,7 +4,11 @@ import { audit } from "@/lib/audit/log";
 import { db } from "@/lib/db/client";
 import { Conflict, Forbidden, NotFound, ValidationError } from "@/lib/errors";
 import { TX_OPTS } from "@/lib/assignment/constants";
-import { lessonWorkspaceMutationsEnabled } from "./feature-flags";
+import {
+  lessonWorkspaceCourseMutationsEnabled,
+  lessonWorkspaceMutationsEnabled,
+  type FeatureFlagEnv,
+} from "./feature-flags";
 import {
   canArchiveLesson,
   canDeleteLesson,
@@ -27,7 +31,7 @@ export type LessonActorCtx = {
   actorUserId: string;
   ipAddress?: string;
   userAgent?: string;
-  env?: NodeJS.ProcessEnv;
+  env?: FeatureFlagEnv;
 };
 
 function teacherSession(actorUserId: string): Session {
@@ -41,8 +45,17 @@ function teacherSession(actorUserId: string): Session {
   };
 }
 
-function assertMutationsEnabled(env?: NodeJS.ProcessEnv) {
+function assertMutationsEnabled(env?: FeatureFlagEnv) {
   if (!lessonWorkspaceMutationsEnabled(env)) {
+    throw new Forbidden("lesson_workspace_mutations_disabled");
+  }
+}
+
+function assertCourseMutationsEnabled(
+  courseOfferingId: string,
+  env?: FeatureFlagEnv
+) {
+  if (!lessonWorkspaceCourseMutationsEnabled(courseOfferingId, env)) {
     throw new Forbidden("lesson_workspace_mutations_disabled");
   }
 }
@@ -62,6 +75,7 @@ export async function createLesson(
 ): Promise<Lesson> {
   assertMutationsEnabled(ctx.env);
   const parsed = CreateLessonSchema.parse(input);
+  assertCourseMutationsEnabled(parsed.courseOfferingId, ctx.env);
 
   return db.$transaction(async (tx) => {
     const course = await tx.courseOffering.findUnique({
@@ -101,11 +115,13 @@ export async function updateLesson(
     const lesson = await tx.lesson.findUnique({
       where: { id: lessonId },
       select: {
+        courseOfferingId: true,
         archivedAt: true,
         course: { select: { teacherId: true, archivedAt: true } },
       },
     });
     if (!lesson) throw new NotFound("lesson_not_found");
+    assertCourseMutationsEnabled(lesson.courseOfferingId, ctx.env);
     assertCanMutate(ctx.actorUserId, lesson.course);
     if (lesson.archivedAt !== null) throw new Conflict("lesson_archived");
 
@@ -127,6 +143,7 @@ export async function reorderLessons(
 ): Promise<void> {
   assertMutationsEnabled(ctx.env);
   const parsed = ReorderLessonsSchema.parse(input);
+  assertCourseMutationsEnabled(parsed.courseOfferingId, ctx.env);
   if (new Set(parsed.lessonIds).size !== parsed.lessonIds.length) {
     throw new ValidationError({ lessonIds: "lesson_ids_must_be_unique" });
   }
@@ -186,6 +203,7 @@ export async function archiveLesson(
       },
     });
     if (!lesson) throw new NotFound("lesson_not_found");
+    assertCourseMutationsEnabled(lesson.courseOfferingId, ctx.env);
     assertCanMutate(ctx.actorUserId, lesson.course);
     if (lesson.archivedAt !== null)
       throw new Conflict("lesson_already_archived");
@@ -252,6 +270,7 @@ export async function deleteEmptyLesson(
       },
     });
     if (!lesson) throw new NotFound("lesson_not_found");
+    assertCourseMutationsEnabled(lesson.courseOfferingId, ctx.env);
     assertCanMutate(ctx.actorUserId, lesson.course);
     if (
       !canDeleteLesson({
@@ -304,6 +323,7 @@ export async function moveLessonContent(
       },
     });
     if (!target) throw new NotFound("target_lesson_not_found");
+    assertCourseMutationsEnabled(target.courseOfferingId, ctx.env);
     assertCanMutate(ctx.actorUserId, target.course);
 
     const content = await readContent(tx, parsed.contentType, parsed.contentId);

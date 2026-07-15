@@ -1,8 +1,17 @@
 export {
+  lessonWorkspaceCourseEnabled,
+  lessonWorkspaceCourseMutationsEnabled,
   lessonWorkspaceDefaultRouteEnabled,
   lessonWorkspaceEnabled,
   lessonWorkspaceMutationsEnabled,
+  type FeatureFlagEnv,
 } from "./feature-flags";
+export {
+  buildAdminLessonProjection,
+  type AdminLessonItem,
+  type AdminLessonSource,
+  type AdminLessonWorkspaceProjection,
+} from "./admin-projection";
 export {
   canArchiveLesson,
   canDeleteLesson,
@@ -13,6 +22,8 @@ export {
   type LessonState,
 } from "./policy";
 export {
+  getAdminLessonDetail,
+  getAdminLessonWorkspace,
   getLessonWorkspaceForViewer,
   getStudentLessonWorkspace,
   getTeacherLessonDetail,
