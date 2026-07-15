@@ -7,6 +7,7 @@
 - `dev:qa` now enables Lesson read/mutation flags only after `prepareIsolatedDatabaseEnv()` has replaced `DATABASE_URL` with the separately identity-checked `QA_DATABASE_URL`. Normal local `dev`, Production, default-route cutover, schema migration, and Production data remain untouched and fail closed.
 - Isolated Neon QA accepted real create flow on desktop and iPhone 390 px with no horizontal overflow. The temporary Teacher/course/Lesson fixture was deleted after the run. TypeScript, targeted ESLint, full unit `542/542`, and the Production build passed.
 - To test safely, use `pnpm dev:qa`, open `http://localhost:3100`, sign in with a QA Teacher, enter a course, open `บทเรียน`, and press `สร้างบทเรียน`. Do not add Lesson flags to the normal Production-backed `.env.local` development flow.
+- Feed parity follow-up: Assignment and Material projections now carry `lessonId` plus the free-form Lesson title. Teacher and Student cards render a compact, clickable Lesson flag; legacy unlinked content is labelled `ยังไม่จัดบทเรียน` for Teachers instead of silently losing context. Regression test covers the Prisma projection. Light/Dark/Cream and Desktop/iPhone 390 px visual QA passed without horizontal overflow; temporary QA data was removed.
 
 ## LESSON WORKSPACE B6 — 2026-07-15
 
