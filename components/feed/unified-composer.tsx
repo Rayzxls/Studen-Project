@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import {
@@ -293,6 +294,7 @@ function AssignmentForm({
     <form ref={formRef} action={action} className="space-y-4">
       <input type="hidden" name="courseId" value={courseId} />
       <LessonSelect
+        courseId={courseId}
         options={lessonOptions}
         defaultLessonId={defaultLessonId}
         required={requireLesson}
@@ -429,6 +431,7 @@ function MaterialForm({
     <form ref={formRef} action={action} className="space-y-4">
       <input type="hidden" name="courseId" value={courseId} />
       <LessonSelect
+        courseId={courseId}
         options={lessonOptions}
         defaultLessonId={defaultLessonId}
         required={requireLesson}
@@ -477,11 +480,13 @@ function MaterialForm({
 // ─────────────────────────────────────────────────────────────
 
 function LessonSelect({
+  courseId,
   options,
   defaultLessonId,
   required,
   error,
 }: {
+  courseId: string;
   options: ComposerLessonOption[];
   defaultLessonId?: string;
   required: boolean;
@@ -506,9 +511,18 @@ function LessonSelect({
         ))}
       </select>
       {required && options.length === 0 && (
-        <p className="mt-1.5 text-xs text-amber-700">
-          สร้างบทเรียนก่อน แล้วจึงเพิ่มการบ้านหรือเอกสาร
-        </p>
+        <div className="mt-2 flex flex-col gap-2 rounded-lg border border-hairline bg-surface p-3 text-ink sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs">
+            สร้างบทเรียนก่อน แล้วจึงเพิ่มการบ้านหรือเอกสาร
+          </p>
+          <Link
+            href={`/teacher/courses/${courseId}/lessons`}
+            className="inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-md bg-blue-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            ไปสร้างบทเรียน
+          </Link>
+        </div>
       )}
     </Field>
   );

@@ -44,6 +44,7 @@ export type TeacherLessonDetail = {
     isScored: boolean;
     fullScore: number | null;
     submittedCount: number;
+    missingCount: number;
     lateCount: number;
     pendingGradingCount: number;
   }>;
@@ -184,7 +185,12 @@ export async function getTeacherLessonDetail(input: {
           submissionClosed: true,
           isScored: true,
           scoreItem: { select: { fullScore: true } },
-          submissions: { select: { status: true } },
+          submissions: {
+            select: {
+              status: true,
+              enrollment: { select: { removedAt: true } },
+            },
+          },
         },
       },
       materials: {
@@ -214,23 +220,31 @@ export async function getTeacherLessonDetail(input: {
     archivedReason: lesson.archivedReason,
     activeStudentCount: course._count.enrollments,
     ...blockers,
-    assignments: lesson.assignments.map((assignment) => ({
-      id: assignment.id,
-      title: assignment.title,
-      dueAt: assignment.dueAt,
-      submissionClosed: assignment.submissionClosed,
-      isScored: assignment.isScored,
-      fullScore: assignment.scoreItem?.fullScore ?? null,
-      submittedCount: assignment.submissions.filter((row) =>
+    assignments: lesson.assignments.map((assignment) => {
+      const activeSubmissions = assignment.submissions.filter(
+        (row) => row.enrollment.removedAt === null
+      );
+      const submittedCount = activeSubmissions.filter((row) =>
         ["SUBMITTED", "LATE_SUBMITTED", "GRADED"].includes(row.status)
-      ).length,
-      lateCount: assignment.submissions.filter(
-        (row) => row.status === "LATE_SUBMITTED"
-      ).length,
-      pendingGradingCount: assignment.submissions.filter((row) =>
-        ["SUBMITTED", "LATE_SUBMITTED"].includes(row.status)
-      ).length,
-    })),
+      ).length;
+
+      return {
+        id: assignment.id,
+        title: assignment.title,
+        dueAt: assignment.dueAt,
+        submissionClosed: assignment.submissionClosed,
+        isScored: assignment.isScored,
+        fullScore: assignment.scoreItem?.fullScore ?? null,
+        submittedCount,
+        missingCount: Math.max(course._count.enrollments - submittedCount, 0),
+        lateCount: activeSubmissions.filter(
+          (row) => row.status === "LATE_SUBMITTED"
+        ).length,
+        pendingGradingCount: activeSubmissions.filter((row) =>
+          ["SUBMITTED", "LATE_SUBMITTED"].includes(row.status)
+        ).length,
+      };
+    }),
     materials: lesson.materials,
   };
 }

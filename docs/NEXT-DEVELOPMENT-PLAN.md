@@ -303,6 +303,8 @@ Status: deterministic dry-run and guarded transaction implemented and applied on
 
 ### B3. Teacher workflow
 
+Status: implemented on `phase-11` and accepted on isolated Neon QA on 2026-07-15. Production rollout remains a separate, unapproved operation.
+
 - Create, rename, reorder, archive, and delete an empty Lesson Workspace.
 - Prevent archive while an Assignment is open or grading is pending.
 - Allow moving content between Lessons with confirmation and audit while preserving content IDs and history.
@@ -310,6 +312,8 @@ Status: deterministic dry-run and guarded transaction implemented and applied on
 - Show submitted, missing, late, and pending-grading summaries with deep links to the existing review workspace.
 
 **Exit gate:** Teacher can organize a real course without losing or duplicating Feed content.
+
+**Completion record:** Teacher can create, rename, reorder, archive, and delete empty Lessons under fail-closed mutation flags. Archive blockers protect open Assignments and pending grading; content moves preserve IDs and write Important audit rows. Feed and Lesson-detail composers link Assignment/Material to active Lessons, including a create-Lesson shortcut for an empty course. Lesson detail reports submitted, missing, late, and pending-grading totals with links to the existing review workspace. Desktop and iPhone-size QA passed against isolated Neon QA; Production schema, data, flags, routes, and deployment were not changed.
 
 ### B4. Student learning path
 

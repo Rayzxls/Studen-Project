@@ -190,6 +190,9 @@ export default async function TeacherLessonDetailPage({
                         ส่งแล้ว {assignment.submittedCount}/
                         {lesson.activeStudentCount}
                       </span>
+                      <span className="rounded-full border border-hairline bg-surface px-2.5 py-1 text-ink-mute">
+                        ยังไม่ส่ง {assignment.missingCount}
+                      </span>
                       {assignment.pendingGradingCount > 0 && (
                         <span className="rounded-full bg-amber-50 px-2.5 py-1 text-amber-800">
                           รอตรวจ {assignment.pendingGradingCount}

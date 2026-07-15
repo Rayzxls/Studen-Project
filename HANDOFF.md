@@ -1,5 +1,14 @@
 # HANDOFF — Beagle Classroom
 
+## LESSON WORKSPACE B3 — 2026-07-15
+
+- Teacher Lesson workflow is complete on `phase-11`: list/detail routes, create, rename, reorder, guarded archive, empty deletion, and audited Assignment/Material moves are implemented.
+- Feed composer requires an active Lesson for Assignment/Material, preselects the current Lesson from its detail page, and provides a direct create-Lesson shortcut when a course has no Lessons. Announcement remains course-wide.
+- Lesson detail shows submitted, missing, late, and pending-grading counts and links each Assignment to the existing review workspace. Missing is calculated from active enrollments only.
+- Desktop and iPhone-size QA passed on isolated Neon QA. TypeScript and production build passed; targeted Lesson tests passed 16/16.
+- Commits: `b650f52` plus the B3 acceptance follow-up. Production Lesson migration, backfill, feature flags, default-route change, and deploy remain unapproved and untouched.
+- Next planned slice is B4 Student Learning Path. Do not start Production rollout or switch Feed-first routing without a separate explicit approval.
+
 ## LESSON WORKSPACE B2 — 2026-07-15
 
 - Added a fail-closed compatibility planner. Its default and package-script behavior is read-only dry-run; `--apply` requires the exact `LESSON_BACKFILL_CONFIRM` token and an identity-checked `QA_DATABASE_URL`.
@@ -7,7 +16,7 @@
 - Apply uses one Serializable transaction, preserves content ids, writes one `LESSON_CONTENT_MOVED` Audit row per link, and verifies Assignment, Material, Submission, Score Entry, Comment, File Attachment, and Notification counts before commit.
 - Isolated Neon QA result: 1 affected course, 1 Lesson created, 1 Assignment linked, 0 Materials linked. Entity counts were unchanged; Lesson +1 and Audit +1 matched the plan.
 - Repeated dry-run is a no-op and the verifier reports 0 unassigned Assignment/Material rows and 0 cross-course links.
-- Production migration/backfill remains unapproved and has not run. B3 Teacher workflow/UI has not started.
+- Production migration/backfill remains unapproved and has not run. The B3 status above supersedes this historical B2 handoff note.
 
 ## LESSON WORKSPACE B1 — 2026-07-15
 
