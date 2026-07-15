@@ -13,5 +13,9 @@ export function prepareIsolatedServerEnv<T extends ServerEnv>(
       env.LESSON_WORKSPACE_MUTATIONS_ENABLED ?? "1",
     LESSON_WORKSPACE_DEFAULT_ROUTE_ENABLED:
       env.LESSON_WORKSPACE_DEFAULT_ROUTE_ENABLED ?? "0",
+    // Moderation has already been migrated to the isolated QA database. Keep
+    // its user-reporting and Admin review surfaces available during QA while
+    // preserving an explicit override for fail-closed acceptance checks.
+    MODERATION_CENTER_ENABLED: env.MODERATION_CENTER_ENABLED ?? "1",
   };
 }

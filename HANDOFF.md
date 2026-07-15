@@ -1,5 +1,11 @@
 # HANDOFF — Beagle Classroom
 
+## MODERATION REPORT VISIBILITY FOLLOW-UP — 2026-07-16
+
+- Fixed the missing Moderation report flag on isolated QA. `dev:qa` previously enabled only Lesson Workspace flags, so port 3100 hid every `ReportContentButton` even though the Moderation schema and workflow were present. The isolated server now defaults `MODERATION_CENTER_ENABLED=1` while preserving an explicit `0` override for fail-closed acceptance checks.
+- Student Lesson detail now exposes the existing report dialog beside every Material and Assignment checkpoint. Navigation and report controls are separate interactive elements, avoiding nested links/buttons and preserving direct checkpoint access.
+- Normal Production-backed development and Production configuration were not changed. Verification passed: focused unit 2/2, full unit assertions 543/543 (the first run only failed while writing Vitest's locked cache), targeted ESLint, TypeScript, and Production build. Manual authenticated visual/report submission acceptance on port 3100 remains for the user to confirm.
+
 ## LESSON WORKSPACE STUDENT PROTOTYPE C PARITY — 2026-07-16
 
 - The real Student Lesson list now uses the approved Prototype C learning-path presentation instead of a generic vertical card list. It includes a continuous Lesson path, per-Lesson state marker, real Material/Assignment checkpoints, current-Student progress, next task, overdue state, and restrained entrance/progress motion with reduced-motion support.

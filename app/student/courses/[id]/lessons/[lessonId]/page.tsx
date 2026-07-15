@@ -12,6 +12,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { CourseShell } from "@/components/course/course-shell";
+import { ReportContentButton } from "@/components/moderation/report-content-button";
 import { assert } from "@/lib/auth/guards";
 import { getCourseOfferingForStudent } from "@/lib/course/queries";
 import {
@@ -20,6 +21,7 @@ import {
   studentSubmissionStatusLabel,
   type StudentLessonAssignment,
 } from "@/lib/lesson";
+import { moderationCenterEnabled } from "@/lib/moderation/feature-flags";
 import { studentCourseTabs } from "../../_tabs";
 
 export const dynamic = "force-dynamic";
@@ -49,6 +51,7 @@ export default async function StudentLessonDetailPage({ params }: PageProps) {
   if (!course) notFound();
   const lesson = workspace.lessons.find((item) => item.id === lessonId);
   if (!lesson) notFound();
+  const canReport = moderationCenterEnabled();
 
   return (
     <CourseShell
@@ -142,13 +145,15 @@ export default async function StudentLessonDetailPage({ params }: PageProps) {
             ) : (
               <div className="divide-y divide-hairline">
                 {lesson.materials.map((material) => (
-                  <Link
+                  <div
                     key={material.id}
                     id={`material-${material.id}`}
-                    href={`/student/courses/${id}/materials/${material.id}`}
                     className="group flex scroll-mt-28 items-center justify-between gap-3 py-4 first:pt-1 last:pb-1 target:rounded-lg target:outline target:outline-2 target:outline-offset-4 target:outline-blue-500"
                   >
-                    <span className="flex min-w-0 items-center gap-3">
+                    <Link
+                      href={`/student/courses/${id}/materials/${material.id}`}
+                      className="flex min-w-0 flex-1 items-center gap-3 hover:no-underline"
+                    >
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
                         <FileText className="h-4 w-4" />
                       </span>
@@ -160,9 +165,24 @@ export default async function StudentLessonDetailPage({ params }: PageProps) {
                           พร้อมอ่าน
                         </span>
                       </span>
+                    </Link>
+                    <span className="flex shrink-0 items-center gap-1">
+                      {canReport && (
+                        <ReportContentButton
+                          targetType="MATERIAL"
+                          targetId={material.id}
+                          compact
+                        />
+                      )}
+                      <Link
+                        href={`/student/courses/${id}/materials/${material.id}`}
+                        className="icon-button h-8 w-8 text-ink-mute"
+                        aria-label={`เปิดเอกสาร ${material.title}`}
+                      >
+                        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                      </Link>
                     </span>
-                    <ArrowRight className="h-4 w-4 shrink-0 text-ink-mute transition-transform group-hover:translate-x-0.5" />
-                  </Link>
+                  </div>
                 ))}
               </div>
             )}
@@ -181,25 +201,40 @@ export default async function StudentLessonDetailPage({ params }: PageProps) {
             ) : (
               <div className="divide-y divide-hairline">
                 {lesson.assignments.map((assignment) => (
-                  <Link
+                  <div
                     key={assignment.id}
                     id={`assignment-${assignment.id}`}
-                    href={`/student/courses/${id}/assignments/${assignment.id}`}
                     className="group flex scroll-mt-28 items-center justify-between gap-3 py-4 first:pt-1 last:pb-1 target:rounded-lg target:outline target:outline-2 target:outline-offset-4 target:outline-blue-500"
                   >
-                    <span className="min-w-0">
+                    <Link
+                      href={`/student/courses/${id}/assignments/${assignment.id}`}
+                      className="min-w-0 flex-1 hover:no-underline"
+                    >
                       <span className="block truncate font-medium text-ink">
                         {assignment.title}
                       </span>
                       <span className="mt-1 block text-xs text-ink-mute">
                         {formatDue(assignment)}
                       </span>
-                    </span>
+                    </Link>
                     <span className="flex shrink-0 items-center gap-2">
                       <StatusBadge assignment={assignment} />
-                      <ArrowRight className="h-4 w-4 text-ink-mute transition-transform group-hover:translate-x-0.5" />
+                      {canReport && (
+                        <ReportContentButton
+                          targetType="ASSIGNMENT"
+                          targetId={assignment.id}
+                          compact
+                        />
+                      )}
+                      <Link
+                        href={`/student/courses/${id}/assignments/${assignment.id}`}
+                        className="icon-button h-8 w-8 text-ink-mute"
+                        aria-label={`เปิดการบ้าน ${assignment.title}`}
+                      >
+                        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                      </Link>
                     </span>
-                  </Link>
+                  </div>
                 ))}
               </div>
             )}
