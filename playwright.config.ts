@@ -1,15 +1,17 @@
 import { defineConfig, devices } from "@playwright/test";
+import { assertIsolatedTestDatabase } from "./tests/helpers/database-safety";
+
+assertIsolatedTestDatabase();
 
 /**
  * Playwright E2E configuration — Phase 9 · P9-3
  *
- * Runs against a real local dev server on http://localhost:3000.
- * Tests share the Neon dev DB with the integration tests, so we keep
- * the suite serial (workers: 1) and let webServer reuse the dev
- * server the developer is already running.
+ * Runs against a dedicated local dev server on http://localhost:3100.
+ * Tests mutate data and therefore require a separate QA_DATABASE_URL.
+ * The package runner swaps DATABASE_URL before this config is loaded;
+ * this assertion also blocks direct Playwright commands from bypassing it.
  *
- * Chromium-only. Cross-browser + Lighthouse + axe-core sweep land in
- * a Phase 10 hardening pass.
+ * The suite remains serial because its fixtures share one isolated QA DB.
  */
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -21,7 +23,7 @@ export default defineConfig({
   workers: 1,
   reporter: [["list"]],
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: "http://localhost:3100",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     actionTimeout: 15_000,
@@ -34,9 +36,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "pnpm dev",
-    url: "http://localhost:3000",
-    reuseExistingServer: !process.env.CI,
+    command: "pnpm dev --port 3100",
+    url: "http://localhost:3100",
+    reuseExistingServer: false,
     timeout: 120_000,
     stdout: "ignore",
     stderr: "pipe",

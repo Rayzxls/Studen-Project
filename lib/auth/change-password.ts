@@ -6,6 +6,7 @@ import {
 } from "@/lib/auth/password";
 import { audit } from "@/lib/audit/log";
 import { Forbidden, ValidationError } from "@/lib/errors";
+import { isAccountAvailableForAuthentication } from "@/lib/account/status";
 
 /**
  * Change own password (self-service)
@@ -31,7 +32,13 @@ export async function changeOwnPassword(params: {
     },
   });
 
-  if (!user || !user.isActive || user.deletedAt) {
+  if (
+    !user ||
+    !isAccountAvailableForAuthentication({
+      isActive: user.isActive,
+      deletedAt: user.deletedAt,
+    })
+  ) {
     throw new Forbidden("user_unavailable");
   }
 

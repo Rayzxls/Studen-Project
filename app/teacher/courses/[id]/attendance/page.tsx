@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { Ban, ListChecks } from "lucide-react";
+import { Ban, Download, ListChecks } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
 import { getCourseOfferingForTeacher } from "@/lib/course/queries";
 import { listSessions } from "@/lib/attendance/session";
 import { listTimetableSlots } from "@/lib/attendance/timetable";
+import { getAttendanceSummaryForTeacher } from "@/lib/attendance/queries";
 import { formatSessionHeader, todayInBangkok } from "@/lib/attendance/format";
-import { db } from "@/lib/db/client";
 import { CourseShell } from "@/components/course/course-shell";
 import {
   CreateSessionForm,
@@ -20,20 +20,6 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-type AttendanceCounts = {
-  PRESENT: number;
-  LATE: number;
-  EXCUSED: number;
-  ABSENT: number;
-};
-
-const EMPTY_COUNTS: AttendanceCounts = {
-  PRESENT: 0,
-  LATE: 0,
-  EXCUSED: 0,
-  ABSENT: 0,
-};
-
 export default async function AttendanceListPage({ params }: PageProps) {
   let session;
   try {
@@ -46,42 +32,13 @@ export default async function AttendanceListPage({ params }: PageProps) {
   const course = await getCourseOfferingForTeacher(id, session.user.id);
   if (!course) notFound();
 
-  const [sessions, slots, enrollments, attendanceGroups] = await Promise.all([
+  const [sessions, slots, attendanceSummary] = await Promise.all([
     listSessions(id, { limit: 100 }),
     listTimetableSlots(id),
-    db.enrollment.findMany({
-      where: { courseOfferingId: id, removedAt: null },
-      select: {
-        id: true,
-        student: {
-          select: {
-            studentId: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-      },
-      orderBy: [
-        { student: { firstName: "asc" } },
-        { student: { lastName: "asc" } },
-      ],
-    }),
-    db.attendanceRecord.groupBy({
-      by: ["enrollmentId", "status"],
-      where: { session: { courseOfferingId: id, cancelledAt: null } },
-      _count: { _all: true },
-    }),
+    getAttendanceSummaryForTeacher(id, session.user.id),
   ]);
 
-  const activeSessionCount = sessions.filter((s) => !s.cancelledAt).length;
-  const countsByEnrollment = new Map<string, AttendanceCounts>();
-  for (const group of attendanceGroups) {
-    const counts = countsByEnrollment.get(group.enrollmentId) ?? {
-      ...EMPTY_COUNTS,
-    };
-    counts[group.status] = group._count._all;
-    countsByEnrollment.set(group.enrollmentId, counts);
-  }
+  const activeSessionCount = attendanceSummary.totalSessions;
 
   const slotOptions: TimetableSlotOption[] = slots.map((s) => ({
     id: s.id,
@@ -111,12 +68,21 @@ export default async function AttendanceListPage({ params }: PageProps) {
                 แยกจำนวน มาเรียน / สาย / ลา / ขาด แล้วค่อยสรุปเป็นเปอร์เซ็นต์
               </p>
             </div>
-            <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-blue-500/10">
-              คาบที่เปิดแล้ว {activeSessionCount.toLocaleString("th-TH")} คาบ
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <a
+                href={`/teacher/courses/${id}/attendance/export`}
+                className="btn-secondary btn-sm"
+              >
+                <Download className="h-4 w-4" />
+                ดาวน์โหลด CSV
+              </a>
+              <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-blue-500/10">
+                คาบที่เปิดแล้ว {activeSessionCount.toLocaleString("th-TH")} คาบ
+              </span>
+            </div>
           </div>
 
-          {enrollments.length === 0 ? (
+          {attendanceSummary.rows.length === 0 ? (
             <div className="rounded-xl border border-dashed border-black/15 p-8 text-center text-sm text-black/50">
               ยังไม่มีนักเรียนในรายวิชานี้
             </div>
@@ -136,9 +102,8 @@ export default async function AttendanceListPage({ params }: PageProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  {enrollments.map((enrollment) => {
-                    const counts =
-                      countsByEnrollment.get(enrollment.id) ?? EMPTY_COUNTS;
+                  {attendanceSummary.rows.map((enrollment) => {
+                    const counts = enrollment.counts;
                     const marked =
                       counts.PRESENT +
                       counts.LATE +
@@ -153,7 +118,7 @@ export default async function AttendanceListPage({ params }: PageProps) {
                         : null;
 
                     return (
-                      <tr key={enrollment.id}>
+                      <tr key={enrollment.enrollmentId}>
                         <td>
                           <p className="font-medium text-black">
                             {enrollment.student.firstName}{" "}

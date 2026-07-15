@@ -17,7 +17,7 @@
 import { DEFAULT_GRADE_THRESHOLDS, type GradeThreshold } from "./constants";
 
 /** ScoreItem projection passed into PURE scoring math. */
-export type WeightedItem = Readonly<{
+export type ScoreItemForCalculation = Readonly<{
   /** Score Item ID — used to match against entries. */
   id: string;
   fullScore: number;
@@ -26,7 +26,7 @@ export type WeightedItem = Readonly<{
 }>;
 
 /** ScoreEntry projection passed into PURE scoring math. */
-export type WeightedEntry = Readonly<{
+export type ScoreEntryForCalculation = Readonly<{
   scoreItemId: string;
   /** 0..fullScore (validated upstream). */
   value: number;
@@ -49,13 +49,11 @@ export type WeightedEntry = Readonly<{
  * (degenerate published items only). Caller decides whether to render
  * "—", "0 %", or "ยังไม่มีคะแนน".
  *
- * Exported as `scoreTotal` (canonical, ADR-0024) AND `weightedTotal`
- * (deprecated alias kept for in-flight migration; remove after Phase 10A
- * lands).
+ * `scoreTotal` is the canonical and only public name for this calculation.
  */
 export function scoreTotal(
-  items: readonly WeightedItem[],
-  entries: readonly WeightedEntry[]
+  items: readonly ScoreItemForCalculation[],
+  entries: readonly ScoreEntryForCalculation[]
 ): number | null {
   const entryByItem = new Map<string, number>();
   for (const e of entries) entryByItem.set(e.scoreItemId, e.value);
@@ -73,9 +71,6 @@ export function scoreTotal(
   if (fullSum === 0) return null;
   return (scoreSum / fullSum) * 100;
 }
-
-/** @deprecated Use `scoreTotal` (ADR-0024). Kept transiently for ADR-0024 migration. */
-export const weightedTotal = scoreTotal;
 
 /**
  * Map a percent in [0, 100] to a grade in [0, 4] using a sorted-desc
@@ -117,8 +112,8 @@ export type CourseGradeResult = Readonly<{
 }>;
 
 export function gradeForCourseOffering(
-  items: readonly WeightedItem[],
-  entries: readonly WeightedEntry[],
+  items: readonly ScoreItemForCalculation[],
+  entries: readonly ScoreEntryForCalculation[],
   thresholds: readonly GradeThreshold[] = DEFAULT_GRADE_THRESHOLDS
 ): CourseGradeResult {
   const totalItems = items.length;

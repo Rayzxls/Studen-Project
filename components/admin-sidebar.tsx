@@ -9,11 +9,12 @@ import {
   GraduationCap,
   ScrollText,
   Activity,
+  ShieldAlert,
   UserRound,
   Users,
 } from "lucide-react";
 
-const items = [
+const baseItems = [
   { href: "/admin/dashboard", label: "ภาพรวม", icon: LayoutDashboard },
   { href: "/admin/teachers", label: "ครู", icon: Users },
   { href: "/admin/students", label: "นักเรียน", icon: GraduationCap },
@@ -24,8 +25,23 @@ const items = [
   { href: "/profile", label: "โปรไฟล์", icon: UserRound },
 ];
 
-export function AdminSidebar() {
+export function AdminSidebar({
+  showModeration = false,
+}: {
+  showModeration?: boolean;
+}) {
   const pathname = usePathname();
+  const items = showModeration
+    ? [
+        ...baseItems.slice(0, 5),
+        {
+          href: "/admin/moderation",
+          label: "Moderation Center",
+          icon: ShieldAlert,
+        },
+        ...baseItems.slice(5),
+      ]
+    : baseItems;
 
   return (
     <nav className="hidden min-h-[calc(100vh-57px)] w-60 border-r border-black/[0.06] bg-surface/60 p-3 md:block">

@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
-import { redirect } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import {

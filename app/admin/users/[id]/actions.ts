@@ -6,6 +6,8 @@ import { getRequestMeta } from "@/lib/utils/request";
 import { resetUserPassword } from "@/lib/admin/user-reset-password";
 import { removeProfileImage } from "@/lib/profile/mutations";
 import { HttpError } from "@/lib/errors";
+import { suspendOrReactivateAccount } from "@/lib/account/lifecycle-service";
+import { createPrismaAccountLifecycleRepository } from "@/lib/account/prisma-repository";
 
 export interface ResetPasswordState {
   error?: string;
@@ -71,6 +73,60 @@ export async function resetProfileImageAction(
     return { ok: true };
   } catch (err) {
     if (err instanceof HttpError) return { error: err.message };
+    throw err;
+  }
+}
+
+export interface AccountLifecycleActionState {
+  error?: string;
+  fieldErrors?: Record<string, string>;
+  ok?: boolean;
+  status?: "ACTIVE" | "SUSPENDED";
+}
+
+export async function changeAccountStatusAction(
+  _prev: AccountLifecycleActionState,
+  formData: FormData
+): Promise<AccountLifecycleActionState> {
+  const session = await requireRole(["ADMIN"]);
+  const targetUserId = String(formData.get("userId") ?? "").trim();
+  const to = String(formData.get("to") ?? "").trim();
+  const internalReason = String(formData.get("internalReason") ?? "");
+  const userMessage = String(formData.get("userMessage") ?? "");
+  const confirmed = formData.get("confirmed") === "yes";
+
+  if (!targetUserId) return { error: "missing_user_id" };
+  if (to !== "ACTIVE" && to !== "SUSPENDED") {
+    return { error: "account_lifecycle_transition_invalid" };
+  }
+  if (!confirmed) return { error: "account_lifecycle_confirmation_required" };
+
+  try {
+    await suspendOrReactivateAccount(
+      {
+        actor: { userId: session.user.id, role: session.user.role },
+        targetUserId,
+        to,
+        internalReason,
+        userMessage,
+      },
+      { repository: createPrismaAccountLifecycleRepository() }
+    );
+
+    revalidatePath(`/admin/users/${targetUserId}`);
+    revalidatePath("/admin/teachers");
+    revalidatePath("/admin/students");
+    revalidatePath("/admin/dashboard");
+
+    return { ok: true, status: to };
+  } catch (err) {
+    if (err instanceof HttpError) {
+      const fieldErrors =
+        "errors" in err && typeof err.errors === "object"
+          ? (err.errors as Record<string, string>)
+          : undefined;
+      return { error: err.code, fieldErrors };
+    }
     throw err;
   }
 }

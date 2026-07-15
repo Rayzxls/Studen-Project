@@ -1,0 +1,9 @@
+# Case-based moderation preserves learning evidence
+
+The product will use one case-based Moderation Center for account requests, content reports, file/profile safety, resolved history, and appeals. Moderation Center is an operational queue; Audit Log remains immutable evidence of actions already taken. Multiple reports against one entity aggregate into one case rather than creating independent decisions.
+
+A report never hides content automatically. Authorized actors may temporarily hide content during review with a reason and audit record. Resolution may dismiss and restore the entity, soft-hide published content, or quarantine a file while preserving the entity relationship and metadata. The content owner may request one review within seven days; anonymization remains irreversible and outside that appeal rule.
+
+Published or historically meaningful Comments, Announcements, Materials, Assignments, CourseOfferings, Submission Versions, and attachments are never hard-deleted through normal UI. Empty unpublished drafts and empty never-used CourseOfferings are the narrow exception. Assignment archive or moderation cannot alter linked Score Items, Score Entries, grading state, or attendance. Admin moderation is a safety/compliance exception and does not grant teaching authority.
+
+Academic records and submission metadata remain available as historical evidence. Binary submission files are retained for at least two academic years after course archive; audit records move to archive after the same hot-retention period. Automatic purge remains disabled until isolated QA, backup/restore rehearsal, preview, and explicit Admin confirmation exist. Old self-replaced profile images may purge after 24 hours; Admin-reset profile evidence is quarantined for 30 days before physical deletion, leaving non-URL audit metadata.

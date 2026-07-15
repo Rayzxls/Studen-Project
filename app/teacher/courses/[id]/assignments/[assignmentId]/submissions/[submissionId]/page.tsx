@@ -6,6 +6,7 @@ import { db } from "@/lib/db/client";
 import { CommentsThread } from "@/components/comment/comments-thread";
 import { SubmissionFilePreview } from "@/components/assignment/submission-file-preview";
 import { SafeExternalLinkButton } from "@/components/link/safe-external-link-button";
+import { UserAvatar } from "@/components/profile/user-avatar";
 
 /**
  * Teacher per-submission detail — Phase 9 · P9-2
@@ -54,7 +55,13 @@ export default async function TeacherSubmissionDetailPage({
       enrollment: {
         select: {
           student: {
-            select: { firstName: true, lastName: true, studentId: true },
+            select: {
+              userId: true,
+              firstName: true,
+              lastName: true,
+              studentId: true,
+              user: { select: { profileImageId: true } },
+            },
           },
         },
       },
@@ -116,11 +123,25 @@ export default async function TeacherSubmissionDetailPage({
       </Link>
 
       <div className="card mt-3 p-6">
-        <h1 className="text-lg font-medium text-black">{fullName}</h1>
-        <p className="mt-1 text-xs text-black/50">
-          เลขประจำตัว {submission.enrollment.student.studentId} ·{" "}
-          <code className="text-[11px]">{submission.status}</code>
-        </p>
+        <div className="flex items-center gap-3">
+          <UserAvatar
+            userId={submission.enrollment.student.userId}
+            hasImage={
+              submission.enrollment.student.user.profileImageId !== null
+            }
+            version={submission.enrollment.student.user.profileImageId}
+            size={44}
+          />
+          <div className="min-w-0">
+            <h1 className="truncate text-lg font-medium text-black">
+              {fullName}
+            </h1>
+            <p className="mt-1 text-xs text-black/50">
+              เลขประจำตัว {submission.enrollment.student.studentId} ·{" "}
+              <code className="text-[11px]">{submission.status}</code>
+            </p>
+          </div>
+        </div>
       </div>
 
       {submission.versions.length > 0 && (

@@ -1,7 +1,7 @@
 import type { NextAuthConfig } from "next-auth";
 
 /**
- * Edge-safe NextAuth config (used by middleware)
+ * Shared NextAuth config (used by proxy.ts)
  * No DB / Node-only imports allowed here
  */
 export const authConfig = {

@@ -11,7 +11,7 @@
 
 ### 1. Admin ไม่ใช่ผู้ใส่ข้อมูล
 - Admin ห้ามมี endpoint ที่ใส่คะแนน/เช็คชื่อ/สร้าง assignment
-- Admin มีได้แค่: view, audit log, CSV import (ครูเท่านั้น), reset password, moderate comment
+- Admin มีได้แค่: view/observer, audit log, CSV import ผู้ใช้ตาม flow ที่มี, reset password, export audit และ moderation ที่ระบุไว้
 - ถ้าจะเพิ่ม feature ให้ Admin → ถามผู้ใช้ก่อน
 
 ### 2. ทุก mutation ที่กระทบข้อมูลนักเรียน = audit log
@@ -37,7 +37,7 @@
 ### 6. Assignment ↔ Score Item
 - Assignment มี `scoreItemId` ที่เป็น nullable (FK)
 - ถ้า `is_scored = true` → ตอนสร้าง assignment สร้าง Score Item ผูกอัตโนมัติ
-- ลบ Assignment ที่ผูก ScoreItem ที่ publish แล้ว → block (ต้อง unpublish ก่อน + audit log)
+- ลบ Assignment ที่ผูก ScoreItem ที่ publish แล้ว → block; ระบบไม่มี unpublish ต้องใช้ flow ลบ ScoreItem ที่มี Critical audit ตามกติกาเท่านั้น
 
 ## Coding Conventions
 
@@ -59,14 +59,14 @@
 │   └── api/                  # API routes
 ├── components/
 │   ├── ui/                   # shadcn primitives
-│   ├── 3d/                   # R3F components (lazy-loaded)
+│   ├── motion/               # bounded motion primitives by task tier
 │   ├── feed/                 # feed cards, composer
 │   ├── assignment/           # assignment UI
 │   └── features/             # other domain components
 ├── lib/
 │   ├── auth/                 # NextAuth config + permission utils
 │   ├── db/                   # Prisma client + helpers
-│   ├── scoring/              # weighted total, grade calc (PURE)
+│   ├── scoring/              # sum-based score total, grade/GPA calc (PURE)
 │   ├── storage/              # R2 client + signed URL gen
 │   ├── feed/                 # feed query/aggregation
 │   ├── notification/         # notification creation + delivery
@@ -163,89 +163,38 @@
 ## Performance Budget
 
 - Initial JS bundle: < 250 KB gzipped
-- 3D scene: lazy-load เท่านั้น, ห้ามอยู่ใน critical path
+- Interactive showcase: lazy-load เมื่อมี bundle เพิ่ม และต้องมี static/reduced-motion fallback
 - Feed page: server-paginate 20 items, infinite scroll
-- File upload: chunked, progress UI, max 20 MB
+- File upload: presigned PUT ตรงไป private R2, progress UI, max 20 MB; ห้ามสร้าง public file URL
 - Lighthouse Performance: ≥ 80 บน 3G simulated
-- ห้าม block render ด้วย R3F บนหน้า data-heavy (กรอกคะแนน, เช็คชื่อ, ตรวจงาน, feed)
+- ห้าม WebGL/ambient choreography บนหน้า data-heavy (กรอกคะแนน, เช็คชื่อ, ตรวจงาน, audit)
 
-## Design System — "Ink + Gold"
+## Design System — Calm Ledger v2
 
-Adopted from Father project. ดู [ADR-0011](./docs/adr/0011-theme-ink-gold.md) สำหรับเหตุผล
+กติกาปัจจุบันอยู่ใน [ADR-0014](./docs/adr/0014-theme-calm-ledger-supersedes-ink-gold.md), [ADR-0028](./docs/adr/0028-theme-calm-ledger-v2-color-friendly-and-material.md) และ [ADR-0029](./docs/adr/0029-world-class-interactive-task-modulated-motion.md) ส่วน ADR-0011 Ink + Gold เป็นประวัติที่ถูก supersede แล้ว
 
-### Palette (use these tokens, ห้ามใส่ hex ตรงๆ)
+### Theme และสี
 
-| Token | Value | ใช้กับ |
-|-------|-------|--------|
-| `ink` | `#0F172A` | text primary, primary button gradient |
-| `ink-soft` | `#475569` | text secondary, captions |
-| `accent` | `#B8860B` (gold) | KPI value, GPA, signature accent |
-| `accent-soft` | `#FEF3C7` | badge bg, highlight |
-| `bg` | `#f8fafc` / `#fafaf7` (warm) | page background |
-| `surface` | `#ffffff` | card bg |
-| `border` | `#e2e8f0` (slate-200) | card/input border |
+- Theme modes: `SYSTEM` (ค่าเริ่มต้น), `LIGHT`, `DARK`, `CREAM`
+- ใช้ semantic CSS tokens จาก `app/globals.css`; ห้าม hardcode สีที่อ่านได้เฉพาะ light theme
+- Blue = primary/action, green = success, orange = warning/due, red = destructive
+- Course identity ใช้ palette 8 ช่องที่ระบบกำหนด ไม่สร้าง accent color ส่วนตัวต่อผู้ใช้
+- ไม่ใช้ gold หรือ GPA เป็น hero/KPI หลัก และไม่ใช้ gradient เป็นปุ่มมาตรฐาน
 
-❌ **ห้ามใช้** สีจัด (indigo, violet, purple, pink) เป็น primary accent — ขัด theme
-✅ ใช้ rose/blue/emerald/amber **เฉพาะ semantic badges** (error/info/success/warn) ผ่าน `.badge-*` class
+### Typography และวัสดุ
 
-### Typography
-- Font: **IBM Plex Sans Thai** (โหลดผ่าน `next/font/google`)
-- Variable: `--font-plex`, fallback `system-ui, sans-serif`
-- Headings: `tracking-tight font-bold`
-- Body: weight 400, line-height generous (`leading-relaxed`)
+- Font: **Anuphan** ผ่าน `--font-anuphan`
+- น้ำหนักตัวอักษรหลักไม่เกิน 600; เว้นบรรทัดและระยะหายใจให้ภาษาไทยอ่านง่าย
+- ใช้ class/component เดิม เช่น `.card`, `.btn-*`, `.input`, `.badge-*`, `.glass` ก่อนสร้าง pattern ใหม่
+- Card หลักใช้ `rounded-2xl` ตามระบบเดิม; ห้ามซ้อน card เพื่อการตกแต่งโดยไม่มี hierarchy จริง
+- Form, gradebook, attendance, review และ audit ต้องเป็น work surface ที่นิ่ง อ่านเร็ว และมี contrast ครบทุก theme
 
-### Component Classes (Tailwind `@layer components`)
+### Motion
 
-ใช้ class เหล่านี้ก่อนเขียน utility เอง — copy จาก Father `globals.css`:
-
-| Class | ใช้กับ |
-|-------|--------|
-| `.card` / `.card-flat` | container white + rounded-xl + soft shadow + hover lift |
-| `.btn-primary` | dark gradient + gold shimmer on hover (signature) |
-| `.btn-secondary` | white + slate border, hover lift |
-| `.btn-ghost` | text-only, soft hover bg |
-| `.btn-accent` | gold gradient |
-| `.btn-danger` | rose-600 |
-| `.btn-sm` | size modifier |
-| `.input` | form input ที่ใช้ทุกที่ |
-| `.badge-{admin/teacher/student/gold}` | role badges with ring border |
-| `.table` | data table standard |
-| `.stat` / `.stat-value-gold` | KPI cards |
-
-### Utility Classes
-
-| Class | ใช้กับ |
-|-------|--------|
-| `.text-gradient-gold` | animated gold gradient text (สำหรับ GPA, headline) |
-| `.text-gradient-ink` | static dark gradient |
-| `.mesh-bg` | hero section background (gold radial gradients) |
-| `.glass` | backdrop-blur frosted surface |
-| `.tilt-card` | 3D tilt with CSS vars `--rx --ry` (set via JS pointermove) |
-| `.sheen` | hover sweep shine on cards |
-| `.blob` | floating blob decoration (with animation: float / float-slow) |
-
-### Animation Tokens
-
-ใน `tailwind.config.ts` มี keyframes ใช้ได้ทันที:
-- `animate-fade-in` (entry — 200ms)
-- `animate-slide-up` (entry — 280ms)
-- `animate-shimmer` (loading)
-- `animate-float` / `animate-float-slow` (blobs)
-- `animate-gradient-pan` (gold text)
-- `animate-pulse-ring` (notification dot)
-- `animate-bg-pan` (background subtle)
-
-### 3D Strategy
-- **WebGL/R3F** — เฉพาะ landing hero, login bg, 404, loading transitions
-- **CSS-based "3D feel"** (tilt-card + perspective + mesh-bg + blob + sheen) — ใช้ในหน้าทั่วไปได้ ไม่กิน GPU
-- หน้า production-critical (กรอกคะแนน, เช็คชื่อ, ตรวจงาน, audit log) = 2D ล้วน, density สูง
-
-### Layout Rules
-- Card spacing rhythm: 16 / 24 / 32 (Tailwind 4/6/8)
-- Rounded: `rounded-xl` (12px) สำหรับ cards, `rounded-lg` (8px) สำหรับ buttons/inputs
-- Border: 1px solid `border-slate-200` เริ่มต้นเสมอ — เพิ่มน้ำหนักเฉพาะ active state
-- Shadow: `shadow-soft` default → `shadow-lift` on hover
-- Focus ring: gold `rgba(184,134,11,0.35)` 3px (ตั้งไว้ใน `globals.css`)
+- ใช้ task-modulated motion: feedback 80ms, controls 180ms, panel/page 280ms ตาม ADR-0029
+- ห้าม animation ทำให้ตำแหน่งข้อมูลเปลี่ยนระหว่างกรอกคะแนน เช็กชื่อ ตรวจงาน หรืออ่านตาราง
+- รองรับ `prefers-reduced-motion`; interaction สำคัญต้องใช้งานได้แม้ปิด motion
+- 3D/WebGL ใช้เฉพาะประสบการณ์ที่เหมาะสมและต้อง lazy-load; ห้ามอยู่ใน critical path ของหน้าปฏิบัติงาน
 
 ### Mobile
 - Student views = **mobile-first** (Tailwind default → adjust at `md:` breakpoint)
@@ -259,10 +208,10 @@ Adopted from Father project. ดู [ADR-0011](./docs/adr/0011-theme-ink-gold.md
 
 ### Iconography
 - ใช้ **lucide-react** เป็น default
-- Emoji ใช้ได้ใน feed card "type indicator" (📝 📢 📚 🎯) แต่ห้ามใช้ใน UI structure
+- ใช้ icon ที่มีความหมายพร้อม tooltip เมื่อความหมายไม่ชัด; หลีกเลี่ยง emoji เป็นโครงสร้าง UI
 
 ## เมื่อไม่แน่ใจ
 
 1. อ่าน [CONTEXT.md](./CONTEXT.md) ก่อน — มีคำตอบส่วนใหญ่
 2. ถ้ายังไม่ชัด → ถามผู้ใช้ ห้าม guess feature
-3. ถ้าเจอข้อขัดแย้งระหว่าง docs กับ code → docs คือ source of truth; แจ้ง mismatch
+3. ถ้าเจอข้อขัดแย้งระหว่าง code กับ CONTEXT/ADR ที่ accepted → หยุดและรายงาน mismatch ก่อนแก้ ห้ามเดาเองว่าเอกสารเก่าหรือโค้ดถูกเสมอ

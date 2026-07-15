@@ -1,5 +1,5 @@
 ---
-name: Studennnn
+name: Beagle Classroom
 description: ระบบจัดการห้องเรียนสำหรับโรงเรียนไทย — Calm Ledger v2 theme (ADR-0028 extends ADR-0014)
 colors:
   bg: "#f2f2f7"
@@ -151,17 +151,17 @@ components:
     padding: "2px 10px"
 ---
 
-# Design System: Studennnn — Calm Ledger v2
+# Design System: Beagle Classroom — Calm Ledger v2
 
 ## 1. Overview
 
 **Creative North Star: "Calm Ledger v2 — friendly, layered, smooth."**
 
-Studennnn keeps the discipline of a premium private-banking app — off-white body, true black ink, Anuphan single-family typography, pill geometry, rounded-2xl cards — and adds back the colour and material depth that ADR-0014 stripped out. The chrome stays calm; the content carries colour. The interaction layer borrows the iOS spring curve at three durations and the iOS frosted-glass vocabulary in four named places. Windows 11's contribution is the sense of smooth, layered depth, achieved by stacking subordinate surfaces rather than emulating Mica.
+Beagle Classroom uses Anuphan single-family typography, pill controls, rounded-2xl cards, semantic colour, and layered surfaces. The chrome stays calm while course identity and status carry colour. Interaction follows the task-modulated motion budget: expressive on showcase/consumption surfaces and restrained on data-entry surfaces.
 
-The result reads as a system that an iOS-fluent Thai teenager opens without thinking "this is an old school portal" and a Thai homeroom teacher uses for fifty student grade entries without thinking "this is fighting me." The product owner's pain that ADR-0028 addresses, verbatim: *"ผมต้องการ Layout หรือ ธีมสีโดยรวมให้มันสดใสกว่านี้ เพราะตอนนี้ Project จืดมาก ไม่มีสีสัน."*
+The result should feel approachable to students and efficient for teachers who repeat attendance, grading, and assignment workflows every day. Visual personality comes from course identity, clear status colour, useful imagery, and purposeful motion rather than decorative noise.
 
-The system continues to reject four neighbourhoods PRODUCT.md calls out by name: government ERP (Bootstrap 3, Tahoma, desktop-only), Thai EdTech default (orange+blue+yellow loud + mascots + Cordia), Google Classroom Material (generic), and generic AI-SaaS landing slop. Premium fintech as a family — Halo, Linear, Stripe Sessions — remains the aesthetic lane. iOS Settings.app is the colour-and-interaction reference, not the chrome reference.
+The system avoids legacy school-portal density, loud multi-colour EdTech styling, generic Material clones, and marketing-heavy AI SaaS composition. Product screens remain work-focused; landing and showcase surfaces may be more expressive while keeping the same semantic theme tokens.
 
 This system **extends ADR-0014** via ADR-0028. It does NOT supersede.
 

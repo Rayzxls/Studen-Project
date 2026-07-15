@@ -4,10 +4,10 @@ import { assert } from "@/lib/auth/guards";
 import { getCourseOfferingForStudent } from "@/lib/course/queries";
 import { getOwnScoresForStudent } from "@/lib/scoring/queries";
 import {
-  weightedTotal,
+  scoreTotal,
   gradeFor,
-  type WeightedItem,
-  type WeightedEntry,
+  type ScoreItemForCalculation,
+  type ScoreEntryForCalculation,
 } from "@/lib/scoring/calc";
 import { formatPercent, formatGpa } from "@/lib/scoring/format";
 import { CourseShell } from "@/components/course/course-shell";
@@ -40,19 +40,19 @@ export default async function StudentScoresPage({ params }: PageProps) {
 
   const { items, totalItems, publishedItems } = result;
 
-  // Project to PURE shape for weightedTotal preview. Each rendered item is
+  // Project to the PURE score-total shape. Each rendered item is
   // already known to be published, but we keep `publishedAt` non-null so
   // calc treats it as such.
-  const calcItems: WeightedItem[] = items.map((it) => ({
+  const calcItems: ScoreItemForCalculation[] = items.map((it) => ({
     id: it.id,
     fullScore: it.fullScore,
     publishedAt: it.publishedAt,
   }));
-  const calcEntries: WeightedEntry[] = items
+  const calcEntries: ScoreEntryForCalculation[] = items
     .filter((it) => it.myValue !== null)
     .map((it) => ({ scoreItemId: it.id, value: it.myValue as number }));
 
-  const percent = weightedTotal(calcItems, calcEntries);
+  const percent = scoreTotal(calcItems, calcEntries);
   // เกรดรายวิชา is only meaningful when publish is COMPLETE for this
   // course — never fake a final grade from partial data (CONTEXT §
   // Learning Results). Until then the running % renders with a

@@ -5,6 +5,7 @@ import { requireRole } from "@/lib/auth/guards";
 import { getCourseOfferingForTeacher } from "@/lib/course/queries";
 import { db } from "@/lib/db/client";
 import { getOrderedAttachments } from "@/lib/storage/attachments";
+import { getModerationRestriction } from "@/lib/moderation/queries";
 import { CourseShell } from "@/components/course/course-shell";
 import { PostDetail } from "@/components/course/post-detail";
 import { EditAnnouncementDialog } from "@/components/announcement/edit-announcement-dialog";
@@ -61,6 +62,9 @@ export default async function TeacherAnnouncementDetailPage({
     },
   });
   if (!announcement) notFound();
+  if (await getModerationRestriction("ANNOUNCEMENT", announcement.id)) {
+    notFound();
+  }
 
   const linkUrls = (
     Array.isArray(announcement.linkUrls) ? announcement.linkUrls : []

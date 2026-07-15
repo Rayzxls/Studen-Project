@@ -1,4 +1,5 @@
 import { RemoveMemberDialog } from "./remove-member-dialog";
+import { UserAvatar } from "@/components/profile/user-avatar";
 
 const fullDateFmt = new Intl.DateTimeFormat("th-TH", {
   day: "numeric",
@@ -15,6 +16,7 @@ type Member = {
     studentId: string;
     firstName: string;
     lastName: string;
+    user: { profileImageId: string | null };
   };
 };
 
@@ -59,7 +61,17 @@ export function MembersTable({
             return (
               <tr key={m.id}>
                 <td className="font-mono text-sm">{m.student.studentId}</td>
-                <td>{fullName}</td>
+                <td>
+                  <div className="flex items-center gap-2.5">
+                    <UserAvatar
+                      userId={m.student.userId}
+                      hasImage={m.student.user.profileImageId !== null}
+                      version={m.student.user.profileImageId}
+                      size={32}
+                    />
+                    <span>{fullName}</span>
+                  </div>
+                </td>
                 <td className="text-xs text-black/60">
                   {fullDateFmt.format(m.enrolledAt)}
                 </td>

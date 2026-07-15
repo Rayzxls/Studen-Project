@@ -10,10 +10,8 @@
  * Σscore / ΣfullScore × 100. fullScore alone encodes per-item influence —
  * larger fullScore = more sway in the course grade, automatically.
  *
- * The `weightedTotal` alias remains for transitional compatibility (and
- * lib/scoring/calc.ts still exports it pointing at scoreTotal) — this file
- * tests the canonical `scoreTotal` name and treats fullScore as the only
- * proportional knob.
+ * `scoreTotal` is the only public calculation name; fullScore is the only
+ * proportional input.
  */
 
 import { describe, it, expect } from "vitest";
@@ -21,8 +19,8 @@ import {
   scoreTotal,
   gradeFor,
   gradeForCourseOffering,
-  type WeightedItem,
-  type WeightedEntry,
+  type ScoreItemForCalculation,
+  type ScoreEntryForCalculation,
 } from "@/lib/scoring/calc";
 import {
   DEFAULT_GRADE_THRESHOLDS,
@@ -36,11 +34,11 @@ function item(
   id: string,
   fullScore: number,
   publishedAt: Date | null = D
-): WeightedItem {
+): ScoreItemForCalculation {
   return { id, fullScore, publishedAt };
 }
 
-function entry(scoreItemId: string, value: number): WeightedEntry {
+function entry(scoreItemId: string, value: number): ScoreEntryForCalculation {
   return { scoreItemId, value };
 }
 

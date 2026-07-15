@@ -26,10 +26,13 @@ export async function signIn(
   // so we anchor on the unique Thai text instead of a CSS selector.
   await page.waitForSelector('header form button:has-text("ออกจากระบบ")', {
     timeout: 20_000,
+    state: "attached",
   });
 }
 
 export async function signOut(page: Page): Promise<void> {
+  const accountMenu = page.locator("header details");
+  await accountMenu.locator("summary").click();
   await page.click('header form button:has-text("ออกจากระบบ")');
   await page.waitForURL("**/login", { timeout: 20_000 });
 }

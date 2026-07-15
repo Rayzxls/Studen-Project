@@ -19,7 +19,7 @@ import { getAttendanceStatsForStudent } from "@/lib/attendance/queries";
 import { listTimetableSlots } from "@/lib/attendance/timetable";
 import { dayOfWeekShort } from "@/lib/attendance/format";
 import { getOwnScoresForStudent } from "@/lib/scoring/queries";
-import { weightedTotal } from "@/lib/scoring/calc";
+import { scoreTotal } from "@/lib/scoring/calc";
 import { formatPercent } from "@/lib/scoring/format";
 import {
   buildFeedRowPreview,
@@ -152,7 +152,7 @@ export default async function StudentCourseOverviewPage({ params }: PageProps) {
   const calcEntries = scoreResult.items
     .filter((it) => it.myValue !== null)
     .map((it) => ({ scoreItemId: it.id, value: it.myValue as number }));
-  const percent = weightedTotal(calcItems, calcEntries);
+  const percent = scoreTotal(calcItems, calcEntries);
   const lockedItems = scoreResult.totalItems - scoreResult.publishedItems;
 
   // ── Recent activity merged & sliced ───────────────────────────

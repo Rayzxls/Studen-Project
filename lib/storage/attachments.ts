@@ -1,5 +1,6 @@
 import { db } from "@/lib/db/client";
 import type { FeedAttachment } from "@/lib/feed/aggregator";
+import { getModerationRestrictions } from "@/lib/moderation/queries";
 
 /**
  * Shared attachment helpers for post-style surfaces (announcements,
@@ -36,8 +37,17 @@ export async function getOrderedAttachments(
       mimeType: true,
     },
   });
+  const restrictions = await getModerationRestrictions(
+    rows.map((file) => ({
+      targetType: "FILE_ATTACHMENT" as const,
+      targetId: file.id,
+    }))
+  );
   const byId = new Map(rows.map((file) => [file.id, file]));
   return ids
     .map((id) => byId.get(id))
-    .filter((file): file is (typeof rows)[number] => Boolean(file));
+    .filter(
+      (file): file is (typeof rows)[number] =>
+        file !== undefined && !restrictions.has(`FILE_ATTACHMENT:${file.id}`)
+    );
 }

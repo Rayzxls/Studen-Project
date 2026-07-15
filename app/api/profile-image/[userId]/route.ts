@@ -8,6 +8,7 @@ import {
   readLocalObject,
 } from "@/lib/storage/local-dev";
 import { errorResponse } from "@/lib/errors";
+import { getModerationRestriction } from "@/lib/moderation/queries";
 
 /**
  * GET /api/profile-image/[userId] — Phase 13 avatar serving.
@@ -29,7 +30,7 @@ export async function GET(
   { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    await requireAuth();
+    const session = await requireAuth();
     const { userId } = await params;
 
     const user = await db.user.findUnique({
@@ -50,6 +51,16 @@ export async function GET(
     });
     if (!file || file.deletedAt) {
       return NextResponse.json({ error: "not_found" }, { status: 404 });
+    }
+    const restriction = await getModerationRestriction(
+      "PROFILE_IMAGE",
+      user.profileImageId
+    );
+    if (restriction && session.user.role !== "ADMIN") {
+      return NextResponse.redirect(
+        new URL("/images/default-avatar.png", req.url),
+        { status: 302 }
+      );
     }
 
     if (isLocalStorageFallbackEnabled()) {

@@ -70,7 +70,7 @@ export default async function AdminCourseAssignmentsPage({
                       {assignment.title}
                     </p>
                     {assignment.isScored && (
-                      <span className="badge-gold">นับคะแนน</span>
+                      <span className="badge-info">นับคะแนน</span>
                     )}
                     {publishedScore && (
                       <span className="rounded-full bg-green-500 px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm ring-1 ring-black/10">

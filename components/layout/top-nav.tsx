@@ -1,12 +1,13 @@
 import Link from "next/link";
 import type { Role } from "@prisma/client";
-import { Palette, LogOut, UserRound } from "lucide-react";
+import { Palette, LogOut, Scale, UserRound } from "lucide-react";
 import { signOut } from "@/lib/auth";
 import { db } from "@/lib/db/client";
 import { Bell } from "@/components/notification/bell";
 import { BeagleLogo } from "@/components/landing/beagle-logo";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { ThemeModeControl } from "@/components/theme/theme-mode-control";
+import { moderationCenterEnabled } from "@/lib/moderation/feature-flags";
 
 /**
  * Shared app chrome — Phase 7 · P7-5
@@ -48,6 +49,7 @@ export async function TopNav({
   maxWidth = "max-w-6xl",
 }: TopNavProps) {
   const showBellResolved = showBell && Boolean(session);
+  const showModeration = Boolean(session) && moderationCenterEnabled();
 
   // Avatar-only account entry (Phase 13) — no name in the chrome.
   const me = session
@@ -108,6 +110,18 @@ export async function TopNav({
                   />
                   โปรไฟล์
                 </Link>
+                {showModeration && (
+                  <Link
+                    href="/moderation"
+                    className="flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-sm text-black transition-colors hover:bg-black/[0.04] hover:no-underline"
+                  >
+                    <Scale
+                      className="h-4 w-4 text-black/45"
+                      aria-hidden="true"
+                    />
+                    การตรวจสอบเนื้อหา
+                  </Link>
+                )}
                 <div className="rounded-xl px-2.5 py-2">
                   <div className="mb-2 flex items-center gap-2 text-xs font-medium text-black/55">
                     <Palette className="h-4 w-4" aria-hidden="true" />

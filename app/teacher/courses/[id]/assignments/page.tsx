@@ -167,7 +167,7 @@ export default async function AssignmentsListPage({ params }: PageProps) {
                           {a.title}
                         </p>
                         {a.isScored && (
-                          <span className="badge-gold">นับคะแนน</span>
+                          <span className="badge-info">นับคะแนน</span>
                         )}
                         {publishedScoreItem && (
                           <span className="rounded-md bg-green-500 px-1.5 py-0.5 text-[10px] font-semibold text-white shadow-sm ring-1 ring-black/10">

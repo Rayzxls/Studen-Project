@@ -7,6 +7,7 @@ import {
   Megaphone,
   Paperclip,
   Sparkles,
+  ShieldAlert,
   TrendingUp,
 } from "lucide-react";
 import type { FeedAttachment, FeedItem, FeedKind } from "@/lib/feed/aggregator";
@@ -14,6 +15,8 @@ import { resolveCourseFeedHref } from "@/lib/feed/navigation";
 import { EntryStagger } from "@/components/motion/entry-stagger";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { FeedAttachmentPreview } from "@/components/feed/feed-attachment-preview";
+import { ReportContentButton } from "@/components/moderation/report-content-button";
+import { moderationCenterEnabled } from "@/lib/moderation/feature-flags";
 
 /**
  * Course Feed — Phase 11.8 Instagram-style redesign.
@@ -188,6 +191,26 @@ function FeedCard({
     item.kind === "ASSIGNMENT" && item.detail ? new Date(item.detail) : null;
   const dueSoon = dueAt !== null && isWithin48h(dueAt);
 
+  if (item.moderationRestriction) {
+    return (
+      <article className="card p-5">
+        <div className="flex items-start gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-700">
+            <ShieldAlert className="h-4 w-4" />
+          </span>
+          <div>
+            <h3 className="text-sm font-semibold text-black">
+              เนื้อหานี้ถูกจำกัดการแสดงผลชั่วคราว
+            </h3>
+            <p className="mt-1 text-sm text-ink-soft">
+              ผู้ดูแลกำลังตรวจสอบรายงาน เนื้อหาและไฟล์แนบจะไม่แสดงระหว่างนี้
+            </p>
+          </div>
+        </div>
+      </article>
+    );
+  }
+
   return (
     <article
       className="card group overflow-hidden p-0"
@@ -225,15 +248,24 @@ function FeedCard({
           </p>
         </div>
         {/* Type chip — tinted by kind */}
-        <span
-          className={
-            "inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium " +
-            decor.chip
-          }
-        >
-          {decor.icon}
-          {decor.kindLabel}
-        </span>
+        <div className="flex shrink-0 items-center gap-1">
+          {moderationCenterEnabled() && item.kind !== "SCORE_PUBLISHED" && (
+            <ReportContentButton
+              targetType={moderationTargetType(item.kind)}
+              targetId={item.id}
+              compact
+            />
+          )}
+          <span
+            className={
+              "inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium " +
+              decor.chip
+            }
+          >
+            {decor.icon}
+            {decor.kindLabel}
+          </span>
+        </div>
       </header>
 
       {/* Body — title + preview */}
@@ -315,6 +347,12 @@ function FeedCard({
       </footer>
     </article>
   );
+}
+
+function moderationTargetType(
+  kind: Exclude<FeedKind, "SCORE_PUBLISHED">
+): "ANNOUNCEMENT" | "MATERIAL" | "ASSIGNMENT" {
+  return kind;
 }
 
 function _AttachmentPreview({

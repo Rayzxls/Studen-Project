@@ -5,6 +5,7 @@ import { assert } from "@/lib/auth/guards";
 import { getCourseOfferingForStudent } from "@/lib/course/queries";
 import { db } from "@/lib/db/client";
 import { getOrderedAttachments } from "@/lib/storage/attachments";
+import { getModerationRestriction } from "@/lib/moderation/queries";
 import { CourseShell } from "@/components/course/course-shell";
 import { PostDetail } from "@/components/course/post-detail";
 import { CommentsThread } from "@/components/comment/comments-thread";
@@ -58,6 +59,7 @@ export default async function StudentMaterialDetailPage({ params }: PageProps) {
     },
   });
   if (!material) notFound();
+  if (await getModerationRestriction("MATERIAL", material.id)) notFound();
 
   const linkUrls = (
     Array.isArray(material.linkUrls) ? material.linkUrls : []

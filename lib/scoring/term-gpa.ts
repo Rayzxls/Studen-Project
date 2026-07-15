@@ -18,8 +18,8 @@
 import {
   gradeForCourseOffering,
   type CourseGradeResult,
-  type WeightedItem,
-  type WeightedEntry,
+  type ScoreItemForCalculation,
+  type ScoreEntryForCalculation,
 } from "./calc";
 import { DEFAULT_GRADE_THRESHOLDS, type GradeThreshold } from "./constants";
 
@@ -30,8 +30,8 @@ export type TermCourseBundle = Readonly<{
   creditHours: number;
   /** Optional thresholds override — falls back to `DEFAULT_GRADE_THRESHOLDS`. */
   thresholds?: readonly GradeThreshold[];
-  items: readonly WeightedItem[];
-  entries: readonly WeightedEntry[];
+  items: readonly ScoreItemForCalculation[];
+  entries: readonly ScoreEntryForCalculation[];
 }>;
 
 export type TermGpaResult = Readonly<{

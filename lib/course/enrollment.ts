@@ -466,6 +466,7 @@ export async function getActiveMembers(courseOfferingId: string) {
           studentId: true,
           firstName: true,
           lastName: true,
+          user: { select: { profileImageId: true } },
         },
       },
     },

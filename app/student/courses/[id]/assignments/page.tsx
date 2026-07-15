@@ -150,7 +150,7 @@ export default async function StudentAssignmentsListPage({
                           {a.title}
                         </p>
                         {a.isScored && (
-                          <span className="badge-gold">นับคะแนน</span>
+                          <span className="badge-info">นับคะแนน</span>
                         )}
                       </div>
                       <p

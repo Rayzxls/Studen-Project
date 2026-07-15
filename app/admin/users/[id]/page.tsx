@@ -12,6 +12,10 @@ import { getStudentTermSnapshot } from "@/lib/scoring/queries";
 import { gradeForCourseOffering } from "@/lib/scoring/calc";
 import { DEFAULT_GRADE_THRESHOLDS } from "@/lib/scoring/constants";
 import { getAttendanceStatsForStudent } from "@/lib/attendance/queries";
+import { deriveLegacyAccountStatus } from "@/lib/account/status";
+import { AccountStatusBadge } from "@/components/admin/account-status-badge";
+import { AccountLifecycleCard } from "@/components/admin/account-lifecycle-card";
+import { accountLifecycleMutationsEnabled } from "@/lib/account/feature-flags";
 
 // Auth-gated DB-fetching page — skip static prerender.
 export const dynamic = "force-dynamic";
@@ -224,6 +228,12 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
         ? `${user.admin.firstName} ${user.admin.lastName}`
         : user.identifier;
   const isSelf = user.id === session.user.id;
+  const accountStatus = deriveLegacyAccountStatus({
+    isActive: user.isActive,
+    deletedAt: user.deletedAt,
+    studentAnonymized: user.student?.anonymized,
+  });
+  const lifecycleMutationsAvailable = accountLifecycleMutationsEnabled();
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-8 space-y-6">
@@ -259,28 +269,26 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
           </div>
           <div className="flex flex-wrap gap-2">
             <RoleBadge role={user.role} />
-            {user.isActive ? (
-              <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] text-green-700">
-                ใช้งาน
-              </span>
-            ) : (
-              <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] text-slate-700">
-                ปิดใช้งาน
-              </span>
-            )}
+            <AccountStatusBadge status={accountStatus} />
             {user.mustResetPwd && (
               <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] text-orange-700">
                 ต้องตั้งรหัสผ่านใหม่ตอนเข้าใช้
               </span>
             )}
-            {user.deletedAt && (
-              <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] text-red-700">
-                ลบแล้ว
-              </span>
-            )}
           </div>
         </div>
       </header>
+
+      {lifecycleMutationsAvailable &&
+        !isSelf &&
+        !user.deletedAt &&
+        (accountStatus === "ACTIVE" || accountStatus === "SUSPENDED") && (
+          <AccountLifecycleCard
+            userId={user.id}
+            displayName={displayName}
+            status={accountStatus}
+          />
+        )}
 
       {/* Reset password card — full reveal-once flow */}
       {!isSelf && !user.deletedAt && (

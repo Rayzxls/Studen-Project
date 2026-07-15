@@ -1,5 +1,10 @@
 import { test, expect } from "@playwright/test";
 import { PrismaClient } from "@prisma/client";
+import {
+  enrollStudent,
+  setupTestCourse,
+  type TestCourseContext,
+} from "../integration/permissions/_fixtures";
 import { signIn, signOut } from "./helpers";
 
 /**
@@ -17,12 +22,13 @@ import { signIn, signOut } from "./helpers";
  */
 
 const db = new PrismaClient();
+const PASSWORD = "Test1234!";
+let ctx: TestCourseContext | undefined;
 
-const STUDENT_ID = "60001";
-const STUDENT_PWD = "Student1234";
-const TEACHER_ID = "teacher@studennnn.local";
-const TEACHER_PWD = "Teacher1234!";
-const DEMO_CODE = "MATH4A-DEMO1";
+test.beforeAll(async () => {
+  ctx = await setupTestCourse();
+  await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
+});
 
 test.beforeEach(async () => {
   await db.rateLimitBucket.deleteMany({
@@ -31,23 +37,24 @@ test.beforeEach(async () => {
 });
 
 test.afterAll(async () => {
-  await db.$disconnect();
+  try {
+    await ctx?.cleanup();
+  } finally {
+    await db.$disconnect();
+  }
 });
 
 test("teacher posts material → student bell deep-links to material detail", async ({
   page,
 }) => {
-  const course = await db.courseOffering.findUnique({
-    where: { classCode: DEMO_CODE },
-    select: { id: true },
-  });
-  expect(course).not.toBeNull();
-  const courseId = course!.id;
+  const courseId = ctx!.courseOfferingId;
+  const teacherIdentifier = `${ctx!.prefix}_t1@test.local`;
+  const studentIdentifier = `${ctx!.prefix}_s1`;
 
   const title = `E2E เอกสาร ${Date.now()}`;
 
   // 1) Teacher creates a Material.
-  await signIn(page, TEACHER_ID, TEACHER_PWD);
+  await signIn(page, teacherIdentifier, PASSWORD);
   await page.goto(`/teacher/courses/${courseId}/materials`);
   await page.getByRole("button", { name: /เพิ่มเอกสาร/ }).click();
 
@@ -63,7 +70,7 @@ test("teacher posts material → student bell deep-links to material detail", as
   // 2) Student signs in and opens the bell. The new MATERIAL_POSTED
   //    row should appear inside the popover and click through to the
   //    student-side material detail (P7-8 route).
-  await signIn(page, STUDENT_ID, STUDENT_PWD);
+  await signIn(page, studentIdentifier, PASSWORD);
   await page.goto("/dashboard");
 
   await page.getByRole("button", { name: "การแจ้งเตือน" }).click();

@@ -1,5 +1,6 @@
 import type { AttendanceStatus } from "@prisma/client";
 import { db } from "@/lib/db/client";
+import { Forbidden, NotFound } from "@/lib/errors";
 
 /**
  * Attendance read queries — Phase 4
@@ -48,6 +49,96 @@ export interface AttendanceGrid {
     teacherId: string;
   };
   rows: AttendanceGridRow[];
+}
+
+export type AttendanceCounts = Record<AttendanceStatus, number>;
+
+export interface TeacherAttendanceSummaryRow {
+  enrollmentId: string;
+  student: {
+    studentId: string;
+    firstName: string;
+    lastName: string;
+  };
+  counts: AttendanceCounts;
+}
+
+export interface TeacherAttendanceSummary {
+  totalSessions: number;
+  rows: TeacherAttendanceSummaryRow[];
+}
+
+/**
+ * Course-level attendance summary shared by the Teacher table and CSV export.
+ * Only the owning Teacher may request it; Admin observer access is separate
+ * and never reuses a Teacher export route.
+ */
+export async function getAttendanceSummaryForTeacher(
+  courseOfferingId: string,
+  actorUserId: string
+): Promise<TeacherAttendanceSummary> {
+  const course = await db.courseOffering.findUnique({
+    where: { id: courseOfferingId },
+    select: { teacherId: true },
+  });
+  if (!course) throw new NotFound("course_not_found");
+  if (course.teacherId !== actorUserId) {
+    throw new Forbidden("not_course_owner");
+  }
+
+  const [totalSessions, enrollments, grouped] = await Promise.all([
+    db.session.count({
+      where: { courseOfferingId, cancelledAt: null },
+    }),
+    db.enrollment.findMany({
+      where: { courseOfferingId, removedAt: null },
+      select: {
+        id: true,
+        student: {
+          select: {
+            studentId: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+      orderBy: [
+        { student: { firstName: "asc" } },
+        { student: { lastName: "asc" } },
+      ],
+    }),
+    db.attendanceRecord.groupBy({
+      by: ["enrollmentId", "status"],
+      where: { session: { courseOfferingId, cancelledAt: null } },
+      _count: { _all: true },
+    }),
+  ]);
+
+  const countsByEnrollment = new Map<string, AttendanceCounts>();
+  for (const row of grouped) {
+    const counts = countsByEnrollment.get(row.enrollmentId) ?? {
+      PRESENT: 0,
+      LATE: 0,
+      EXCUSED: 0,
+      ABSENT: 0,
+    };
+    counts[row.status] = row._count._all;
+    countsByEnrollment.set(row.enrollmentId, counts);
+  }
+
+  return {
+    totalSessions,
+    rows: enrollments.map((enrollment) => ({
+      enrollmentId: enrollment.id,
+      student: enrollment.student,
+      counts: countsByEnrollment.get(enrollment.id) ?? {
+        PRESENT: 0,
+        LATE: 0,
+        EXCUSED: 0,
+        ABSENT: 0,
+      },
+    })),
+  };
 }
 
 export async function getAttendanceGridForTeacher(

@@ -5,6 +5,7 @@ import { requireRole } from "@/lib/auth/guards";
 import { getCourseOfferingForTeacher } from "@/lib/course/queries";
 import { db } from "@/lib/db/client";
 import { getOrderedAttachments } from "@/lib/storage/attachments";
+import { getModerationRestriction } from "@/lib/moderation/queries";
 import { CourseShell } from "@/components/course/course-shell";
 import { PostDetail } from "@/components/course/post-detail";
 import { EditMaterialDialog } from "@/components/material/edit-material-dialog";
@@ -57,6 +58,7 @@ export default async function TeacherMaterialDetailPage({ params }: PageProps) {
     },
   });
   if (!material) notFound();
+  if (await getModerationRestriction("MATERIAL", material.id)) notFound();
 
   const linkUrls = (
     Array.isArray(material.linkUrls) ? material.linkUrls : []
