@@ -317,12 +317,16 @@ Status: implemented on `phase-11` and accepted on isolated Neon QA on 2026-07-15
 
 ### B4. Student learning path
 
+Status: implemented on `phase-11` and accepted on isolated Neon QA on 2026-07-15. Feed remains the default course landing and Production rollout remains unapproved.
+
 - Show all active Lessons without sequential locks in v1.
 - Show only the current Student's checkpoints, submitted/total progress, next task, due date, and overdue state.
 - Define progress as submitted Assignments divided by total Assignments. Opening a Material does not count as completion.
 - Show archived Lessons collapsed under "บทเรียนที่จบแล้ว".
 
 **Exit gate:** L1 privacy tests prove that no peer progress, score, attendance, or submission data is exposed.
+
+**Completion record:** Student course navigation now includes a Lesson path and per-Lesson detail. The path exposes every active Lesson without locks, collapses archived Lessons, and presents checkpoints, current-student progress, next work, due dates, and overdue state. Progress counts only submitted Assignments; Materials remain readable resources and never increase completion. The Student query selects only the caller's active Enrollment id and filters nested Submission rows by that id. Unit privacy/projection tests pass inside the full `522/522` suite, TypeScript, targeted ESLint, and the production build pass, and Playwright acceptance passed on Desktop plus iPhone 390 px in Dark, Light, and Cream without horizontal overflow. The isolated QA fixture was cleaned after acceptance; no Production schema, data, flag, route, or deployment change was made.
 
 ### B5. Feed, notifications, and route transition
 

@@ -1,5 +1,14 @@
 # HANDOFF — Beagle Classroom
 
+## LESSON WORKSPACE B4 — 2026-07-15
+
+- Student Learning Path is complete on `phase-11`: the Student course tabs now expose a dedicated Lesson list and Lesson detail while Feed remains the default course experience.
+- All active Lessons are visible without sequential locks. Archived Lessons stay collapsed under `บทเรียนที่จบแล้ว`.
+- Progress is the current Student's submitted Assignments divided by total Assignments. Opening a Material does not count as completion; the UI shows the current Student's next task, due date, overdue state, and per-Assignment status.
+- The query's L1 privacy boundary filters nested Submission rows by the caller's active Enrollment id and does not select peer progress, score, attendance, or submission data.
+- Verification passed: TypeScript, targeted ESLint, production build, unit `522/522`, and Playwright on Desktop plus iPhone 390 px. Dark, Light, and Cream visual QA passed without horizontal overflow. The temporary Neon QA fixture was removed after acceptance.
+- Production Lesson migration, backfill, flags, route cutover, and deploy remain unapproved and untouched. Next planned slice is B5 Feed/notification deep-link parity; Feed-first routing must remain unchanged until that slice passes.
+
 ## LESSON WORKSPACE B3 — 2026-07-15
 
 - Teacher Lesson workflow is complete on `phase-11`: list/detail routes, create, rename, reorder, guarded archive, empty deletion, and audited Assignment/Material moves are implemented.
@@ -7,7 +16,7 @@
 - Lesson detail shows submitted, missing, late, and pending-grading counts and links each Assignment to the existing review workspace. Missing is calculated from active enrollments only.
 - Desktop and iPhone-size QA passed on isolated Neon QA. TypeScript and production build passed; targeted Lesson tests passed 16/16.
 - Commits: `b650f52` plus the B3 acceptance follow-up. Production Lesson migration, backfill, feature flags, default-route change, and deploy remain unapproved and untouched.
-- Next planned slice is B4 Student Learning Path. Do not start Production rollout or switch Feed-first routing without a separate explicit approval.
+- B4 Student Learning Path is now complete; see the newer handoff section above. Do not start Production rollout or switch Feed-first routing without a separate explicit approval.
 
 ## LESSON WORKSPACE B2 — 2026-07-15
 

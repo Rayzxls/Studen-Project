@@ -5,6 +5,10 @@ import { Forbidden, NotFound } from "@/lib/errors";
 import { lessonWorkspaceEnabled } from "./feature-flags";
 import { lessonState, type LessonState } from "./policy";
 import { getLessonArchiveBlockers } from "./policy";
+import {
+  buildStudentLessonProjection,
+  type StudentLessonWorkspaceProjection,
+} from "./student-projection";
 
 export type LessonWorkspaceListItem = {
   id: string;
@@ -141,6 +145,77 @@ export async function getLessonWorkspaceForViewer(input: {
       assignmentCount: row._count.assignments,
       materialCount: row._count.materials,
     })),
+  };
+}
+
+/**
+ * Student-only learning path. The nested Submission filter is the L1 privacy
+ * boundary: Prisma can return only the current Enrollment's row.
+ */
+export async function getStudentLessonWorkspace(input: {
+  courseOfferingId: string;
+  studentId: string;
+  env?: NodeJS.ProcessEnv;
+  now?: Date;
+}): Promise<StudentLessonWorkspaceProjection> {
+  if (!lessonWorkspaceEnabled(input.env)) {
+    return {
+      enabled: false,
+      courseOfferingId: input.courseOfferingId,
+      lessons: [],
+    };
+  }
+
+  const course = await db.courseOffering.findUnique({
+    where: { id: input.courseOfferingId },
+    select: {
+      enrollments: {
+        where: { studentId: input.studentId, removedAt: null },
+        select: { id: true },
+        take: 1,
+      },
+    },
+  });
+  if (!course) throw new NotFound("course_not_found");
+  const enrollment = course.enrollments[0];
+  if (!enrollment) throw new Forbidden("lesson_workspace_forbidden");
+
+  const rows = await db.lesson.findMany({
+    where: { courseOfferingId: input.courseOfferingId },
+    orderBy: [{ position: "asc" }, { createdAt: "asc" }, { id: "asc" }],
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      position: true,
+      archivedAt: true,
+      materials: {
+        where: { deletedAt: null },
+        orderBy: [{ postedAt: "asc" }, { id: "asc" }],
+        select: { id: true, title: true, postedAt: true },
+      },
+      assignments: {
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          dueAt: true,
+          createdAt: true,
+          submissions: {
+            where: { enrollmentId: enrollment.id },
+            select: { status: true },
+            take: 1,
+          },
+        },
+      },
+    },
+  });
+
+  return {
+    enabled: true,
+    courseOfferingId: input.courseOfferingId,
+    lessons: buildStudentLessonProjection(rows, input.now),
   };
 }
 
