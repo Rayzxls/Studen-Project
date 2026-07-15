@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { resolve } from "node:path";
 import { prepareIsolatedDatabaseEnv } from "../tests/helpers/database-safety";
+import { prepareIsolatedServerEnv } from "./isolated-server-env";
 
 let isolatedEnv: NodeJS.ProcessEnv;
 try {
@@ -20,7 +21,7 @@ const child = spawn(
   {
     cwd: process.cwd(),
     env: {
-      ...isolatedEnv,
+      ...prepareIsolatedServerEnv(isolatedEnv),
       QA_BASE_URL: "http://localhost:3100",
       AUTH_URL: "http://localhost:3100",
       NEXTAUTH_URL: "http://localhost:3100",

@@ -1,5 +1,13 @@
 # HANDOFF — Beagle Classroom
 
+## LESSON WORKSPACE B6 ACCEPTANCE FOLLOW-UP — 2026-07-16
+
+- Teacher Lesson list is now aligned with the approved Prototype B interaction model: course header, free-form Lesson creation modal, left Lesson structure, right selected-Lesson summary, reorder controls, archived section, and direct entry to the existing real Lesson detail workspace. Announcement remains course-wide in Feed and is not presented as Lesson-owned data.
+- The previous real page was not a faithful Prototype B projection: it used an inline create form and a vertical card list. That UI was replaced; the Prototype routes remain available only as historical design references.
+- `dev:qa` now enables Lesson read/mutation flags only after `prepareIsolatedDatabaseEnv()` has replaced `DATABASE_URL` with the separately identity-checked `QA_DATABASE_URL`. Normal local `dev`, Production, default-route cutover, schema migration, and Production data remain untouched and fail closed.
+- Isolated Neon QA accepted real create flow on desktop and iPhone 390 px with no horizontal overflow. The temporary Teacher/course/Lesson fixture was deleted after the run. TypeScript, targeted ESLint, full unit `542/542`, and the Production build passed.
+- To test safely, use `pnpm dev:qa`, open `http://localhost:3100`, sign in with a QA Teacher, enter a course, open `บทเรียน`, and press `สร้างบทเรียน`. Do not add Lesson flags to the normal Production-backed `.env.local` development flow.
+
 ## LESSON WORKSPACE B6 — 2026-07-15
 
 - Admin Lesson observer is implemented on `phase-11`. The Admin course shell now exposes a feature-flagged `บทเรียน` tab with aggregate list and detail routes for active or archived courses.
