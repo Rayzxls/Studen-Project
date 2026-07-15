@@ -10,6 +10,11 @@ import {
 } from "@/components/feed/course-feed-view";
 import { UnifiedComposer } from "@/components/feed/unified-composer";
 import { teacherCourseTabs } from "../_tabs";
+import {
+  getLessonWorkspaceForViewer,
+  lessonWorkspaceEnabled,
+  lessonWorkspaceMutationsEnabled,
+} from "@/lib/lesson";
 
 // Auth-gated DB-fetching page — skip static prerender.
 export const dynamic = "force-dynamic";
@@ -38,6 +43,16 @@ export default async function TeacherCourseFeedPage({
   const filter = normalizeFilter(type);
   const kindFilter = feedKindsForFilter(filter);
   const page = await getCourseFeed(id, undefined, kindFilter ?? undefined);
+  const lessonWorkspace = lessonWorkspaceEnabled()
+    ? await getLessonWorkspaceForViewer({
+        courseOfferingId: id,
+        viewer: { id: session.user.id, role: session.user.role },
+      })
+    : null;
+  const lessonOptions =
+    lessonWorkspace?.lessons
+      .filter((lesson) => lesson.state === "ACTIVE")
+      .map((lesson) => ({ id: lesson.id, title: lesson.title })) ?? [];
 
   return (
     <CourseShell
@@ -49,7 +64,11 @@ export default async function TeacherCourseFeedPage({
     >
       <div className="space-y-4">
         <div className="flex items-center justify-end">
-          <UnifiedComposer courseId={id} />
+          <UnifiedComposer
+            courseId={id}
+            lessonOptions={lessonOptions}
+            requireLesson={lessonWorkspaceMutationsEnabled()}
+          />
         </div>
         <CourseFeedView
           items={page.items}

@@ -30,6 +30,7 @@ const LinkUrlSchema = z
 
 export const CreateMaterialSchema = z.object({
   courseOfferingId: z.string().min(1),
+  lessonId: z.string().min(1).nullable().optional(),
   title: z.string().trim().min(TITLE_MIN).max(TITLE_MAX),
   body: z.string().max(BODY_MAX),
   fileAttachmentIds: z.array(z.string().min(1)).default([]),
@@ -39,6 +40,7 @@ export const CreateMaterialSchema = z.object({
 export type CreateMaterialInput = z.infer<typeof CreateMaterialSchema>;
 
 export const UpdateMaterialSchema = z.object({
+  lessonId: z.string().min(1).nullable().optional(),
   title: z.string().trim().min(TITLE_MIN).max(TITLE_MAX).optional(),
   body: z.string().max(BODY_MAX).optional(),
   fileAttachmentIds: z.array(z.string().min(1)).optional(),
