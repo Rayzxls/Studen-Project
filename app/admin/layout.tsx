@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth/guards";
 import { TopNav } from "@/components/layout/top-nav";
 import { AdminSidebar } from "@/components/admin-sidebar";
+import { moderationCenterEnabled } from "@/lib/moderation/feature-flags";
 
 // Auth-gated DB-fetching layout — skip static prerender so CI build does
 // not try to connect to a real Postgres at localhost:5432.
@@ -24,7 +25,7 @@ export default async function AdminLayout({
       <TopNav session={session} showBell={false} showRoleBadge />
 
       <div className="flex">
-        <AdminSidebar />
+        <AdminSidebar showModeration={moderationCenterEnabled()} />
         <main className="min-w-0 flex-1">{children}</main>
       </div>
     </div>

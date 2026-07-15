@@ -15,6 +15,7 @@ import { ReviewPanel } from "@/components/assignment/review-panel";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { SubmissionFilePreview } from "@/components/assignment/submission-file-preview";
 import { SafeExternalLinkButton } from "@/components/link/safe-external-link-button";
+import { getModerationRestriction } from "@/lib/moderation/queries";
 
 /**
  * Teacher Assignment Review Workspace — Phase 11.
@@ -159,6 +160,7 @@ export default async function AssignmentReviewWorkspacePage({
       }),
     ]);
   if (!assignment) notFound();
+  if (await getModerationRestriction("ASSIGNMENT", assignment.id)) notFound();
 
   const enrollmentMap = new Map<string, (typeof activeEnrollments)[number]>();
   for (const e of activeEnrollments) enrollmentMap.set(e.id, e);

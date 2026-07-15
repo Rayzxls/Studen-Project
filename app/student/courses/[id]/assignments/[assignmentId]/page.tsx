@@ -22,6 +22,7 @@ import { CommentsThread } from "@/components/comment/comments-thread";
 import { ensureSubmission } from "@/lib/assignment/submission";
 import { AssignmentAttachmentGallery } from "@/components/assignment/assignment-attachment-gallery";
 import { SafeExternalLinkButton } from "@/components/link/safe-external-link-button";
+import { getModerationRestriction } from "@/lib/moderation/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -113,6 +114,7 @@ export default async function StudentAssignmentDetailPage({
     },
   });
   if (!assignment || assignment.courseOfferingId !== courseId) notFound();
+  if (await getModerationRestriction("ASSIGNMENT", assignment.id)) notFound();
 
   const assignmentFileIds = jsonStringArray(assignment.fileAttachmentIds);
   const assignmentFileRows =

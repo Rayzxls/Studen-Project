@@ -33,6 +33,17 @@
 
 **แผนอ้างอิงหลัก:** `docs/NEXT-DEVELOPMENT-PLAN.md`
 
+**A4 Moderation Center implementation update (2026-07-15):** เพิ่ม Moderation
+Center แบบ case-based หลัง feature flag `MODERATION_CENTER_ENABLED=1` แล้ว รองรับ
+report aggregation/dedup สำหรับ Announcement, Material, Assignment, Comment,
+File Attachment และ Profile Image; มี immutable snapshot, event timeline,
+temporary hide/quarantine, restore, resolve/dismiss และ one-time owner appeal.
+ข้อจำกัดถูก enforce ที่ Feed/detail, signed-file route, attachment projection และ
+profile-image delivery โดยไม่แตะคะแนน การเข้าเรียน submission หรือสิทธิ์สอนของ
+Admin. Additive migration ลงเฉพาะ Neon QA, integration flow ผ่าน 1/1 และ policy
+unit ผ่าน 5/5; Production ยังไม่ได้ migrate/enable และต้องขอ approval แยก พร้อม
+manual theme/mobile/private-R2 acceptance ก่อน rollout.
+
 **A4 Account Lifecycle implementation update (2026-07-15):** Neon QA ผ่าน
 additive migration/backfill แล้ว (latest verifier: `ACTIVE` 12, mismatch 0,
 lifecycle history 0 หลัง test cleanup) และเพิ่ม transaction

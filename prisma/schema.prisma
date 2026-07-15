@@ -76,6 +76,10 @@ model User {
   announcementsPosted     Announcement[]          @relation("AnnouncementAuthor") // Phase 7
   lifecycleEventsAsTarget AccountLifecycleEvent[] @relation("LifecycleTarget")
   lifecycleEventsAsActor  AccountLifecycleEvent[] @relation("LifecycleActor")
+  moderationReports       ModerationReport[]      @relation("ModerationReporter")
+  moderationCasesOwned    ModerationCase[]        @relation("ModerationOwner")
+  moderationCasesReviewed ModerationCase[]        @relation("ModerationReviewer")
+  moderationEventsAsActor ModerationCaseEvent[]   @relation("ModerationEventActor")
 
   @@index([role])
   @@index([accountStatus])
@@ -95,6 +99,113 @@ model AccountLifecycleEvent {
   createdAt    DateTime      @default(now())
 
   @@index([targetUserId, createdAt])
+  @@index([actorUserId, createdAt])
+}
+
+enum ModerationTargetType {
+  COMMENT
+  ANNOUNCEMENT
+  MATERIAL
+  ASSIGNMENT
+  FILE_ATTACHMENT
+  PROFILE_IMAGE
+}
+
+enum ModerationCaseStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+  DISMISSED
+  APPEALED
+}
+
+enum ModerationReportCategory {
+  HARASSMENT
+  INAPPROPRIATE_CONTENT
+  PRIVACY
+  COPYRIGHT
+  SPAM
+  OTHER
+}
+
+enum ModerationRestrictionKind {
+  HIDDEN
+  QUARANTINED
+}
+
+enum ModerationCaseEventType {
+  REPORT_ADDED
+  REVIEW_STARTED
+  TEMPORARILY_RESTRICTED
+  RESTRICTION_RESTORED
+  RESOLVED
+  DISMISSED
+  APPEAL_SUBMITTED
+}
+
+model ModerationCase {
+  id               String                     @id @default(cuid())
+  activeKey        String?                    @unique
+  targetType       ModerationTargetType
+  targetId         String
+  targetLabel      String
+  targetSnapshot   Json
+  courseOfferingId String?
+  ownerUserId      String?
+  ownerUser        User?                      @relation("ModerationOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
+  status           ModerationCaseStatus       @default(OPEN)
+  reportCount      Int                        @default(0)
+  priority         Int                        @default(0)
+  restrictionKind  ModerationRestrictionKind?
+  restrictedAt     DateTime?
+  restrictedById   String?
+  restrictedReason String?
+  decisionSummary  String?
+  userMessage      String?
+  resolvedAt       DateTime?
+  resolvedById     String?
+  resolvedBy       User?                      @relation("ModerationReviewer", fields: [resolvedById], references: [id], onDelete: SetNull)
+  appealDeadline   DateTime?
+  appealUsed       Boolean                    @default(false)
+  createdAt        DateTime                   @default(now())
+  updatedAt        DateTime                   @updatedAt
+
+  reports ModerationReport[]
+  events  ModerationCaseEvent[]
+
+  @@index([status, priority, createdAt])
+  @@index([targetType, targetId])
+  @@index([courseOfferingId, status])
+  @@index([ownerUserId, status])
+}
+
+model ModerationReport {
+  id         String                   @id @default(cuid())
+  caseId     String
+  case       ModerationCase           @relation(fields: [caseId], references: [id], onDelete: Restrict)
+  reporterId String
+  reporter   User                     @relation("ModerationReporter", fields: [reporterId], references: [id], onDelete: Restrict)
+  category   ModerationReportCategory
+  details    String
+  createdAt  DateTime                 @default(now())
+
+  @@unique([caseId, reporterId])
+  @@index([reporterId, createdAt])
+}
+
+model ModerationCaseEvent {
+  id          String                  @id @default(cuid())
+  caseId      String
+  case        ModerationCase          @relation(fields: [caseId], references: [id], onDelete: Restrict)
+  actorUserId String
+  actorUser   User                    @relation("ModerationEventActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+  type        ModerationCaseEventType
+  reason      String?
+  userMessage String?
+  metadata    Json?
+  createdAt   DateTime                @default(now())
+
+  @@index([caseId, createdAt])
   @@index([actorUserId, createdAt])
 }
 

@@ -5,6 +5,12 @@ import { db } from "@/lib/db/client";
 import { COMMENT_EDIT_WINDOW_MS } from "@/lib/assignment/constants";
 import { formatNotificationTime } from "@/lib/notification/time-format";
 import { UserAvatar } from "@/components/profile/user-avatar";
+import { ReportContentButton } from "@/components/moderation/report-content-button";
+import {
+  getModerationRestrictions,
+  moderationTargetKey,
+} from "@/lib/moderation/queries";
+import { moderationCenterEnabled } from "@/lib/moderation/feature-flags";
 import { CommentComposer } from "./composer";
 import { EditCommentDialog } from "./edit-comment-dialog";
 import { SelfDeleteCommentButton } from "./delete-comment-button";
@@ -94,6 +100,12 @@ export async function CommentsThread({
   ]);
 
   const courseTeacherId = courseTeacherIdRow?.teacherId ?? null;
+  const restrictions = await getModerationRestrictions(
+    comments.map((comment) => ({
+      targetType: "COMMENT" as const,
+      targetId: comment.id,
+    }))
+  );
   const isModerator =
     (role === "TEACHER" && session.user.id === courseTeacherId) ||
     role === "ADMIN";
@@ -182,7 +194,10 @@ export async function CommentsThread({
         >
           {comments.map((c) => {
             const isOwn = c.authorId === session.user.id;
-            const isAlive = c.deletedAt === null;
+            const isRestricted = restrictions.has(
+              moderationTargetKey("COMMENT", c.id)
+            );
+            const isAlive = c.deletedAt === null && !isRestricted;
             const withinEditWindow =
               isAlive &&
               now.getTime() - c.createdAt.getTime() < COMMENT_EDIT_WINDOW_MS;
@@ -245,6 +260,10 @@ export async function CommentsThread({
                       >
                         {c.body}
                       </p>
+                    ) : isRestricted ? (
+                      <p className="mt-1 text-sm italic text-ink-soft">
+                        ความคิดเห็นนี้ถูกซ่อนระหว่างการตรวจสอบ
+                      </p>
                     ) : (
                       <p className="mt-1 text-sm italic text-black/40">
                         ข้อความนี้ถูกลบ
@@ -275,6 +294,13 @@ export async function CommentsThread({
                         <ModerateDeleteCommentDialog
                           commentId={c.id}
                           revalidate={revalidate}
+                        />
+                      )}
+                      {moderationCenterEnabled() && !isOwn && (
+                        <ReportContentButton
+                          targetType="COMMENT"
+                          targetId={c.id}
+                          compact
                         />
                       )}
                     </div>

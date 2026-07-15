@@ -57,16 +57,17 @@ model or button exists.
 
 ## 4. Moderation coverage
 
+The first central Moderation Center slice was implemented and verified on isolated Neon QA on 2026-07-15. It is feature-flagged and has not been migrated or enabled in Production.
+
 | Content type | Status | Current rule and remaining boundary |
 | --- | --- | --- |
-| Class-wide and private Comment | **Shipped** | Author self-delete is soft; owning Teacher and Admin moderation require a reason and audit. Admin private-comment moderation escalates audit tier. |
-| Announcement | **Shipped** | Owning Teacher soft-deletes with a reason, notification suppression, and audit evidence. Admin remains a read-only Course observer. |
-| Material | **Shipped** | Same owner-only soft-delete posture as Announcement, with reason and audit evidence. |
-| Profile image | **Shipped** | Owner can replace/remove; Admin can reset only the image as an audited moderation exception. |
-| Assignment | **Deferred - A4 Content Retention** | Current delete is a physical delete and can cascade Submission/Version history when not blocked by scoring rules. Replace this with an archive/retention decision before calling Assignment moderation complete. |
-| Submission attachment/file | **Deferred - A4 Content Retention** | Schema supports soft-delete metadata, but there is no complete moderator hide/delete/restore UI and evidence flow for every owner type. |
-| Restore/appeal workflow | **Deferred - post-Core moderation release** | Deleted comments/announcements/materials preserve evidence but there is no user-facing restore or appeal workflow. |
-| Unified moderation queue | **Removed from current Proposal** | Permission, retention, reason, and audit rules are mandatory; a central queue is optional and should be added only when operating volume justifies it. |
+| Class-wide and private Comment | **QA-implemented** | Existing Teacher moderation remains; authenticated reports can aggregate into an Admin case with snapshot, temporary hide, restore, decision, audit, and owner appeal. |
+| Announcement and Material | **QA-implemented** | Owner soft-delete remains separate. Admin may restrict policy/safety content through a case without gaining Teacher editing privileges. |
+| Assignment content | **Partial** | Admin case restriction is QA-implemented and never mutates scores/submissions. The older destructive owner delete path still needs archive-first replacement before content retention is complete. |
+| File Attachment | **QA-implemented** | A quarantined file is removed from normal attachment projection and denied before signed delivery; Admin retains evidence access. Private-R2 manual acceptance remains open. |
+| Profile image | **QA-implemented** | Existing audited avatar reset remains. A moderation restriction makes normal delivery fall back to the default avatar while preserving evidence for Admin review. |
+| Restore/appeal workflow | **QA-implemented** | Admin can restore/dismiss temporary restrictions; the content owner gets one appeal within seven days and the case returns to review. |
+| Unified moderation queue | **QA-implemented** | Admin-only Active/History/All queue with reports, immutable snapshot, timeline, restrictions, and decisions. Production rollout remains unapproved. |
 
 ## 5. Profile scope
 
@@ -85,14 +86,18 @@ model or button exists.
    mobile/theme, QR handoff, and private R2 acceptance before release sign-off.
 2. **A3.1 correctness and UI consistency:** closed for Admin headcount semantics
    and identity-rich avatar surfaces. Keep dense operational tables text-first.
-3. **A4 Account and Content Retention:** design account transitions and replace
-   destructive Assignment deletion before exposing more lifecycle controls.
+3. **A4 Account and Content Retention:** Account Lifecycle and the first
+   Moderation Center slice pass isolated QA. Replace destructive Assignment
+   deletion, complete manual moderation acceptance, then request a separate
+   production migration/feature-flag approval.
 4. **Release B Lesson Workspace:** begin only after A2 is green and A3.1/A4
    decisions are recorded. Keep the existing Feed as the chronological view.
 
 ## Audit conclusion
 
 The current Proposal may claim the operational dashboards, QR/invite core, and
-minimal Profile as shipped. It must not claim advanced analytics, complete User
-CRUD/lifecycle, full-content moderation, or a full personal-information profile.
-Those boundaries are now explicit rather than "probably complete".
+minimal Profile as shipped. It may describe Account Lifecycle and central
+Moderation as QA-implemented behind disabled production flags, but not as
+Production-shipped. It must not claim advanced analytics, irreversible User
+lifecycle completion, automatic content purge, or a full personal-information
+profile. Those boundaries are explicit rather than "probably complete".

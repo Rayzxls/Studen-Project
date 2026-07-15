@@ -19,6 +19,10 @@
 import { db } from "@/lib/db/client";
 import type { Session } from "@/lib/auth/permissions";
 import { getCourseScopeForUser } from "./scope";
+import {
+  getModerationRestrictions,
+  moderationTargetKey,
+} from "@/lib/moderation/queries";
 
 export type FeedKind =
   | "ASSIGNMENT"
@@ -49,6 +53,8 @@ export interface FeedItem {
   attachments?: FeedAttachment[];
   /** Reference links rendered inline in course feed cards. */
   linkUrls?: string[];
+  /** Active moderation overlay. Restricted content renders a placeholder. */
+  moderationRestriction?: "HIDDEN" | "QUARANTINED" | null;
 }
 
 export interface FeedAttachment {
@@ -286,6 +292,24 @@ async function aggregateFeed(
         })
       : [];
   const fileById = new Map(fileRows.map((file) => [file.id, file]));
+  const restrictions = await getModerationRestrictions([
+    ...assignments.map((item) => ({
+      targetType: "ASSIGNMENT" as const,
+      targetId: item.id,
+    })),
+    ...materials.map((item) => ({
+      targetType: "MATERIAL" as const,
+      targetId: item.id,
+    })),
+    ...announcements.map((item) => ({
+      targetType: "ANNOUNCEMENT" as const,
+      targetId: item.id,
+    })),
+    ...fileRows.map((item) => ({
+      targetType: "FILE_ATTACHMENT" as const,
+      targetId: item.id,
+    })),
+  ]);
 
   const merged: FeedItem[] = [
     ...assignments.map(
@@ -300,8 +324,14 @@ async function aggregateFeed(
         authorName: teacherFullName(a.course?.teacher),
         authorUserId: a.course?.teacher?.userId ?? null,
         authorHasAvatar: Boolean(a.course?.teacher?.user.profileImageId),
-        attachments: attachmentsFor(a.fileAttachmentIds, fileById),
+        attachments: attachmentsFor(
+          a.fileAttachmentIds,
+          fileById,
+          restrictions
+        ),
         linkUrls: jsonStringArray(a.linkUrls),
+        moderationRestriction:
+          restrictions.get(moderationTargetKey("ASSIGNMENT", a.id)) ?? null,
         attachmentCount:
           jsonArrayLength(a.fileAttachmentIds) + jsonArrayLength(a.linkUrls),
       })
@@ -319,8 +349,14 @@ async function aggregateFeed(
           adminFullName(m.postedBy?.admin),
         authorUserId: m.postedBy?.id ?? null,
         authorHasAvatar: Boolean(m.postedBy?.profileImageId),
-        attachments: attachmentsFor(m.fileAttachmentIds, fileById),
+        attachments: attachmentsFor(
+          m.fileAttachmentIds,
+          fileById,
+          restrictions
+        ),
         linkUrls: jsonStringArray(m.linkUrls),
+        moderationRestriction:
+          restrictions.get(moderationTargetKey("MATERIAL", m.id)) ?? null,
         attachmentCount:
           jsonArrayLength(m.fileAttachmentIds) + jsonArrayLength(m.linkUrls),
       })
@@ -338,8 +374,14 @@ async function aggregateFeed(
           adminFullName(an.postedBy?.admin),
         authorUserId: an.postedBy?.id ?? null,
         authorHasAvatar: Boolean(an.postedBy?.profileImageId),
-        attachments: attachmentsFor(an.fileAttachmentIds, fileById),
+        attachments: attachmentsFor(
+          an.fileAttachmentIds,
+          fileById,
+          restrictions
+        ),
         linkUrls: jsonStringArray(an.linkUrls),
+        moderationRestriction:
+          restrictions.get(moderationTargetKey("ANNOUNCEMENT", an.id)) ?? null,
         attachmentCount:
           jsonArrayLength(an.fileAttachmentIds) + jsonArrayLength(an.linkUrls),
       })
@@ -440,9 +482,15 @@ function attachmentsFor(
       sizeBytes: number;
       mimeType: string;
     }
-  >
+  >,
+  restrictions: Map<string, "HIDDEN" | "QUARANTINED">
 ): FeedAttachment[] {
   return jsonStringArray(rawIds)
+    .filter(
+      (id) =>
+        restrictions.get(moderationTargetKey("FILE_ATTACHMENT", id)) !==
+        "QUARANTINED"
+    )
     .map((id) => fileById.get(id))
     .filter((file): file is FeedAttachment => Boolean(file));
 }

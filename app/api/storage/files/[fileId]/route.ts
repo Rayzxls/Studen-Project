@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { assert, requireAuth } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { Forbidden, NotFound, errorResponse } from "@/lib/errors";
+import { getModerationRestriction } from "@/lib/moderation/queries";
 import {
   buildContentDisposition,
   type FileOwnerTypeLiteral,
@@ -35,7 +36,15 @@ export async function GET(_req: Request, { params }: RouteProps) {
     });
     if (!file) throw new NotFound("file_not_found");
 
-    await assertCanReadFile(file.ownerType, file.ownerId);
+    const session = await requireAuth();
+    await assertCanReadFile(file.ownerType, file.ownerId, session.user);
+    const restriction = await getModerationRestriction(
+      "FILE_ATTACHMENT",
+      file.id
+    );
+    if (restriction && session.user.role !== "ADMIN") {
+      throw new Forbidden("file_temporarily_restricted");
+    }
 
     const disposition = buildContentDisposition({
       filename: file.originalFilename,
@@ -69,7 +78,8 @@ export async function GET(_req: Request, { params }: RouteProps) {
 
 async function assertCanReadFile(
   ownerType: FileOwnerTypeLiteral,
-  ownerId: string
+  ownerId: string,
+  actor: { id: string; role: "ADMIN" | "TEACHER" | "STUDENT" }
 ): Promise<void> {
   if (ownerType === "SUBMISSION") {
     await assert.canViewSubmission(ownerId);
@@ -84,7 +94,11 @@ async function assertCanReadFile(
       },
     });
     if (!row) throw new NotFound("assignment_not_found");
-    await assertCanReadCourseFile(row.courseOfferingId, row.course.teacherId);
+    await assertCanReadCourseFile(
+      row.courseOfferingId,
+      row.course.teacherId,
+      actor
+    );
     return;
   }
   if (ownerType === "MATERIAL") {
@@ -96,7 +110,11 @@ async function assertCanReadFile(
       },
     });
     if (!row) throw new NotFound("material_not_found");
-    await assertCanReadCourseFile(row.courseOfferingId, row.course.teacherId);
+    await assertCanReadCourseFile(
+      row.courseOfferingId,
+      row.course.teacherId,
+      actor
+    );
     return;
   }
   if (ownerType === "ANNOUNCEMENT") {
@@ -108,7 +126,11 @@ async function assertCanReadFile(
       },
     });
     if (!row) throw new NotFound("announcement_not_found");
-    await assertCanReadCourseFile(row.courseOfferingId, row.course.teacherId);
+    await assertCanReadCourseFile(
+      row.courseOfferingId,
+      row.course.teacherId,
+      actor
+    );
     return;
   }
   throw new Forbidden("file_owner_type_not_readable");
@@ -116,16 +138,16 @@ async function assertCanReadFile(
 
 async function assertCanReadCourseFile(
   courseOfferingId: string,
-  teacherId: string
+  teacherId: string,
+  actor: { id: string; role: "ADMIN" | "TEACHER" | "STUDENT" }
 ): Promise<void> {
-  const session = await requireAuth();
-  if (session.user.role === "ADMIN") return;
-  if (session.user.role === "TEACHER" && session.user.id === teacherId) return;
-  if (session.user.role === "STUDENT") {
+  if (actor.role === "ADMIN") return;
+  if (actor.role === "TEACHER" && actor.id === teacherId) return;
+  if (actor.role === "STUDENT") {
     const enrollment = await db.enrollment.findUnique({
       where: {
         studentId_courseOfferingId: {
-          studentId: session.user.id,
+          studentId: actor.id,
           courseOfferingId,
         },
       },

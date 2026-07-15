@@ -1,6 +1,6 @@
 # Moderation and content retention matrix
 
-Decision status: approved for implementation planning on 2026-07-14. No schema or production data mutation is authorized by this document.
+Decision status: approved on 2026-07-14. The first operational Moderation Center slice was implemented and verified on an isolated Neon QA branch on 2026-07-15. Its additive production migration and feature enablement remain unapproved.
 
 | Entity | Normal owner action | Moderation action | History and restore | Score/attendance effect |
 |---|---|---|---|---|
@@ -17,9 +17,13 @@ Decision status: approved for implementation planning on 2026-07-14. No schema o
 
 Statuses: `OPEN -> IN_REVIEW -> RESOLVED | DISMISSED`, with `RESOLVED -> APPEALED -> IN_REVIEW` for one appeal submitted within seven days.
 
-Tabs: Account Requests, Content Reports, Files and Profile Safety, and Decision History. Users may report only entities they can already access. Reports are authenticated, deduplicated per reporter/entity, and aggregated by entity. Report count affects priority only, never the decision automatically.
+The Admin queue exposes Active, History, and All views. Users may report only entities they can already access. Reports are authenticated, deduplicated per reporter/entity, and aggregated by entity. Report count affects priority only, never the decision automatically.
 
 Temporary hide during review requires reason and audit. Dismissal restores a temporary hide. Resolution notifies the content owner with a safe user-facing explanation and tells reporters only whether action was taken or no violation was found. Reporter identity is visible to Admin but never disclosed to the reported user.
+
+The QA implementation supports Announcement, Material, Assignment, Comment, File Attachment, and Profile Image targets. Every case stores an immutable target snapshot, an event timeline, reports, restriction state, and one owner appeal. Restricted posts/comments disappear from normal Feed/detail surfaces; restricted files fail closed before signing; restricted profile images fall back to the default avatar. Admin moderation never changes scores, attendance, submissions, or teaching workflow.
+
+Existing Teacher comment moderation remains the fast classroom-level tool. The central Moderation Center is an Admin-only policy and safety workflow; it does not turn Admin into a Teacher and does not absorb Account Lifecycle requests in this first slice.
 
 ## Retention safety
 
