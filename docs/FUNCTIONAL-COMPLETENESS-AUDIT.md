@@ -90,8 +90,11 @@ The first central Moderation Center slice was implemented and verified on isolat
    Moderation Center slice pass isolated QA. Replace destructive Assignment
    deletion, complete manual moderation acceptance, then request a separate
    production migration/feature-flag approval.
-4. **Release B Lesson Workspace:** begin only after A2 is green and A3.1/A4
-   decisions are recorded. Keep the existing Feed as the chronological view.
+4. **Release B Lesson Workspace:** B1 additive persistence, read projection,
+   permissions, feature flags, and audit contracts pass isolated Neon QA.
+   Continue with B2 only after reviewing its dry-run/backfill plan. Keep the
+   existing Feed as the chronological view and do not migrate Production
+   without separate approval.
 
 ## Audit conclusion
 

@@ -25,6 +25,7 @@
     "db:migrate:qa:status": "dotenv -e .env.local -- tsx scripts/run-isolated-prisma.ts status",
     "db:migrate:qa:deploy": "dotenv -e .env.local -- tsx scripts/run-isolated-prisma.ts deploy",
     "db:migrate:qa:verify-account-status": "dotenv -e .env.local -- tsx scripts/verify-account-status-backfill.ts",
+    "db:migrate:qa:verify-lesson-foundation": "dotenv -e .env.local -- tsx scripts/verify-lesson-workspace-foundation.ts",
     "db:studio": "dotenv -e .env.local -- prisma studio",
     "db:push": "dotenv -e .env.local -- prisma db push",
     "db:seed": "dotenv -e .env.local -- tsx prisma/seed.ts",

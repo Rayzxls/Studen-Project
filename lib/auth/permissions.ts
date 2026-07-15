@@ -74,6 +74,49 @@ export const can = {
   },
 
   /**
+   * Read a CourseOffering's Lesson Workspace.
+   *
+   * - owning Teacher: active CourseOffering only;
+   * - actively enrolled Student: active CourseOffering only;
+   * - Admin: read-only observer, including archived CourseOfferings.
+   *
+   * The projection passed here contains only the caller's own Enrollment,
+   * so this predicate cannot expose peer progress or membership.
+   */
+  viewLessonWorkspace(
+    session: Session,
+    scope: {
+      teacherId: string;
+      archivedAt: Date | null;
+      enrollment: { studentId: string; removedAt: Date | null } | null;
+    }
+  ): boolean {
+    if (session.user.role === "ADMIN") return true;
+    if (scope.archivedAt !== null) return false;
+    if (session.user.role === "TEACHER") {
+      return session.user.id === scope.teacherId;
+    }
+    if (session.user.role === "STUDENT") {
+      return (
+        scope.enrollment !== null &&
+        scope.enrollment.removedAt === null &&
+        session.user.id === scope.enrollment.studentId
+      );
+    }
+    return false;
+  },
+
+  /** Owning Teacher may mutate Lesson structure in an active CourseOffering. */
+  mutateLesson(
+    session: Session,
+    lesson: { course: { teacherId: string; archivedAt: Date | null } }
+  ): boolean {
+    if (session.user.role !== "TEACHER") return false;
+    if (lesson.course.archivedAt !== null) return false;
+    return session.user.id === lesson.course.teacherId;
+  },
+
+  /**
    * Student has an active (non-removed) Enrollment in the given course.
    * Pure predicate — caller fetches `enrollment.studentId` and
    * `enrollment.removedAt` and passes them in. ADR-0013 soft-delete:

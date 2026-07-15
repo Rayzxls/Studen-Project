@@ -1,5 +1,17 @@
 # HANDOFF — Beagle Classroom
 
+## LESSON WORKSPACE B1 — 2026-07-15
+
+- Implemented the additive Lesson domain under `CourseOffering`.
+- `Assignment.lessonId` and `Material.lessonId` are nullable and use `ON DELETE SET NULL`; `Announcement` remains course-wide.
+- Added fail-closed read/mutation/default-route flags. No Lesson UI, mutation route, backfill, Feed replacement, or default-route change is included in B1.
+- Owning Teacher may mutate active Lesson structure, active Student enrollment may read, and Admin is a read-only observer including archived courses.
+- Added Important audit contracts for archive, empty deletion, and content moves. Fire sites are reserved for B3 mutations.
+- Applied migration `20260715030000_add_lesson_workspace_foundation` to isolated Neon QA only. Verification: Lesson 0, linked legacy content 0, cross-course links 0, schema current.
+- Verification passed: unit 507/507, TypeScript, targeted B1 ESLint, and Prisma generation. Full-repo ESLint still scans generated `.next-qa` and bundled `.claude` skill files; use targeted lint until ignore coverage is corrected separately.
+- Production Lesson migration and all Lesson flags remain unapproved/off. Do not migrate Production or start B2 backfill without a separate explicit decision.
+- Moderation Center flag was enabled manually in Vercel on 2026-07-15; authenticated role/theme/mobile/private-R2 acceptance is still open and must not be described as fully accepted.
+
 ## 🚀 PRODUCTION OPS — 2026-06-13 ล่าสุด (อ่านก่อนสุด)
 
 > รอบนี้ **ปล่อยขึ้น production จริงแล้ว** + ตั้ง R2 + แก้ perf — สรุปให้ Codex/session ใหม่ตามทัน

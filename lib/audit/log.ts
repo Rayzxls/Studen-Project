@@ -35,6 +35,10 @@ export type AuditEvent =
   | "COURSE_MEMBER_REMOVED"
   | "COURSE_MEMBER_RESTORED_BY_REJOIN"
   | "COURSE_OFFERING_ARCHIVED"
+  // Lesson Workspace (Release B) — creation/rename/reorder are Verbose.
+  | "LESSON_ARCHIVED" // Important · reason required when B3 exposes mutation
+  | "LESSON_DELETED" // Important · only an empty Lesson may be hard-deleted
+  | "LESSON_CONTENT_MOVED" // Important · preserves content id/history
   // Scoring (Phase 5) — past-tense per Pattern 10; pre-publish CUD not audited (Verbose tier)
   | "SCORE_ITEM_PUBLISHED"
   | "SCORE_EDIT_AFTER_PUBLISH"

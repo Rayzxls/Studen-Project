@@ -32,6 +32,14 @@ describe("actionLabel", () => {
     expect(actionLabel("PASSWORD_RESET_BY_ADMIN")).toBe("Admin รีเซ็ตรหัสผ่าน");
   });
 
+  it("translates Lesson Workspace events", () => {
+    expect(actionLabel("LESSON_ARCHIVED")).toBe("เก็บบทเรียนเข้าคลัง");
+    expect(actionLabel("LESSON_DELETED")).toBe("ลบบทเรียนว่าง");
+    expect(actionLabel("LESSON_CONTENT_MOVED")).toBe(
+      "ย้ายเนื้อหาระหว่างบทเรียน"
+    );
+  });
+
   it("falls back to raw enum literal for unknown action (defensive)", () => {
     // Cast through unknown to feign a label-table miss.
     const unknown = "BRAND_NEW_EVENT_NOT_LABELLED" as never;

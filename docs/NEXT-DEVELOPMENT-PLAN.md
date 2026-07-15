@@ -2,7 +2,7 @@
 
 **Updated:** 2026-07-15
 **Sequence:** Core completion -> Lesson Workspace -> Quiz -> Identity/Integrations -> AI -> Optional product modules  
-**Current state:** A0 Documentation Alignment, A1 Report/Export v1, the A2 automated QA gate, and A3/A3.1 static correctness work are complete. A2 manual acceptance remains open. A4 Account Lifecycle and the first operational Moderation Center slice now have additive persistence, isolated Neon QA migrations/integration tests, audited transactions, and feature-flagged Admin surfaces. Production code and schema migrations shipped on 2026-07-15; behavior enablement remains pending Vercel flags and post-cutover smoke testing. The Lesson Workspace prototype is approved as a direction reference, but production development has not been approved yet.
+**Current state:** A0 Documentation Alignment, A1 Report/Export v1, the A2 automated QA gate, and A3/A3.1 static correctness work are complete. A2 manual acceptance remains open. A4 Account Lifecycle and the first operational Moderation Center slice have additive persistence, audited transactions, and feature-flagged Admin surfaces; Moderation behavior has been enabled in Vercel, while authenticated role/theme/mobile/private-R2 acceptance remains open. Lesson Workspace B1 is implemented and migrated on isolated Neon QA only. Its flags remain fail-closed, no UI/default route changed, and Production has not received the Lesson migration.
 
 ## Why this order
 
@@ -266,7 +266,7 @@ Status: decision lock completed 2026-07-14. The first operational slice was impl
 
 ### B0. Decision lock and prototype baseline
 
-Status: design direction approved, implementation not started.
+Status: design direction approved. The B1 foundation is implemented and verified on isolated Neon QA; B2 and later workflow/UI slices have not started.
 
 - Teacher experience: Variant B split workspace.
 - Student experience: Variant C learning path with a checkpoint for each topic.
@@ -276,12 +276,16 @@ Status: design direction approved, implementation not started.
 
 ### B1. Additive domain foundation
 
+Status: implemented and verified on isolated Neon QA on 2026-07-15. Production migration requires a separate explicit approval.
+
 - Add a Lesson Workspace entity under CourseOffering with title, optional description, position, and archive state.
 - Add optional Lesson references to content first; do not make them required in the first schema rollout.
 - Define permissions, query projections, audit events, and feature flag behavior before exposing mutations.
 - General Announcement remains available for course-wide news.
 
 **Exit gate:** additive schema and pure permission/domain tests pass without changing current UI or default routes.
+
+**Verification record:** QA migration status is current; the invariant verifier reports zero Lessons, zero linked legacy content, and zero cross-course Assignment or Material links. Unit tests pass 507/507, TypeScript passes, and targeted B1 ESLint passes. The existing Feed remains the default experience.
 
 ### B2. Compatibility and backfill
 
