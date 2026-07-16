@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { resolve } from "node:path";
 import { prepareIsolatedDatabaseEnv } from "../tests/helpers/database-safety";
+import { prepareIsolatedServerEnv } from "./isolated-server-env";
 
 type Mode = "integration" | "all" | "e2e" | "smoke";
 
@@ -43,7 +44,7 @@ try {
 }
 
 isolatedEnv = {
-  ...isolatedEnv,
+  ...(mode === "e2e" ? prepareIsolatedServerEnv(isolatedEnv) : isolatedEnv),
   AUTH_URL: "http://localhost:3100",
   NEXTAUTH_URL: "http://localhost:3100",
   NEXT_DIST_DIR: ".next-qa",

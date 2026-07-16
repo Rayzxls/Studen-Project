@@ -1,10 +1,13 @@
 # HANDOFF — Beagle Classroom
 
-## MODERATION REPORT VISIBILITY FOLLOW-UP — 2026-07-16
+## MODERATION REPORT ACCEPTANCE FOLLOW-UP — 2026-07-16
 
 - Fixed the missing Moderation report flag on isolated QA. `dev:qa` previously enabled only Lesson Workspace flags, so port 3100 hid every `ReportContentButton` even though the Moderation schema and workflow were present. The isolated server now defaults `MODERATION_CENTER_ENABLED=1` while preserving an explicit `0` override for fail-closed acceptance checks.
-- Student Lesson detail now exposes the existing report dialog beside every Material and Assignment checkpoint. Navigation and report controls are separate interactive elements, avoiding nested links/buttons and preserving direct checkpoint access.
-- Normal Production-backed development and Production configuration were not changed. Verification passed: focused unit 2/2, full unit assertions 543/543 (the first run only failed while writing Vitest's locked cache), targeted ESLint, TypeScript, and Production build. Manual authenticated visual/report submission acceptance on port 3100 remains for the user to confirm.
+- Student Lesson detail exposes the existing report dialog beside every Material and Assignment checkpoint. Navigation and report controls are separate interactive elements, avoiding nested links/buttons and preserving direct checkpoint access.
+- Added an authenticated Playwright acceptance flow on the isolated Neon QA branch: Student in Cream theme at 390×844 reports an Assignment checkpoint, the report is aggregated into a Moderation Case, then Admin in Dark theme opens the queue item and reads the immutable evidence snapshot. The fixture and case are removed after the run.
+- Fixed a real mobile regression found by that flow: the Lesson Material/Assignment grid used an automatic min-content track and expanded a 342 px card to 489 px. The grid and content sections now use shrinkable `minmax(0,1fr)` / `min-w-0` constraints, and the E2E test asserts document width against the mobile viewport.
+- Isolated QA now explicitly uses `LESSON_WORKSPACE_PILOT_COURSE_IDS=*`. This prevents Next.js from reloading Production pilot ids from `.env.local` and rejecting newly generated QA courses, while normal development and Production values remain unchanged.
+- Verification passed: Moderation E2E 1/1, focused feature/env unit 11/11, full unit assertions before the added wildcard case 543/543, targeted ESLint, TypeScript, and Production build. Production private-R2 upload/preview and authenticated Production smoke remain separate rollout acceptance; do not describe those as completed by this local QA run.
 
 ## LESSON WORKSPACE STUDENT PROTOTYPE C PARITY — 2026-07-16
 

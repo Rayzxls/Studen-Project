@@ -13,6 +13,9 @@ export function prepareIsolatedServerEnv<T extends ServerEnv>(
       env.LESSON_WORKSPACE_MUTATIONS_ENABLED ?? "1",
     LESSON_WORKSPACE_DEFAULT_ROUTE_ENABLED:
       env.LESSON_WORKSPACE_DEFAULT_ROUTE_ENABLED ?? "0",
+    // Next.js loads .env.local again when the dev server starts. An explicit
+    // wildcard prevents Production pilot ids from being reintroduced into QA.
+    LESSON_WORKSPACE_PILOT_COURSE_IDS: "*",
     // Moderation has already been migrated to the isolated QA database. Keep
     // its user-reporting and Admin review surfaces available during QA while
     // preserving an explicit override for fail-closed acceptance checks.

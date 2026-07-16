@@ -134,7 +134,7 @@ export default async function StudentLessonDetailPage({ params }: PageProps) {
           </section>
         )}
 
-        <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-2 lg:items-start">
           <ContentSection
             icon={BookOpen}
             title="เอกสารและสื่อ"
@@ -257,7 +257,7 @@ function ContentSection({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-hairline bg-surface p-5 shadow-card">
+    <section className="min-w-0 rounded-lg border border-hairline bg-surface p-5 shadow-card">
       <div className="mb-4 flex items-start gap-3">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
           <Icon className="h-4 w-4" />

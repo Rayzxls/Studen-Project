@@ -22,6 +22,7 @@ export function lessonWorkspaceCourseEnabled(
   if (!lessonWorkspaceEnabled(env)) return false;
   const raw = env.LESSON_WORKSPACE_PILOT_COURSE_IDS;
   if (raw === undefined) return true;
+  if (raw.trim() === "*") return true;
   return raw
     .split(",")
     .map((id) => id.trim())

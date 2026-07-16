@@ -29,6 +29,15 @@ describe("Lesson Workspace feature flags", () => {
     ).toBe(true);
   });
 
+  it("enables all courses when an isolated QA server uses the wildcard", () => {
+    expect(
+      lessonWorkspaceCourseEnabled("qa-generated-course", {
+        LESSON_WORKSPACE_ENABLED: "1",
+        LESSON_WORKSPACE_PILOT_COURSE_IDS: "*",
+      })
+    ).toBe(true);
+  });
+
   it("restricts the workspace to exact course ids when a pilot allowlist is present", () => {
     const env = {
       LESSON_WORKSPACE_ENABLED: "1",
