@@ -59,11 +59,16 @@ export function ClassCodeCard({
 
       <div className="grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
         <div className="flex flex-col items-center justify-center rounded-2xl bg-white p-5 ring-1 ring-black/[0.06]">
+          {/* includeMargin bakes the 4-module quiet zone INTO the white SVG
+              itself — the dark/cream themes remap the surrounding .bg-white
+              tile to a dark surface, which otherwise leaves the QR with no
+              quiet zone and makes camera scanning fail (spec requires >= 4
+              light modules around the symbol). */}
           <QRCodeSVG
             value={inviteUrl}
             size={180}
             level="M"
-            includeMargin={false}
+            includeMargin
             fgColor="#111827"
             bgColor="#FFFFFF"
             title={`QR เข้าร่วมห้อง ${courseName}`}
