@@ -33,10 +33,16 @@ export default async function CourseSettingsPage({ params }: PageProps) {
   ]);
   if (!course) notFound();
 
+  // Invite links + the QR payload must be absolute. If neither explicit env
+  // is set, fall back to Vercel's system-provided production domain before
+  // localhost — otherwise a missing env var silently ships localhost invite
+  // QR codes to students (bare domain, no protocol, per Vercel docs).
   const appUrl = (
     process.env.AUTH_URL ??
     process.env.NEXT_PUBLIC_APP_URL ??
-    "http://localhost:3000"
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : "http://localhost:3000")
   ).replace(/\/$/, "");
   const inviteStatus = getClassCodeInviteStatus(course);
   const codeExpiresAtLabel = course.codeExpiresAt
