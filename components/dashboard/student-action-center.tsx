@@ -66,7 +66,8 @@ export function DueWorkBlock({ items }: { items: StudentDueItem[] }) {
       {items.length === 0 ? (
         <EmptyState
           icon={CheckCircle2}
-          title="ไม่มีงานค้าง"
+          beagle
+          title="ไม่มีงานค้าง — เก่งมาก!"
           hint="งานใหม่จากครูจะแสดงที่นี่พร้อมกำหนดส่ง"
         />
       ) : (
