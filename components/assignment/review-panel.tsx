@@ -1,7 +1,9 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { CheckCircle2, RotateCcw, X } from "lucide-react";
+import { FeedbackSnippets } from "./feedback-snippets";
+import { appendToDraft } from "@/lib/feedback/snippets";
 import {
   quickGradeAndAdvanceAction,
   returnAndAdvanceAction,
@@ -52,6 +54,7 @@ export function ReviewPanel({
   >(returnAndAdvanceAction, {});
 
   const [returnOpen, setReturnOpen] = useState(false);
+  const commentRef = useRef<HTMLTextAreaElement>(null);
 
   const primaryLabel = isScored ? "ยืนยันคะแนน" : "ตรวจเสร็จ";
 
@@ -171,6 +174,7 @@ export function ReviewPanel({
               </button>
             </div>
             <textarea
+              ref={commentRef}
               name="comment"
               rows={4}
               minLength={5}
@@ -179,6 +183,15 @@ export function ReviewPanel({
               autoFocus
               className="input"
               placeholder="เช่น 'เพิ่มเหตุผลในข้อ 2 หน่อยครับ' · ≥ 5 ตัวอักษร · เป็นคอมเมนต์ส่วนตัวถึงนักเรียน"
+            />
+            <FeedbackSnippets
+              readDraft={() => commentRef.current?.value ?? ""}
+              writeDraft={(snippet) => {
+                const el = commentRef.current;
+                if (!el) return;
+                el.value = appendToDraft(el.value, snippet);
+                el.focus();
+              }}
             />
             {returnState.fieldErrors?.comment && (
               <p className="text-xs text-red-700">

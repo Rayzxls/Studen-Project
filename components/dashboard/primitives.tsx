@@ -421,15 +421,33 @@ export function EmptyState({
   title,
   hint,
   action,
+  beagle = false,
 }: {
   icon: LucideIcon;
   title: string;
   hint?: string;
   action?: { href: string; label: string };
+  /**
+   * Show the beagle mark instead of the icon — reserved for "good news"
+   * empties (nothing pending / all caught up), where the mascot reads as
+   * a calm reward rather than decoration.
+   */
+  beagle?: boolean;
 }) {
   return (
     <div className="rounded-xl border border-dashed border-black/15 px-6 py-8 text-center">
-      <Icon className="mx-auto h-7 w-7 text-black/20" aria-hidden="true" />
+      {beagle ? (
+        <Image
+          src="/brand/beagle-mark.png"
+          alt=""
+          width={56}
+          height={58}
+          className="mx-auto opacity-90"
+          aria-hidden="true"
+        />
+      ) : (
+        <Icon className="mx-auto h-7 w-7 text-black/20" aria-hidden="true" />
+      )}
       <p className="mt-2 text-sm font-medium text-black/70">{title}</p>
       {hint && <p className="mt-1 text-xs text-black/45">{hint}</p>}
       {action && (
