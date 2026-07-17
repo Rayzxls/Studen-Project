@@ -2,7 +2,7 @@
 
 **Updated:** 2026-07-17
 **Sequence:** Core completion -> Lesson Workspace -> Quiz -> Identity/Integrations -> AI -> Optional product modules  
-**Current state:** A0 Documentation Alignment, A1 Report/Export v1, the A2 automated QA gate, and A3/A3.1 static correctness work are complete. QR/invite browser acceptance is now automated; physical phone-camera and production private-R2 smoke remain manual release checks. A4 Account Lifecycle and the operational Moderation Center have additive persistence, audited transactions, and feature-flagged Admin surfaces. Lesson Workspace B1-B6 are implemented and accepted on isolated Neon QA. Its Production migration, backfill, pilot flags, and default-route cutover remain separate unapproved rollout operations.
+**Current state:** A0 Documentation Alignment, A1 Report/Export v1, the A2 automated QA gate, and A3/A3.1 static correctness work are complete. QR/invite browser acceptance is now automated; physical phone-camera and production private-R2 smoke remain manual release checks. A4 Account Lifecycle and the operational Moderation Center have additive persistence, audited transactions, and feature-flagged Admin surfaces. Lesson Workspace B1-B6 are implemented and accepted on isolated Neon QA. Quiz C1 now has an additive schema, an offline unapplied migration, fail-closed flags, and pure validation/state policy. Lesson and Quiz database rollout operations remain separately unapproved.
 
 ## Why this order
 
@@ -22,7 +22,7 @@ This matrix prevents an implemented screen or database field from being mistaken
 | QR and invite link | Class Code, `qrcode.react`, `ClassCodeCard`, and join route exist | Implemented foundation, not accepted until QR scan, invite copy, expiry, deactivate, regenerate, mobile, and rejoin flows pass QA |
 | Moderation | Existing Teacher comment moderation plus a case-based Admin queue for reports, evidence snapshots, temporary restrictions, decisions, restore, and one-time appeal | Code/schema deployed behind `MODERATION_CENTER_ENABLED`; flag cutover and manual all-theme/mobile/private-R2 acceptance remain open |
 | Profile personal information | Avatar, display name, read-only real identity, password, and theme exist | Intentionally minimal learning identity; a full personal profile requires a privacy/scope decision, not an automatic expansion |
-| Quiz / Testing | No domain model or route found | Not implemented; planned after Lesson Workspace |
+| Quiz / Testing | Approved contract, responsive prototype, four ADRs, additive schema/migration, and pure policy tests exist | C1 foundation complete in code; migration, persistence services, UI, and Production rollout are not applied/implemented |
 | AI Assistant | No model-provider integration found | Not implemented; planned only after stable Lesson/Quiz contracts |
 | Google Login | NextAuth currently uses Credentials only | Not implemented; identity-linking rules must be designed first |
 | Chat Room, Reward, Meeting | No domain model or route found | Candidate backlog; not committed to the current release plan |
@@ -379,13 +379,14 @@ Status: implemented on `phase-11` and verified locally plus isolated Neon QA on 
 route `/teacher/courses/[id]/quiz-prototype` covers Teacher Builder, Student
 Attempt, and Teacher Results without persistence. Desktop 1440x900, mobile
 390x844, and Light/Dark/Cream visual acceptance passed. This is not evidence of
-a Quiz domain model, database migration, or Production readiness.
+Production readiness. The later C1 slice adds a domain model and prepares an
+offline migration, but does not apply it to a database.
 
 Implementation sequence:
 
 1. Completed: validate Teacher Builder, Student Attempt, and Teacher Results in a throwaway responsive prototype.
-2. Write Quiz domain ADRs for lifecycle/snapshot, Score Item coupling, Attempt concurrency, and archive/moderation evidence.
-3. Add an additive schema and pure validation/state-policy layer behind fail-closed flags.
+2. Completed 2026-07-17: Quiz domain ADRs lock lifecycle/snapshot, Score Item coupling, Attempt concurrency, and archive/moderation evidence (ADR-0035 through ADR-0038).
+3. Completed 2026-07-17: additive schema, offline unapplied migration, fail-closed flags, and pure validation/state-policy layer.
 4. Implement Teacher draft Builder and preview without Student mutations.
 5. Implement Student Attempt, auto-save, timer, resume, and objective auto-grading.
 6. Connect best Attempt to draft Score Entries, Teacher results, close/reopen, exceptions, and one-way publication.

@@ -1,5 +1,25 @@
 # HANDOFF — Beagle Classroom
 
+## QUIZ FOUNDATION C1 — 2026-07-17
+
+- Added the additive Quiz persistence foundation: Quiz, questions, options, Attempts, answers, idempotent Attempt mutations, per-Student exceptions, immutable Attempt snapshots, lease/revision fields, and `QUIZ_LINKED` Score Item provenance.
+- Prepared migration `20260717010000_add_quiz_foundation` offline from the committed schema. It has **not** been applied to Neon QA or Production; no database data, R2 object, or Vercel flag was mutated in this slice.
+- Added fail-closed `QUIZ_ENABLED`, `QUIZ_MUTATIONS_ENABLED`, and exact-course `QUIZ_PILOT_COURSE_IDS` policy. Missing or empty pilot ids enable no course; `*` is reserved for isolated QA.
+- Added pure Zod validation and lifecycle/Attempt policy for objective question limits, scored defaults, immutable-content guards, server-authoritative deadlines, one-writer lease/revision checks, all-or-nothing objective grading, and best-Attempt selection.
+- Extended private-file owner compatibility for Quiz/Question/Option. Student reads fail closed for drafts, future-open, cancelled, or archived Quiz content; Presign mutations remain rejected by the existing upload guard until the Teacher Builder service slice is implemented.
+- Gradebook recognizes `QUIZ_LINKED` items but hides publish/delete actions there. Quiz-linked scores must be managed by the future Quiz workflow, preserving ADR-0036 coupling.
+- Verification passed: Prisma validate/generate, targeted ESLint, TypeScript, focused Quiz/storage unit `59/59`, full unit `574/574`, and Next.js Production build. Repository-wide `eslint .` remains blocked by the documented generated `.next-qa` and bundled `.claude` files; no changed Quiz file has a lint finding.
+- Next implementation slice: Teacher draft Builder and preview only. Student Attempt mutations and any database migration remain separately gated.
+
+## QUIZ DOMAIN ADRS — 2026-07-17
+
+- Release C architecture design is now locked in ADR-0035 through ADR-0038: immutable Attempt snapshots, atomic Scored Quiz/Score Item coupling, one-writer device leases with Server-authoritative expiry, and archive/moderation/private-file evidence rules.
+- Practice Quiz never creates a Score Item. Scored Quiz introduces immutable `QUIZ_LINKED` provenance, uses the existing sum-based score ledger, and must close before one-way publication. Best submitted Attempt supplies the draft Score Entry while preserving auto-grade evidence.
+- The first Student Attempt freezes Teacher-authored questions, answers, points, and assigned order. Post-start correction is an irreversible audited question void plus recalculation; normal editing or hard deletion is blocked.
+- Attempt writes require the current lease, revision, and idempotency key. Device takeover invalidates the old writer, Server time determines expiry, and correctness does not depend only on cron.
+- Quiz/question reports snapshot Teacher-authored content but exclude Student answers, scores, exceptions, and private Attempt files. Admin remains read-only and cannot perform academic actions.
+- This ADR slice itself changed no schema or data. The subsequent C1 foundation described above now implements the additive schema and pure policy layer, while all database rollout remains unapproved.
+
 ## QUIZ MVP GRILL AND PROTOTYPE — 2026-07-17
 
 - Quiz MVP decision Grill is complete. The approved product contract lives in `docs/QUIZ-MVP-DECISIONS.md` and covers lifecycle, scoring, Attempts, files, privacy, notifications, analytics, limits, feature flags, and rollout guardrails.
@@ -7,7 +27,7 @@
 - The prototype provides three switchable surfaces: Teacher Builder, Student Attempt, and Teacher Results. It also includes Light, Dark, and Cream theme controls, responsive question navigation, attachment affordances, timer/auto-save language, result metrics, Student status, and item analysis.
 - Visual acceptance passed at 1440x900 and 390x844 for all three surfaces. Light, Dark, and Cream were inspected; document-level horizontal overflow is zero. Teacher question cards intentionally scroll inside their own mobile strip, and the results table intentionally scrolls inside its own container.
 - Targeted ESLint and full TypeScript typecheck pass. No Prisma schema, Neon data, R2 object, feature flag, Production route, or existing Feed/Lesson/Score behavior was changed.
-- Next step is not schema implementation yet. Review the prototype with the product owner, record UI revisions, then write Quiz lifecycle/snapshot, Score Item coupling, Attempt concurrency, and archive/moderation ADRs before additive schema work.
+- Prototype review, the four prerequisite ADRs, and the additive C1 schema/policy foundation are complete. The next step is the Teacher draft Builder and preview; Production migration remains separately unapproved.
 
 ## NOTIFICATION SHORTCUT AND ROUTER ACCEPTANCE — 2026-07-17
 
