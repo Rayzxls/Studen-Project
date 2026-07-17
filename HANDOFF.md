@@ -1,5 +1,12 @@
 # HANDOFF — Beagle Classroom
 
+## NOTIFICATION SHORTCUT AND ROUTER ACCEPTANCE — 2026-07-17
+
+- Every bell row now exposes a visible destination shortcut instead of relying on an invisible whole-row click. Labels match the destination: scores, work, document, announcement, course, or members.
+- Audited all 9 `NotificationKind` values across Student and Teacher routing, including Lesson-aware deep links and safe legacy fallbacks. Existing Admin behavior remains the Dashboard fallback because Admin receives no teaching notifications.
+- Hardened navigation against form tampering. The browser submits only the Notification id; the server reloads a non-suppressed row owned by the signed-in recipient and computes the route from its immutable snapshot. Client-submitted redirect URLs were removed.
+- Verification passed: route/label unit `35/35`, full unit `558/558`, focused Student Material and Teacher class-join Playwright `3/3`, TypeScript, targeted ESLint, and Production build. The isolated Neon QA branch was used; Production data and flags were not mutated.
+
 ## QR AND INVITE ACCEPTANCE — 2026-07-17
 
 - Restored the existing Teacher-only Class Code surface to Course Settings as a complete invite handoff card. It now shows a scannable QR, class code, absolute invite URL, course/class context, expiry, and a clear ready/disabled/expired state with copy actions. Student surfaces do not render the management card or regeneration controls.

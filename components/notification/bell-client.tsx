@@ -8,7 +8,7 @@ import {
   useState,
   useTransition,
 } from "react";
-import { Bell as BellIcon, BellOff } from "lucide-react";
+import { ArrowUpRight, Bell as BellIcon, BellOff } from "lucide-react";
 import { NotificationIcon } from "./bell-icon";
 import { RelativeTime } from "./relative-time";
 import {
@@ -19,7 +19,7 @@ import {
 
 export interface BellClientItem {
   id: string;
-  href: string;
+  destinationLabel: string;
   createdAtIso: string;
   readAtIso: string | null;
   preview: {
@@ -182,11 +182,10 @@ export function BellClient({
                       name="notificationId"
                       value={item.id}
                     />
-                    <input type="hidden" name="href" value={item.href} />
                     <button
                       type="submit"
                       className={
-                        "flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-black/[0.025] " +
+                        "group flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-black/[0.035] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 " +
                         (isUnread ? "" : "opacity-60")
                       }
                     >
@@ -219,6 +218,10 @@ export function BellClient({
                             <RelativeTime iso={item.createdAtIso} />
                           </span>
                         </span>
+                      </span>
+                      <span className="ml-1 inline-flex shrink-0 self-center items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-[10px] font-medium text-blue-700 transition-colors group-hover:bg-blue-100">
+                        {item.destinationLabel}
+                        <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
                       </span>
                     </button>
                   </form>

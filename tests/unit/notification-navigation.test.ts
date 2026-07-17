@@ -8,7 +8,10 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { resolveNotificationHref } from "@/lib/notification/navigation";
+import {
+  resolveNotificationDestinationLabel,
+  resolveNotificationHref,
+} from "@/lib/notification/navigation";
 
 const COURSE_ID = "course-abc";
 
@@ -335,5 +338,33 @@ describe("resolveNotificationHref — fallbacks", () => {
         payload: {},
       })
     ).toBe("/dashboard");
+  });
+});
+
+describe("resolveNotificationDestinationLabel", () => {
+  it.each([
+    ["SCORE_ITEM_PUBLISHED", "STUDENT", {}, "ดูคะแนน"],
+    ["SCORE_ENTRY_EDITED", "STUDENT", {}, "ดูคะแนน"],
+    ["ASSIGNMENT_POSTED", "STUDENT", {}, "ดูงาน"],
+    ["SUBMISSION_GRADED", "STUDENT", {}, "ดูงาน"],
+    ["SUBMISSION_RETURNED", "STUDENT", {}, "ดูงาน"],
+    ["MATERIAL_POSTED", "STUDENT", {}, "เปิดเอกสาร"],
+    ["ANNOUNCEMENT_POSTED", "STUDENT", {}, "อ่านประกาศ"],
+    ["COMMENT_REPLIED", "STUDENT", { entityKind: "MATERIAL" }, "เปิดเอกสาร"],
+    ["CLASS_CODE_JOINED", "TEACHER", {}, "ดูสมาชิก"],
+  ] as const)("%s for %s shows %s", (kind, role, payload, expected) => {
+    expect(resolveNotificationDestinationLabel({ kind, role, payload })).toBe(
+      expected
+    );
+  });
+
+  it("labels a Teacher submission comment as a work shortcut", () => {
+    expect(
+      resolveNotificationDestinationLabel({
+        kind: "COMMENT_REPLIED",
+        role: "TEACHER",
+        payload: { entityKind: "SUBMISSION" },
+      })
+    ).toBe("ดูงาน");
   });
 });

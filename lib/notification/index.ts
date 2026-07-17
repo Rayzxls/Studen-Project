@@ -39,6 +39,7 @@ export {
 } from "./suppress";
 
 export {
+  getNotificationForRecipient,
   listNotificationsForRecipient,
   countUnreadNotifications,
   markNotificationRead,

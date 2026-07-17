@@ -135,6 +135,11 @@ Automate and manually verify these end-to-end paths:
 - Playwright now starts a dedicated QA server on port 3100 and never reuses the
   normal port 3000 server, preventing a QA browser from driving a primary-DB
   process that was already running.
+- Notification navigation acceptance now covers all 9 notification kinds. Bell
+  rows show an explicit destination shortcut, and the server derives the route
+  from a recipient-owned Notification rather than a client-provided URL.
+  Student Material and Teacher class-join shortcuts pass isolated-Neon browser
+  acceptance; route and destination-label logic passes 35 focused unit cases.
 - Safe verification on 2026-07-15: typecheck passed, 486/486 unit tests passed,
   anonymous HTTP smoke passed 10/10, ESLint completed with zero errors (existing
   tool-bundle warnings remain), and the Next.js production build passed.

@@ -4,8 +4,7 @@ import {
   listNotificationsForRecipient,
 } from "@/lib/notification";
 import { buildNotificationPreview } from "@/lib/notification/preview";
-import { resolveNotificationHref } from "@/lib/notification/navigation";
-import { lessonWorkspaceCourseEnabled } from "@/lib/lesson/feature-flags";
+import { resolveNotificationDestinationLabel } from "@/lib/notification/navigation";
 import { BellClient, type BellClientItem } from "./bell-client";
 
 /**
@@ -13,8 +12,8 @@ import { BellClient, type BellClientItem } from "./bell-client";
  *
  * Server Component. Fetches the unread count + the 20 most recent
  * non-suppressed notifications for the signed-in recipient (Q3 lock =
- * eager render), builds per-row preview + href server-side (Q5.2 lock
- * = c), and renders an HTML popover panel (Q4 lock = A, no Pattern-7
+ * eager render), builds each preview and destination label server-side,
+ * and renders an HTML popover panel (Q4 lock = A, no Pattern-7
  * dialog).
  *
  * Children:
@@ -33,15 +32,10 @@ export async function Bell({ userId, role }: { userId: string; role: Role }) {
 
   const items: BellClientItem[] = page.items.map((n) => ({
     id: n.id,
-    href: resolveNotificationHref({
+    destinationLabel: resolveNotificationDestinationLabel({
       kind: n.kind,
       role,
-      courseOfferingId: n.courseOfferingId,
-      sourceEntityId: n.sourceEntityId,
       payload: n.payloadJson,
-      lessonWorkspaceEnabled:
-        n.courseOfferingId !== null &&
-        lessonWorkspaceCourseEnabled(n.courseOfferingId),
     }),
     createdAtIso: n.createdAt.toISOString(),
     readAtIso: n.readAt?.toISOString() ?? null,

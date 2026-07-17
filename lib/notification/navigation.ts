@@ -42,6 +42,48 @@ export interface ResolveNotificationHrefArgs {
   lessonWorkspaceEnabled?: boolean;
 }
 
+export interface ResolveNotificationDestinationLabelArgs {
+  kind: NotificationKind;
+  role: Role;
+  payload: unknown;
+}
+
+/** Human-facing action label shown on every notification row. */
+export function resolveNotificationDestinationLabel(
+  args: ResolveNotificationDestinationLabelArgs
+): string {
+  if (args.role === "ADMIN") return "เปิดแดชบอร์ด";
+
+  switch (args.kind) {
+    case "SCORE_ITEM_PUBLISHED":
+    case "SCORE_ENTRY_EDITED":
+      return "ดูคะแนน";
+    case "ASSIGNMENT_POSTED":
+    case "SUBMISSION_GRADED":
+    case "SUBMISSION_RETURNED":
+      return "ดูงาน";
+    case "MATERIAL_POSTED":
+      return "เปิดเอกสาร";
+    case "ANNOUNCEMENT_POSTED":
+      return "อ่านประกาศ";
+    case "CLASS_CODE_JOINED":
+      return args.role === "TEACHER" ? "ดูสมาชิก" : "เปิดวิชา";
+    case "COMMENT_REPLIED": {
+      switch (payloadString(args.payload, "entityKind")) {
+        case "ASSIGNMENT":
+        case "SUBMISSION":
+          return "ดูงาน";
+        case "MATERIAL":
+          return "เปิดเอกสาร";
+        case "ANNOUNCEMENT":
+          return "อ่านประกาศ";
+        default:
+          return "เปิดวิชา";
+      }
+    }
+  }
+}
+
 function lessonContentHref(args: {
   role: "STUDENT" | "TEACHER";
   courseOfferingId: string;

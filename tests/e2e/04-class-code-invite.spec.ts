@@ -83,6 +83,19 @@ test("teacher hands off an invite and students can join or rejoin on mobile", as
     })
   ).toBeVisible();
 
+  await signOut(page);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await signIn(page, teacherIdentifier, PASSWORD);
+  await page.goto("/dashboard");
+  await page.getByRole("button", { name: "การแจ้งเตือน" }).click();
+  const notificationPanel = page.locator("#notification-bell-panel");
+  await expect(
+    notificationPanel.getByText("Alice Tester เข้าร่วมห้องเรียน")
+  ).toBeVisible();
+  await expect(notificationPanel.getByText("ดูสมาชิก")).toBeVisible();
+  await notificationPanel.getByText("ดูสมาชิก").click();
+  await expect(page).toHaveURL(`/teacher/courses/${courseId}/members`);
+
   const enrollment = await db.enrollment.findFirstOrThrow({
     where: {
       courseOfferingId: courseId,
@@ -98,6 +111,9 @@ test("teacher hands off an invite and students can join or rejoin on mobile", as
     reason: "QA invite rejoin acceptance",
   });
 
+  await signOut(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await signIn(page, studentIdentifier, PASSWORD);
   await page.goto(inviteUrl);
   await page.getByRole("button", { name: "เข้าร่วมห้องเรียน" }).click();
   await expect(page.getByText("เข้าห้องเรียนสำเร็จ")).toBeVisible();
