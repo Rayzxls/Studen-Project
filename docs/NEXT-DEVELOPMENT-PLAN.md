@@ -387,11 +387,11 @@ Implementation sequence:
 1. Completed: validate Teacher Builder, Student Attempt, and Teacher Results in a throwaway responsive prototype.
 2. Completed 2026-07-17: Quiz domain ADRs lock lifecycle/snapshot, Score Item coupling, Attempt concurrency, and archive/moderation evidence (ADR-0035 through ADR-0038).
 3. Completed 2026-07-17: additive schema, offline unapplied migration, fail-closed flags, and pure validation/state-policy layer.
-4. Implemented in code 2026-07-17: Teacher draft Builder, atomic create/replace,
+4. Isolated-QA accepted 2026-07-18: Teacher draft Builder, atomic create/replace,
    scored `QUIZ_LINKED` Score Item coupling, debounced auto-save, Lesson entry
-   point, and read-only Student preview. Student mutations remain absent. The
-   Quiz migration has not been applied to Neon QA or Production, so isolated
-   database and visual acceptance remain required before this item is rollout-complete.
+   point, and read-only Student preview. The additive migration is applied to
+   Neon QA only, and authenticated desktop/mobile Playwright acceptance passes.
+   Student mutations remain absent and Production migration/flags remain off.
 5. Implement Student Attempt, auto-save, timer, resume, and objective auto-grading.
 6. Connect best Attempt to draft Score Entries, Teacher results, close/reopen, exceptions, and one-way publication.
 7. Add private attachments, notifications, Moderation evidence, CSV analytics, and Admin aggregate observer.

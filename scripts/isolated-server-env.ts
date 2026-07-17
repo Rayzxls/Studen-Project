@@ -20,5 +20,11 @@ export function prepareIsolatedServerEnv<T extends ServerEnv>(
     // its user-reporting and Admin review surfaces available during QA while
     // preserving an explicit override for fail-closed acceptance checks.
     MODERATION_CENTER_ENABLED: env.MODERATION_CENTER_ENABLED ?? "1",
+    // Quiz tables exist only on the isolated QA branch at this rollout stage.
+    // The wildcard is safe here because run-isolated-server first proves that
+    // DATABASE_URL was replaced with a distinct QA_DATABASE_URL.
+    QUIZ_ENABLED: env.QUIZ_ENABLED ?? "1",
+    QUIZ_MUTATIONS_ENABLED: env.QUIZ_MUTATIONS_ENABLED ?? "1",
+    QUIZ_PILOT_COURSE_IDS: "*",
   };
 }

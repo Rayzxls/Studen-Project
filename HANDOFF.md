@@ -1,5 +1,13 @@
 # HANDOFF — Beagle Classroom
 
+## QUIZ C2 ISOLATED QA ACCEPTANCE — 2026-07-18
+
+- Applied `20260717010000_add_quiz_foundation` to the identity-checked Neon QA branch only. Prisma reports all five QA migrations up to date; Production schema and Vercel flags remain unchanged.
+- The isolated QA server now enables Quiz reads and mutations with the QA-only wildcard allowlist after `prepareIsolatedDatabaseEnv` proves `QA_DATABASE_URL` is distinct from the primary database. Explicit `QUIZ_ENABLED=0` and `QUIZ_MUTATIONS_ENABLED=0` overrides still fail closed.
+- Added authenticated Playwright acceptance for the real Teacher Builder. It creates a Practice draft through the UI, verifies debounced autosave, switches to Scored mode, proves atomic `QUIZ_LINKED` Score Item creation and score updates, duplicates a question, opens both previews without creating an Attempt, and checks 390 px document overflow.
+- Visual review passed for desktop 1440×900 and mobile 390×844. Focused Quiz/QA unit tests pass `12/12`, the Playwright flow passes `1/1`, targeted ESLint and TypeScript pass, and the fixture removes its temporary Quiz, Score Item, Lesson, Course, and users from QA.
+- C2 is accepted on isolated QA. Production migration/flags remain a later explicit rollout decision. The next implementation slice is C3 Student Attempt, autosave, timer, resume, and objective auto-grading.
+
 ## TEACHER QUIZ BUILDER C2 — 2026-07-17
 
 - Added the real feature-gated Teacher Quiz draft workflow under a Lesson. Teachers can create a free-form Quiz, edit metadata and settings, add/delete/duplicate/reorder questions, manage objective options and correct answers, see the calculated total score, and open an in-context or full-page Student preview.
