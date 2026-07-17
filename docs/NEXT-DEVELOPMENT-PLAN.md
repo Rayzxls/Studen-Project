@@ -1,8 +1,8 @@
 # Next Development Plan
 
-**Updated:** 2026-07-15
+**Updated:** 2026-07-17
 **Sequence:** Core completion -> Lesson Workspace -> Quiz -> Identity/Integrations -> AI -> Optional product modules  
-**Current state:** A0 Documentation Alignment, A1 Report/Export v1, the A2 automated QA gate, and A3/A3.1 static correctness work are complete. A2 manual acceptance remains open. A4 Account Lifecycle and the first operational Moderation Center slice now have additive persistence, isolated Neon QA migrations/integration tests, audited transactions, and feature-flagged Admin surfaces. Production schema migrations and behavior enablement remain unapproved. The Lesson Workspace prototype is approved as a direction reference, but production development has not been approved yet.
+**Current state:** A0 Documentation Alignment, A1 Report/Export v1, the A2 automated QA gate, and A3/A3.1 static correctness work are complete. QR/invite browser acceptance is now automated; physical phone-camera and production private-R2 smoke remain manual release checks. A4 Account Lifecycle and the operational Moderation Center have additive persistence, audited transactions, and feature-flagged Admin surfaces. Lesson Workspace B1-B6 are implemented and accepted on isolated Neon QA. Its Production migration, backfill, pilot flags, and default-route cutover remain separate unapproved rollout operations.
 
 ## Why this order
 
@@ -20,7 +20,7 @@ This matrix prevents an implemented screen or database field from being mistaken
 | Report and export | Student Learning Results has browser Print to PDF; Teacher score and attendance summaries have course-level CSV; Admin Audit has filtered CSV | V1 shipped: full report-card PDF generation is explicitly deferred pending a separate layout, identity, signature, and authorization decision |
 | Admin user management | Create/import Teacher, list users, reset password, reset avatar, and user drill-down exist | Partial: deactivate, restore, delete-request, and anonymize workflows are not complete even though `User.deletedAt` and `Student.anonymized` exist |
 | QR and invite link | Class Code, `qrcode.react`, `ClassCodeCard`, and join route exist | Implemented foundation, not accepted until QR scan, invite copy, expiry, deactivate, regenerate, mobile, and rejoin flows pass QA |
-| Moderation | Existing Teacher comment moderation plus a case-based Admin queue for reports, evidence snapshots, temporary restrictions, decisions, restore, and one-time appeal | QA-implemented behind `MODERATION_CENTER_ENABLED`; production migration/enablement and manual all-theme/mobile/private-R2 acceptance remain open |
+| Moderation | Existing Teacher comment moderation plus a case-based Admin queue for reports, evidence snapshots, temporary restrictions, decisions, restore, and one-time appeal | Code/schema deployed behind `MODERATION_CENTER_ENABLED`; flag cutover and manual all-theme/mobile/private-R2 acceptance remain open |
 | Profile personal information | Avatar, display name, read-only real identity, password, and theme exist | Intentionally minimal learning identity; a full personal profile requires a privacy/scope decision, not an automatic expansion |
 | Quiz / Testing | No domain model or route found | Not implemented; planned after Lesson Workspace |
 | AI Assistant | No model-provider integration found | Not implemented; planned only after stable Lesson/Quiz contracts |
@@ -135,6 +135,11 @@ Automate and manually verify these end-to-end paths:
 - Playwright now starts a dedicated QA server on port 3100 and never reuses the
   normal port 3000 server, preventing a QA browser from driving a primary-DB
   process that was already running.
+- Notification navigation acceptance now covers all 9 notification kinds. Bell
+  rows show an explicit destination shortcut, and the server derives the route
+  from a recipient-owned Notification rather than a client-provided URL.
+  Student Material and Teacher class-join shortcuts pass isolated-Neon browser
+  acceptance; route and destination-label logic passes 35 focused unit cases.
 - Safe verification on 2026-07-15: typecheck passed, 486/486 unit tests passed,
   anonymous HTTP smoke passed 10/10, ESLint completed with zero errors (existing
   tool-bundle warnings remain), and the Next.js production build passed.
@@ -181,8 +186,8 @@ its intentionally narrow L1 projection.
 Status: decision lock and pure policy foundation completed 2026-07-14. The
 additive schema, lifecycle-history model, legacy backfill, guarded QA-only
 migration, atomic Prisma repository, and feature-flagged Admin suspend/reactivate
-surface were completed and verified on QA on 2026-07-15. Production has not
-been migrated and the mutation flag remains disabled by default. See ADR-0031.
+surface were completed and verified on QA on 2026-07-15. Production migrated
+successfully on 2026-07-15 and the mutation flag remains disabled. See ADR-0031.
 
 - `lib/account/lifecycle-policy.ts` defines and unit-tests the transition contract without database writes.
 - `lib/account/status.ts` defines deterministic legacy-to-canonical compatibility
@@ -221,12 +226,16 @@ been migrated and the mutation flag remains disabled by default. See ADR-0031.
 
 #### QR and invite acceptance
 
-- Test code entry, QR scan, invite link, expired code, inactive code, regenerated code, existing active enrollment, removed Student rejoin, and mobile camera/browser handoff.
-- Confirm that Student never sees the Teacher-only Class Code management surface.
+**Status:** Automated browser acceptance completed 2026-07-17 on isolated Neon QA. Physical phone-camera scanning remains a manual OS/device release check.
+
+- Teacher Course Settings exposes the QR, class code, absolute invite URL, course/class context, expiry, and ready/disabled/expired state.
+- Playwright verifies mobile invite prefill, first join, removed Student rejoin through the same Enrollment, expired code, inactive code, stale regenerated code, and successful fresh-code join.
+- Teacher Dark and Student Cream acceptance passes at desktop and iPhone 390x844 widths with no horizontal overflow. Student never sees Teacher-only Class Code management or regeneration controls.
+- The QR payload is asserted against the same absolute invite URL used by the mobile browser handoff. A real camera scan is not simulated and remains on the release-device checklist.
 
 #### Moderation coverage
 
-Status: decision lock completed 2026-07-14. The first operational slice was implemented and integration-tested on isolated Neon QA on 2026-07-15 behind `MODERATION_CENTER_ENABLED`. Production migration/enablement is not approved. See ADR-0032 and `MODERATION-CONTENT-MATRIX.md`.
+Status: decision lock completed 2026-07-14. The first operational slice was implemented and integration-tested on isolated Neon QA on 2026-07-15 behind `MODERATION_CENTER_ENABLED`. Production code/schema shipped on 2026-07-15; the flag remains disabled pending cutover acceptance. See ADR-0032 and `MODERATION-CONTENT-MATRIX.md`.
 
 - The first slice provides one case-based Moderation Center for content reports, file/profile safety, resolved history, and one-time appeals. Account Lifecycle requests remain a separate workflow.
 - A Report does not hide content automatically. Admin or an authorized Teacher may temporarily hide content during review with reason and audit.
@@ -243,7 +252,7 @@ Status: decision lock completed 2026-07-14. The first operational slice was impl
 - Added authenticated reporting for Announcement, Material, Assignment, Comment, File Attachment, and Profile Image targets, plus one owner appeal within seven days.
 - Enforced restrictions at Feed/detail queries, signed-file delivery, attachment projection, and profile-image delivery. Admin can still inspect evidence; normal users receive hidden content, denied files, or the default avatar as appropriate.
 - Unit policy tests passed 5/5 and the isolated QA integration test passed the report aggregation, deduplication, snapshot, hide, decision, appeal, event, audit, and cleanup flow.
-- Remaining before production rollout: production migration approval, feature-flag approval, Admin/Teacher/Student manual acceptance in System/Dark/Cream and mobile/desktop, and private-R2 quarantine/restore smoke testing.
+- Remaining before behavior rollout: Vercel feature-flag cutover, Admin/Teacher/Student manual acceptance in System/Dark/Cream and mobile/desktop, and private-R2 quarantine/restore smoke testing.
 
 #### A4 implementation order
 
@@ -266,7 +275,7 @@ Status: decision lock completed 2026-07-14. The first operational slice was impl
 
 ### B0. Decision lock and prototype baseline
 
-Status: design direction approved, implementation not started.
+Status: design direction approved. B1-B6 are implemented and accepted on isolated Neon QA. Feed remains the default course landing; Production migration, compatibility backfill, pilot allowlist, feature-flag cutover, and default-route change remain unapproved.
 
 - Teacher experience: Variant B split workspace.
 - Student experience: Variant C learning path with a checkpoint for each topic.
@@ -276,6 +285,8 @@ Status: design direction approved, implementation not started.
 
 ### B1. Additive domain foundation
 
+Status: implemented and verified on isolated Neon QA on 2026-07-15. Production migration requires a separate explicit approval.
+
 - Add a Lesson Workspace entity under CourseOffering with title, optional description, position, and archive state.
 - Add optional Lesson references to content first; do not make them required in the first schema rollout.
 - Define permissions, query projections, audit events, and feature flag behavior before exposing mutations.
@@ -283,7 +294,11 @@ Status: design direction approved, implementation not started.
 
 **Exit gate:** additive schema and pure permission/domain tests pass without changing current UI or default routes.
 
+**Verification record:** Before B2, QA migration status was current and the B1 invariant verifier reported zero Lessons, zero linked legacy content, and zero cross-course Assignment or Material links. Unit tests passed 507/507, TypeScript passed, and targeted B1 ESLint passed. The existing Feed remains the default experience.
+
 ### B2. Compatibility and backfill
+
+Status: deterministic dry-run and guarded transaction implemented and applied on isolated Neon QA on 2026-07-15. Production remains untouched and requires a separate reviewed dry-run and explicit approval.
 
 - Create an idempotent dry-run script that reports exactly what will change.
 - Create "เนื้อหาเดิม" for existing Materials and Assignments where needed.
@@ -293,7 +308,11 @@ Status: design direction approved, implementation not started.
 
 **Exit gate:** before/after entity counts match, no orphaned content exists, and running the backfill twice produces no additional changes.
 
+**QA verification record:** one fallback Lesson named "เนื้อหาเดิม" was created for one affected course and one existing Assignment was linked. Assignment, Material, Submission, Score Entry, Comment, File Attachment, and Notification counts stayed unchanged; one expected Lesson and one Important Audit row were added. The repeated dry-run reports zero changes and the cross-course/unassigned-content verifier reports zero violations.
+
 ### B3. Teacher workflow
+
+Status: implemented on `phase-11` and accepted on isolated Neon QA on 2026-07-15. Production rollout remains a separate, unapproved operation.
 
 - Create, rename, reorder, archive, and delete an empty Lesson Workspace.
 - Prevent archive while an Assignment is open or grading is pending.
@@ -303,7 +322,11 @@ Status: design direction approved, implementation not started.
 
 **Exit gate:** Teacher can organize a real course without losing or duplicating Feed content.
 
+**Completion record:** Teacher can create, rename, reorder, archive, and delete empty Lessons under fail-closed mutation flags. Archive blockers protect open Assignments and pending grading; content moves preserve IDs and write Important audit rows. Feed and Lesson-detail composers link Assignment/Material to active Lessons, including a create-Lesson shortcut for an empty course. Lesson detail reports submitted, missing, late, and pending-grading totals with links to the existing review workspace. Desktop and iPhone-size QA passed against isolated Neon QA; Production schema, data, flags, routes, and deployment were not changed.
+
 ### B4. Student learning path
+
+Status: implemented on `phase-11` and accepted on isolated Neon QA on 2026-07-15. Feed remains the default course landing and Production rollout remains unapproved.
 
 - Show all active Lessons without sequential locks in v1.
 - Show only the current Student's checkpoints, submitted/total progress, next task, due date, and overdue state.
@@ -312,7 +335,11 @@ Status: design direction approved, implementation not started.
 
 **Exit gate:** L1 privacy tests prove that no peer progress, score, attendance, or submission data is exposed.
 
+**Completion record:** Student course navigation now includes a Lesson path and per-Lesson detail. The path exposes every active Lesson without locks, collapses archived Lessons, and presents checkpoints, current-student progress, next work, due dates, and overdue state. Progress counts only submitted Assignments; Materials remain readable resources and never increase completion. The Student query selects only the caller's active Enrollment id and filters nested Submission rows by that id. Unit privacy/projection tests pass inside the full `522/522` suite, TypeScript, targeted ESLint, and the production build pass, and Playwright acceptance passed on Desktop plus iPhone 390 px in Dark, Light, and Cream without horizontal overflow. The isolated QA fixture was cleaned after acceptance; no Production schema, data, flag, route, or deployment change was made.
+
 ### B5. Feed, notifications, and route transition
+
+Status: implemented on `phase-11` and verified locally plus isolated Neon QA on 2026-07-15. Feed remains the default course landing and Production rollout remains unapproved.
 
 - Feed continues to project canonical Announcement, Material, Assignment, and score events chronologically.
 - Notifications deep-link to the content item inside its Lesson when applicable; creating an empty Lesson sends no notification.
@@ -321,13 +348,27 @@ Status: design direction approved, implementation not started.
 
 **Exit gate:** Feed item counts and links match the pre-release baseline, bookmarks still work, and the flag can restore the old default without a data rollback.
 
+**Completion record:** Feed projection and default course redirects remain unchanged. New Lesson-linked Assignment, Material, submission grade/return, and relevant comment notifications snapshot the optional Lesson id and, only while the fail-closed Lesson read flag is enabled, deep-link to stable Assignment/Material anchors inside Student or Teacher Lesson detail. Legacy notifications, Announcements, and flag-off navigation retain their original direct detail URLs, so existing bookmarks remain valid and rollback needs no data mutation. Empty Lesson creation still has no notification producer. Full unit `528/528`, targeted isolated-Neon integration `19/19`, TypeScript, targeted ESLint, and production build passed. No Production schema, data, flags, default routes, or deployment changed.
+
 ### B6. Admin observer and rollout
+
+**Status:** Admin observer and course-level pilot controls are implemented on `phase-11` and accepted on local isolated QA on 2026-07-15. Production rollout, pilot approval, and the default-route change remain open and unapproved.
 
 - Admin sees Lesson structure, progress summaries, and content in read-only mode.
 - Pilot with one CourseOffering before wider rollout.
 - Run theme, accessibility, mobile, performance, permission, migration, and production smoke QA.
 
 **Exit gate:** pilot approval, no P0/P1 defects, rollback rehearsal complete, and documentation updated from planning to shipped state.
+
+**Implementation record:** Admin course navigation now includes feature-flagged Lesson list/detail routes for aggregate observation. Admin can see Lesson content and aggregate submitted, missing, late, pending-grading, and completion values but cannot see Student identities, scores, attendance, private comments, Submission versions, or submitted files. The query rejects non-Admin viewers before database access and the UI renders no teaching mutations. `LESSON_WORKSPACE_PILOT_COURSE_IDS` provides an exact CourseOffering allowlist across tabs, routes, mutations, Feed composer coupling, and notification deep links; an explicitly empty allowlist disables every course. TypeScript, targeted ESLint, production build, full unit `540/540`, and desktop/iPhone local visual QA passed without horizontal overflow. This completes the B6 implementation slice, not the Production exit gate.
+
+**Production pilot sequence (still requires approval):**
+
+1. Deploy the already-reviewed additive Lesson migration and run the guarded compatibility backfill/verification against Production only after backup and explicit approval.
+2. Set `LESSON_WORKSPACE_ENABLED=1`, keep the default-route flag off, and set `LESSON_WORKSPACE_PILOT_COURSE_IDS` to exactly one approved CourseOffering id. Enable mutations only after the Teacher owner and existing content pass read-only smoke QA.
+3. Verify Teacher, Student, and Admin permissions; Light/Dark/Cream; desktop/mobile; notification deep links; Feed parity; private file delivery; and performance on that course.
+4. Rehearse rollback by disabling the Lesson flags and confirming Feed/direct detail URLs still work with no data rollback.
+5. Widen the allowlist only after pilot sign-off. Do not remove the allowlist or switch the default course landing until a separate approval records the result.
 
 ## Release C: Quiz
 

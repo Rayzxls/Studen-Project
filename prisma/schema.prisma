@@ -352,6 +352,7 @@ model CourseOffering {
   timetableSlots TimetableSlot[]
   sessions       Session[]
   scoreItems     ScoreItem[]
+  lessons        Lesson[]
   assignments    Assignment[]
   materials      Material[] // Phase 7
   announcements  Announcement[] // Phase 7
@@ -534,6 +535,33 @@ enum SubmissionStatus {
   GRADED // teacher finished grading (scored Assignment: ScoreItem published; ungraded: marked done)
 }
 
+// Teacher-defined content structure inside one CourseOffering.
+// Lesson is additive: existing Assignment and Material rows may remain
+// course-wide until the guarded B2 compatibility backfill is approved.
+model Lesson {
+  id               String         @id @default(cuid())
+  courseOfferingId String
+  course           CourseOffering @relation(fields: [courseOfferingId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  position    Int     @default(0)
+
+  archivedAt     DateTime?
+  archivedById   String?
+  archivedReason String?
+
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  assignments Assignment[]
+  materials   Material[]
+
+  @@index([courseOfferingId, position])
+  @@index([courseOfferingId, archivedAt])
+}
+
 // Per CourseOffering — title, description, deadline, file/text/link toggles.
 // Optional 1:1 link to a ScoreItem when isScored=true (ADR-0019 § 1 — created
 // atomically in the same $transaction as Assignment.create or as the
@@ -543,6 +571,11 @@ model Assignment {
   id               String         @id @default(cuid())
   courseOfferingId String
   course           CourseOffering @relation(fields: [courseOfferingId], references: [id], onDelete: Cascade)
+
+  // Optional during B1/B2 compatibility. Service-layer checks must ensure
+  // the Lesson belongs to this same CourseOffering before linking content.
+  lessonId String?
+  lesson   Lesson? @relation(fields: [lessonId], references: [id], onDelete: SetNull)
 
   title       String // teacher-defined, ≤ 200 chars (validated at API boundary)
   description String // markdown subset, ≤ 10000 chars
@@ -586,6 +619,7 @@ model Assignment {
   submissions Submission[]
 
   @@index([courseOfferingId, createdAt])
+  @@index([lessonId, createdAt])
   @@index([scoreItemId])
 }
 
@@ -824,6 +858,11 @@ model Material {
   courseOfferingId String
   course           CourseOffering @relation(fields: [courseOfferingId], references: [id], onDelete: Cascade)
 
+  // Optional during B1/B2 compatibility; General Announcements intentionally
+  // stay course-wide and therefore do not carry a Lesson relation.
+  lessonId String?
+  lesson   Lesson? @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+
   // 1..200 chars (validated at lib/material/validation)
   title String
 
@@ -847,6 +886,7 @@ model Material {
   deletedReason String? // ≥ 5 chars when present
 
   @@index([courseOfferingId, postedAt(sort: Desc)])
+  @@index([lessonId, postedAt(sort: Desc)])
   @@index([deletedAt])
 }
 

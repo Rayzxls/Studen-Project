@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   generateClassCode,
+  getClassCodeInviteStatus,
   isValidClassCodeFormat,
   normalizeClassCode,
 } from "@/lib/course/class-code";
@@ -86,5 +87,51 @@ describe("normalizeClassCode", () => {
   it("strips non-alphanumeric except hyphen", () => {
     expect(normalizeClassCode("MATH4A_A8K2X3")).toBe("MATH4AA8K2X3");
     expect(normalizeClassCode("MATH4A.A8K2X3")).toBe("MATH4AA8K2X3");
+  });
+});
+
+describe("getClassCodeInviteStatus", () => {
+  const now = new Date("2026-07-17T12:00:00.000Z");
+
+  it("returns READY for an active code without an expiry", () => {
+    expect(
+      getClassCodeInviteStatus({ codeActive: true, codeExpiresAt: null }, now)
+    ).toBe("READY");
+  });
+
+  it("prioritizes DISABLED even when the code is also expired", () => {
+    expect(
+      getClassCodeInviteStatus(
+        {
+          codeActive: false,
+          codeExpiresAt: new Date("2026-07-16T12:00:00.000Z"),
+        },
+        now
+      )
+    ).toBe("DISABLED");
+  });
+
+  it("returns EXPIRED at the exact expiry boundary", () => {
+    expect(
+      getClassCodeInviteStatus(
+        {
+          codeActive: true,
+          codeExpiresAt: new Date("2026-07-17T12:00:00.000Z"),
+        },
+        now
+      )
+    ).toBe("EXPIRED");
+  });
+
+  it("returns READY before a future expiry", () => {
+    expect(
+      getClassCodeInviteStatus(
+        {
+          codeActive: true,
+          codeExpiresAt: new Date("2026-07-18T12:00:00.000Z"),
+        },
+        now
+      )
+    ).toBe("READY");
   });
 });

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  BookOpen,
   CalendarClock,
   ClipboardList,
   FileText,
@@ -270,8 +271,9 @@ function FeedCard({
 
       {/* Body — title + preview */}
       <div className="px-5 pt-4">
+        <LessonFlag item={item} role={role} />
         <h3
-          className="text-lg font-semibold text-black"
+          className={`${hasLessonFlag(item, role) ? "mt-2.5" : ""} text-lg font-semibold text-black`}
           style={{ letterSpacing: "-0.02em", lineHeight: 1.3 }}
         >
           {headline}
@@ -347,6 +349,43 @@ function FeedCard({
       </footer>
     </article>
   );
+}
+
+function LessonFlag({
+  item,
+  role,
+}: {
+  item: FeedItem;
+  role: "TEACHER" | "STUDENT";
+}) {
+  if (item.kind !== "ASSIGNMENT" && item.kind !== "MATERIAL") return null;
+
+  if (item.lessonId && item.lessonTitle) {
+    const href = `/${role === "TEACHER" ? "teacher" : "student"}/courses/${item.courseOfferingId}/lessons/${item.lessonId}`;
+    return (
+      <Link
+        href={href}
+        className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700 hover:border-blue-300 hover:no-underline"
+        title={`เปิดบทเรียน ${item.lessonTitle}`}
+      >
+        <BookOpen className="h-3.5 w-3.5 shrink-0" />
+        <span className="truncate">{item.lessonTitle}</span>
+      </Link>
+    );
+  }
+
+  if (role !== "TEACHER") return null;
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-black/[0.04] px-2.5 py-1 text-[11px] font-medium text-ink-mute">
+      <BookOpen className="h-3.5 w-3.5" />
+      ยังไม่จัดบทเรียน
+    </span>
+  );
+}
+
+function hasLessonFlag(item: FeedItem, role: "TEACHER" | "STUDENT"): boolean {
+  if (item.kind !== "ASSIGNMENT" && item.kind !== "MATERIAL") return false;
+  return Boolean(item.lessonId && item.lessonTitle) || role === "TEACHER";
 }
 
 function moderationTargetType(

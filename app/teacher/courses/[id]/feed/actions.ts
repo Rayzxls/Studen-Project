@@ -8,6 +8,7 @@ import { createMaterial } from "@/lib/material/material";
 import { createAnnouncement } from "@/lib/announcement/announcement";
 import { ZodError } from "zod";
 import { HttpError, ValidationError } from "@/lib/errors";
+import { lessonWorkspaceCourseMutationsEnabled } from "@/lib/lesson";
 
 /**
  * Unified composer Server Actions — Phase 10C · ADR-0025 § 3.
@@ -120,6 +121,7 @@ export async function composeAssignmentAction(
   const session = await requireRole(["TEACHER"]);
   const meta = await getRequestMeta();
   const courseId = String(formData.get("courseId") ?? "");
+  const lessonId = String(formData.get("lessonId") ?? "").trim();
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "");
   const dueAtStr = String(formData.get("dueAt") ?? "");
@@ -131,6 +133,12 @@ export async function composeAssignmentAction(
     formData.get("fileAttachmentIds")
   );
   if (!courseId) return { error: "missing_course_id" };
+  if (
+    lessonWorkspaceCourseMutationsEnabled(courseId) &&
+    lessonId.length === 0
+  ) {
+    return { fieldErrors: { lessonId: "เลือกบทเรียนก่อนสร้างการบ้าน" } };
+  }
   if (fileAttachmentIds.length > 0 && ownerId.length === 0) {
     return {
       fieldErrors: { fileAttachmentIds: "missing_attachment_owner_id" },
@@ -150,6 +158,7 @@ export async function composeAssignmentAction(
     await createAssignment(
       {
         courseOfferingId: courseId,
+        lessonId: lessonId.length > 0 ? lessonId : null,
         id: ownerId.length > 0 ? ownerId : undefined,
         title,
         description,
@@ -177,6 +186,8 @@ export async function composeAssignmentAction(
     throw err;
   }
   revalidatePath(`/teacher/courses/${courseId}/feed`);
+  if (lessonId)
+    revalidatePath(`/teacher/courses/${courseId}/lessons/${lessonId}`);
   return { ok: true };
 }
 
@@ -189,6 +200,7 @@ export async function composeMaterialAction(
   const session = await requireRole(["TEACHER"]);
   const meta = await getRequestMeta();
   const courseId = String(formData.get("courseId") ?? "");
+  const lessonId = String(formData.get("lessonId") ?? "").trim();
   const title = String(formData.get("title") ?? "").trim();
   const body = String(formData.get("body") ?? "").trim();
   const linkUrls = parseLinkUrls(String(formData.get("linkUrls") ?? ""));
@@ -197,6 +209,12 @@ export async function composeMaterialAction(
     formData.get("fileAttachmentIds")
   );
   if (!courseId) return { error: "missing_course_id" };
+  if (
+    lessonWorkspaceCourseMutationsEnabled(courseId) &&
+    lessonId.length === 0
+  ) {
+    return { fieldErrors: { lessonId: "เลือกบทเรียนก่อนสร้างเอกสาร" } };
+  }
   if (fileAttachmentIds.length > 0 && ownerId.length === 0) {
     return {
       fieldErrors: { fileAttachmentIds: "missing_attachment_owner_id" },
@@ -209,6 +227,7 @@ export async function composeMaterialAction(
     await createMaterial(
       {
         courseOfferingId: courseId,
+        lessonId: lessonId.length > 0 ? lessonId : null,
         id: ownerId.length > 0 ? ownerId : undefined,
         title,
         body,
@@ -228,5 +247,7 @@ export async function composeMaterialAction(
     throw err;
   }
   revalidatePath(`/teacher/courses/${courseId}/feed`);
+  if (lessonId)
+    revalidatePath(`/teacher/courses/${courseId}/lessons/${lessonId}`);
   return { ok: true };
 }

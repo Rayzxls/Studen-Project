@@ -41,6 +41,9 @@ describe("tierFor — per-action default tier", () => {
       "SCORE_ITEM_PUBLISHED",
       "ADMIN_AUDIT_EXPORTED",
       "CLASS_ANALYTICS_EXPORTED",
+      "LESSON_ARCHIVED",
+      "LESSON_DELETED",
+      "LESSON_CONTENT_MOVED",
     ]) {
       expect(tierFor(a)).toBe("IMPORTANT");
     }

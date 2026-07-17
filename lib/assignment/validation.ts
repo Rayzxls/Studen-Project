@@ -65,6 +65,7 @@ const LinkUrlSchema = z
 export const CreateAssignmentSchema = z
   .object({
     courseOfferingId: z.string().min(1, "ระบุวิชา"),
+    lessonId: z.string().min(1).nullable().optional(),
     title: z.string().trim().min(1, "ตั้งชื่อการบ้าน").max(TITLE_MAX),
     description: z.string().max(DESCRIPTION_MAX, "คำอธิบายยาวเกินไป"),
     dueAt: z.coerce.date().nullable().optional(),
@@ -109,6 +110,7 @@ export type CreateAssignmentInput = z.input<typeof CreateAssignmentSchema>;
  * rejects it on the true→false flip with `not_scored`.
  */
 export const UpdateAssignmentSchema = z.object({
+  lessonId: z.string().min(1).nullable().optional(),
   title: z.string().trim().min(1).max(TITLE_MAX).optional(),
   description: z.string().max(DESCRIPTION_MAX).optional(),
   dueAt: z.coerce.date().nullable().optional(),

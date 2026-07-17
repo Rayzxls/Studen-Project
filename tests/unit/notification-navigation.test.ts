@@ -8,7 +8,10 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { resolveNotificationHref } from "@/lib/notification/navigation";
+import {
+  resolveNotificationDestinationLabel,
+  resolveNotificationHref,
+} from "@/lib/notification/navigation";
 
 const COURSE_ID = "course-abc";
 
@@ -220,6 +223,98 @@ describe("resolveNotificationHref — TEACHER recipient", () => {
   });
 });
 
+describe("resolveNotificationHref — Lesson Workspace deep links", () => {
+  it("keeps the legacy Assignment URL while the workspace flag is off", () => {
+    expect(
+      resolveNotificationHref({
+        kind: "ASSIGNMENT_POSTED",
+        role: "STUDENT",
+        courseOfferingId: COURSE_ID,
+        sourceEntityId: "assignment-99",
+        payload: { lessonId: "lesson-2" },
+        lessonWorkspaceEnabled: false,
+      })
+    ).toBe(`/student/courses/${COURSE_ID}/assignments/assignment-99`);
+  });
+
+  it("opens a posted Assignment at its Student Lesson checkpoint", () => {
+    expect(
+      resolveNotificationHref({
+        kind: "ASSIGNMENT_POSTED",
+        role: "STUDENT",
+        courseOfferingId: COURSE_ID,
+        sourceEntityId: "assignment-99",
+        payload: { lessonId: "lesson-2" },
+        lessonWorkspaceEnabled: true,
+      })
+    ).toBe(
+      `/student/courses/${COURSE_ID}/lessons/lesson-2#assignment-assignment-99`
+    );
+  });
+
+  it("opens a posted Material at its Student Lesson checkpoint", () => {
+    expect(
+      resolveNotificationHref({
+        kind: "MATERIAL_POSTED",
+        role: "STUDENT",
+        courseOfferingId: COURSE_ID,
+        sourceEntityId: "material-3",
+        payload: { lessonId: "lesson-2" },
+        lessonWorkspaceEnabled: true,
+      })
+    ).toBe(
+      `/student/courses/${COURSE_ID}/lessons/lesson-2#material-material-3`
+    );
+  });
+
+  it("opens a graded Submission at its parent Assignment checkpoint", () => {
+    expect(
+      resolveNotificationHref({
+        kind: "SUBMISSION_GRADED",
+        role: "STUDENT",
+        courseOfferingId: COURSE_ID,
+        sourceEntityId: "submission-7",
+        payload: { assignmentId: "assignment-99", lessonId: "lesson-2" },
+        lessonWorkspaceEnabled: true,
+      })
+    ).toBe(
+      `/student/courses/${COURSE_ID}/lessons/lesson-2#assignment-assignment-99`
+    );
+  });
+
+  it("opens a Teacher comment at the linked Material checkpoint", () => {
+    expect(
+      resolveNotificationHref({
+        kind: "COMMENT_REPLIED",
+        role: "TEACHER",
+        courseOfferingId: COURSE_ID,
+        sourceEntityId: "comment-3",
+        payload: {
+          entityKind: "MATERIAL",
+          entityOwnerId: "material-5",
+          lessonId: "lesson-2",
+        },
+        lessonWorkspaceEnabled: true,
+      })
+    ).toBe(
+      `/teacher/courses/${COURSE_ID}/lessons/lesson-2#material-material-5`
+    );
+  });
+
+  it("falls back to the entity detail for legacy notifications without lessonId", () => {
+    expect(
+      resolveNotificationHref({
+        kind: "MATERIAL_POSTED",
+        role: "STUDENT",
+        courseOfferingId: COURSE_ID,
+        sourceEntityId: "material-3",
+        payload: {},
+        lessonWorkspaceEnabled: true,
+      })
+    ).toBe(`/student/courses/${COURSE_ID}/materials/material-3`);
+  });
+});
+
 describe("resolveNotificationHref — fallbacks", () => {
   it("returns /dashboard when courseOfferingId is null", () => {
     expect(
@@ -243,5 +338,33 @@ describe("resolveNotificationHref — fallbacks", () => {
         payload: {},
       })
     ).toBe("/dashboard");
+  });
+});
+
+describe("resolveNotificationDestinationLabel", () => {
+  it.each([
+    ["SCORE_ITEM_PUBLISHED", "STUDENT", {}, "ดูคะแนน"],
+    ["SCORE_ENTRY_EDITED", "STUDENT", {}, "ดูคะแนน"],
+    ["ASSIGNMENT_POSTED", "STUDENT", {}, "ดูงาน"],
+    ["SUBMISSION_GRADED", "STUDENT", {}, "ดูงาน"],
+    ["SUBMISSION_RETURNED", "STUDENT", {}, "ดูงาน"],
+    ["MATERIAL_POSTED", "STUDENT", {}, "เปิดเอกสาร"],
+    ["ANNOUNCEMENT_POSTED", "STUDENT", {}, "อ่านประกาศ"],
+    ["COMMENT_REPLIED", "STUDENT", { entityKind: "MATERIAL" }, "เปิดเอกสาร"],
+    ["CLASS_CODE_JOINED", "TEACHER", {}, "ดูสมาชิก"],
+  ] as const)("%s for %s shows %s", (kind, role, payload, expected) => {
+    expect(resolveNotificationDestinationLabel({ kind, role, payload })).toBe(
+      expected
+    );
+  });
+
+  it("labels a Teacher submission comment as a work shortcut", () => {
+    expect(
+      resolveNotificationDestinationLabel({
+        kind: "COMMENT_REPLIED",
+        role: "TEACHER",
+        payload: { entityKind: "SUBMISSION" },
+      })
+    ).toBe("ดูงาน");
   });
 });

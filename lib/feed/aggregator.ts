@@ -39,6 +39,9 @@ export interface FeedItem {
   title: string | null;
   /** Optional second-line detail — Assignment.dueAt ISO string, etc. */
   detail?: string | null;
+  /** Optional Lesson ownership for Assignment/Material Feed flags. */
+  lessonId?: string | null;
+  lessonTitle?: string | null;
   /** First ~280 chars of body/description for Instagram-style card body. */
   bodyPreview?: string | null;
   /** Display name of the teacher who posted ("ครูสมชาย ใจดี"). */
@@ -153,6 +156,8 @@ async function aggregateFeed(
               linkUrls: true,
               dueAt: true,
               createdAt: true,
+              lessonId: true,
+              lesson: { select: { title: true } },
               course: {
                 select: {
                   teacher: {
@@ -190,6 +195,8 @@ async function aggregateFeed(
               fileAttachmentIds: true,
               linkUrls: true,
               postedAt: true,
+              lessonId: true,
+              lesson: { select: { title: true } },
               postedBy: {
                 select: {
                   id: true,
@@ -320,6 +327,8 @@ async function aggregateFeed(
         sortAt: a.createdAt,
         title: a.title,
         detail: a.dueAt ? a.dueAt.toISOString() : null,
+        lessonId: a.lessonId,
+        lessonTitle: a.lesson?.title ?? null,
         bodyPreview: truncatePreview(a.description),
         authorName: teacherFullName(a.course?.teacher),
         authorUserId: a.course?.teacher?.userId ?? null,
@@ -343,6 +352,8 @@ async function aggregateFeed(
         courseOfferingId: m.courseOfferingId,
         sortAt: m.postedAt,
         title: m.title,
+        lessonId: m.lessonId,
+        lessonTitle: m.lesson?.title ?? null,
         bodyPreview: truncatePreview(m.body),
         authorName:
           teacherFullName(m.postedBy?.teacher) ??

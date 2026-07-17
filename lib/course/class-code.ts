@@ -80,6 +80,23 @@ export function normalizeClassCode(input: string): string {
     .replace(/[^A-Z0-9-]/g, "");
 }
 
+export type ClassCodeInviteStatus = "READY" | "DISABLED" | "EXPIRED";
+
+/**
+ * Resolve the user-facing invite status with an injectable clock so UI code
+ * does not read time during render and tests can cover the expiry boundary.
+ */
+export function getClassCodeInviteStatus(
+  input: { codeActive: boolean; codeExpiresAt: Date | null },
+  now = new Date()
+): ClassCodeInviteStatus {
+  if (!input.codeActive) return "DISABLED";
+  if (input.codeExpiresAt && input.codeExpiresAt.getTime() <= now.getTime()) {
+    return "EXPIRED";
+  }
+  return "READY";
+}
+
 // ═══════════════════════════════════════════════════════════
 // Class Code mutation wrappers (Phase 3 P3-5/3 — Settings tab)
 // ═══════════════════════════════════════════════════════════

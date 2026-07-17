@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import {
@@ -36,6 +37,7 @@ import { TeacherAttachmentUploader } from "@/components/attachment/teacher-attac
  */
 
 type ChipKey = "announcement" | "assignment" | "material";
+export type ComposerLessonOption = { id: string; title: string };
 
 const CHIPS: {
   key: ChipKey;
@@ -67,7 +69,17 @@ const INITIAL_ANN: ComposeAnnouncementState = {};
 const INITIAL_ASN: ComposeAssignmentState = {};
 const INITIAL_MAT: ComposeMaterialState = {};
 
-export function UnifiedComposer({ courseId }: { courseId: string }) {
+export function UnifiedComposer({
+  courseId,
+  lessonOptions = [],
+  defaultLessonId,
+  requireLesson = false,
+}: {
+  courseId: string;
+  lessonOptions?: ComposerLessonOption[];
+  defaultLessonId?: string;
+  requireLesson?: boolean;
+}) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [chip, setChip] = useState<ChipKey>("announcement");
   const [ownerIds, setOwnerIds] = useState<Record<ChipKey, string>>({
@@ -174,6 +186,9 @@ export function UnifiedComposer({ courseId }: { courseId: string }) {
               <AssignmentForm
                 courseId={courseId}
                 ownerId={ownerIds.assignment}
+                lessonOptions={lessonOptions}
+                defaultLessonId={defaultLessonId}
+                requireLesson={requireLesson}
                 close={close}
               />
             )}
@@ -181,6 +196,9 @@ export function UnifiedComposer({ courseId }: { courseId: string }) {
               <MaterialForm
                 courseId={courseId}
                 ownerId={ownerIds.material}
+                lessonOptions={lessonOptions}
+                defaultLessonId={defaultLessonId}
+                requireLesson={requireLesson}
                 close={close}
               />
             )}
@@ -255,10 +273,16 @@ function AnnouncementForm({
 function AssignmentForm({
   courseId,
   ownerId,
+  lessonOptions,
+  defaultLessonId,
+  requireLesson,
   close,
 }: {
   courseId: string;
   ownerId: string;
+  lessonOptions: ComposerLessonOption[];
+  defaultLessonId?: string;
+  requireLesson: boolean;
   close: () => void;
 }) {
   const [state, action] = useActionState(composeAssignmentAction, INITIAL_ASN);
@@ -269,6 +293,13 @@ function AssignmentForm({
   return (
     <form ref={formRef} action={action} className="space-y-4">
       <input type="hidden" name="courseId" value={courseId} />
+      <LessonSelect
+        courseId={courseId}
+        options={lessonOptions}
+        defaultLessonId={defaultLessonId}
+        required={requireLesson}
+        error={state.fieldErrors?.lessonId}
+      />
       <Field
         label="ชื่อการบ้าน"
         error={state.fieldErrors?.title}
@@ -380,10 +411,16 @@ function AssignmentForm({
 function MaterialForm({
   courseId,
   ownerId,
+  lessonOptions,
+  defaultLessonId,
+  requireLesson,
   close,
 }: {
   courseId: string;
   ownerId: string;
+  lessonOptions: ComposerLessonOption[];
+  defaultLessonId?: string;
+  requireLesson: boolean;
   close: () => void;
 }) {
   const [state, action] = useActionState(composeMaterialAction, INITIAL_MAT);
@@ -393,6 +430,13 @@ function MaterialForm({
   return (
     <form ref={formRef} action={action} className="space-y-4">
       <input type="hidden" name="courseId" value={courseId} />
+      <LessonSelect
+        courseId={courseId}
+        options={lessonOptions}
+        defaultLessonId={defaultLessonId}
+        required={requireLesson}
+        error={state.fieldErrors?.lessonId}
+      />
       <Field
         label="หัวข้อ"
         error={state.fieldErrors?.title}
@@ -434,6 +478,55 @@ function MaterialForm({
 // ─────────────────────────────────────────────────────────────
 // Shared
 // ─────────────────────────────────────────────────────────────
+
+function LessonSelect({
+  courseId,
+  options,
+  defaultLessonId,
+  required,
+  error,
+}: {
+  courseId: string;
+  options: ComposerLessonOption[];
+  defaultLessonId?: string;
+  required: boolean;
+  error?: string;
+}) {
+  return (
+    <Field label="บทเรียน" error={error} htmlFor="composer-lesson">
+      <select
+        id="composer-lesson"
+        name="lessonId"
+        required={required}
+        defaultValue={defaultLessonId ?? ""}
+        className="input"
+      >
+        <option value="" disabled={required}>
+          {options.length === 0 ? "ยังไม่มีบทเรียน" : "เลือกบทเรียน"}
+        </option>
+        {options.map((lesson) => (
+          <option key={lesson.id} value={lesson.id}>
+            {lesson.title}
+          </option>
+        ))}
+      </select>
+      {required && options.length === 0 && (
+        <div className="mt-2 flex flex-col gap-2 rounded-lg border border-hairline bg-surface p-3 text-ink sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs">
+            สร้างบทเรียนก่อน แล้วจึงเพิ่มการบ้านหรือเอกสาร
+          </p>
+          <Link
+            href={`/teacher/courses/${courseId}/lessons`}
+            className="inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-md bg-blue-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            ไปสร้างบทเรียน
+          </Link>
+        </div>
+      )}
+    </Field>
+  );
+}
 
 function Field({
   label,

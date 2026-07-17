@@ -18,6 +18,7 @@ import { db } from "@/lib/db/client";
 import { Conflict, Forbidden, NotFound, ValidationError } from "@/lib/errors";
 import { fanOutBroadcast } from "@/lib/notification";
 import { TX_OPTS } from "./constants";
+import { assertLinkableLesson } from "@/lib/lesson/linking";
 import {
   CreateAssignmentSchema,
   type CreateAssignmentInput,
@@ -68,6 +69,10 @@ export async function createAssignment(
     if (course.teacherId !== ctx.actorUserId) {
       throw new Forbidden("not_course_owner");
     }
+    await assertLinkableLesson(tx, {
+      lessonId: parsed.lessonId,
+      courseOfferingId: parsed.courseOfferingId,
+    });
 
     // Materialise the Assignment with scoreItemId=null first.
     const assignmentId = parsed.id;
@@ -89,6 +94,7 @@ export async function createAssignment(
       data: {
         ...(assignmentId && { id: assignmentId }),
         courseOfferingId: parsed.courseOfferingId,
+        lessonId: parsed.lessonId ?? null,
         title: parsed.title,
         description: parsed.description,
         dueAt: parsed.dueAt ?? null,
@@ -134,6 +140,7 @@ export async function createAssignment(
       payload: {
         courseId: parsed.courseOfferingId,
         courseName: courseRow.name,
+        lessonId: parsed.lessonId ?? null,
         assignmentTitle: parsed.title,
         dueAt: parsed.dueAt?.toISOString() ?? null,
       },
@@ -182,6 +189,7 @@ export async function updateAssignment(
       select: {
         id: true,
         courseOfferingId: true,
+        lessonId: true,
         isScored: true,
         scoreItemId: true,
         course: { select: { teacherId: true } },
@@ -197,6 +205,12 @@ export async function updateAssignment(
     if (!current) throw new NotFound("assignment_not_found");
     if (current.course.teacherId !== ctx.actorUserId) {
       throw new Forbidden("not_course_owner");
+    }
+    if (parsed.lessonId !== undefined) {
+      await assertLinkableLesson(tx, {
+        lessonId: parsed.lessonId,
+        courseOfferingId: current.courseOfferingId,
+      });
     }
 
     const toggleOn = parsed.isScored === true && current.isScored === false;
@@ -372,6 +386,7 @@ function buildPlainFieldsPatch(
   parsed: UpdateAssignmentInput
 ): Prisma.AssignmentUncheckedUpdateInput {
   const data: Prisma.AssignmentUncheckedUpdateInput = {};
+  if (parsed.lessonId !== undefined) data.lessonId = parsed.lessonId;
   if (parsed.title !== undefined) data.title = parsed.title;
   if (parsed.description !== undefined) data.description = parsed.description;
   if (parsed.dueAt !== undefined) data.dueAt = parsed.dueAt;

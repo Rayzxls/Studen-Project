@@ -53,21 +53,21 @@ model or button exists.
 | Regenerate, enable/disable, and expire code | **Shipped** | Owner-only audited mutations exist in `lib/course/class-code.ts`, including idempotent activation and expiry changes. |
 | Existing enrollment and removed Student rejoin | **Shipped** | Active duplicate enrollment is rejected; a removed enrollment is restored in place with audit history and notification unsuppression. |
 | In-app camera scanner | **Removed from Proposal** | The QR is scanned by the phone camera or browser/OS scanner and opens the invite link. Maintaining a second camera permission surface adds little value. |
-| Full browser/mobile acceptance | **Deferred - A2 manual acceptance** | The isolated QA branch, integration suite, critical Playwright suite, safe smoke, and restore rehearsal pass. Expired/disabled/regenerated links, mobile handoff, role visibility, all themes, and private-R2 behavior still require manual release sign-off. |
+| Full browser/mobile acceptance | **Partially accepted - A2** | Isolated-Neon Playwright now covers the Teacher invite card, exact QR/invite payload, mobile prefill, first join, removed Student rejoin, expired/disabled/regenerated stale-code rejection, fresh-code success, role visibility, Dark Teacher, Cream Student, and iPhone 390x844 overflow. Physical phone-camera scanning, remaining theme/device combinations, and production private-R2 behavior remain manual release checks. |
 
 ## 4. Moderation coverage
 
-The first central Moderation Center slice was implemented and verified on isolated Neon QA on 2026-07-15. It is feature-flagged and has not been migrated or enabled in Production.
+The first central Moderation Center slice was implemented and verified on isolated Neon QA on 2026-07-15. Production code and schema shipped on 2026-07-15; the server-side feature flag remains disabled pending cutover acceptance.
 
 | Content type | Status | Current rule and remaining boundary |
 | --- | --- | --- |
-| Class-wide and private Comment | **QA-implemented** | Existing Teacher moderation remains; authenticated reports can aggregate into an Admin case with snapshot, temporary hide, restore, decision, audit, and owner appeal. |
-| Announcement and Material | **QA-implemented** | Owner soft-delete remains separate. Admin may restrict policy/safety content through a case without gaining Teacher editing privileges. |
+| Class-wide and private Comment | **Production-deployed, disabled** | Existing Teacher moderation remains; authenticated reports can aggregate into an Admin case with snapshot, temporary hide, restore, decision, audit, and owner appeal after flag cutover. |
+| Announcement and Material | **Production-deployed, disabled** | Owner soft-delete remains separate. Admin may restrict policy/safety content through a case without gaining Teacher editing privileges after flag cutover. |
 | Assignment content | **Partial** | Admin case restriction is QA-implemented and never mutates scores/submissions. The older destructive owner delete path still needs archive-first replacement before content retention is complete. |
-| File Attachment | **QA-implemented** | A quarantined file is removed from normal attachment projection and denied before signed delivery; Admin retains evidence access. Private-R2 manual acceptance remains open. |
-| Profile image | **QA-implemented** | Existing audited avatar reset remains. A moderation restriction makes normal delivery fall back to the default avatar while preserving evidence for Admin review. |
-| Restore/appeal workflow | **QA-implemented** | Admin can restore/dismiss temporary restrictions; the content owner gets one appeal within seven days and the case returns to review. |
-| Unified moderation queue | **QA-implemented** | Admin-only Active/History/All queue with reports, immutable snapshot, timeline, restrictions, and decisions. Production rollout remains unapproved. |
+| File Attachment | **Production-deployed, disabled** | A quarantined file is removed from normal attachment projection and denied before signed delivery; Admin retains evidence access. Private-R2 manual acceptance remains open. |
+| Profile image | **Production-deployed, disabled** | Existing audited avatar reset remains. A moderation restriction makes normal delivery fall back to the default avatar while preserving evidence for Admin review. |
+| Restore/appeal workflow | **Production-deployed, disabled** | Admin can restore/dismiss temporary restrictions; the content owner gets one appeal within seven days and the case returns to review. |
+| Unified moderation queue | **Production-deployed, disabled** | Admin-only Active/History/All queue with reports, immutable snapshot, timeline, restrictions, and decisions. Vercel flag cutover remains open. |
 
 ## 5. Profile scope
 
@@ -82,16 +82,21 @@ The first central Moderation Center slice was implemented and verified on isolat
 ## Follow-up order
 
 1. **Finish A2 manual acceptance:** automated QA isolation, integration/E2E,
-   safe smoke, and restore rehearsal are green. Complete role workflows,
-   mobile/theme, QR handoff, and private R2 acceptance before release sign-off.
+   safe smoke, restore rehearsal, and QR/invite browser handoff are green.
+   Complete remaining role/theme/device checks, a physical phone-camera scan,
+   and private R2 acceptance before release sign-off.
 2. **A3.1 correctness and UI consistency:** closed for Admin headcount semantics
    and identity-rich avatar surfaces. Keep dense operational tables text-first.
 3. **A4 Account and Content Retention:** Account Lifecycle and the first
    Moderation Center slice pass isolated QA. Replace destructive Assignment
    deletion, complete manual moderation acceptance, then request a separate
    production migration/feature-flag approval.
-4. **Release B Lesson Workspace:** begin only after A2 is green and A3.1/A4
-   decisions are recorded. Keep the existing Feed as the chronological view.
+4. **Release B Lesson Workspace:** B1-B6 implementation and isolated-Neon QA
+   are complete. Counts and relationships are preserved, the second backfill
+   dry-run is a no-op, and cross-course links are zero. Production migration,
+   pilot flags, and default-route cutover remain separately unapproved.
+   Keep the existing Feed as the chronological view. B3 Teacher mutations and
+   every Production migration/backfill still require separate approval.
 
 ## Audit conclusion
 

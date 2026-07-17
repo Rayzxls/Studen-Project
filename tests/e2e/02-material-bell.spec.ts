@@ -81,9 +81,11 @@ test("teacher posts material → student bell deep-links to material detail", as
   const popover = page.locator("#notification-bell-panel");
   await expect(popover).toBeVisible();
   await expect(popover.getByText(title)).toBeVisible();
+  await expect(popover.getByText("เปิดเอกสาร")).toBeVisible();
+  await expect(popover.locator('input[name="href"]')).toHaveCount(0);
 
   // Click the row → server action marks read + redirects to the entity URL.
-  await popover.getByText(title).click();
+  await popover.getByText("เปิดเอกสาร").click();
 
   // P9-1: MATERIAL_POSTED now deep-links to the student detail page,
   // not the course root fallback.

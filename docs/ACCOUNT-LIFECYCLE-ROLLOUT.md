@@ -1,7 +1,8 @@
 # Account Lifecycle Rollout
 
 **Status:** QA persistence, transaction wiring, and feature-flagged Admin UI are
-verified. Production migration and behavior cutover are not approved.
+verified. Production migration completed on 2026-07-15; behavior cutover remains
+disabled until the Vercel Production flag is explicitly enabled and redeployed.
 
 ## Safety boundary
 
@@ -59,6 +60,11 @@ Requires a separate explicit approval immediately before execution.
    separately reviewed read-only command. Do not print URLs or personal data.
 5. Stop rollout on any mismatch. Do not compensate with ad-hoc row edits.
 
+**Production result 2026-07-15:** completed at application merge commit
+`7c18813`. Both additive migrations applied through `prisma migrate deploy`.
+Aggregate verification found four Active accounts, zero canonical/legacy
+mismatches, zero lifecycle events, and an up-to-date migration history.
+
 ### Gate 4: canonical read and dual write
 
 1. Read canonical status behind a server-side feature flag.
@@ -83,12 +89,13 @@ Requires a separate explicit approval immediately before execution.
 
 1. Complete manual compatibility QA for login and the Admin account-detail action
    in Light, Dark, Cream, desktop, and mobile views on the isolated QA server.
-2. Keep the feature flag disabled through deployment and until the Production
-   schema gate receives a separate explicit approval.
+2. Production schema is complete. Keep the mutation flag disabled until the
+   Vercel environment cutover and post-redeploy role/theme smoke test are complete.
 3. Before enabling Production behavior, rerun self-action, stale-state,
    last-active-Admin, rollback, and session-revocation acceptance against QA and
    record the deployed application commit.
 4. After the compatibility window, design termination/restoration and irreversible
    anonymization as separate slices. They are not exposed by the current UI.
-5. Build the Moderation Center case workflow only after account lifecycle rollout
-   is accepted; do not combine content moderation with this transaction.
+5. The Moderation Center now exists as a separate case workflow and remains
+   isolated from account-lifecycle transactions. Accept and enable each feature
+   independently; never combine their state changes in one transaction.

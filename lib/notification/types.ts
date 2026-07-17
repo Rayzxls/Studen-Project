@@ -15,6 +15,11 @@ import type { NotifEntityType, NotificationKind } from "@prisma/client";
 interface BasePayload {
   courseId?: string;
   courseName?: string;
+  /**
+   * Optional Lesson snapshot for lesson-aware navigation. Legacy rows and
+   * course-wide content intentionally omit this field.
+   */
+  lessonId?: string | null;
 }
 
 // ─── Broadcast kinds ─────────────────────────────────────────

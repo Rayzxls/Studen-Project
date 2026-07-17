@@ -27,6 +27,33 @@ export interface BellListItem {
 const BELL_PAGE_SIZE = 20;
 
 /**
+ * Read one visible notification owned by a recipient. Server actions use this
+ * row to derive navigation instead of trusting a client-submitted URL.
+ */
+export async function getNotificationForRecipient(args: {
+  notificationId: string;
+  recipientId: string;
+}): Promise<BellListItem | null> {
+  return db.notification.findFirst({
+    where: {
+      id: args.notificationId,
+      recipientId: args.recipientId,
+      suppressedAt: null,
+    },
+    select: {
+      id: true,
+      kind: true,
+      sourceEntityType: true,
+      sourceEntityId: true,
+      courseOfferingId: true,
+      payloadJson: true,
+      readAt: true,
+      createdAt: true,
+    },
+  });
+}
+
+/**
  * List recent notifications for the bell dropdown.
  *
  * Includes BOTH read and unread per Q2.1 = A (bell shows all state,

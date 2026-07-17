@@ -1,5 +1,102 @@
 # HANDOFF — Beagle Classroom
 
+## NOTIFICATION SHORTCUT AND ROUTER ACCEPTANCE — 2026-07-17
+
+- Every bell row now exposes a visible destination shortcut instead of relying on an invisible whole-row click. Labels match the destination: scores, work, document, announcement, course, or members.
+- Audited all 9 `NotificationKind` values across Student and Teacher routing, including Lesson-aware deep links and safe legacy fallbacks. Existing Admin behavior remains the Dashboard fallback because Admin receives no teaching notifications.
+- Hardened navigation against form tampering. The browser submits only the Notification id; the server reloads a non-suppressed row owned by the signed-in recipient and computes the route from its immutable snapshot. Client-submitted redirect URLs were removed.
+- Verification passed: route/label unit `35/35`, full unit `558/558`, focused Student Material and Teacher class-join Playwright `3/3`, TypeScript, targeted ESLint, and Production build. The isolated Neon QA branch was used; Production data and flags were not mutated.
+
+## QR AND INVITE ACCEPTANCE — 2026-07-17
+
+- Restored the existing Teacher-only Class Code surface to Course Settings as a complete invite handoff card. It now shows a scannable QR, class code, absolute invite URL, course/class context, expiry, and a clear ready/disabled/expired state with copy actions. Student surfaces do not render the management card or regeneration controls.
+- Added a pure `getClassCodeInviteStatus` domain helper with an injectable clock. Disabled state takes precedence, the exact expiry boundary fails closed, and active codes without an expiry remain ready.
+- Added isolated-Neon Playwright acceptance across a Dark Teacher desktop and Cream Student iPhone 390x844 flow. It verifies the QR payload/invite URL, prefilled code, first join, removal plus restoration of the same Enrollment on rejoin, no mobile horizontal overflow, and hidden Teacher-only controls.
+- The same browser acceptance proves expired, disabled, and regenerated stale codes fail closed before the fresh regenerated code succeeds. Existing class-code mutation and enrollment-domain coverage remains intact.
+- Verification passed: full unit `548/548` (including focused class-code `19/19`), focused class-code/enrollment integration `11/11`, QR/invite Playwright `2/2`, TypeScript, targeted ESLint, formatting, and the Next.js Production build. Physical phone-camera scanning remains a manual OS/device release check; there is intentionally no in-app camera scanner. Production database, Lesson flags, private R2 objects, and rollout state were not mutated by this slice.
+
+## MODERATION REPORT ACCEPTANCE FOLLOW-UP — 2026-07-16
+
+- Fixed the missing Moderation report flag on isolated QA. `dev:qa` previously enabled only Lesson Workspace flags, so port 3100 hid every `ReportContentButton` even though the Moderation schema and workflow were present. The isolated server now defaults `MODERATION_CENTER_ENABLED=1` while preserving an explicit `0` override for fail-closed acceptance checks.
+- Student Lesson detail exposes the existing report dialog beside every Material and Assignment checkpoint. Navigation and report controls are separate interactive elements, avoiding nested links/buttons and preserving direct checkpoint access.
+- Added an authenticated Playwright acceptance flow on the isolated Neon QA branch: Student in Cream theme at 390×844 reports an Assignment checkpoint, the report is aggregated into a Moderation Case, then Admin in Dark theme opens the queue item and reads the immutable evidence snapshot. The fixture and case are removed after the run.
+- Fixed a real mobile regression found by that flow: the Lesson Material/Assignment grid used an automatic min-content track and expanded a 342 px card to 489 px. The grid and content sections now use shrinkable `minmax(0,1fr)` / `min-w-0` constraints, and the E2E test asserts document width against the mobile viewport.
+- Isolated QA now explicitly uses `LESSON_WORKSPACE_PILOT_COURSE_IDS=*`. This prevents Next.js from reloading Production pilot ids from `.env.local` and rejecting newly generated QA courses, while normal development and Production values remain unchanged.
+- Verification passed: Moderation E2E 1/1, focused feature/env unit 11/11, full unit assertions before the added wildcard case 543/543, targeted ESLint, TypeScript, and Production build. Production private-R2 upload/preview and authenticated Production smoke remain separate rollout acceptance; do not describe those as completed by this local QA run.
+
+## LESSON WORKSPACE STUDENT PROTOTYPE C PARITY — 2026-07-16
+
+- The real Student Lesson list now uses the approved Prototype C learning-path presentation instead of a generic vertical card list. It includes a continuous Lesson path, per-Lesson state marker, real Material/Assignment checkpoints, current-Student progress, next task, overdue state, and restrained entrance/progress motion with reduced-motion support.
+- The Student contract is unchanged: every active Lesson remains directly openable, progress is submitted Assignments divided by total Assignments, opening a Material does not count as completion, and the projection still selects only the caller's Enrollment submissions. Student Lesson detail no longer labels free-form Lessons with a fixed ordinal title.
+- Isolated Neon QA accepted Light and Dark desktop plus Cream and Dark iPhone 390 px list/detail renders with zero horizontal overflow. Temporary users, course, Lessons, Materials, Assignments, and Submission were removed after the run.
+- Verification passed: targeted ESLint, TypeScript, full unit `543/543`, and Production build. Feed remains the default course landing; Lesson flags and Production rollout state are unchanged.
+
+## LESSON WORKSPACE B6 ACCEPTANCE FOLLOW-UP — 2026-07-16
+
+- Teacher Lesson list is now aligned with the approved Prototype B interaction model: course header, free-form Lesson creation modal, left Lesson structure, right selected-Lesson summary, reorder controls, archived section, and direct entry to the existing real Lesson detail workspace. Announcement remains course-wide in Feed and is not presented as Lesson-owned data.
+- The previous real page was not a faithful Prototype B projection: it used an inline create form and a vertical card list. That UI was replaced; the Prototype routes remain available only as historical design references.
+- `dev:qa` now enables Lesson read/mutation flags only after `prepareIsolatedDatabaseEnv()` has replaced `DATABASE_URL` with the separately identity-checked `QA_DATABASE_URL`. Normal local `dev`, Production, default-route cutover, schema migration, and Production data remain untouched and fail closed.
+- Isolated Neon QA accepted real create flow on desktop and iPhone 390 px with no horizontal overflow. The temporary Teacher/course/Lesson fixture was deleted after the run. TypeScript, targeted ESLint, full unit `542/542`, and the Production build passed.
+- To test safely, use `pnpm dev:qa`, open `http://localhost:3100`, sign in with a QA Teacher, enter a course, open `บทเรียน`, and press `สร้างบทเรียน`. Do not add Lesson flags to the normal Production-backed `.env.local` development flow.
+- Feed parity follow-up: Assignment and Material projections now carry `lessonId` plus the free-form Lesson title. Teacher and Student cards render a compact, clickable Lesson flag; legacy unlinked content is labelled `ยังไม่จัดบทเรียน` for Teachers instead of silently losing context. Regression test covers the Prisma projection. Light/Dark/Cream and Desktop/iPhone 390 px visual QA passed without horizontal overflow; temporary QA data was removed.
+
+## LESSON WORKSPACE B6 — 2026-07-15
+
+- Admin Lesson observer is implemented on `phase-11`. The Admin course shell now exposes a feature-flagged `บทเรียน` tab with aggregate list and detail routes for active or archived courses.
+- Admin can read Lesson titles/descriptions, Assignment/Material content, active-student totals, submitted/missing/late/pending-grading counts, and aggregate completion. The projection does not select Student identity, scores, attendance, Submission versions, private comments, or submitted files. No teaching mutation actions are rendered, and non-Admin query callers are rejected before a database read.
+- Added optional `LESSON_WORKSPACE_PILOT_COURSE_IDS`. When absent, the existing read flag keeps all-course behavior; when present, only exact comma-separated CourseOffering ids are enabled; an explicitly empty value enables no courses. The same course gate controls tabs, routes, mutations, Feed composer requirements, and Lesson-aware notification links.
+- Verification passed: TypeScript, targeted ESLint, production build, full unit `540/540`, and local QA on desktop plus iPhone 390 px. Admin list/detail had no horizontal overflow, no private identity, and no mutation controls. The temporary QA Admin was deleted after the run.
+- The three local 400 responses observed during visual QA were existing missing Teacher avatar objects caused by the documented local-storage/R2 pointer mismatch, not Lesson routes. No database repair was attempted.
+- Production migration/backfill/flags/pilot/default-route/deployment remain untouched. B6 code is complete, but Production rollout acceptance is still open: choose one CourseOffering id, configure fail-closed flags, redeploy, run production permission/theme/mobile/performance smoke, rehearse flag-off rollback, then widen only after approval. Feed remains the default landing.
+
+## LESSON WORKSPACE B5 — 2026-07-15
+
+- Feed/notification parity is complete on `phase-11`. Feed remains the chronological canonical projection and the default Student/Teacher course landing; no route cutover was made.
+- New Assignment, Material, submission grade/return, and relevant comment notification snapshots now carry an optional `lessonId`. When the fail-closed Lesson read flag is enabled, the bell opens the exact Assignment or Material checkpoint inside its Lesson.
+- Legacy notifications without `lessonId`, all course-wide Announcements, and every notification while the flag is disabled keep the existing direct detail URL. Existing Feed links and bookmarks are unchanged.
+- Student and Teacher Lesson detail pages expose stable `assignment-{id}` and `material-{id}` anchors with visible keyboard/target focus. Creating an empty Lesson still emits no notification because Lesson mutations have no notification producer.
+- Verification passed: TypeScript, targeted ESLint, production build, full unit `528/528`, and targeted isolated-Neon integration `19/19`. Full-repository lint remains blocked by pre-existing generated `.next-qa` and bundled `.claude` skill files, not B5 files.
+- Production schema, data, flags, default routes, deployment, and `main` remain untouched. B6 Admin observer code is now complete; Production pilot rollout still requires separate approval. Disabling the Lesson flag restores legacy navigation without data rollback.
+
+## LESSON WORKSPACE B4 — 2026-07-15
+
+- Student Learning Path is complete on `phase-11`: the Student course tabs now expose a dedicated Lesson list and Lesson detail while Feed remains the default course experience.
+- All active Lessons are visible without sequential locks. Archived Lessons stay collapsed under `บทเรียนที่จบแล้ว`.
+- Progress is the current Student's submitted Assignments divided by total Assignments. Opening a Material does not count as completion; the UI shows the current Student's next task, due date, overdue state, and per-Assignment status.
+- The query's L1 privacy boundary filters nested Submission rows by the caller's active Enrollment id and does not select peer progress, score, attendance, or submission data.
+- Verification passed: TypeScript, targeted ESLint, production build, unit `522/522`, and Playwright on Desktop plus iPhone 390 px. Dark, Light, and Cream visual QA passed without horizontal overflow. The temporary Neon QA fixture was removed after acceptance.
+- Production Lesson migration, backfill, flags, route cutover, and deploy remain unapproved and untouched. Next planned slice is B5 Feed/notification deep-link parity; Feed-first routing must remain unchanged until that slice passes.
+
+## LESSON WORKSPACE B3 — 2026-07-15
+
+- Teacher Lesson workflow is complete on `phase-11`: list/detail routes, create, rename, reorder, guarded archive, empty deletion, and audited Assignment/Material moves are implemented.
+- Feed composer requires an active Lesson for Assignment/Material, preselects the current Lesson from its detail page, and provides a direct create-Lesson shortcut when a course has no Lessons. Announcement remains course-wide.
+- Lesson detail shows submitted, missing, late, and pending-grading counts and links each Assignment to the existing review workspace. Missing is calculated from active enrollments only.
+- Desktop and iPhone-size QA passed on isolated Neon QA. TypeScript and production build passed; targeted Lesson tests passed 16/16.
+- Commits: `b650f52` plus the B3 acceptance follow-up. Production Lesson migration, backfill, feature flags, default-route change, and deploy remain unapproved and untouched.
+- B4 Student Learning Path is now complete; see the newer handoff section above. Do not start Production rollout or switch Feed-first routing without a separate explicit approval.
+
+## LESSON WORKSPACE B2 — 2026-07-15
+
+- Added a fail-closed compatibility planner. Its default and package-script behavior is read-only dry-run; `--apply` requires the exact `LESSON_BACKFILL_CONFIRM` token and an identity-checked `QA_DATABASE_URL`.
+- Existing unassigned Assignment/Material rows map to one deterministic fallback Lesson named `เนื้อหาเดิม` per CourseOffering. Announcement remains course-wide.
+- Apply uses one Serializable transaction, preserves content ids, writes one `LESSON_CONTENT_MOVED` Audit row per link, and verifies Assignment, Material, Submission, Score Entry, Comment, File Attachment, and Notification counts before commit.
+- Isolated Neon QA result: 1 affected course, 1 Lesson created, 1 Assignment linked, 0 Materials linked. Entity counts were unchanged; Lesson +1 and Audit +1 matched the plan.
+- Repeated dry-run is a no-op and the verifier reports 0 unassigned Assignment/Material rows and 0 cross-course links.
+- Production migration/backfill remains unapproved and has not run. The B3 status above supersedes this historical B2 handoff note.
+
+## LESSON WORKSPACE B1 — 2026-07-15
+
+- Implemented the additive Lesson domain under `CourseOffering`.
+- `Assignment.lessonId` and `Material.lessonId` are nullable and use `ON DELETE SET NULL`; `Announcement` remains course-wide.
+- Added fail-closed read/mutation/default-route flags. No Lesson UI, mutation route, backfill, Feed replacement, or default-route change is included in B1.
+- Owning Teacher may mutate active Lesson structure, active Student enrollment may read, and Admin is a read-only observer including archived courses.
+- Added Important audit contracts for archive, empty deletion, and content moves. Fire sites are reserved for B3 mutations.
+- Applied migration `20260715030000_add_lesson_workspace_foundation` to isolated Neon QA only. Verification: Lesson 0, linked legacy content 0, cross-course links 0, schema current.
+- Verification passed: unit 507/507, TypeScript, targeted B1 ESLint, and Prisma generation. Full-repo ESLint still scans generated `.next-qa` and bundled `.claude` skill files; use targeted lint until ignore coverage is corrected separately.
+- Production Lesson migration and all Lesson flags remain unapproved/off. Do not migrate Production or start B2 backfill without a separate explicit decision.
+- Moderation Center flag was enabled manually in Vercel on 2026-07-15; authenticated role/theme/mobile/private-R2 acceptance is still open and must not be described as fully accepted.
+
 ## 🚀 PRODUCTION OPS — 2026-06-13 ล่าสุด (อ่านก่อนสุด)
 
 > รอบนี้ **ปล่อยขึ้น production จริงแล้ว** + ตั้ง R2 + แก้ perf — สรุปให้ Codex/session ใหม่ตามทัน
@@ -25,6 +122,21 @@
 3. มีบัญชี test ค้างใน prod: student `990137` (ทดสอบ เอฟเอบี — Claude สมัครตอน verify FAB), student `36901234` (ธนภัทร), teacher `0940817471@hotmail.com` (wrw wqdq)
 4. Vercel region ตอนนี้ = **sin1** · admin login: `Rayzxls` / (รหัสอยู่ใน session เก่า — ควร rotate)
 
+### Production rollout update — 2026-07-15
+
+- ✅ PR #8 merged เข้า `main` ที่ `7c18813`; GitHub CI และ Vercel Production ผ่าน
+- ✅ Production ใช้ `prisma migrate deploy` ลง
+  `20260715010000_add_account_lifecycle_foundation` และ
+  `20260715020000_add_moderation_center_foundation` แล้ว ห้าม apply ซ้ำด้วย
+  `db push`
+- ✅ Post-migration aggregate verification: User `ACTIVE` 4, legacy mismatch 0,
+  lifecycle event 0, moderation case/report/event 0 และ migration status up to date
+- ⏸️ Behavior cutover ยังปิด: ต้องตั้ง Vercel Production env
+  `ACCOUNT_LIFECYCLE_MUTATIONS_ENABLED=1` และ
+  `MODERATION_CENTER_ENABLED=1` แล้ว redeploy ก่อน UI/mutation จะเปิด
+- ไม่มี Vercel CLI/token ในเครื่องรอบนี้ จึงไม่ได้เปลี่ยน environment variables
+  แทนผู้ใช้ และไม่ได้เปลี่ยนค่า default ใน code
+
 ---
 
 ## 🧭 PLANNING UPDATE — 2026-07-14 · Core → Lesson Workspace → Quiz → AI
@@ -41,8 +153,8 @@ temporary hide/quarantine, restore, resolve/dismiss และ one-time owner app
 ข้อจำกัดถูก enforce ที่ Feed/detail, signed-file route, attachment projection และ
 profile-image delivery โดยไม่แตะคะแนน การเข้าเรียน submission หรือสิทธิ์สอนของ
 Admin. Additive migration ลงเฉพาะ Neon QA, integration flow ผ่าน 1/1 และ policy
-unit ผ่าน 5/5; Production ยังไม่ได้ migrate/enable และต้องขอ approval แยก พร้อม
-manual theme/mobile/private-R2 acceptance ก่อน rollout.
+unit ผ่าน 5/5; Production migrate และ deploy code แล้วเมื่อ 2026-07-15 แต่ flag
+ยังปิด รอ Vercel environment cutover พร้อม manual theme/mobile/private-R2 acceptance.
 
 **A4 Account Lifecycle implementation update (2026-07-15):** Neon QA ผ่าน
 additive migration/backfill แล้ว (latest verifier: `ACTIVE` 12, mismatch 0,
@@ -51,8 +163,8 @@ lifecycle history 0 หลัง test cleanup) และเพิ่ม transact
 transaction, sync `accountStatus` + `isActive`, revoke session, เขียน
 `AccountLifecycleEvent` และ `AuditLog` แบบ atomic. หน้า Admin user detail มีฟอร์ม
 เหตุผลภายใน + ข้อความแจ้งผู้ใช้ + confirmation แล้ว แต่แสดงเฉพาะเมื่อ
-`ACCOUNT_LIFECYCLE_MUTATIONS_ENABLED=1`; ค่า default ยังปิดและ Production ยังไม่ได้
-migrate/enable. QA integration suspend→reactivate ผ่าน 1/1, unit 486/486,
+`ACCOUNT_LIFECYCLE_MUTATIONS_ENABLED=1`; ค่า default ยังปิด Production migrate
+และ deploy code แล้วแต่ยังไม่ enable. QA integration suspend→reactivate ผ่าน 1/1, unit 486/486,
 typecheck และ targeted ESLint ผ่าน. ห้าม migrate Production โดยไม่มี approval แยก.
 
 **A0 Documentation Alignment ปิดแล้ว (2026-07-14 · docs only):** ปรับ `README.md`, `CLAUDE.md`, `CONTEXT.md`, `docs/PROPOSAL.md`, `docs/DEPLOY.md`, `Task.md` และ roadmap ให้ตรง code/product ปัจจุบัน ไม่มีการแก้ code, schema หรือข้อมูล งานถัดไปตาม roadmap คือ A2 Critical-path QA → A3 Functional Completeness Audit

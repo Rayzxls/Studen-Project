@@ -1,8 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth/guards";
 import { getCourseOfferingForTeacher } from "@/lib/course/queries";
+import { getClassCodeInviteStatus } from "@/lib/course/class-code";
 import { listTimetableSlots } from "@/lib/attendance/timetable";
 import { CourseShell } from "@/components/course/course-shell";
+import { ClassCodeCard } from "@/components/class-code-card";
 import { ClassCodeControls } from "@/components/course/class-code-controls";
 import { ArchiveCourseDialog } from "@/components/course/archive-course-dialog";
 import { TimetableEditor } from "@/components/attendance/timetable-editor";
@@ -31,6 +33,23 @@ export default async function CourseSettingsPage({ params }: PageProps) {
   ]);
   if (!course) notFound();
 
+  const appUrl = (
+    process.env.AUTH_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    "http://localhost:3000"
+  ).replace(/\/$/, "");
+  const inviteStatus = getClassCodeInviteStatus(course);
+  const codeExpiresAtLabel = course.codeExpiresAt
+    ? new Intl.DateTimeFormat("th-TH", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Asia/Bangkok",
+      }).format(course.codeExpiresAt)
+    : null;
+
   return (
     <CourseShell
       session={session}
@@ -40,6 +59,15 @@ export default async function CourseSettingsPage({ params }: PageProps) {
       tabs={teacherCourseTabs(id)}
     >
       <div className="space-y-4">
+        <ClassCodeCard
+          classCode={course.classCode}
+          courseName={course.name}
+          className={course.class.name}
+          appUrl={appUrl}
+          canJoin={inviteStatus === "READY"}
+          inviteStatus={inviteStatus}
+          codeExpiresAtLabel={codeExpiresAtLabel}
+        />
         <ClassCodeControls
           courseId={id}
           classCode={course.classCode}

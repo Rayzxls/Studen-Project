@@ -46,6 +46,10 @@ const ACTION_LABEL_TH: Record<AuditEvent, string> = {
   COURSE_MEMBER_REMOVED: "นำนักเรียนออกจากห้อง",
   COURSE_MEMBER_RESTORED_BY_REJOIN: "นักเรียนกลับเข้าห้องอัตโนมัติ",
   COURSE_OFFERING_ARCHIVED: "ครูยกเลิกวิชา",
+  // Lesson Workspace
+  LESSON_ARCHIVED: "เก็บบทเรียนเข้าคลัง",
+  LESSON_DELETED: "ลบบทเรียนว่าง",
+  LESSON_CONTENT_MOVED: "ย้ายเนื้อหาระหว่างบทเรียน",
   // Scoring
   SCORE_ITEM_PUBLISHED: "เผยแพร่รายการคะแนน",
   SCORE_EDIT_AFTER_PUBLISH: "แก้คะแนนหลังเผยแพร่",

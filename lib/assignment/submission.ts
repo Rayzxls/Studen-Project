@@ -618,6 +618,7 @@ export async function returnSubmission(
           select: {
             id: true,
             title: true,
+            lessonId: true,
             course: { select: { id: true, name: true } },
           },
         },
@@ -636,6 +637,7 @@ export async function returnSubmission(
       payload: {
         courseId: enriched.assignment.course.id,
         courseName: enriched.assignment.course.name,
+        lessonId: enriched.assignment.lessonId,
         assignmentId: enriched.assignment.id,
         assignmentTitle: enriched.assignment.title,
         teacherName: `${teacher.firstName} ${teacher.lastName}`,
@@ -812,6 +814,7 @@ export async function gradeSubmission(
             select: {
               id: true,
               title: true,
+              lessonId: true,
               course: { select: { id: true, name: true } },
             },
           },
@@ -830,6 +833,7 @@ export async function gradeSubmission(
         payload: {
           courseId: enriched.assignment.course.id,
           courseName: enriched.assignment.course.name,
+          lessonId: enriched.assignment.lessonId,
           assignmentId: enriched.assignment.id,
           assignmentTitle: enriched.assignment.title,
           graderName: `${grader.firstName} ${grader.lastName}`,

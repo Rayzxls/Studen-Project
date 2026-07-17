@@ -18,6 +18,7 @@ import {
   suppressNotificationsForDeletedEntity,
 } from "@/lib/notification";
 import { REASON_MAX, REASON_MIN, TX_OPTS } from "./constants";
+import { assertLinkableLesson } from "@/lib/lesson/linking";
 import {
   CreateMaterialSchema,
   UpdateMaterialSchema,
@@ -50,6 +51,10 @@ export async function createMaterial(
     if (course.teacherId !== ctx.actorUserId) {
       throw new Forbidden("not_course_owner");
     }
+    await assertLinkableLesson(tx, {
+      lessonId: parsed.lessonId,
+      courseOfferingId: parsed.courseOfferingId,
+    });
 
     if (parsed.fileAttachmentIds.length > 0 && !parsed.id) {
       throw new ValidationError({
@@ -69,6 +74,7 @@ export async function createMaterial(
       data: {
         ...(parsed.id && { id: parsed.id }),
         courseOfferingId: parsed.courseOfferingId,
+        lessonId: parsed.lessonId ?? null,
         title: parsed.title,
         body: parsed.body,
         fileAttachmentIds: parsed.fileAttachmentIds as Prisma.InputJsonValue,
@@ -90,6 +96,7 @@ export async function createMaterial(
       payload: {
         courseId: parsed.courseOfferingId,
         courseName: course.name,
+        lessonId: parsed.lessonId ?? null,
         title: parsed.title,
         postedByName: `${teacher.firstName} ${teacher.lastName}`,
       },
@@ -115,6 +122,7 @@ export async function updateMaterial(
       where: { id: materialId },
       select: {
         id: true,
+        courseOfferingId: true,
         deletedAt: true,
         course: { select: { teacherId: true } },
       },
@@ -124,10 +132,17 @@ export async function updateMaterial(
     if (current.course.teacherId !== ctx.actorUserId) {
       throw new Forbidden("not_course_owner");
     }
+    if (parsed.lessonId !== undefined) {
+      await assertLinkableLesson(tx, {
+        lessonId: parsed.lessonId,
+        courseOfferingId: current.courseOfferingId,
+      });
+    }
 
     return tx.material.update({
       where: { id: materialId },
       data: {
+        ...(parsed.lessonId !== undefined && { lessonId: parsed.lessonId }),
         ...(parsed.title !== undefined && { title: parsed.title }),
         ...(parsed.body !== undefined && { body: parsed.body }),
         ...(parsed.fileAttachmentIds !== undefined && {
