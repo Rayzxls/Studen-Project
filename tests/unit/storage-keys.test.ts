@@ -150,6 +150,10 @@ describe("isFileOwnerType", () => {
     expect(isFileOwnerType("ANNOUNCEMENT")).toBe(true);
     expect(isFileOwnerType("SUBMISSION")).toBe(true);
     expect(isFileOwnerType("COMMENT")).toBe(true);
+    expect(isFileOwnerType("PROFILE_IMAGE")).toBe(true);
+    expect(isFileOwnerType("QUIZ")).toBe(true);
+    expect(isFileOwnerType("QUIZ_QUESTION")).toBe(true);
+    expect(isFileOwnerType("QUIZ_OPTION")).toBe(true);
   });
 
   it("rejects random strings", () => {

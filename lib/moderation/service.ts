@@ -370,7 +370,10 @@ async function courseIdForFileOwner(
     | "ANNOUNCEMENT"
     | "SUBMISSION"
     | "COMMENT"
-    | "PROFILE_IMAGE",
+    | "PROFILE_IMAGE"
+    | "QUIZ"
+    | "QUIZ_QUESTION"
+    | "QUIZ_OPTION",
   ownerId: string
 ): Promise<string | null> {
   if (ownerType === "PROFILE_IMAGE") return null;
@@ -382,6 +385,31 @@ async function courseIdForFileOwner(
     return comment
       ? courseIdForCommentOwner(client, comment.ownerType, comment.ownerId)
       : null;
+  }
+  if (ownerType === "QUIZ") {
+    const quiz = await client.quiz.findUnique({
+      where: { id: ownerId },
+      select: { courseOfferingId: true },
+    });
+    return quiz?.courseOfferingId ?? null;
+  }
+  if (ownerType === "QUIZ_QUESTION") {
+    const question = await client.quizQuestion.findUnique({
+      where: { id: ownerId },
+      select: { quiz: { select: { courseOfferingId: true } } },
+    });
+    return question?.quiz.courseOfferingId ?? null;
+  }
+  if (ownerType === "QUIZ_OPTION") {
+    const option = await client.quizOption.findUnique({
+      where: { id: ownerId },
+      select: {
+        question: {
+          select: { quiz: { select: { courseOfferingId: true } } },
+        },
+      },
+    });
+    return option?.question.quiz.courseOfferingId ?? null;
   }
   return courseIdForCommentOwner(client, ownerType, ownerId);
 }

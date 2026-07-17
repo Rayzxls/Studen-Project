@@ -70,6 +70,9 @@ export const FILE_OWNER_TYPES = [
   "SUBMISSION",
   "COMMENT",
   "PROFILE_IMAGE",
+  "QUIZ",
+  "QUIZ_QUESTION",
+  "QUIZ_OPTION",
 ] as const;
 
 export type FileOwnerTypeLiteral = (typeof FILE_OWNER_TYPES)[number];

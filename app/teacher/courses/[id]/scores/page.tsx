@@ -243,6 +243,7 @@ export default async function ScoresListPage({ params }: PageProps) {
                 const published = item.publishedAt !== null;
                 const target = scoreItemTarget(id, item);
                 const isAssignmentLinked = item.source === "ASSIGNMENT_LINKED";
+                const isQuizLinked = item.source === "QUIZ_LINKED";
                 return (
                   <li
                     key={item.id}
@@ -260,12 +261,12 @@ export default async function ScoresListPage({ params }: PageProps) {
                           <span
                             className={
                               "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 " +
-                              (isAssignmentLinked
+                              (isAssignmentLinked || isQuizLinked
                                 ? "bg-blue-500/10 text-blue-700 ring-blue-500/15"
                                 : "bg-black/[0.04] text-ink-soft ring-black/[0.06]")
                             }
                           >
-                            {isAssignmentLinked ? (
+                            {isAssignmentLinked || isQuizLinked ? (
                               <ClipboardCheck className="h-3 w-3" />
                             ) : (
                               <PencilLine className="h-3 w-3" />
@@ -293,7 +294,7 @@ export default async function ScoresListPage({ params }: PageProps) {
                       </span>
                     </Link>
                     <div className="flex shrink-0 items-center gap-1">
-                      {!published && (
+                      {!published && !isQuizLinked && (
                         <PublishScoreItemDialog
                           courseId={id}
                           scoreItemId={item.id}
@@ -303,13 +304,15 @@ export default async function ScoresListPage({ params }: PageProps) {
                           activeMemberCount={activeMemberCount}
                         />
                       )}
-                      <DeleteScoreItemDialog
-                        courseId={id}
-                        scoreItemId={item.id}
-                        scoreItemName={item.name}
-                        isPublished={published}
-                        entriesCount={item._count.entries}
-                      />
+                      {!isQuizLinked && (
+                        <DeleteScoreItemDialog
+                          courseId={id}
+                          scoreItemId={item.id}
+                          scoreItemName={item.name}
+                          isPublished={published}
+                          entriesCount={item._count.entries}
+                        />
+                      )}
                     </div>
                   </li>
                 );
@@ -324,15 +327,23 @@ export default async function ScoresListPage({ params }: PageProps) {
 
 type ScoreItemListItem = {
   id: string;
-  source: "MANUAL" | "ASSIGNMENT_LINKED";
+  source: "MANUAL" | "ASSIGNMENT_LINKED" | "QUIZ_LINKED";
   assignment: { id: string } | null;
 };
 
 function scoreItemKindLabel(item: ScoreItemListItem): string {
+  if (item.source === "QUIZ_LINKED") return "แบบทดสอบ";
   return item.source === "ASSIGNMENT_LINKED" ? "งานส่ง" : "คะแนนครูกรอกเอง";
 }
 
 function scoreItemTarget(courseId: string, item: ScoreItemListItem) {
+  if (item.source === "QUIZ_LINKED") {
+    return {
+      href: `/teacher/courses/${courseId}/lessons`,
+      actionLabel: "ไปที่บทเรียน",
+      hint: "จัดการและเผยแพร่คะแนนจากแบบทดสอบเท่านั้น",
+    };
+  }
   if (item.source === "ASSIGNMENT_LINKED" && item.assignment) {
     return {
       href: `/teacher/courses/${courseId}/assignments/${item.assignment.id}`,
