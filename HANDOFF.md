@@ -1,5 +1,14 @@
 # HANDOFF — Beagle Classroom
 
+## QUIZ MVP GRILL AND PROTOTYPE — 2026-07-17
+
+- Quiz MVP decision Grill is complete. The approved product contract lives in `docs/QUIZ-MVP-DECISIONS.md` and covers lifecycle, scoring, Attempts, files, privacy, notifications, analytics, limits, feature flags, and rollout guardrails.
+- Added a non-persistent, development-only prototype at `/teacher/courses/[id]/quiz-prototype`. Production returns `notFound()` and the prototype does not read or write Quiz data.
+- The prototype provides three switchable surfaces: Teacher Builder, Student Attempt, and Teacher Results. It also includes Light, Dark, and Cream theme controls, responsive question navigation, attachment affordances, timer/auto-save language, result metrics, Student status, and item analysis.
+- Visual acceptance passed at 1440x900 and 390x844 for all three surfaces. Light, Dark, and Cream were inspected; document-level horizontal overflow is zero. Teacher question cards intentionally scroll inside their own mobile strip, and the results table intentionally scrolls inside its own container.
+- Targeted ESLint and full TypeScript typecheck pass. No Prisma schema, Neon data, R2 object, feature flag, Production route, or existing Feed/Lesson/Score behavior was changed.
+- Next step is not schema implementation yet. Review the prototype with the product owner, record UI revisions, then write Quiz lifecycle/snapshot, Score Item coupling, Attempt concurrency, and archive/moderation ADRs before additive schema work.
+
 ## NOTIFICATION SHORTCUT AND ROUTER ACCEPTANCE — 2026-07-17
 
 - Every bell row now exposes a visible destination shortcut instead of relying on an invisible whole-row click. Labels match the destination: scores, work, document, announcement, course, or members.

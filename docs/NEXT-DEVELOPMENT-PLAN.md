@@ -372,14 +372,28 @@ Status: implemented on `phase-11` and verified locally plus isolated Neon QA on 
 
 ## Release C: Quiz
 
-Quiz requires a separate Grill session before implementation. Recommended MVP direction:
+**Grill status:** Complete 2026-07-17. The approved contract is recorded in
+[`docs/QUIZ-MVP-DECISIONS.md`](./QUIZ-MVP-DECISIONS.md).
 
-- Quiz belongs to one Lesson Workspace.
-- Start with objective question types only; define supported types during Grill.
-- Attempts, availability window, result visibility, retake policy, and auto-grading must be explicit domain decisions.
-- Scored Quiz uses the existing Score Item and publish contract instead of creating a second grade system.
-- Teacher sees attempt and grading backlog; Student sees only their own attempt and published result.
-- Question bank, randomization, anti-cheat, essay AI grading, and cross-course copy are not assumed in v1.
+**Prototype status:** Complete for product review 2026-07-17. The development-only
+route `/teacher/courses/[id]/quiz-prototype` covers Teacher Builder, Student
+Attempt, and Teacher Results without persistence. Desktop 1440x900, mobile
+390x844, and Light/Dark/Cream visual acceptance passed. This is not evidence of
+a Quiz domain model, database migration, or Production readiness.
+
+Implementation sequence:
+
+1. Completed: validate Teacher Builder, Student Attempt, and Teacher Results in a throwaway responsive prototype.
+2. Write Quiz domain ADRs for lifecycle/snapshot, Score Item coupling, Attempt concurrency, and archive/moderation evidence.
+3. Add an additive schema and pure validation/state-policy layer behind fail-closed flags.
+4. Implement Teacher draft Builder and preview without Student mutations.
+5. Implement Student Attempt, auto-save, timer, resume, and objective auto-grading.
+6. Connect best Attempt to draft Score Entries, Teacher results, close/reopen, exceptions, and one-way publication.
+7. Add private attachments, notifications, Moderation evidence, CSV analytics, and Admin aggregate observer.
+8. Run isolated-Neon permission, theme, mobile, concurrency, expiry, private-file, and rollback acceptance before a one-course Production pilot.
+
+Question bank, cross-course copy, spreadsheet import, essay/short-answer grading,
+AI grading, invasive proctoring, and full offline exams remain outside MVP.
 
 **Start condition:** Lesson Workspace is stable in production and Release A QA remains green.
 
