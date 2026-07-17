@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { X, Plus } from "lucide-react";
+import { TimePicker } from "@/components/ui/time-picker";
 import {
   createSessionAction,
   type CreateSessionState,
@@ -239,14 +240,13 @@ export function CreateSessionForm({ courseId, slots, defaultDate }: Props) {
                 >
                   เวลาเริ่ม
                 </label>
-                <input
-                  type="time"
+                <TimePicker
                   id="startTime"
                   name="startTime"
                   required
                   value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  className="input"
+                  onChange={setStartTime}
+                  ariaLabel="เวลาเริ่มคาบ"
                 />
                 {state.fieldErrors?.startTime && (
                   <p className="mt-1 text-xs text-red-700">
@@ -261,15 +261,13 @@ export function CreateSessionForm({ courseId, slots, defaultDate }: Props) {
                 >
                   เวลาสิ้นสุด
                 </label>
-                <input
-                  type="time"
+                <TimePicker
                   id="endTime"
                   name="endTime"
                   required
                   value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  className="input"
-                  aria-invalid={timeInvalid || undefined}
+                  onChange={setEndTime}
+                  ariaLabel="เวลาสิ้นสุดคาบ"
                 />
                 {(state.fieldErrors?.endTime || timeInvalid) && (
                   <p className="mt-1 text-xs text-red-700">
