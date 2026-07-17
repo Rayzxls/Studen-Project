@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   BookOpen,
@@ -490,7 +491,18 @@ function EmptyState({ filter }: { filter: CourseFeedFilter }) {
         }ในวิชานี้`;
   return (
     <div className="card-flat p-10 text-center text-sm text-black/40">
+      <Image
+        src="/brand/beagle-mark.png"
+        alt=""
+        width={56}
+        height={58}
+        className="mx-auto mb-3 opacity-80"
+        aria-hidden="true"
+      />
       <p>{label}</p>
+      <p className="mt-1 text-xs text-black/30">
+        น้องบีเกิ้ลเฝ้าฟีดอยู่ — มีอะไรใหม่จะเห็นที่นี่ก่อนใคร
+      </p>
     </div>
   );
 }

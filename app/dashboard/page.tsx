@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { GraduationCap, Plus } from "lucide-react";
+import { CalendarDays, GraduationCap, Plus } from "lucide-react";
 import type { Session } from "@/lib/auth/permissions";
 import { auth } from "@/lib/auth";
 import { resolveDisplayName } from "@/lib/profile/display-name";
@@ -239,6 +239,13 @@ async function StudentDashboard({
               >
                 <GraduationCap className="h-4 w-4" aria-hidden="true" />
                 ผลการเรียน
+              </Link>
+              <Link
+                href="/student/timetable"
+                className="inline-flex min-h-9 items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-semibold text-white ring-1 ring-white/25 transition-colors hover:bg-white/20 hover:no-underline"
+              >
+                <CalendarDays className="h-4 w-4" aria-hidden="true" />
+                ตารางเรียน
               </Link>
             </div>
           </div>
