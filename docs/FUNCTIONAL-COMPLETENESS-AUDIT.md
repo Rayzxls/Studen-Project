@@ -53,7 +53,7 @@ model or button exists.
 | Regenerate, enable/disable, and expire code | **Shipped** | Owner-only audited mutations exist in `lib/course/class-code.ts`, including idempotent activation and expiry changes. |
 | Existing enrollment and removed Student rejoin | **Shipped** | Active duplicate enrollment is rejected; a removed enrollment is restored in place with audit history and notification unsuppression. |
 | In-app camera scanner | **Removed from Proposal** | The QR is scanned by the phone camera or browser/OS scanner and opens the invite link. Maintaining a second camera permission surface adds little value. |
-| Full browser/mobile acceptance | **Deferred - A2 manual acceptance** | The isolated QA branch, integration suite, critical Playwright suite, safe smoke, and restore rehearsal pass. Expired/disabled/regenerated links, mobile handoff, role visibility, all themes, and private-R2 behavior still require manual release sign-off. |
+| Full browser/mobile acceptance | **Partially accepted - A2** | Isolated-Neon Playwright now covers the Teacher invite card, exact QR/invite payload, mobile prefill, first join, removed Student rejoin, expired/disabled/regenerated stale-code rejection, fresh-code success, role visibility, Dark Teacher, Cream Student, and iPhone 390x844 overflow. Physical phone-camera scanning, remaining theme/device combinations, and production private-R2 behavior remain manual release checks. |
 
 ## 4. Moderation coverage
 
@@ -82,17 +82,19 @@ The first central Moderation Center slice was implemented and verified on isolat
 ## Follow-up order
 
 1. **Finish A2 manual acceptance:** automated QA isolation, integration/E2E,
-   safe smoke, and restore rehearsal are green. Complete role workflows,
-   mobile/theme, QR handoff, and private R2 acceptance before release sign-off.
+   safe smoke, restore rehearsal, and QR/invite browser handoff are green.
+   Complete remaining role/theme/device checks, a physical phone-camera scan,
+   and private R2 acceptance before release sign-off.
 2. **A3.1 correctness and UI consistency:** closed for Admin headcount semantics
    and identity-rich avatar surfaces. Keep dense operational tables text-first.
 3. **A4 Account and Content Retention:** Account Lifecycle and the first
    Moderation Center slice pass isolated QA. Replace destructive Assignment
    deletion, complete manual moderation acceptance, then request a separate
    production migration/feature-flag approval.
-4. **Release B Lesson Workspace:** B1 foundation and B2 deterministic legacy
-   content backfill pass isolated Neon QA. Counts and relationships are
-   preserved, the second dry-run is a no-op, and cross-course links are zero.
+4. **Release B Lesson Workspace:** B1-B6 implementation and isolated-Neon QA
+   are complete. Counts and relationships are preserved, the second backfill
+   dry-run is a no-op, and cross-course links are zero. Production migration,
+   pilot flags, and default-route cutover remain separately unapproved.
    Keep the existing Feed as the chronological view. B3 Teacher mutations and
    every Production migration/backfill still require separate approval.
 

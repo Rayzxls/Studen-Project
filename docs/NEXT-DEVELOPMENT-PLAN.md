@@ -1,8 +1,8 @@
 # Next Development Plan
 
-**Updated:** 2026-07-15
+**Updated:** 2026-07-17
 **Sequence:** Core completion -> Lesson Workspace -> Quiz -> Identity/Integrations -> AI -> Optional product modules  
-**Current state:** A0 Documentation Alignment, A1 Report/Export v1, the A2 automated QA gate, and A3/A3.1 static correctness work are complete. A2 manual acceptance remains open. A4 Account Lifecycle and the first operational Moderation Center slice have additive persistence, audited transactions, and feature-flagged Admin surfaces; Moderation behavior has been enabled in Vercel, while authenticated role/theme/mobile/private-R2 acceptance remains open. Lesson Workspace B1 is implemented and migrated on isolated Neon QA only. Its flags remain fail-closed, no UI/default route changed, and Production has not received the Lesson migration.
+**Current state:** A0 Documentation Alignment, A1 Report/Export v1, the A2 automated QA gate, and A3/A3.1 static correctness work are complete. QR/invite browser acceptance is now automated; physical phone-camera and production private-R2 smoke remain manual release checks. A4 Account Lifecycle and the operational Moderation Center have additive persistence, audited transactions, and feature-flagged Admin surfaces. Lesson Workspace B1-B6 are implemented and accepted on isolated Neon QA. Its Production migration, backfill, pilot flags, and default-route cutover remain separate unapproved rollout operations.
 
 ## Why this order
 
@@ -221,8 +221,12 @@ successfully on 2026-07-15 and the mutation flag remains disabled. See ADR-0031.
 
 #### QR and invite acceptance
 
-- Test code entry, QR scan, invite link, expired code, inactive code, regenerated code, existing active enrollment, removed Student rejoin, and mobile camera/browser handoff.
-- Confirm that Student never sees the Teacher-only Class Code management surface.
+**Status:** Automated browser acceptance completed 2026-07-17 on isolated Neon QA. Physical phone-camera scanning remains a manual OS/device release check.
+
+- Teacher Course Settings exposes the QR, class code, absolute invite URL, course/class context, expiry, and ready/disabled/expired state.
+- Playwright verifies mobile invite prefill, first join, removed Student rejoin through the same Enrollment, expired code, inactive code, stale regenerated code, and successful fresh-code join.
+- Teacher Dark and Student Cream acceptance passes at desktop and iPhone 390x844 widths with no horizontal overflow. Student never sees Teacher-only Class Code management or regeneration controls.
+- The QR payload is asserted against the same absolute invite URL used by the mobile browser handoff. A real camera scan is not simulated and remains on the release-device checklist.
 
 #### Moderation coverage
 
@@ -266,7 +270,7 @@ Status: decision lock completed 2026-07-14. The first operational slice was impl
 
 ### B0. Decision lock and prototype baseline
 
-Status: design direction approved. The B1 foundation is implemented and verified on isolated Neon QA; B2 and later workflow/UI slices have not started.
+Status: design direction approved. B1-B6 are implemented and accepted on isolated Neon QA. Feed remains the default course landing; Production migration, compatibility backfill, pilot allowlist, feature-flag cutover, and default-route change remain unapproved.
 
 - Teacher experience: Variant B split workspace.
 - Student experience: Variant C learning path with a checkpoint for each topic.

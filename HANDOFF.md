@@ -1,5 +1,13 @@
 # HANDOFF — Beagle Classroom
 
+## QR AND INVITE ACCEPTANCE — 2026-07-17
+
+- Restored the existing Teacher-only Class Code surface to Course Settings as a complete invite handoff card. It now shows a scannable QR, class code, absolute invite URL, course/class context, expiry, and a clear ready/disabled/expired state with copy actions. Student surfaces do not render the management card or regeneration controls.
+- Added a pure `getClassCodeInviteStatus` domain helper with an injectable clock. Disabled state takes precedence, the exact expiry boundary fails closed, and active codes without an expiry remain ready.
+- Added isolated-Neon Playwright acceptance across a Dark Teacher desktop and Cream Student iPhone 390x844 flow. It verifies the QR payload/invite URL, prefilled code, first join, removal plus restoration of the same Enrollment on rejoin, no mobile horizontal overflow, and hidden Teacher-only controls.
+- The same browser acceptance proves expired, disabled, and regenerated stale codes fail closed before the fresh regenerated code succeeds. Existing class-code mutation and enrollment-domain coverage remains intact.
+- Verification passed: full unit `548/548` (including focused class-code `19/19`), focused class-code/enrollment integration `11/11`, QR/invite Playwright `2/2`, TypeScript, targeted ESLint, formatting, and the Next.js Production build. Physical phone-camera scanning remains a manual OS/device release check; there is intentionally no in-app camera scanner. Production database, Lesson flags, private R2 objects, and rollout state were not mutated by this slice.
+
 ## MODERATION REPORT ACCEPTANCE FOLLOW-UP — 2026-07-16
 
 - Fixed the missing Moderation report flag on isolated QA. `dev:qa` previously enabled only Lesson Workspace flags, so port 3100 hid every `ReportContentButton` even though the Moderation schema and workflow were present. The isolated server now defaults `MODERATION_CENTER_ENABLED=1` while preserving an explicit `0` override for fail-closed acceptance checks.
