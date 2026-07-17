@@ -89,8 +89,10 @@ export function QrScanDialog({
           canvas.height = video.videoHeight;
           ctx.drawImage(video, 0, 0);
           const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          // attemptBoth: dark-theme surfaces can present the QR inverted
+          // (light modules on dark) — decode both polarities per frame.
           const found = jsQR(img.data, img.width, img.height, {
-            inversionAttempts: "dontInvert",
+            inversionAttempts: "attemptBoth",
           });
           if (!found) return;
           const code = parseJoinCode(found.data);
@@ -144,7 +146,7 @@ export function QrScanDialog({
           </div>
 
           <div className="relative mt-3 aspect-square w-full overflow-hidden rounded-xl bg-black">
-            { }
+            {}
             <video
               ref={videoRef}
               playsInline
