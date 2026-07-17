@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2 } from "lucide-react";
+import { Camera, CheckCircle2 } from "lucide-react";
 import {
   submitVersionAction,
   type SubmitVersionState,
@@ -172,6 +172,7 @@ export function SubmitVersionForm({
   const [uploaded, setUploaded] = useState<UploadedFile[]>([]);
   const [inFlight, setInFlight] = useState<UploadProgressEntry[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isEditingExisting, setIsEditingExisting] = useState(
     startCollapsed ? false : !hasExistingCurrent
@@ -381,6 +382,7 @@ export function SubmitVersionForm({
       void uploadOne(f);
     }
     if (fileInputRef.current) fileInputRef.current.value = "";
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
   }
 
   function removeUploaded(id: string) {
@@ -532,12 +534,33 @@ export function SubmitVersionForm({
                 เลือกไฟล์
               </button>
             </p>
+            {/* Camera-first path for paper homework: `capture` opens the
+                rear camera directly on mobile; desktop browsers ignore it
+                and fall back to the normal picker. The captured photo rides
+                the same presign → PUT → commit pipeline (EXIF stripped
+                server-side like every image). */}
+            <button
+              type="button"
+              className="btn-secondary btn-sm mt-3 gap-1.5"
+              onClick={() => cameraInputRef.current?.click()}
+            >
+              <Camera className="h-4 w-4" aria-hidden="true" />
+              ถ่ายรูปส่งงาน
+            </button>
             <input
               ref={fileInputRef}
               type="file"
               multiple
               className="hidden"
               accept={ALLOWED_MIME_TYPES.join(",")}
+              onChange={(e) => onPickFiles(e.target.files)}
+            />
+            <input
+              ref={cameraInputRef}
+              type="file"
+              className="hidden"
+              accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+              capture="environment"
               onChange={(e) => onPickFiles(e.target.files)}
             />
           </div>
