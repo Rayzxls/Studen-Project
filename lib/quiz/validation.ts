@@ -172,6 +172,7 @@ export const QuizStudentExceptionSchema = z
   );
 
 export type CreateQuizDraftInput = z.input<typeof CreateQuizDraftSchema>;
+export type CreateQuizDraftData = z.output<typeof CreateQuizDraftSchema>;
 export type QuizAttemptAnswerInput = z.input<typeof QuizAttemptAnswerSchema>;
 export type QuizStudentExceptionInput = z.input<
   typeof QuizStudentExceptionSchema

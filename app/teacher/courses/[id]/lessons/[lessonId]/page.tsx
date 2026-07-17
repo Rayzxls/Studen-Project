@@ -7,6 +7,7 @@ import {
   BookOpen,
   ClipboardCheck,
   ClipboardList,
+  CircleHelp,
   FileText,
   FolderInput,
   Pencil,
@@ -23,6 +24,11 @@ import {
   lessonWorkspaceCourseEnabled,
   lessonWorkspaceCourseMutationsEnabled,
 } from "@/lib/lesson";
+import {
+  getTeacherQuizSummariesForLesson,
+  quizCourseEnabled,
+  quizCourseMutationsEnabled,
+} from "@/lib/quiz";
 import { teacherCourseTabs } from "../../_tabs";
 import {
   archiveLessonAction,
@@ -50,8 +56,9 @@ export default async function TeacherLessonDetailPage({
   }
   const { id, lessonId } = await params;
   if (!lessonWorkspaceCourseEnabled(id)) notFound();
+  const quizEnabled = quizCourseEnabled(id);
   const { notice } = await searchParams;
-  const [course, lesson, workspace] = await Promise.all([
+  const [course, lesson, workspace, quizzes] = await Promise.all([
     getCourseOfferingForTeacher(id, session.user.id),
     getTeacherLessonDetail({
       courseOfferingId: id,
@@ -62,6 +69,13 @@ export default async function TeacherLessonDetailPage({
       courseOfferingId: id,
       viewer: { id: session.user.id, role: session.user.role },
     }),
+    quizEnabled
+      ? getTeacherQuizSummariesForLesson({
+          courseOfferingId: id,
+          lessonId,
+          teacherId: session.user.id,
+        })
+      : Promise.resolve([]),
   ]);
   if (!course) notFound();
 
@@ -72,7 +86,9 @@ export default async function TeacherLessonDetailPage({
   const canMutate =
     lessonWorkspaceCourseMutationsEnabled(id) && lesson.state === "ACTIVE";
   const isEmpty =
-    lesson.assignments.length === 0 && lesson.materials.length === 0;
+    lesson.assignments.length === 0 &&
+    lesson.materials.length === 0 &&
+    quizzes.length === 0;
 
   return (
     <CourseShell
@@ -251,6 +267,58 @@ export default async function TeacherLessonDetailPage({
                 </article>
               ))}
             </ContentSection>
+
+            {quizEnabled && (
+              <ContentSection
+                title="แบบทดสอบ"
+                icon={CircleHelp}
+                empty={`ยังไม่มีแบบทดสอบของ ${lesson.title}`}
+              >
+                <div className="py-4">
+                  {quizzes.length === 0 && (
+                    <p className="text-sm text-ink-mute">
+                      ยังไม่มีแบบทดสอบในบทนี้
+                    </p>
+                  )}
+                  {quizzes.length > 0 && (
+                    <div className="space-y-2">
+                      {quizzes.map((quiz) => (
+                        <Link
+                          key={quiz.id}
+                          href={`/teacher/courses/${id}/quizzes/${quiz.id}`}
+                          className="flex min-h-16 items-center justify-between gap-4 rounded-lg border border-hairline bg-bg/40 px-4 py-3 transition-colors hover:border-blue-300 hover:bg-blue-50/50"
+                        >
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-semibold text-ink">
+                              {quiz.title}
+                            </span>
+                            <span className="mt-1 block text-xs text-ink-mute">
+                              {quiz.mode === "SCORED" ? "มีคะแนน" : "ฝึกทำ"}
+                              {` · ${quiz.questionCount} ข้อ · ${quiz.totalPoints} คะแนน`}
+                            </span>
+                          </span>
+                          <span className="badge shrink-0">
+                            {quiz.status === "DRAFT"
+                              ? "ฉบับร่าง"
+                              : quiz.status === "OPEN"
+                                ? "เปิดทำ"
+                                : "ปิดแล้ว"}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                  {quizCourseMutationsEnabled(id) && canMutate && (
+                    <Link
+                      href={`/teacher/courses/${id}/lessons/${lesson.id}/quizzes/new`}
+                      className="btn-secondary btn-sm mt-3 w-fit"
+                    >
+                      <CircleHelp className="h-4 w-4" /> สร้างแบบทดสอบ
+                    </Link>
+                  )}
+                </div>
+              </ContentSection>
+            )}
 
             <ContentSection
               title="ประกาศ"

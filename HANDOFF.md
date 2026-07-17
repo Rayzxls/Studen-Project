@@ -1,5 +1,14 @@
 # HANDOFF — Beagle Classroom
 
+## TEACHER QUIZ BUILDER C2 — 2026-07-17
+
+- Added the real feature-gated Teacher Quiz draft workflow under a Lesson. Teachers can create a free-form Quiz, edit metadata and settings, add/delete/duplicate/reorder questions, manage objective options and correct answers, see the calculated total score, and open an in-context or full-page Student preview.
+- Draft persistence replaces the complete validated Quiz atomically. Scored Quiz creation creates exactly one `QUIZ_LINKED` Score Item in the same transaction; switching modes creates/deletes the still-unpublished empty linked item safely. Draft content locks after the first Attempt, and Preview never creates an Attempt, answer, Score Entry, notification, or audit row.
+- Existing drafts use a 1.2-second debounced auto-save with explicit saving/saved/error feedback. The initial new Quiz still requires one deliberate save to create its record. Pre-open draft CUD stays Verbose-tier and intentionally emits no Audit event.
+- All Teacher routes and Lesson entry points fail closed through `QUIZ_ENABLED`, `QUIZ_MUTATIONS_ENABLED`, and exact `QUIZ_PILOT_COURSE_IDS` checks before any Quiz database read. With the current disabled flags, existing Production UI and unmigrated databases do not query Quiz tables.
+- Private Quiz attachment ids are still rejected by the service. The UI states that multi-file support is a later boundary; Student Attempt, open/close, grading/results, notifications, Moderation evidence, and Admin observer are not implemented in C2.
+- Focused Quiz unit tests pass `22/22`, full unit passes `580/580`, targeted ESLint and TypeScript pass, and the Next.js Production build includes all three gated Teacher routes. The additive Quiz migration remains unapplied to Neon QA and Production, so real database/visual acceptance is still pending and no rollout flag should be enabled yet.
+
 ## QUIZ FOUNDATION C1 — 2026-07-17
 
 - Added the additive Quiz persistence foundation: Quiz, questions, options, Attempts, answers, idempotent Attempt mutations, per-Student exceptions, immutable Attempt snapshots, lease/revision fields, and `QUIZ_LINKED` Score Item provenance.

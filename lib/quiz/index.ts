@@ -30,3 +30,16 @@ export {
   type QuizAttemptAnswerInput,
   type QuizStudentExceptionInput,
 } from "./validation";
+export {
+  createQuizDraft,
+  saveQuizDraft,
+  type QuizDraftActorCtx,
+  type QuizDraftRepository,
+  type QuizDraftResult,
+} from "./draft-service";
+export {
+  getTeacherQuizDraft,
+  getTeacherQuizSummariesForLesson,
+  type TeacherQuizDraftView,
+  type TeacherQuizSummary,
+} from "./queries";
