@@ -1,14 +1,25 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { LogIn } from "lucide-react";
+import { LogIn, ScanLine } from "lucide-react";
+
+// Camera + jsQR decoder stay out of the initial bundle — loaded only when
+// the student actually taps "สแกน QR" (CLAUDE.md perf budget).
+const QrScanDialog = dynamic(
+  () =>
+    import("@/components/course/qr-scan-dialog").then((m) => m.QrScanDialog),
+  { ssr: false }
+);
 
 function JoinForm() {
   const router = useRouter();
   const search = useSearchParams();
   const [code, setCode] = useState(search.get("code") ?? "");
+  const [scanOpen, setScanOpen] = useState(false);
+  const [scanned, setScanned] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<{
     courseName: string;
@@ -106,18 +117,36 @@ function JoinForm() {
           <label htmlFor="code" className="mb-1.5 block text-sm font-medium">
             รหัสห้องเรียน
           </label>
-          <input
-            id="code"
-            type="text"
-            autoComplete="off"
-            autoCapitalize="characters"
-            spellCheck={false}
-            required
-            className="input font-mono tracking-wider"
-            placeholder="เช่น MATH4A-A8K2X3"
-            value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
-          />
+          <div className="flex gap-2">
+            <input
+              id="code"
+              type="text"
+              autoComplete="off"
+              autoCapitalize="characters"
+              spellCheck={false}
+              required
+              className="input min-w-0 flex-1 font-mono tracking-wider"
+              placeholder="เช่น MATH4A-A8K2X3"
+              value={code}
+              onChange={(e) => {
+                setCode(e.target.value.toUpperCase());
+                setScanned(false);
+              }}
+            />
+            <button
+              type="button"
+              className="btn-secondary shrink-0 gap-1.5"
+              onClick={() => setScanOpen(true)}
+            >
+              <ScanLine className="h-4 w-4" aria-hidden="true" />
+              สแกน QR
+            </button>
+          </div>
+          {scanned && (
+            <p className="mt-1.5 text-xs text-green-700">
+              สแกนสำเร็จ — ตรวจรหัสแล้วกดเข้าร่วมได้เลย
+            </p>
+          )}
         </div>
 
         {error && (
@@ -141,6 +170,19 @@ function JoinForm() {
           </Link>
         </div>
       </form>
+
+      {scanOpen && (
+        <QrScanDialog
+          open={scanOpen}
+          onClose={() => setScanOpen(false)}
+          onCode={(scannedCode) => {
+            setCode(scannedCode);
+            setScanned(true);
+            setError(null);
+            setScanOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }
