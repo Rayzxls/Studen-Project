@@ -2,6 +2,7 @@ import {
   BarChart3,
   CheckCircle2,
   Clock3,
+  Download,
   LockKeyhole,
   RotateCcw,
   Send,
@@ -62,54 +63,68 @@ export function TeacherQuizResults({
             </p>
           </div>
 
-          {mutationsEnabled && (
-            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-              {result.status === "OPEN" && (
-                <form action={closeQuizAction}>
-                  <HiddenIds result={result} />
-                  <button className="btn-secondary btn-sm w-full" type="submit">
-                    <Square className="h-4 w-4" /> ปิดรับคำตอบ
-                  </button>
-                </form>
-              )}
-              {result.status === "CLOSED" && result.publishedAt === null && (
-                <details className="relative">
-                  <summary className="btn-secondary btn-sm w-full cursor-pointer list-none">
-                    <RotateCcw className="h-4 w-4" /> เปิดอีกครั้ง
-                  </summary>
-                  <form
-                    action={reopenQuizAction}
-                    className="mt-2 w-full space-y-3 rounded-lg border border-hairline bg-surface p-4 shadow-card sm:absolute sm:right-0 sm:z-20 sm:w-80"
-                  >
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            <a
+              href={`/teacher/courses/${result.courseOfferingId}/quizzes/${result.id}/results/export`}
+              className="btn-secondary btn-sm w-full"
+            >
+              <Download className="h-4 w-4" /> ดาวน์โหลด CSV
+            </a>
+            {mutationsEnabled && (
+              <>
+                {result.status === "OPEN" && (
+                  <form action={closeQuizAction}>
                     <HiddenIds result={result} />
-                    <label className="block text-xs font-medium text-ink">
-                      เวลาปิดใหม่
-                      <input
-                        className="input mt-1.5 text-sm"
-                        type="datetime-local"
-                        name="newClosesAt"
-                        defaultValue={reopenDefault}
-                        required
-                      />
-                    </label>
-                    <label className="block text-xs font-medium text-ink">
-                      เหตุผล
-                      <textarea
-                        className="input mt-1.5 min-h-20 resize-y text-sm"
-                        name="reason"
-                        minLength={5}
-                        maxLength={500}
-                        required
-                      />
-                    </label>
-                    <button className="btn-primary btn-sm w-full" type="submit">
-                      <RotateCcw className="h-4 w-4" /> ยืนยันเปิดอีกครั้ง
+                    <button
+                      className="btn-secondary btn-sm w-full"
+                      type="submit"
+                    >
+                      <Square className="h-4 w-4" /> ปิดรับคำตอบ
                     </button>
                   </form>
-                </details>
-              )}
-            </div>
-          )}
+                )}
+                {result.status === "CLOSED" && result.publishedAt === null && (
+                  <details className="relative">
+                    <summary className="btn-secondary btn-sm w-full cursor-pointer list-none">
+                      <RotateCcw className="h-4 w-4" /> เปิดอีกครั้ง
+                    </summary>
+                    <form
+                      action={reopenQuizAction}
+                      className="mt-2 w-full space-y-3 rounded-lg border border-hairline bg-surface p-4 shadow-card sm:absolute sm:right-0 sm:z-20 sm:w-80"
+                    >
+                      <HiddenIds result={result} />
+                      <label className="block text-xs font-medium text-ink">
+                        เวลาปิดใหม่
+                        <input
+                          className="input mt-1.5 text-sm"
+                          type="datetime-local"
+                          name="newClosesAt"
+                          defaultValue={reopenDefault}
+                          required
+                        />
+                      </label>
+                      <label className="block text-xs font-medium text-ink">
+                        เหตุผล
+                        <textarea
+                          className="input mt-1.5 min-h-20 resize-y text-sm"
+                          name="reason"
+                          minLength={5}
+                          maxLength={500}
+                          required
+                        />
+                      </label>
+                      <button
+                        className="btn-primary btn-sm w-full"
+                        type="submit"
+                      >
+                        <RotateCcw className="h-4 w-4" /> ยืนยันเปิดอีกครั้ง
+                      </button>
+                    </form>
+                  </details>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </header>
 

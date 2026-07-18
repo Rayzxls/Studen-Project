@@ -1,5 +1,12 @@
 # HANDOFF — Beagle Classroom
 
+## QUIZ C5C CSV ANALYTICS AND ADMIN OBSERVER — 2026-07-18
+
+- Added a Teacher-owned Quiz Results CSV export from the same aggregate projection used by the Results workspace. The private no-store download includes summary metrics, per-Student best-attempt rows, and per-question analysis, protects spreadsheet formula injection, and records `CLASS_ANALYTICS_EXPORTED` in Audit Log.
+- Added feature-gated Admin Quiz list and detail surfaces as aggregate-only observer views. Admin can see lifecycle state, participation/completion/pass metrics, score aggregates, and question-level correctness, but receives no Student identity, answer, score-per-Student, private file, or academic mutation control.
+- Kept the existing ownership and rollout boundaries intact: Teacher export asserts Course ownership, Admin reads require the Admin role, Quiz reads fail closed behind the existing Course flags, and no schema, database row, R2 object, Production flag, or deployment setting changed.
+- Acceptance passed locally: focused Quiz report/query/route tests `11/11`, full unit `621/621`, targeted ESLint, TypeScript, and the Next.js Production build. Authenticated isolated-QA private-R2 smoke, all-theme/mobile visual acceptance, expiry/concurrency/rollback drills, and the one-course Production pilot remain separate rollout gates.
+
 ## QUIZ C5B MODERATION EVIDENCE — 2026-07-18
 
 - Added Student reporting for a complete Quiz and for an individual question. A question report captures the immutable Attempt snapshot that Student actually saw, so a later Teacher edit cannot rewrite case evidence.

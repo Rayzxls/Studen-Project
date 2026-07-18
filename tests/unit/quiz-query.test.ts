@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   findMany: vi.fn(),
   findFirst: vi.fn(),
+  courseFindUnique: vi.fn(),
 }));
 
 vi.mock("@/lib/db/client", () => ({
@@ -11,6 +12,9 @@ vi.mock("@/lib/db/client", () => ({
       findMany: mocks.findMany,
       findFirst: mocks.findFirst,
     },
+    courseOffering: {
+      findUnique: mocks.courseFindUnique,
+    },
   },
 }));
 
@@ -18,12 +22,14 @@ import {
   getTeacherQuizDraft,
   getTeacherQuizResults,
   getTeacherQuizSummariesForLesson,
+  getAdminQuizWorkspace,
 } from "@/lib/quiz/queries";
 
 describe("Quiz teacher queries", () => {
   beforeEach(() => {
     mocks.findMany.mockReset();
     mocks.findFirst.mockReset();
+    mocks.courseFindUnique.mockReset();
   });
 
   it("fails closed before querying an unlisted course", async () => {
@@ -206,5 +212,81 @@ describe("Quiz teacher queries", () => {
       expect.objectContaining({ id: "question-2", correctRate: 100 }),
     ]);
     expect(result.students[0]).not.toHaveProperty("answers");
+  });
+
+  it("rejects a non-Admin observer before any database query", async () => {
+    await expect(
+      getAdminQuizWorkspace({
+        courseOfferingId: "course-a",
+        viewer: { id: "teacher-1", role: "TEACHER" },
+        env: {
+          QUIZ_ENABLED: "1",
+          QUIZ_PILOT_COURSE_IDS: "course-a",
+        },
+      })
+    ).rejects.toMatchObject({ code: "quiz_observer_forbidden" });
+
+    expect(mocks.courseFindUnique).not.toHaveBeenCalled();
+    expect(mocks.findMany).not.toHaveBeenCalled();
+  });
+
+  it("returns aggregate-only Quiz data to Admin", async () => {
+    mocks.courseFindUnique.mockResolvedValue({
+      _count: { enrollments: 2 },
+    });
+    mocks.findMany.mockResolvedValue([
+      {
+        id: "quiz-1",
+        courseOfferingId: "course-a",
+        lessonId: "lesson-1",
+        title: "Checkpoint",
+        mode: "SCORED",
+        status: "OPEN",
+        required: true,
+        closesAt: null,
+        passThresholdPercent: 60,
+        lesson: { title: "Grammar" },
+        scoreItem: { publishedAt: null, entries: [] },
+        questions: [{ points: 5 }, { points: 5 }],
+        attempts: [
+          {
+            id: "attempt-1",
+            enrollmentId: "enrollment-1",
+            attemptNumber: 1,
+            status: "SUBMITTED",
+            startedAt: new Date("2026-07-18T01:00:00Z"),
+            submittedAt: new Date("2026-07-18T01:05:00Z"),
+            finalScore: 8,
+          },
+          {
+            id: "attempt-2",
+            enrollmentId: "enrollment-2",
+            attemptNumber: 1,
+            status: "IN_PROGRESS",
+            startedAt: new Date("2026-07-18T01:00:00Z"),
+            submittedAt: null,
+            finalScore: null,
+          },
+        ],
+      },
+    ]);
+
+    const result = await getAdminQuizWorkspace({
+      courseOfferingId: "course-a",
+      viewer: { id: "admin-1", role: "ADMIN" },
+      env: {
+        QUIZ_ENABLED: "1",
+        QUIZ_PILOT_COURSE_IDS: "course-a",
+      },
+    });
+
+    expect(result.quizzes[0]).toMatchObject({
+      title: "Checkpoint",
+      counts: { total: 2, submitted: 1, inProgress: 1, notStarted: 0 },
+      metrics: { average: 8, highest: 8, lowest: 8 },
+    });
+    expect(result.quizzes[0]).not.toHaveProperty("students");
+    expect(result.quizzes[0]).not.toHaveProperty("answers");
+    expect(JSON.stringify(result)).not.toContain("enrollment-1");
   });
 });

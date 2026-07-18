@@ -1,11 +1,15 @@
 import type { CourseTab } from "@/components/course/tab-nav";
 import { lessonWorkspaceCourseEnabled } from "@/lib/lesson";
+import { quizCourseEnabled } from "@/lib/quiz";
 
 export const adminCourseTabs = (courseId: string): CourseTab[] => [
   { label: "ภาพรวม", href: `/admin/courses/${courseId}` },
   { label: "ฟีด", href: `/admin/courses/${courseId}/feed` },
   ...(lessonWorkspaceCourseEnabled(courseId)
     ? [{ label: "บทเรียน", href: `/admin/courses/${courseId}/lessons` }]
+    : []),
+  ...(quizCourseEnabled(courseId)
+    ? [{ label: "แบบทดสอบ", href: `/admin/courses/${courseId}/quizzes` }]
     : []),
   { label: "สมาชิก", href: `/admin/courses/${courseId}/members` },
   { label: "เช็คชื่อ", href: `/admin/courses/${courseId}/attendance` },

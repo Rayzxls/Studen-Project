@@ -66,6 +66,8 @@ export {
   type StudentQuizAttemptView,
 } from "./attempt-service";
 export {
+  getAdminQuizDetail,
+  getAdminQuizWorkspace,
   getStudentQuizSummariesForCourse,
   getStudentQuizSummariesForLesson,
   getStudentQuizSummary,
@@ -73,6 +75,9 @@ export {
   getTeacherQuizResults,
   getTeacherQuizSummariesForCourse,
   getTeacherQuizSummariesForLesson,
+  type AdminQuizDetailView,
+  type AdminQuizObserverItem,
+  type AdminQuizWorkspaceView,
   type StudentQuizSummary,
   type TeacherQuizDraftView,
   type TeacherQuizResultsView,

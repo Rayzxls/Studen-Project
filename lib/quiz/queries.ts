@@ -1,3 +1,4 @@
+import type { Role } from "@prisma/client";
 import { db } from "@/lib/db/client";
 import { Forbidden, NotFound } from "@/lib/errors";
 import type { FeedAttachment } from "@/lib/feed/aggregator";
@@ -112,6 +113,52 @@ export type TeacherQuizResultsView = {
       finalScore: number | null;
     }>;
   }>;
+  questions: Array<{
+    id: string;
+    position: number;
+    prompt: string;
+    points: number;
+    answeredCount: number;
+    correctCount: number;
+    correctRate: number | null;
+  }>;
+};
+
+export type AdminQuizObserverItem = {
+  id: string;
+  courseOfferingId: string;
+  lessonId: string;
+  lessonTitle: string;
+  title: string;
+  mode: "PRACTICE" | "SCORED";
+  status: "DRAFT" | "OPEN" | "CLOSED";
+  required: boolean;
+  closesAt: Date | null;
+  totalPoints: number;
+  questionCount: number;
+  publishedAt: Date | null;
+  counts: {
+    total: number;
+    notStarted: number;
+    inProgress: number;
+    submitted: number;
+  };
+  metrics: {
+    average: number | null;
+    highest: number | null;
+    lowest: number | null;
+    passRate: number | null;
+    averageDurationSeconds: number | null;
+  };
+};
+
+export type AdminQuizWorkspaceView = {
+  courseOfferingId: string;
+  activeStudentCount: number;
+  quizzes: AdminQuizObserverItem[];
+};
+
+export type AdminQuizDetailView = AdminQuizObserverItem & {
   questions: Array<{
     id: string;
     position: number;
@@ -585,6 +632,229 @@ export async function getTeacherQuizResults(input: {
   };
 }
 
+export async function getAdminQuizWorkspace(input: {
+  courseOfferingId: string;
+  viewer: { id: string; role: Role };
+  env?: QuizFeatureFlagEnv;
+}): Promise<AdminQuizWorkspaceView> {
+  assertAdminQuizObserver(input.viewer.role);
+  assertCourseEnabled(input.courseOfferingId, input.env);
+
+  const course = await db.courseOffering.findUnique({
+    where: { id: input.courseOfferingId },
+    select: {
+      _count: { select: { enrollments: { where: { removedAt: null } } } },
+    },
+  });
+  if (!course) throw new NotFound("course_not_found");
+
+  const rows = await db.quiz.findMany({
+    where: {
+      courseOfferingId: input.courseOfferingId,
+      archivedAt: null,
+      cancelledAt: null,
+    },
+    orderBy: [
+      { lesson: { position: "asc" } },
+      { position: "asc" },
+      { createdAt: "asc" },
+    ],
+    select: {
+      id: true,
+      courseOfferingId: true,
+      lessonId: true,
+      title: true,
+      mode: true,
+      status: true,
+      required: true,
+      closesAt: true,
+      passThresholdPercent: true,
+      lesson: { select: { title: true } },
+      scoreItem: {
+        select: {
+          publishedAt: true,
+          entries: {
+            where: { enrollment: { removedAt: null } },
+            select: { value: true },
+          },
+        },
+      },
+      questions: {
+        where: { voidedAt: null },
+        select: { points: true },
+      },
+      attempts: {
+        where: { enrollment: { removedAt: null } },
+        select: {
+          id: true,
+          enrollmentId: true,
+          attemptNumber: true,
+          status: true,
+          startedAt: true,
+          submittedAt: true,
+          finalScore: true,
+        },
+      },
+    },
+  });
+
+  const activeStudentCount = course._count.enrollments;
+  return {
+    courseOfferingId: input.courseOfferingId,
+    activeStudentCount,
+    quizzes: rows.map((row) => {
+      const aggregate = buildAdminQuizAggregate({
+        activeStudentCount,
+        passThresholdPercent: row.passThresholdPercent,
+        totalPoints: row.questions.reduce(
+          (total, question) => total + question.points,
+          0
+        ),
+        publishedScores:
+          row.scoreItem?.publishedAt == null
+            ? null
+            : row.scoreItem.entries.map((entry) => entry.value),
+        attempts: row.attempts,
+      });
+      return {
+        id: row.id,
+        courseOfferingId: row.courseOfferingId,
+        lessonId: row.lessonId,
+        lessonTitle: row.lesson.title,
+        title: row.title,
+        mode: row.mode,
+        status: row.status,
+        required: row.required,
+        closesAt: row.closesAt,
+        totalPoints: aggregate.totalPoints,
+        questionCount: row.questions.length,
+        publishedAt: row.scoreItem?.publishedAt ?? null,
+        counts: aggregate.counts,
+        metrics: aggregate.metrics,
+      };
+    }),
+  };
+}
+
+export async function getAdminQuizDetail(input: {
+  courseOfferingId: string;
+  quizId: string;
+  viewer: { id: string; role: Role };
+  env?: QuizFeatureFlagEnv;
+}): Promise<AdminQuizDetailView> {
+  assertAdminQuizObserver(input.viewer.role);
+  assertCourseEnabled(input.courseOfferingId, input.env);
+
+  const [course, row] = await Promise.all([
+    db.courseOffering.findUnique({
+      where: { id: input.courseOfferingId },
+      select: {
+        _count: { select: { enrollments: { where: { removedAt: null } } } },
+      },
+    }),
+    db.quiz.findFirst({
+      where: {
+        id: input.quizId,
+        courseOfferingId: input.courseOfferingId,
+        archivedAt: null,
+        cancelledAt: null,
+      },
+      select: {
+        id: true,
+        courseOfferingId: true,
+        lessonId: true,
+        title: true,
+        mode: true,
+        status: true,
+        required: true,
+        closesAt: true,
+        passThresholdPercent: true,
+        lesson: { select: { title: true } },
+        scoreItem: {
+          select: {
+            publishedAt: true,
+            entries: {
+              where: { enrollment: { removedAt: null } },
+              select: { value: true },
+            },
+          },
+        },
+        questions: {
+          where: { voidedAt: null },
+          orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+          select: { id: true, position: true, prompt: true, points: true },
+        },
+        attempts: {
+          where: { enrollment: { removedAt: null } },
+          select: {
+            id: true,
+            enrollmentId: true,
+            attemptNumber: true,
+            status: true,
+            startedAt: true,
+            submittedAt: true,
+            finalScore: true,
+            answers: { select: { questionId: true, isCorrect: true } },
+          },
+        },
+      },
+    }),
+  ]);
+  if (!course) throw new NotFound("course_not_found");
+  if (!row) throw new NotFound("quiz_not_found");
+
+  const aggregate = buildAdminQuizAggregate({
+    activeStudentCount: course._count.enrollments,
+    passThresholdPercent: row.passThresholdPercent,
+    totalPoints: row.questions.reduce(
+      (total, question) => total + question.points,
+      0
+    ),
+    publishedScores:
+      row.scoreItem?.publishedAt == null
+        ? null
+        : row.scoreItem.entries.map((entry) => entry.value),
+    attempts: row.attempts,
+  });
+
+  return {
+    id: row.id,
+    courseOfferingId: row.courseOfferingId,
+    lessonId: row.lessonId,
+    lessonTitle: row.lesson.title,
+    title: row.title,
+    mode: row.mode,
+    status: row.status,
+    required: row.required,
+    closesAt: row.closesAt,
+    totalPoints: aggregate.totalPoints,
+    questionCount: row.questions.length,
+    publishedAt: row.scoreItem?.publishedAt ?? null,
+    counts: aggregate.counts,
+    metrics: aggregate.metrics,
+    questions: row.questions.map((question) => {
+      const answers = aggregate.bestAttempts
+        .map((attempt) =>
+          attempt.answers?.find((answer) => answer.questionId === question.id)
+        )
+        .filter((answer) => answer !== undefined && answer.isCorrect !== null);
+      const correctCount = answers.filter((answer) => answer?.isCorrect).length;
+      return {
+        id: question.id,
+        position: question.position,
+        prompt: question.prompt,
+        points: question.points,
+        answeredCount: answers.length,
+        correctCount,
+        correctRate:
+          answers.length === 0
+            ? null
+            : Math.round((correctCount / answers.length) * 100),
+      };
+    }),
+  };
+}
+
 export async function getStudentQuizSummariesForLesson(input: {
   courseOfferingId: string;
   lessonId: string;
@@ -758,4 +1028,118 @@ function assertCourseEnabled(
   if (!quizCourseEnabled(courseOfferingId, env)) {
     throw new Forbidden("quiz_disabled");
   }
+}
+
+type AdminAttemptSource = {
+  id: string;
+  enrollmentId: string;
+  attemptNumber: number;
+  status: "IN_PROGRESS" | "SUBMITTED" | "AUTO_SUBMITTED";
+  startedAt: Date;
+  submittedAt: Date | null;
+  finalScore: number | null;
+  answers?: Array<{ questionId: string; isCorrect: boolean | null }>;
+};
+
+function buildAdminQuizAggregate(input: {
+  activeStudentCount: number;
+  passThresholdPercent: number | null;
+  totalPoints: number;
+  publishedScores: number[] | null;
+  attempts: AdminAttemptSource[];
+}) {
+  const attemptsByEnrollment = new Map<string, AdminAttemptSource[]>();
+  for (const attempt of input.attempts) {
+    const attempts = attemptsByEnrollment.get(attempt.enrollmentId) ?? [];
+    attempts.push(attempt);
+    attemptsByEnrollment.set(attempt.enrollmentId, attempts);
+  }
+
+  const bestAttempts: AdminAttemptSource[] = [];
+  let inProgress = 0;
+  let submitted = 0;
+  for (const attempts of attemptsByEnrollment.values()) {
+    const best = selectBestAttempt(
+      attempts.map((attempt) => ({
+        ...attempt,
+        score: attempt.finalScore ?? 0,
+        submittedAtMs: attempt.submittedAt?.getTime() ?? null,
+      }))
+    );
+    if (best) bestAttempts.push(best);
+    if (attempts.some((attempt) => attempt.status === "IN_PROGRESS")) {
+      inProgress += 1;
+    } else if (best) {
+      submitted += 1;
+    }
+  }
+
+  const scores = input.publishedScores
+    ? [
+        ...input.publishedScores,
+        ...Array(
+          Math.max(input.activeStudentCount - input.publishedScores.length, 0)
+        ).fill(0),
+      ]
+    : bestAttempts.map((attempt) => attempt.finalScore ?? 0);
+  const passCount =
+    input.passThresholdPercent === null || input.totalPoints <= 0
+      ? 0
+      : scores.filter(
+          (score) =>
+            (score / input.totalPoints) * 100 >=
+            (input.passThresholdPercent ?? 0)
+        ).length;
+  const durations = bestAttempts
+    .filter((attempt) => attempt.submittedAt !== null)
+    .map((attempt) =>
+      Math.max(
+        0,
+        Math.round(
+          ((attempt.submittedAt?.getTime() ?? attempt.startedAt.getTime()) -
+            attempt.startedAt.getTime()) /
+            1000
+        )
+      )
+    );
+
+  return {
+    totalPoints: input.totalPoints,
+    bestAttempts,
+    counts: {
+      total: input.activeStudentCount,
+      notStarted: Math.max(
+        input.activeStudentCount - inProgress - submitted,
+        0
+      ),
+      inProgress,
+      submitted,
+    },
+    metrics: {
+      average:
+        scores.length === 0
+          ? null
+          : Math.round(
+              (scores.reduce((sum, score) => sum + score, 0) / scores.length) *
+                100
+            ) / 100,
+      highest: scores.length === 0 ? null : Math.max(...scores),
+      lowest: scores.length === 0 ? null : Math.min(...scores),
+      passRate:
+        input.passThresholdPercent === null || scores.length === 0
+          ? null
+          : Math.round((passCount / scores.length) * 100),
+      averageDurationSeconds:
+        durations.length === 0
+          ? null
+          : Math.round(
+              durations.reduce((sum, seconds) => sum + seconds, 0) /
+                durations.length
+            ),
+    },
+  };
+}
+
+function assertAdminQuizObserver(role: Role) {
+  if (role !== "ADMIN") throw new Forbidden("quiz_observer_forbidden");
 }
