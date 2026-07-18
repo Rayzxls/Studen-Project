@@ -33,6 +33,11 @@ function navigationFor(role: DashboardRole, showModeration: boolean) {
         ]
       : [
           { href: "/teacher/courses", label: "วิชาที่สอน", icon: BookOpen },
+          {
+            href: "/teacher/timetable",
+            label: "ตารางสอน",
+            icon: CalendarDays,
+          },
           { href: "/teacher/courses/new", label: "สร้างวิชา", icon: Plus },
         ];
 

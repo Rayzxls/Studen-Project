@@ -1,5 +1,12 @@
 import Image from "next/image";
-import { BookOpen, Users, ClipboardCheck, Clock3 } from "lucide-react";
+import Link from "next/link";
+import {
+  BookOpen,
+  Users,
+  ClipboardCheck,
+  Clock3,
+  ChevronRight,
+} from "lucide-react";
 import {
   getTeacherStats,
   getTeacherTodaySchedule,
@@ -120,12 +127,21 @@ export async function TeacherHero({
         {/* Today's schedule list — only render when there's something to show. */}
         {today.length > 0 && (
           <div className="mt-6">
-            <h2
-              className="text-sm font-medium text-black/80"
-              style={{ letterSpacing: "-0.01em" }}
-            >
-              ตารางวันนี้
-            </h2>
+            <div className="flex items-center justify-between gap-3">
+              <h2
+                className="text-sm font-medium text-black/80"
+                style={{ letterSpacing: "-0.01em" }}
+              >
+                ตารางวันนี้
+              </h2>
+              <Link
+                href="/teacher/timetable"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:no-underline"
+              >
+                ดูตารางทั้งหมด
+                <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+              </Link>
+            </div>
             <ul className="mt-2 space-y-1.5">
               {today.map((s) => (
                 <ScheduleRow key={`${s.courseId}-${s.startTime}`} slot={s} />

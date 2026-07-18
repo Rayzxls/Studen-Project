@@ -1,5 +1,13 @@
 # HANDOFF — Beagle Classroom
 
+## RESPONSIVE TIMETABLE WORKSPACE — 2026-07-19
+
+- Replaced the Student timetable list with a shared responsive weekly timetable and added the Teacher-owned `/teacher/timetable` workspace. Desktop uses a horizontal time grid with overlap lanes and a current-time marker; Mobile uses day tabs and a readable daily timeline. Both roles receive current/next-class context, while Student remains read-only and sees only active enrolled courses.
+- Teacher can create, edit, and delete recurring slots from the aggregate timetable or the existing per-course Settings surface. Desktop supports clicking an empty time position with 15-minute snapping; Mobile offers a selected-day shortcut that suggests a non-overlapping one-hour slot. Existing Attendance behavior remains unchanged: the timetable is a recurring template and editing it does not rewrite previously opened Sessions.
+- Added immediate overlap feedback. Same-course overlap blocks the save action before submission and remains rejected by the Server; cross-course overlap shows an advisory but remains allowed per the existing Q4b domain decision. All file/data access boundaries are unchanged and Admin remains read-only.
+- Navigation now exposes Student `ตารางเรียน` and Teacher `ตารางสอน` shortcuts from Dashboard/course surfaces. The shared Time Picker and timetable cards use the existing Light/Dark/Cream tokens.
+- Acceptance passed locally: timetable view-model unit `6/6`, targeted ESLint, TypeScript, `git diff --check`, and Next.js Production build. The read-only safe smoke now covers Student/Teacher timetable plus the exact Quiz pilot routes for Teacher/Student/Admin; Local passes `15/15`. The pre-deploy Production baseline passed the existing and Quiz boundaries `14/15`; only the new `/teacher/timetable` route returned the expected `404` before this slice was merged. Browser-plugin visual automation could not attach because its local runtime asset bootstrap failed; authenticated manual Desktop/Mobile visual acceptance remains required. This code slice makes no Prisma migration, Neon row, R2 object, Vercel flag, or Production data mutation.
+
 ## DASHBOARD + QUIZ PRODUCTION ROLLOUT — 2026-07-18
 
 - Merged PR #16 (`phase-11` -> `main`) at `bf34af69`; GitHub main CI passed lint/typecheck, all unit tests, and Production build. Vercel Production deployment and the final flag-aware redeploy both completed successfully at `https://studen-project.vercel.app`.

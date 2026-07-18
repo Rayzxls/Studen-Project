@@ -114,20 +114,20 @@ export function TimePicker({
         className="input flex w-full items-center justify-between gap-2"
       >
         <span
-          className={`font-mono text-base tabular-nums ${parsed ? "text-black" : "text-black/35"}`}
+          className={`font-mono text-base tabular-nums ${parsed ? "text-ink" : "text-ink-faint"}`}
         >
           {parsed ? `${pad(parsed.h)}:${pad(parsed.m)}` : "เลือกเวลา"}
         </span>
-        <Clock className="h-4 w-4 shrink-0 text-black/35" aria-hidden="true" />
+        <Clock className="h-4 w-4 shrink-0 text-ink-faint" aria-hidden="true" />
       </button>
 
       {open && (
         <div
           role="dialog"
           aria-label="เลือกเวลา"
-          className="absolute left-0 top-full z-30 mt-1.5 w-[19rem] max-w-[calc(100vw-2rem)] rounded-2xl border border-black/[0.08] bg-white p-3 shadow-lift"
+          className="absolute left-0 top-full z-30 mt-1.5 w-[19rem] max-w-[calc(100vw-2rem)] rounded-2xl border border-hairline bg-surface p-3 shadow-lift"
         >
-          <p className="px-1 text-[11px] font-semibold uppercase tracking-wide text-black/40">
+          <p className="px-1 text-[11px] font-semibold uppercase tracking-wide text-ink-mute">
             ชั่วโมง
           </p>
           <div className="mt-1.5 grid grid-cols-6 gap-1">
@@ -144,8 +144,8 @@ export function TimePicker({
                     selected
                       ? "bg-blue-600 font-semibold text-white"
                       : school
-                        ? "text-black hover:bg-blue-50"
-                        : "text-black/35 hover:bg-black/5"
+                        ? "text-ink hover:bg-blue-50"
+                        : "text-ink-faint hover:bg-bg"
                   }`}
                 >
                   {pad(h)}
@@ -154,7 +154,7 @@ export function TimePicker({
             })}
           </div>
 
-          <p className="mt-3 px-1 text-[11px] font-semibold uppercase tracking-wide text-black/40">
+          <p className="mt-3 px-1 text-[11px] font-semibold uppercase tracking-wide text-ink-mute">
             นาที
           </p>
           <div className="mt-1.5 grid grid-cols-6 gap-1">
@@ -169,7 +169,7 @@ export function TimePicker({
                   className={`${gridBtn} ${
                     selected
                       ? "bg-blue-600 font-semibold text-white"
-                      : "text-black hover:bg-blue-50"
+                      : "text-ink hover:bg-blue-50"
                   }`}
                 >
                   {pad(m)}
@@ -178,7 +178,7 @@ export function TimePicker({
             })}
           </div>
 
-          <p className="mt-2 px-1 text-[11px] text-black/35">
+          <p className="mt-2 px-1 text-[11px] text-ink-faint">
             เลือกชั่วโมงก่อน แล้วแตะนาทีเพื่อยืนยัน · เวลาแบบ 24 ชม.
           </p>
         </div>
