@@ -217,7 +217,7 @@ function HeroCopy() {
 
       <h1
         className="mt-5 text-balance text-5xl font-semibold text-black md:text-6xl lg:text-7xl"
-        style={{ letterSpacing: "-0.045em", lineHeight: 1.02 }}
+        style={{ letterSpacing: "-0.045em", lineHeight: 1.35 }}
       >
         คิด วางแผน ติดตาม
         <br />

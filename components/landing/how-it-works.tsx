@@ -195,7 +195,7 @@ export function HowItWorks() {
           </span>
           <h2
             className="mt-4 text-4xl font-semibold text-black md:text-5xl"
-            style={{ letterSpacing: "-0.03em", lineHeight: 1.1 }}
+            style={{ letterSpacing: "-0.03em", lineHeight: 1.35 }}
           >
             ตั้งห้องเรียนให้พร้อม ภายในไม่กี่นาที
           </h2>
