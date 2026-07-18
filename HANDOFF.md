@@ -1,5 +1,13 @@
 # HANDOFF — Beagle Classroom
 
+## DASHBOARD VARIANT B PRODUCT CUTOVER — 2026-07-18
+
+- Replaced the Student and Teacher Dashboard body with the approved Variant B operating layout while preserving the existing course-card visual language and real database projections.
+- Added a theme-safe focus dock, an expanding left navigation rail, a two-column course workspace, and a right-side actionable brief. Repeated metrics were removed: each surface now owns a distinct decision or shortcut instead of restating the same count.
+- Restored and upgraded the TopNav account/notification area with the existing Profile, Theme, Notification, and feature-gated Moderation destinations intact. Admin Dashboard behavior remains unchanged.
+- Removed the absorbed development-only Dashboard prototype route and prototype-only mascot asset. No schema, database row, R2 object, Production flag, or role permission changed.
+- Acceptance passed: targeted ESLint, `git diff --check`, TypeScript through the Next.js Production build, and all 22 production routes. Authenticated visual acceptance still requires a signed-in QA session because the current isolated-QA seed credentials are not reusable.
+
 ## QUIZ C4 TEACHER RESULTS AND PUBLICATION — 2026-07-18
 
 - Added the real feature-gated Teacher Quiz Results workspace for Open and Closed Quiz states. It shows Student status counts, best-Attempt history, average/high/low/pass metrics, duration, and per-question response/correctness analysis while keeping Admin outside academic mutations.

@@ -36,6 +36,13 @@ import {
   ReviewQueueBlock,
 } from "@/components/dashboard/teacher-ops";
 import { AmbientBackground } from "@/components/motion/ambient-background";
+import {
+  DashboardFocusBrief,
+  DashboardOperatingGrid,
+  DashboardSectionHeading,
+  WeeklyMissionDock,
+} from "@/components/dashboard/operating-shell";
+import { moderationCenterEnabled } from "@/lib/moderation/feature-flags";
 
 // Auth-gated DB-fetching page — skip static prerender.
 export const dynamic = "force-dynamic";
@@ -96,9 +103,14 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-bg">
-      <TopNav session={session} />
+      <TopNav
+        session={session}
+        maxWidth="max-w-[1480px]"
+        accountLabel={name}
+        accountSubtitle={user.role === "TEACHER" ? "ครูผู้สอน" : "นักเรียน"}
+      />
 
-      <main className="mx-auto max-w-6xl animate-fade-in px-4 py-8 sm:px-6 md:py-10">
+      <main className="mx-auto max-w-[1480px] animate-fade-in px-4 py-8 sm:px-6 md:py-10">
         {user.role === "STUDENT" && (
           <StudentDashboard
             session={session}
@@ -181,6 +193,7 @@ async function StudentDashboard({
     actionCenter.recentScores,
     (item) => item.courseId
   );
+  const focusItem = actionCenter.returned[0] ?? actionCenter.due[0];
 
   return (
     <>
@@ -262,69 +275,119 @@ async function StudentDashboard({
         </div>
       </section>
 
-      <section className="mt-6">
-        {courses.length === 0 ? (
-          <CourseShowcaseEmpty
-            href="/join"
-            title="ยังไม่มีวิชาเรียน"
-            hint="เข้าร่วมด้วยรหัสห้องจากครู แล้ววิชาของคุณจะแสดงตรงนี้"
-            actionLabel="เข้าร่วมห้องเรียน"
-          />
-        ) : (
-          <div className="mx-auto grid max-w-5xl gap-5 sm:grid-cols-2 xl:grid-cols-3">
-            {courses.map((e) => {
-              const courseId = e.course.id;
-              const dueCount = dueByCourse.get(courseId) ?? 0;
-              const returnedCount = returnedByCourse.get(courseId) ?? 0;
-              const needsAction = dueCount + returnedCount;
-              return (
-                <CourseShowcaseCard
-                  key={e.id}
-                  href={`/student/courses/${courseId}`}
-                  title={e.course.name}
-                  subtitle={e.course.class.name}
-                  badge={yearLabelFromTerm(e.course.term.name)}
-                  classId={e.course.class.id}
-                  avatarUserId={e.course.teacher.userId}
-                  hasAvatar={Boolean(e.course.teacher.user.profileImageId)}
-                  avatarAlt={`ครู ${e.course.teacher.firstName} ${e.course.teacher.lastName}`}
-                  notice={
-                    needsAction > 0
-                      ? `มีงานต้องจัดการ ${needsAction} ชิ้น`
-                      : `ครู ${e.course.teacher.firstName} ${e.course.teacher.lastName}`
-                  }
-                  noticeTone={needsAction > 0 ? "attention" : "muted"}
-                  stats={[
-                    { value: dueCount, label: "งานต้องส่ง" },
-                    { value: scoreByCourse.get(courseId) ?? 0, label: "คะแนน" },
-                    { value: "1", label: "ครู" },
-                  ]}
-                  actionLabel="เข้าวิชา"
-                  menu={
-                    <StudentCourseCardMenu
-                      courseId={courseId}
-                      courseName={e.course.name}
-                    />
-                  }
+      <WeeklyMissionDock
+        items={[
+          {
+            label: "วิชาที่กำลังเรียน",
+            value: courses.length,
+            detail: "ห้องเรียนที่ยังใช้งานอยู่",
+            tone: "blue",
+            href: "/student/courses",
+          },
+          {
+            label: "งานที่ต้องจัดการ",
+            value: actionCenter.due.length + actionCenter.returned.length,
+            detail: "รวมงานใกล้กำหนดและงานที่ครูส่งคืน",
+            tone: "orange",
+            href: "/student/courses",
+          },
+          {
+            label: "ผลใหม่",
+            value: actionCenter.recentScores.length,
+            detail: "คะแนนล่าสุดที่ครูประกาศแล้ว",
+            tone: "green",
+            href: "/student/terms",
+          },
+        ]}
+      />
+
+      <DashboardOperatingGrid
+        role="student"
+        showModeration={moderationCenterEnabled()}
+        main={
+          <div className="space-y-5">
+            <section>
+              <DashboardSectionHeading role="student" count={courses.length} />
+              {courses.length === 0 ? (
+                <CourseShowcaseEmpty
+                  href="/join"
+                  title="ยังไม่มีวิชาเรียน"
+                  hint="เข้าร่วมด้วยรหัสห้องจากครู แล้ววิชาของคุณจะแสดงตรงนี้"
+                  actionLabel="เข้าร่วมห้องเรียน"
                 />
-              );
-            })}
+              ) : (
+                <div className="grid gap-5 md:grid-cols-2">
+                  {courses.map((e) => {
+                    const courseId = e.course.id;
+                    const dueCount = dueByCourse.get(courseId) ?? 0;
+                    const returnedCount = returnedByCourse.get(courseId) ?? 0;
+                    const needsAction = dueCount + returnedCount;
+                    return (
+                      <CourseShowcaseCard
+                        key={e.id}
+                        href={`/student/courses/${courseId}`}
+                        title={e.course.name}
+                        subtitle={e.course.class.name}
+                        badge={yearLabelFromTerm(e.course.term.name)}
+                        classId={e.course.class.id}
+                        avatarUserId={e.course.teacher.userId}
+                        hasAvatar={Boolean(
+                          e.course.teacher.user.profileImageId
+                        )}
+                        avatarAlt={`ครู ${e.course.teacher.firstName} ${e.course.teacher.lastName}`}
+                        notice={
+                          needsAction > 0
+                            ? `มีงานต้องจัดการ ${needsAction} ชิ้น`
+                            : `ครู ${e.course.teacher.firstName} ${e.course.teacher.lastName}`
+                        }
+                        noticeTone={needsAction > 0 ? "attention" : "muted"}
+                        stats={[
+                          { value: dueCount, label: "งานต้องส่ง" },
+                          {
+                            value: scoreByCourse.get(courseId) ?? 0,
+                            label: "คะแนน",
+                          },
+                          { value: "1", label: "ครู" },
+                        ]}
+                        actionLabel="เข้าวิชา"
+                        menu={
+                          <StudentCourseCardMenu
+                            courseId={courseId}
+                            courseName={e.course.name}
+                          />
+                        }
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
+            <ReturnedWorkBlock items={actionCenter.returned} />
+            <DueWorkBlock items={actionCenter.due} />
           </div>
-        )}
-      </section>
-
-      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_330px] lg:items-start">
-        {/* Action Center — the main block. */}
-        <div className="min-w-0 space-y-4">
-          <ReturnedWorkBlock items={actionCenter.returned} />
-          <DueWorkBlock items={actionCenter.due} />
-        </div>
-
-        <aside className="space-y-4">
-          <StudentTodayPanel studentUserId={session.user.id} />
-          <RecentScoresBlock items={actionCenter.recentScores} />
-        </aside>
-      </div>
+        }
+        aside={
+          <>
+            <DashboardFocusBrief
+              role="student"
+              title={focusItem?.title ?? "ไม่มีงานค้างในตอนนี้"}
+              detail={
+                focusItem
+                  ? `${focusItem.courseName} · เปิดงานนี้แล้วทำต่อได้ทันที`
+                  : "คุณจัดการงานครบแล้ว วิชาและคะแนนล่าสุดยังอยู่ด้านล่าง"
+              }
+              href={
+                focusItem
+                  ? `/student/courses/${focusItem.courseId}/assignments/${focusItem.assignmentId}`
+                  : "/student/courses"
+              }
+            />
+            <StudentTodayPanel studentUserId={session.user.id} />
+            <RecentScoresBlock items={actionCenter.recentScores} />
+          </>
+        }
+      />
     </>
   );
 }
@@ -367,86 +430,127 @@ async function TeacherDashboard({
         avatarVersion={avatarVersion}
       />
 
-      <section className="mt-6">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2
-              className="text-xl font-semibold text-black"
-              style={{ letterSpacing: "-0.02em" }}
-            >
-              วิชาที่สอน
-            </h2>
-            <p className="mt-1 text-sm text-black/55">
-              เปิดดูห้องเรียน งาน และความคืบหน้าของนักเรียนได้จากการ์ดนี้
-            </p>
-          </div>
-          <Link href="/teacher/courses/new" className="btn-primary btn-sm">
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            สร้างวิชา
-          </Link>
-        </div>
+      <WeeklyMissionDock
+        items={[
+          {
+            label: "วิชาที่สอน",
+            value: classHealth.length,
+            detail: "ห้องเรียนที่ครูกำลังดูแล",
+            tone: "blue",
+            href: "/teacher/courses",
+          },
+          {
+            label: "งานรอตรวจ",
+            value: reviewQueue.reduce(
+              (sum, item) => sum + item.pendingCount,
+              0
+            ),
+            detail: "ชิ้นงานที่นักเรียนส่งและยังไม่ตรวจ",
+            tone: "orange",
+            href: "/teacher/courses",
+          },
+          {
+            label: "สมาชิกในชั้นเรียน",
+            value: classHealth.reduce(
+              (sum, course) => sum + course.activeStudents,
+              0
+            ),
+            detail: "รวมการลงทะเบียนในทุกวิชา",
+            tone: "green",
+            href: "/teacher/courses",
+          },
+        ]}
+      />
 
-        {classHealth.length === 0 ? (
-          <CourseShowcaseEmpty
-            href="/teacher/courses/new"
-            title="ยังไม่มีวิชาที่สอน"
-            hint="สร้างวิชาแรก แล้วแชร์รหัสห้องให้นักเรียนเข้าร่วม"
-            actionLabel="สร้างวิชา"
-          />
-        ) : (
-          <div className="mx-auto grid max-w-5xl gap-5 sm:grid-cols-2 xl:grid-cols-3">
-            {classHealth.map((c) => (
-              <CourseShowcaseCard
-                key={c.courseId}
-                href={`/teacher/courses/${c.courseId}`}
-                title={c.courseName}
-                subtitle={c.className}
-                badge={yearLabelFromTerm(term?.academicYearName ?? term?.name)}
-                classId={c.classId}
-                avatarUserId={teacherUserId}
-                hasAvatar={hasAvatar}
-                avatarAlt={`ครู ${name}`}
-                notice={
-                  c.pendingReview > 0
-                    ? `รอตรวจ ${c.pendingReview} ชิ้น`
-                    : "พร้อมดูแลห้องเรียน"
-                }
-                noticeTone={c.pendingReview > 0 ? "attention" : "success"}
-                stats={[
-                  { value: c.activeStudents, label: "นักเรียน" },
-                  { value: c.pendingReview, label: "รอตรวจ" },
-                  { value: c.draftScoreItems, label: "ร่างคะแนน" },
-                ]}
-                actionLabel="ดูข้อมูล"
-                menu={
-                  <TeacherCourseCardMenu
-                    courseId={c.courseId}
-                    courseName={c.courseName}
-                  />
+      <DashboardOperatingGrid
+        role="teacher"
+        showModeration={moderationCenterEnabled()}
+        main={
+          <div className="space-y-5">
+            <section>
+              <DashboardSectionHeading
+                role="teacher"
+                count={classHealth.length}
+                action={
+                  <Link
+                    href="/teacher/courses/new"
+                    className="btn-primary btn-sm"
+                  >
+                    <Plus className="h-4 w-4" aria-hidden="true" />
+                    สร้างวิชา
+                  </Link>
                 }
               />
-            ))}
-          </div>
-        )}
-      </section>
 
-      <section className="mt-6">
-        <div className="mb-4">
-          <h2
-            className="text-xl font-semibold text-black"
-            style={{ letterSpacing: "-0.02em" }}
-          >
-            งานที่ต้องดูแล
-          </h2>
-          <p className="mt-1 text-sm text-black/55">
-            เหลือเฉพาะรายการที่ครูต้องลงมือทำต่อ ไม่ซ้ำกับตัวเลขสรุปใน Hero
-          </p>
-        </div>
-        <div className="grid gap-6 lg:grid-cols-2">
-          <ReviewQueueBlock items={reviewQueue} />
-          <ClassHealthBlock rows={classHealth} />
-        </div>
-      </section>
+              {classHealth.length === 0 ? (
+                <CourseShowcaseEmpty
+                  href="/teacher/courses/new"
+                  title="ยังไม่มีวิชาที่สอน"
+                  hint="สร้างวิชาแรก แล้วแชร์รหัสห้องให้นักเรียนเข้าร่วม"
+                  actionLabel="สร้างวิชา"
+                />
+              ) : (
+                <div className="grid gap-5 md:grid-cols-2">
+                  {classHealth.map((c) => (
+                    <CourseShowcaseCard
+                      key={c.courseId}
+                      href={`/teacher/courses/${c.courseId}`}
+                      title={c.courseName}
+                      subtitle={c.className}
+                      badge={yearLabelFromTerm(
+                        term?.academicYearName ?? term?.name
+                      )}
+                      classId={c.classId}
+                      avatarUserId={teacherUserId}
+                      hasAvatar={hasAvatar}
+                      avatarAlt={`ครู ${name}`}
+                      notice={
+                        c.pendingReview > 0
+                          ? `รอตรวจ ${c.pendingReview} ชิ้น`
+                          : "พร้อมดูแลห้องเรียน"
+                      }
+                      noticeTone={c.pendingReview > 0 ? "attention" : "success"}
+                      stats={[
+                        { value: c.activeStudents, label: "นักเรียน" },
+                        { value: c.pendingReview, label: "รอตรวจ" },
+                        { value: c.draftScoreItems, label: "ร่างคะแนน" },
+                      ]}
+                      actionLabel="ดูข้อมูล"
+                      menu={
+                        <TeacherCourseCardMenu
+                          courseId={c.courseId}
+                          courseName={c.courseName}
+                        />
+                      }
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <ReviewQueueBlock items={reviewQueue} />
+          </div>
+        }
+        aside={
+          <>
+            <DashboardFocusBrief
+              role="teacher"
+              title={reviewQueue[0]?.title ?? "ตรวจครบทุกชิ้นแล้ว"}
+              detail={
+                reviewQueue[0]
+                  ? `${reviewQueue[0].courseName} · ห้อง ${reviewQueue[0].className} · รอตรวจ ${reviewQueue[0].pendingCount} ชิ้น`
+                  : "งานส่งใหม่ของนักเรียนจะปรากฏตรงนี้โดยอัตโนมัติ"
+              }
+              href={
+                reviewQueue[0]
+                  ? `/teacher/courses/${reviewQueue[0].courseId}/assignments/${reviewQueue[0].assignmentId}?filter=pending`
+                  : "/teacher/courses"
+              }
+            />
+            <ClassHealthBlock rows={classHealth} />
+          </>
+        }
+      />
     </>
   );
 }

@@ -2,7 +2,7 @@
 
 **Updated:** 2026-07-18
 **Sequence:** Core completion -> Lesson Workspace -> Quiz -> Identity/Integrations -> AI -> Optional product modules  
-**Current state:** A0 Documentation Alignment, A1 Report/Export v1, the A2 automated QA gate, and A3/A3.1 static correctness work are complete. QR/invite browser acceptance is now automated; physical phone-camera and production private-R2 smoke remain manual release checks. A4 Account Lifecycle and the operational Moderation Center have additive persistence, audited transactions, and feature-flagged Admin surfaces. Lesson Workspace B1-B6 are implemented and accepted on isolated Neon QA. Quiz C1-C3 now cover the additive foundation, Teacher Builder, and Student Attempt/autosave/auto-grading workflow on isolated Neon QA. Lesson and Quiz Production rollout operations remain separately unapproved.
+**Current state:** A0 Documentation Alignment, A1 Report/Export v1, the A2 automated QA gate, and A3/A3.1 static correctness work are complete. QR/invite browser acceptance is now automated; physical phone-camera and production private-R2 smoke remain manual release checks. A4 Account Lifecycle and the operational Moderation Center have additive persistence, audited transactions, and feature-flagged Admin surfaces. Lesson Workspace B1-B6 are implemented and accepted on isolated Neon QA. Quiz C1-C4 now cover the additive foundation, Teacher Builder, Student Attempt/autosave/auto-grading, and Teacher Results/lifecycle/publication workflow on isolated Neon QA. Lesson and Quiz Production rollout operations remain separately unapproved.
 
 ## Why this order
 
@@ -22,7 +22,7 @@ This matrix prevents an implemented screen or database field from being mistaken
 | QR and invite link | Class Code, `qrcode.react`, `ClassCodeCard`, and join route exist | Implemented foundation, not accepted until QR scan, invite copy, expiry, deactivate, regenerate, mobile, and rejoin flows pass QA |
 | Moderation | Existing Teacher comment moderation plus a case-based Admin queue for reports, evidence snapshots, temporary restrictions, decisions, restore, and one-time appeal | Code/schema deployed behind `MODERATION_CENTER_ENABLED`; flag cutover and manual all-theme/mobile/private-R2 acceptance remain open |
 | Profile personal information | Avatar, display name, read-only real identity, password, and theme exist | Intentionally minimal learning identity; a full personal profile requires a privacy/scope decision, not an automatic expansion |
-| Quiz / Testing | Approved contract, four ADRs, additive schema, Teacher Builder, and Student Attempt/autosave/auto-grading pass isolated Neon QA | C1-C3 accepted on QA; Teacher results, lifecycle completion, attachments/notifications/Moderation/analytics/Admin observer, and Production rollout remain |
+| Quiz / Testing | Approved contract, four ADRs, additive schema, Teacher Builder, Student Attempt/autosave/auto-grading, and Teacher Results/lifecycle/publication pass isolated Neon QA | C1-C4 accepted on QA; private attachments, Moderation evidence, CSV analytics, Admin aggregate observer, and Production rollout remain |
 | AI Assistant | No model-provider integration found | Not implemented; planned only after stable Lesson/Quiz contracts |
 | Google Login | NextAuth currently uses Credentials only | Not implemented; identity-linking rules must be designed first |
 | Chat Room, Reward, Meeting | No domain model or route found | Candidate backlog; not committed to the current release plan |
