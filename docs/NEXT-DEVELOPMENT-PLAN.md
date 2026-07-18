@@ -1,8 +1,8 @@
 # Next Development Plan
 
-**Updated:** 2026-07-17
+**Updated:** 2026-07-18
 **Sequence:** Core completion -> Lesson Workspace -> Quiz -> Identity/Integrations -> AI -> Optional product modules  
-**Current state:** A0 Documentation Alignment, A1 Report/Export v1, the A2 automated QA gate, and A3/A3.1 static correctness work are complete. QR/invite browser acceptance is now automated; physical phone-camera and production private-R2 smoke remain manual release checks. A4 Account Lifecycle and the operational Moderation Center have additive persistence, audited transactions, and feature-flagged Admin surfaces. Lesson Workspace B1-B6 are implemented and accepted on isolated Neon QA. Quiz C1 now has an additive schema, an offline unapplied migration, fail-closed flags, and pure validation/state policy. Lesson and Quiz database rollout operations remain separately unapproved.
+**Current state:** A0 Documentation Alignment, A1 Report/Export v1, the A2 automated QA gate, and A3/A3.1 static correctness work are complete. QR/invite browser acceptance is now automated; physical phone-camera and production private-R2 smoke remain manual release checks. A4 Account Lifecycle and the operational Moderation Center have additive persistence, audited transactions, and feature-flagged Admin surfaces. Lesson Workspace B1-B6 are implemented and accepted on isolated Neon QA. Quiz C1-C3 now cover the additive foundation, Teacher Builder, and Student Attempt/autosave/auto-grading workflow on isolated Neon QA. Lesson and Quiz Production rollout operations remain separately unapproved.
 
 ## Why this order
 
@@ -22,7 +22,7 @@ This matrix prevents an implemented screen or database field from being mistaken
 | QR and invite link | Class Code, `qrcode.react`, `ClassCodeCard`, and join route exist | Implemented foundation, not accepted until QR scan, invite copy, expiry, deactivate, regenerate, mobile, and rejoin flows pass QA |
 | Moderation | Existing Teacher comment moderation plus a case-based Admin queue for reports, evidence snapshots, temporary restrictions, decisions, restore, and one-time appeal | Code/schema deployed behind `MODERATION_CENTER_ENABLED`; flag cutover and manual all-theme/mobile/private-R2 acceptance remain open |
 | Profile personal information | Avatar, display name, read-only real identity, password, and theme exist | Intentionally minimal learning identity; a full personal profile requires a privacy/scope decision, not an automatic expansion |
-| Quiz / Testing | Approved contract, responsive prototype, four ADRs, additive schema/migration, and pure policy tests exist | C1 foundation complete in code; migration, persistence services, UI, and Production rollout are not applied/implemented |
+| Quiz / Testing | Approved contract, four ADRs, additive schema, Teacher Builder, and Student Attempt/autosave/auto-grading pass isolated Neon QA | C1-C3 accepted on QA; Teacher results, lifecycle completion, attachments/notifications/Moderation/analytics/Admin observer, and Production rollout remain |
 | AI Assistant | No model-provider integration found | Not implemented; planned only after stable Lesson/Quiz contracts |
 | Google Login | NextAuth currently uses Credentials only | Not implemented; identity-linking rules must be designed first |
 | Chat Room, Reward, Meeting | No domain model or route found | Candidate backlog; not committed to the current release plan |
@@ -392,8 +392,14 @@ Implementation sequence:
    point, and read-only Student preview. The additive migration is applied to
    Neon QA only, and authenticated desktop/mobile Playwright acceptance passes.
    Student mutations remain absent and Production migration/flags remain off.
-5. Implement Student Attempt, auto-save, timer, resume, and objective auto-grading.
-6. Connect best Attempt to draft Score Entries, Teacher results, close/reopen, exceptions, and one-way publication.
+5. Isolated-QA accepted 2026-07-18: Student Quiz center and Lesson entry,
+   start/resume with device lease takeover, revision/idempotency-safe auto-save,
+   server-authoritative timer/deadline auto-submit, final confirmation, objective
+   auto-grading, score-visibility rules, and responsive Desktop/iPhone UI. Student
+   payloads are sanitized so answer keys and Teacher explanations stay Server-only.
+6. In progress: best submitted Attempt now updates the linked draft Score Entry.
+   Teacher results, close/reopen, exception-management UI, and one-way publication
+   remain the next implementation slice.
 7. Add private attachments, notifications, Moderation evidence, CSV analytics, and Admin aggregate observer.
 8. Run isolated-Neon permission, theme, mobile, concurrency, expiry, private-file, and rollback acceptance before a one-course Production pilot.
 

@@ -7,12 +7,40 @@ import { requireRole } from "@/lib/auth/guards";
 import { HttpError } from "@/lib/errors";
 import {
   createQuizDraft,
+  openQuiz,
   saveQuizDraft,
   type CreateQuizDraftInput,
 } from "@/lib/quiz";
 
 function value(formData: FormData, key: string): string {
   return String(formData.get(key) ?? "").trim();
+}
+
+export async function saveAndOpenQuizAction(formData: FormData): Promise<void> {
+  const courseId = value(formData, "courseId");
+  const lessonId = value(formData, "lessonId");
+  const quizId = value(formData, "quizId");
+  let notice = "เปิดแบบทดสอบให้นักเรียนแล้ว";
+
+  try {
+    const actorId = await actorUserId();
+    await saveQuizDraft(
+      quizId,
+      parsePayload(formData) as CreateQuizDraftInput,
+      { actorUserId: actorId }
+    );
+    await openQuiz(
+      { courseOfferingId: courseId, quizId },
+      { actorUserId: actorId }
+    );
+    revalidateQuizPaths(courseId, lessonId, quizId);
+  } catch (error) {
+    notice = errorNotice(error);
+  }
+
+  redirect(
+    `/teacher/courses/${courseId}/quizzes/${quizId}?notice=${encodeURIComponent(notice)}`
+  );
 }
 
 function parsePayload(formData: FormData): unknown {

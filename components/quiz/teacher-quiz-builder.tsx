@@ -15,6 +15,7 @@ import {
   ListChecks,
   Plus,
   Save,
+  Send,
   Settings2,
   Shuffle,
   Trash2,
@@ -61,6 +62,7 @@ export type QuizBuilderInitialData = {
 type Props = {
   initial: QuizBuilderInitialData;
   action: (formData: FormData) => void | Promise<void>;
+  openAction?: (formData: FormData) => void | Promise<void>;
   autosaveAction?: (formData: FormData) => Promise<{
     ok: boolean;
     message: string;
@@ -79,6 +81,7 @@ const typeLabels: Record<QuestionType, string> = {
 export function TeacherQuizBuilder({
   initial,
   action,
+  openAction,
   autosaveAction,
   notice,
   locked = false,
@@ -369,6 +372,16 @@ export function TeacherQuizBuilder({
             >
               <Save className="h-4 w-4" /> บันทึกฉบับร่าง
             </button>
+            {data.quizId && openAction && !locked && (
+              <button
+                type="submit"
+                formAction={openAction}
+                disabled={isSaving}
+                className="btn-primary btn-sm"
+              >
+                <Send className="h-4 w-4" /> บันทึกและเปิดทำ
+              </button>
+            )}
           </div>
         </header>
 

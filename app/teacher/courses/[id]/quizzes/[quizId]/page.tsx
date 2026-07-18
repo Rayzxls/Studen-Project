@@ -9,7 +9,11 @@ import {
   quizCourseMutationsEnabled,
 } from "@/lib/quiz";
 import { teacherCourseTabs } from "../../_tabs";
-import { autosaveQuizDraftAction, saveQuizDraftAction } from "../actions";
+import {
+  autosaveQuizDraftAction,
+  saveAndOpenQuizAction,
+  saveQuizDraftAction,
+} from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +56,7 @@ export default async function TeacherQuizBuilderPage({
     >
       <TeacherQuizBuilder
         action={saveQuizDraftAction}
+        openAction={saveAndOpenQuizAction}
         autosaveAction={autosaveQuizDraftAction}
         notice={notice}
         locked={

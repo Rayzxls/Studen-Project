@@ -1,5 +1,15 @@
 # HANDOFF — Beagle Classroom
 
+## QUIZ C3 STUDENT ATTEMPT — 2026-07-18
+
+- Added the real feature-gated Student Quiz center, Lesson-linked Quiz cards, Quiz detail/start flow, and one-question-per-page Attempt workspace. The responsive UI includes question checkpoints, answered progress, server-adjusted timer, autosave feedback, final unanswered-question confirmation, a sticky mobile action bar, and a clear submitted/result state.
+- Student Attempt persistence now supports start/resume, device lease takeover, hashed lease cookies, optimistic write revisions, idempotent answer/submit mutations, immutable Attempt snapshots, server-authoritative deadline or closed-Quiz auto-submit, exact all-or-nothing objective auto-grading, Attempt limits, and per-Student deadline/attempt exceptions already present in the schema.
+- Teachers can open a valid Draft Quiz from its Builder and both roles now have a dedicated feature-gated Quiz tab and course-level list. Open validation rejects archived parents, empty quizzes, expired close times, invalid scored Score Item coupling, and any Quiz that already has an Attempt.
+- Scored Quiz submission writes the Student's best submitted Attempt into the linked draft Score Entry while preserving one-way score publication. Practice scores are visible immediately; Scored Quiz scores remain hidden until the linked Score Item is published. Teacher results, close/reopen, exception management UI, and publication workflow remain the next slice.
+- Closed a security boundary found during final review: the Student React payload is now a sanitized snapshot with no `isCorrect` field or Teacher explanation. The complete answer key remains Server/DB-only. Raw lease tokens are never persisted, and read-only feature-flag mode cannot finalize or mutate an Attempt.
+- Isolated Neon QA acceptance passes for Student sign-in, Quiz discovery, start, autosave persistence, final submit, visible Practice score, cleanup, and Desktop 1440×900 plus iPhone 390×844 visual/overflow checks. Full unit passes `602/602`, Quiz E2E passes `1/1`, targeted ESLint, TypeScript, and the Production build pass.
+- Production remains unchanged: Quiz migration/flags and pilot rollout still require a separate explicit approval. C3 code is accepted on isolated QA only.
+
 ## QUIZ C2 ISOLATED QA ACCEPTANCE — 2026-07-18
 
 - Applied `20260717010000_add_quiz_foundation` to the identity-checked Neon QA branch only. Prisma reports all five QA migrations up to date; Production schema and Vercel flags remain unchanged.

@@ -38,8 +38,30 @@ export {
   type QuizDraftResult,
 } from "./draft-service";
 export {
+  openQuiz,
+  type QuizLifecycleActorCtx,
+  type QuizLifecycleRepository,
+} from "./lifecycle-service";
+export {
+  getStudentQuizAttempt,
+  hashLeaseToken,
+  saveQuizAttemptAnswer,
+  startOrResumeQuizAttempt,
+  submitQuizAttempt,
+  type QuizAttemptActorCtx,
+  type QuizAttemptRepository,
+  type QuizAttemptSnapshot,
+  type QuizSnapshotQuestion,
+  type StudentQuizAttemptView,
+} from "./attempt-service";
+export {
+  getStudentQuizSummariesForCourse,
+  getStudentQuizSummariesForLesson,
+  getStudentQuizSummary,
   getTeacherQuizDraft,
+  getTeacherQuizSummariesForCourse,
   getTeacherQuizSummariesForLesson,
+  type StudentQuizSummary,
   type TeacherQuizDraftView,
   type TeacherQuizSummary,
 } from "./queries";
