@@ -2,6 +2,10 @@ import { db } from "@/lib/db/client";
 import { Forbidden, NotFound } from "@/lib/errors";
 import type { FeedAttachment } from "@/lib/feed/aggregator";
 import {
+  getModerationRestrictions,
+  moderationTargetKey,
+} from "@/lib/moderation/queries";
+import {
   attachmentIds,
   getOrderedAttachments,
 } from "@/lib/storage/attachments";
@@ -639,7 +643,7 @@ async function getStudentQuizSummaries(input: {
       scoreItem: { select: { publishedAt: true } },
       questions: {
         where: { voidedAt: null },
-        select: { points: true },
+        select: { id: true, points: true },
       },
       attempts: {
         where: { enrollment: { studentId: input.studentId } },
@@ -653,14 +657,32 @@ async function getStudentQuizSummaries(input: {
     },
   });
 
+  const restrictions = await getModerationRestrictions(
+    rows.flatMap((row) => [
+      { targetType: "QUIZ" as const, targetId: row.id },
+      ...row.questions.map((question) => ({
+        targetType: "QUIZ_QUESTION" as const,
+        targetId: question.id,
+      })),
+    ])
+  );
+  const visibleRows = rows.filter(
+    (row) =>
+      !restrictions.has(moderationTargetKey("QUIZ", row.id)) &&
+      row.questions.every(
+        (question) =>
+          !restrictions.has(moderationTargetKey("QUIZ_QUESTION", question.id))
+      )
+  );
+
   const allAttachments = await getOrderedAttachments(
-    rows.flatMap((row) => attachmentIds(row.fileAttachmentIds))
+    visibleRows.flatMap((row) => attachmentIds(row.fileAttachmentIds))
   );
   const attachmentById = new Map(
     allAttachments.map((attachment) => [attachment.id, attachment])
   );
 
-  return rows.map((row) => {
+  return visibleRows.map((row) => {
     const active = row.attempts.find(
       (attempt) => attempt.status === "IN_PROGRESS"
     );

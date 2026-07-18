@@ -1,5 +1,13 @@
 # HANDOFF — Beagle Classroom
 
+## QUIZ C5B MODERATION EVIDENCE — 2026-07-18
+
+- Added Student reporting for a complete Quiz and for an individual question. A question report captures the immutable Attempt snapshot that Student actually saw, so a later Teacher edit cannot rewrite case evidence.
+- Quiz evidence stores Teacher-authored title/description, question and option text, plus private attachment metadata. It deliberately excludes correct-option secrets, Teacher explanations, Student answers, Attempt grading/scores, personal exceptions, submitted files, R2 keys, and public/signed URLs.
+- Moderation restrictions now hide a Quiz from Student discovery and fail closed on overview, start, save, submit, and direct Attempt reads. Existing Attempts, answers, grading, Score Item, and Score Entries remain untouched; Admin stays a safety observer and receives no academic mutation.
+- Extended the Admin case detail with theme-safe Quiz/question evidence rendering and the existing authenticated evidence-file route. Student restricted routes return a normal 404 instead of an error boundary.
+- Acceptance passed: focused isolated-Neon integration `2/2`, full unit `616/616`, targeted ESLint, TypeScript, `git diff --check`, and Next.js Production build. Production Quiz migration, rollout flags, database data, and R2 objects were not changed. C5a authenticated private-R2 smoke and the broader one-course Quiz rollout gate remain open.
+
 ## QUIZ C5A PRIVATE ATTACHMENTS — 2026-07-18
 
 - Enabled private multi-file attachments for the Quiz brief, individual questions, and individual answer options. Teacher uploads keep stable Quiz/Question/Option owner ids, validate uploader plus exact owner scope transactionally, and remain accessible only through the authenticated `/api/storage/files/[fileId]` route.

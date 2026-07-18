@@ -160,6 +160,7 @@ function EvidencePreview({
   const body = textValue(record, "body") || textValue(record, "description");
   const links = stringList(record, "linkUrls");
   const filename = textValue(record, "originalFilename");
+  const questions = evidenceQuestions(record);
   const capturedFileCount = moderationEvidenceFileIds(snapshot).length;
   const unavailableFileCount = Math.max(
     0,
@@ -185,6 +186,44 @@ function EvidencePreview({
           <p className="text-sm text-black">
             ไฟล์: <strong>{filename}</strong>
           </p>
+        )}
+        {questions.length > 0 && (
+          <div className="space-y-3">
+            <p className="text-xs font-medium text-ink-soft">
+              เนื้อหาแบบทดสอบที่บันทึกไว้ {questions.length} คำถาม
+            </p>
+            {questions.map((question, index) => (
+              <article
+                key={question.id}
+                className="rounded-lg border border-hairline bg-surface p-4"
+              >
+                <p className="text-xs font-medium text-blue-700">
+                  คำถามที่ {index + 1} · {question.type}
+                </p>
+                <h4 className="mt-1.5 text-sm font-semibold leading-6 text-ink">
+                  {question.prompt}
+                </h4>
+                {question.options.length > 0 && (
+                  <ol className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {question.options.map((option, optionIndex) => (
+                      <li
+                        key={option.id}
+                        className="rounded-md bg-bg px-3 py-2 text-sm text-ink-soft"
+                      >
+                        <span className="mr-2 font-medium text-ink-soft">
+                          {String.fromCharCode(65 + optionIndex)}.
+                        </span>
+                        {option.text}
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </article>
+            ))}
+            <p className="text-xs text-ink-soft">
+              หลักฐานไม่แสดงเฉลย คำตอบนักเรียน หรือคะแนนของ Attempt
+            </p>
+          </div>
         )}
         {attachments.length > 0 && (
           <div className="rounded-xl border border-hairline bg-surface py-3">
@@ -218,11 +257,15 @@ function EvidencePreview({
             มีไฟล์หลักฐาน {unavailableFileCount} รายการที่ไม่พบ metadata
           </p>
         )}
-        {!title && !body && !filename && links.length === 0 && (
-          <p className="text-sm text-ink-soft">
-            รายการนี้มีเฉพาะข้อมูลอ้างอิงของเนื้อหา
-          </p>
-        )}
+        {!title &&
+          !body &&
+          !filename &&
+          links.length === 0 &&
+          questions.length === 0 && (
+            <p className="text-sm text-ink-soft">
+              รายการนี้มีเฉพาะข้อมูลอ้างอิงของเนื้อหา
+            </p>
+          )}
       </div>
     </section>
   );
@@ -238,6 +281,51 @@ function stringList(record: Prisma.JsonObject, key: string): string[] {
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === "string")
     : [];
+}
+
+function evidenceQuestions(record: Prisma.JsonObject): Array<{
+  id: string;
+  type: string;
+  prompt: string;
+  options: Array<{ id: string; text: string }>;
+}> {
+  const questions = record.questions;
+  if (!Array.isArray(questions)) return [];
+  return questions.flatMap((item) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+    const question = item as Prisma.JsonObject;
+    if (
+      typeof question.id !== "string" ||
+      typeof question.type !== "string" ||
+      typeof question.prompt !== "string"
+    ) {
+      return [];
+    }
+    const options = Array.isArray(question.options)
+      ? question.options.flatMap((optionItem) => {
+          if (
+            !optionItem ||
+            typeof optionItem !== "object" ||
+            Array.isArray(optionItem)
+          ) {
+            return [];
+          }
+          const option = optionItem as Prisma.JsonObject;
+          return typeof option.id === "string" &&
+            typeof option.text === "string"
+            ? [{ id: option.id, text: option.text }]
+            : [];
+        })
+      : [];
+    return [
+      {
+        id: question.id,
+        type: question.type,
+        prompt: question.prompt,
+        options,
+      },
+    ];
+  });
 }
 
 function personName(person: {

@@ -4,6 +4,7 @@ import { CourseShell } from "@/components/course/course-shell";
 import { StudentQuizAttempt } from "@/components/quiz/student-quiz-attempt";
 import { assert } from "@/lib/auth/guards";
 import { getCourseOfferingForStudent } from "@/lib/course/queries";
+import { HttpError } from "@/lib/errors";
 import { getStudentQuizAttempt, quizCourseEnabled } from "@/lib/quiz";
 import { studentCourseTabs } from "../../../../_tabs";
 import {
@@ -34,7 +35,10 @@ export default async function StudentQuizAttemptPage({ params }: PageProps) {
       { courseOfferingId: id, attemptId, leaseToken },
       { studentUserId: guard.session.user.id }
     ),
-  ]);
+  ]).catch((error: unknown) => {
+    if (error instanceof HttpError && error.status === 404) notFound();
+    throw error;
+  });
   if (!course || attempt.quizId !== quizId) notFound();
 
   return (

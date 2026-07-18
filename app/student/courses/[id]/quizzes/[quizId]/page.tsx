@@ -9,9 +9,11 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { CourseShell } from "@/components/course/course-shell";
+import { ReportContentButton } from "@/components/moderation/report-content-button";
 import { QuizAttachmentPreview } from "@/components/quiz/quiz-attachment-preview";
 import { assert } from "@/lib/auth/guards";
 import { getCourseOfferingForStudent } from "@/lib/course/queries";
+import { HttpError } from "@/lib/errors";
 import {
   getStudentQuizSummary,
   quizCourseEnabled,
@@ -47,7 +49,10 @@ export default async function StudentQuizOverviewPage({
       quizId,
       studentId: guard.session.user.id,
     }),
-  ]);
+  ]).catch((error: unknown) => {
+    if (error instanceof HttpError && error.status === 404) notFound();
+    throw error;
+  });
   if (!course) notFound();
   const now = new Date();
   const beforeOpen = !!quiz.opensAt && now.getTime() < quiz.opensAt.getTime();
@@ -81,10 +86,17 @@ export default async function StudentQuizOverviewPage({
         <header className="border-b border-hairline pb-7">
           <div className="flex flex-wrap items-start justify-between gap-5">
             <div className="min-w-0">
-              <span className="badge">
-                {quiz.mode === "PRACTICE" ? "ฝึกทำ" : "มีคะแนน"}
-                {quiz.required && " · ต้องทำ"}
-              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="badge">
+                  {quiz.mode === "PRACTICE" ? "ฝึกทำ" : "มีคะแนน"}
+                  {quiz.required && " · ต้องทำ"}
+                </span>
+                <ReportContentButton
+                  targetType="QUIZ"
+                  targetId={quiz.id}
+                  compact
+                />
+              </div>
               <h1 className="mt-4 text-2xl font-semibold text-ink md:text-4xl">
                 {quiz.title}
               </h1>

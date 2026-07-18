@@ -8,6 +8,10 @@ import {
   applyModerationCaseAction,
   createModerationReport,
 } from "@/lib/moderation/service";
+import {
+  getStudentQuizSummariesForCourse,
+  startOrResumeQuizAttempt,
+} from "@/lib/quiz";
 import { assertIsolatedTestDatabase } from "@/tests/helpers/database-safety";
 import {
   enrollStudent,
@@ -62,7 +66,28 @@ describe("Moderation Center workflow", () => {
     if (adminUserId) {
       await db.user.deleteMany({ where: { id: adminUserId } });
     }
-    if (ctx) await ctx.cleanup();
+    if (ctx) {
+      await db.quizAttemptMutation.deleteMany({
+        where: {
+          attempt: { quiz: { courseOfferingId: ctx.courseOfferingId } },
+        },
+      });
+      await db.quizAnswer.deleteMany({
+        where: {
+          attempt: { quiz: { courseOfferingId: ctx.courseOfferingId } },
+        },
+      });
+      await db.quizAttempt.deleteMany({
+        where: { quiz: { courseOfferingId: ctx.courseOfferingId } },
+      });
+      await db.quiz.deleteMany({
+        where: { courseOfferingId: ctx.courseOfferingId },
+      });
+      await db.lesson.deleteMany({
+        where: { courseOfferingId: ctx.courseOfferingId },
+      });
+      await ctx.cleanup();
+    }
     caseIds = [];
   });
 
@@ -217,5 +242,285 @@ describe("Moderation Center workflow", () => {
       "APPEAL_SUBMITTED",
     ]);
     expect(auditCount).toBe(6);
+  });
+
+  it("captures Quiz evidence without answers, grading or correct-option secrets", async () => {
+    const enrollment = await db.enrollment.findUniqueOrThrow({
+      where: {
+        studentId_courseOfferingId: {
+          studentId: ctx.studentUserId,
+          courseOfferingId: ctx.courseOfferingId,
+        },
+      },
+      select: { id: true },
+    });
+    const lesson = await db.lesson.create({
+      data: {
+        courseOfferingId: ctx.courseOfferingId,
+        title: "Moderation Quiz lesson",
+        description: "QA only",
+        createdById: ctx.teacherUserId,
+      },
+      select: { id: true },
+    });
+    const quiz = await db.quiz.create({
+      data: {
+        courseOfferingId: ctx.courseOfferingId,
+        lessonId: lesson.id,
+        title: "Safety checkpoint",
+        description: "Teacher-authored Quiz details",
+        mode: "PRACTICE",
+        status: "OPEN",
+        createdById: ctx.teacherUserId,
+        questions: {
+          create: {
+            type: "SINGLE_CHOICE",
+            prompt: "Current source prompt",
+            explanation: "Teacher-only explanation",
+            points: 5,
+            position: 0,
+            options: {
+              create: [
+                { text: "Visible option A", isCorrect: true, position: 0 },
+                { text: "Visible option B", isCorrect: false, position: 1 },
+              ],
+            },
+          },
+        },
+      },
+      select: {
+        id: true,
+        questions: { select: { id: true, options: { select: { id: true } } } },
+      },
+    });
+    const question = quiz.questions[0];
+    expect(question).toBeDefined();
+    const optionIds = question!.options.map((option) => option.id);
+
+    const attempt = await db.quizAttempt.create({
+      data: {
+        quizId: quiz.id,
+        enrollmentId: enrollment.id,
+        attemptNumber: 1,
+        status: "SUBMITTED",
+        submittedAt: new Date(),
+        submissionTrigger: "MANUAL",
+        snapshotRevision: 1,
+        autoScore: 5,
+        finalScore: 5,
+        snapshotJson: {
+          quizId: quiz.id,
+          revision: 1,
+          title: "Safety checkpoint",
+          description: "Teacher-authored Quiz details",
+          mode: "PRACTICE",
+          hideExplanations: false,
+          totalPoints: 5,
+          attachments: [],
+          questions: [
+            {
+              id: question!.id,
+              type: "SINGLE_CHOICE",
+              prompt: "Prompt the student actually saw",
+              explanation: "Must not enter moderation evidence",
+              points: 5,
+              attachments: [
+                {
+                  id: "captured-private-file",
+                  originalFilename: "question.png",
+                  mimeType: "image/png",
+                  sizeBytes: 321,
+                },
+              ],
+              options: [
+                {
+                  id: optionIds[0],
+                  text: "Snapshot option A",
+                  isCorrect: true,
+                  attachments: [],
+                },
+                {
+                  id: optionIds[1],
+                  text: "Snapshot option B",
+                  isCorrect: false,
+                  attachments: [],
+                },
+              ],
+            },
+          ],
+        },
+        answers: {
+          create: {
+            questionId: question!.id,
+            answerJson: { selectedOptionIds: [optionIds[0]] },
+            isCorrect: true,
+            awardedPoints: 5,
+          },
+        },
+      },
+      select: { id: true },
+    });
+
+    await db.quizQuestion.update({
+      where: { id: question!.id },
+      data: { prompt: "Edited after attempt snapshot" },
+    });
+
+    const quizReport = await createModerationReport(
+      {
+        actor: { userId: ctx.studentUserId, role: "STUDENT" },
+        targetType: "QUIZ",
+        targetId: quiz.id,
+        category: "INAPPROPRIATE_CONTENT",
+        details: "Report the complete Quiz without exposing answer secrets.",
+      },
+      { enabled: true }
+    );
+    const questionReport = await createModerationReport(
+      {
+        actor: { userId: ctx.studentUserId, role: "STUDENT" },
+        targetType: "QUIZ_QUESTION",
+        targetId: question!.id,
+        category: "PRIVACY",
+        details: "Report the exact question snapshot shown in my Attempt.",
+      },
+      { enabled: true }
+    );
+    caseIds = [quizReport.caseId, questionReport.caseId];
+
+    const cases = await db.moderationCase.findMany({
+      where: { id: { in: caseIds } },
+      select: { targetType: true, ownerUserId: true, targetSnapshot: true },
+    });
+    const quizCase = cases.find((item) => item.targetType === "QUIZ");
+    const questionCase = cases.find(
+      (item) => item.targetType === "QUIZ_QUESTION"
+    );
+    expect(quizCase?.ownerUserId).toBe(ctx.teacherUserId);
+    expect(quizCase?.targetSnapshot).toMatchObject({
+      kind: "QUIZ",
+      title: "Safety checkpoint",
+      questions: [
+        expect.objectContaining({
+          prompt: "Edited after attempt snapshot",
+          options: [
+            expect.objectContaining({ text: "Visible option A" }),
+            expect.objectContaining({ text: "Visible option B" }),
+          ],
+        }),
+      ],
+    });
+    expect(questionCase?.targetSnapshot).toMatchObject({
+      kind: "QUIZ_QUESTION",
+      fileAttachmentIds: ["captured-private-file"],
+      questions: [
+        expect.objectContaining({
+          prompt: "Prompt the student actually saw",
+          options: [
+            expect.objectContaining({ text: "Snapshot option A" }),
+            expect.objectContaining({ text: "Snapshot option B" }),
+          ],
+        }),
+      ],
+    });
+
+    const evidenceText = JSON.stringify(cases);
+    expect(evidenceText).not.toContain("isCorrect");
+    expect(evidenceText).not.toContain("Teacher-only explanation");
+    expect(evidenceText).not.toContain("Must not enter moderation evidence");
+    expect(evidenceText).not.toContain("finalScore");
+    expect(evidenceText).not.toContain("selectedOptionIds");
+
+    await applyModerationCaseAction(
+      {
+        actor: { userId: adminUserId, role: "ADMIN" },
+        caseId: quizReport.caseId,
+        action: "START_REVIEW",
+        internalReason: "Review the reported Quiz before restricting access.",
+      },
+      { enabled: true }
+    );
+    await applyModerationCaseAction(
+      {
+        actor: { userId: adminUserId, role: "ADMIN" },
+        caseId: quizReport.caseId,
+        action: "HIDE",
+        internalReason: "Temporarily hide this Quiz during safety review.",
+      },
+      { enabled: true }
+    );
+
+    const previousModerationFlag = process.env.MODERATION_CENTER_ENABLED;
+    process.env.MODERATION_CENTER_ENABLED = "1";
+    try {
+      await expect(
+        getStudentQuizSummariesForCourse({
+          courseOfferingId: ctx.courseOfferingId,
+          studentId: ctx.studentUserId,
+          env: {
+            QUIZ_ENABLED: "1",
+            QUIZ_PILOT_COURSE_IDS: ctx.courseOfferingId,
+          },
+        })
+      ).resolves.toEqual([]);
+      await expect(
+        startOrResumeQuizAttempt(
+          { courseOfferingId: ctx.courseOfferingId, quizId: quiz.id },
+          {
+            studentUserId: ctx.studentUserId,
+            env: {
+              QUIZ_ENABLED: "1",
+              QUIZ_MUTATIONS_ENABLED: "1",
+              QUIZ_PILOT_COURSE_IDS: ctx.courseOfferingId,
+            },
+          }
+        )
+      ).rejects.toMatchObject({ code: "quiz_not_found" });
+      await expect(
+        db.quizAttempt.findUniqueOrThrow({
+          where: { id: attempt.id },
+          select: {
+            status: true,
+            finalScore: true,
+            answers: {
+              select: {
+                answerJson: true,
+                isCorrect: true,
+                awardedPoints: true,
+              },
+            },
+          },
+        })
+      ).resolves.toMatchObject({
+        status: "SUBMITTED",
+        finalScore: 5,
+        answers: [
+          {
+            answerJson: { selectedOptionIds: [optionIds[0]] },
+            isCorrect: true,
+            awardedPoints: 5,
+          },
+        ],
+      });
+    } finally {
+      if (previousModerationFlag === undefined) {
+        delete process.env.MODERATION_CENTER_ENABLED;
+      } else {
+        process.env.MODERATION_CENTER_ENABLED = previousModerationFlag;
+      }
+    }
+
+    await expect(
+      createModerationReport(
+        {
+          actor: { userId: ctx.otherStudentUserId, role: "STUDENT" },
+          targetType: "QUIZ_QUESTION",
+          targetId: question!.id,
+          category: "OTHER",
+          details: "I did not receive this question in an Attempt snapshot.",
+        },
+        { enabled: true }
+      )
+    ).rejects.toMatchObject({ code: "moderation_target_not_found" });
   });
 });

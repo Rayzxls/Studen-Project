@@ -15,6 +15,7 @@ import {
   Send,
 } from "lucide-react";
 import type { StudentQuizAttemptView } from "@/lib/quiz";
+import { ReportContentButton } from "@/components/moderation/report-content-button";
 import { QuizAttachmentPreview } from "@/components/quiz/quiz-attachment-preview";
 import type { QuizAttemptActionResult } from "@/app/student/courses/[id]/quizzes/actions";
 
@@ -262,9 +263,16 @@ export function StudentQuizAttempt({
                 </p>
               )}
             </div>
-            <span className="shrink-0 text-xs text-ink-mute">
-              {current.points} คะแนน
-            </span>
+            <div className="flex shrink-0 items-center gap-1">
+              <span className="text-xs text-ink-mute">
+                {current.points} คะแนน
+              </span>
+              <ReportContentButton
+                targetType="QUIZ_QUESTION"
+                targetId={current.id}
+                compact
+              />
+            </div>
           </div>
 
           <div className="mt-6 grid gap-3">

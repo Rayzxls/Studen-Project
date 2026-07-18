@@ -24,6 +24,8 @@ const TARGET_TYPES = new Set<ModerationTargetType>([
   "ANNOUNCEMENT",
   "MATERIAL",
   "ASSIGNMENT",
+  "QUIZ",
+  "QUIZ_QUESTION",
   "FILE_ATTACHMENT",
   "PROFILE_IMAGE",
 ]);

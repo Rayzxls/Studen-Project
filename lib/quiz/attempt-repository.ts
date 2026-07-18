@@ -405,6 +405,11 @@ async function loadStartableQuiz(
     },
   });
   if (!quiz) throw new NotFound("quiz_not_found");
+  await assertQuizModerationAccess(
+    tx,
+    quiz.id,
+    quiz.questions.map((question) => question.id)
+  );
   if (quiz.course.archivedAt || quiz.lesson.archivedAt) {
     throw new Conflict("quiz_parent_archived");
   }
@@ -555,6 +560,7 @@ async function loadOwnedAttempt(
       writeRevision: true,
       quiz: {
         select: {
+          id: true,
           status: true,
           closesAt: true,
           scoreItem: { select: { publishedAt: true } },
@@ -563,6 +569,12 @@ async function loadOwnedAttempt(
     },
   });
   if (!attempt) throw new NotFound("quiz_attempt_not_found");
+  const snapshot = parseSnapshot(attempt.snapshotJson);
+  await assertQuizModerationAccess(
+    tx,
+    attempt.quiz.id,
+    snapshot.questions.map((question) => question.id)
+  );
   return attempt;
 }
 
@@ -761,7 +773,39 @@ async function loadAttemptViewRow(tx: Tx, command: GetAttemptCommand) {
     },
   });
   if (!attempt) throw new NotFound("quiz_attempt_not_found");
+  const snapshot = parseSnapshot(attempt.snapshotJson);
+  await assertQuizModerationAccess(
+    tx,
+    attempt.quizId,
+    snapshot.questions.map((question) => question.id)
+  );
   return attempt;
+}
+
+async function assertQuizModerationAccess(
+  tx: Tx,
+  quizId: string,
+  questionIds: string[]
+): Promise<void> {
+  if (!moderationCenterEnabled()) return;
+  const restricted = await tx.moderationCase.findFirst({
+    where: {
+      restrictionKind: { not: null },
+      OR: [
+        { targetType: "QUIZ", targetId: quizId },
+        ...(questionIds.length > 0
+          ? [
+              {
+                targetType: "QUIZ_QUESTION" as const,
+                targetId: { in: questionIds },
+              },
+            ]
+          : []),
+      ],
+    },
+    select: { id: true },
+  });
+  if (restricted) throw new NotFound("quiz_not_found");
 }
 
 function parseSnapshot(value: Prisma.JsonValue): QuizAttemptSnapshot {

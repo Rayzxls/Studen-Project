@@ -403,8 +403,9 @@ Implementation sequence:
    of missing active Students and records their zero Score Entries before the
    linked `QUIZ_LINKED` Score Item is published. Production migration/flags remain
    off.
-7. C5a implemented locally 2026-07-18: private multi-file attachments for the Quiz brief, questions, and options; exact owner/uploader validation; authenticated previews; immutable Student-safe Attempt metadata; legacy snapshot compatibility; and Moderation filtering. Full unit `616/616`, targeted lint/TypeScript, and Production build pass. Authenticated isolated-QA upload/R2 smoke remains before acceptance. Next: Quiz/question Moderation evidence, CSV analytics, and Admin aggregate observer. Quiz lifecycle notifications and destination routing are complete.
-8. Run isolated-Neon permission, theme, mobile, concurrency, expiry, private-file, and rollback acceptance before a one-course Production pilot.
+7. C5a implemented locally 2026-07-18: private multi-file attachments for the Quiz brief, questions, and options; exact owner/uploader validation; authenticated previews; immutable Student-safe Attempt metadata; legacy snapshot compatibility; and Moderation filtering. Full unit `616/616`, targeted lint/TypeScript, and Production build pass. Authenticated isolated-QA upload/R2 smoke remains before acceptance.
+8. C5b implemented locally and integration-verified on isolated Neon QA 2026-07-18: Students can report a Quiz or the exact immutable question snapshot they saw; cases preserve Teacher content, option text, and private attachment metadata without correctness, explanations, Student answers, grading, scores, exceptions, or submitted files. Active restrictions hide Student Quiz discovery and fail closed on start, save, submit, and direct Attempt reads without mutating academic records. Admin evidence is theme-safe and remains observer-only. Focused integration `2/2`, full unit `616/616`, targeted ESLint, TypeScript, and Production build pass.
+9. Next: Quiz CSV analytics and Admin aggregate observer, then run isolated-Neon permission, all-theme/mobile, concurrency, expiry, authenticated private-R2, and rollback acceptance before a one-course Production pilot.
 
 Question bank, cross-course copy, spreadsheet import, essay/short-answer grading,
 AI grading, invasive proctoring, and full offline exams remain outside MVP.
