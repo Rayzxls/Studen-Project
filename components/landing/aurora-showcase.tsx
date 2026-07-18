@@ -195,7 +195,7 @@ export function AuroraShowcase() {
             style={{
               color: "var(--color-ink)",
               letterSpacing: "-0.03em",
-              lineHeight: 1.05,
+              lineHeight: 1.35,
             }}
           >
             ใส่ใจในทุกรายละเอียด
