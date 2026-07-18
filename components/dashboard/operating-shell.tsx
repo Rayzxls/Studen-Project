@@ -9,74 +9,11 @@ import {
   LayoutDashboard,
   Plus,
   Scale,
-  Sparkles,
   UserRound,
   UsersRound,
 } from "lucide-react";
 
 type DashboardRole = "student" | "teacher";
-
-type MissionItem = {
-  label: string;
-  value: number | string;
-  detail: string;
-  tone: "blue" | "green" | "orange";
-  href: string;
-};
-
-const toneClass: Record<MissionItem["tone"], string> = {
-  blue: "border-blue-500/30 bg-surface text-blue-600",
-  green: "border-green-500/30 bg-surface text-green-600",
-  orange: "border-orange-500/30 bg-surface text-orange-600",
-};
-
-export function WeeklyMissionDock({ items }: { items: MissionItem[] }) {
-  return (
-    <section className="mt-5" aria-labelledby="mission-dock-title">
-      <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
-        <div>
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-blue-600" aria-hidden="true" />
-            <h2
-              id="mission-dock-title"
-              className="text-base font-semibold text-ink"
-            >
-              ภารกิจที่ควรโฟกัส
-            </h2>
-          </div>
-          <p className="mt-0.5 text-xs text-ink-mute">
-            สรุปเฉพาะสิ่งที่ต้องตัดสินใจหรือทำต่อในตอนนี้
-          </p>
-        </div>
-        <span className="badge">อัปเดตล่าสุด</span>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-3">
-        {items.map((item) => (
-          <Link
-            key={item.label}
-            href={item.href}
-            className={`group relative min-h-32 overflow-hidden rounded-2xl border p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-lift hover:no-underline ${toneClass[item.tone]}`}
-          >
-            <div className="absolute inset-x-0 top-0 h-1 bg-current opacity-70" />
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold opacity-80">{item.label}</p>
-                <p className="mt-2 text-3xl font-semibold tabular-nums text-ink">
-                  {item.value}
-                </p>
-                <p className="mt-1 text-xs text-ink-mute">{item.detail}</p>
-              </div>
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-surface/75 text-current ring-1 ring-current/15 transition-transform duration-300 group-hover:translate-x-1">
-                <ChevronRight className="h-4 w-4" aria-hidden="true" />
-              </span>
-            </div>
-          </Link>
-        ))}
-      </div>
-    </section>
-  );
-}
 
 function navigationFor(role: DashboardRole, showModeration: boolean) {
   const common = [

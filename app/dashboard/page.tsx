@@ -40,7 +40,6 @@ import {
   DashboardFocusBrief,
   DashboardOperatingGrid,
   DashboardSectionHeading,
-  WeeklyMissionDock,
 } from "@/components/dashboard/operating-shell";
 import { moderationCenterEnabled } from "@/lib/moderation/feature-flags";
 
@@ -275,32 +274,6 @@ async function StudentDashboard({
         </div>
       </section>
 
-      <WeeklyMissionDock
-        items={[
-          {
-            label: "วิชาที่กำลังเรียน",
-            value: courses.length,
-            detail: "ห้องเรียนที่ยังใช้งานอยู่",
-            tone: "blue",
-            href: "/student/courses",
-          },
-          {
-            label: "งานที่ต้องจัดการ",
-            value: actionCenter.due.length + actionCenter.returned.length,
-            detail: "รวมงานใกล้กำหนดและงานที่ครูส่งคืน",
-            tone: "orange",
-            href: "/student/courses",
-          },
-          {
-            label: "ผลใหม่",
-            value: actionCenter.recentScores.length,
-            detail: "คะแนนล่าสุดที่ครูประกาศแล้ว",
-            tone: "green",
-            href: "/student/terms",
-          },
-        ]}
-      />
-
       <DashboardOperatingGrid
         role="student"
         showModeration={moderationCenterEnabled()}
@@ -428,38 +401,6 @@ async function TeacherDashboard({
         name={name}
         hasAvatar={hasAvatar}
         avatarVersion={avatarVersion}
-      />
-
-      <WeeklyMissionDock
-        items={[
-          {
-            label: "วิชาที่สอน",
-            value: classHealth.length,
-            detail: "ห้องเรียนที่ครูกำลังดูแล",
-            tone: "blue",
-            href: "/teacher/courses",
-          },
-          {
-            label: "งานรอตรวจ",
-            value: reviewQueue.reduce(
-              (sum, item) => sum + item.pendingCount,
-              0
-            ),
-            detail: "ชิ้นงานที่นักเรียนส่งและยังไม่ตรวจ",
-            tone: "orange",
-            href: "/teacher/courses",
-          },
-          {
-            label: "สมาชิกในชั้นเรียน",
-            value: classHealth.reduce(
-              (sum, course) => sum + course.activeStudents,
-              0
-            ),
-            detail: "รวมการลงทะเบียนในทุกวิชา",
-            tone: "green",
-            href: "/teacher/courses",
-          },
-        ]}
       />
 
       <DashboardOperatingGrid
