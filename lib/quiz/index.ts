@@ -13,6 +13,7 @@ export {
   canReopenQuiz,
   decideAttemptWrite,
   effectiveAttemptDeadline,
+  effectiveQuizAccessDeadline,
   scoreObjectiveAnswer,
   selectBestAttempt,
   type AttemptWriteDecision,
@@ -21,14 +22,18 @@ export {
 } from "./policy";
 export {
   CreateQuizDraftSchema,
+  PublishQuizResultsSchema,
   QuizAttemptAnswerSchema,
   QuizOptionSchema,
   QuizQuestionSchema,
   QuizReasonSchema,
   QuizStudentExceptionSchema,
+  ReopenQuizSchema,
   type CreateQuizDraftInput,
   type QuizAttemptAnswerInput,
   type QuizStudentExceptionInput,
+  type PublishQuizResultsInput,
+  type ReopenQuizInput,
 } from "./validation";
 export {
   createQuizDraft,
@@ -38,9 +43,15 @@ export {
   type QuizDraftResult,
 } from "./draft-service";
 export {
+  closeQuiz,
   openQuiz,
+  publishQuizResults,
+  reopenQuiz,
+  setQuizStudentException,
   type QuizLifecycleActorCtx,
   type QuizLifecycleRepository,
+  type QuizLifecycleResult,
+  type PublishQuizResultsResult,
 } from "./lifecycle-service";
 export {
   getStudentQuizAttempt,
@@ -59,9 +70,11 @@ export {
   getStudentQuizSummariesForLesson,
   getStudentQuizSummary,
   getTeacherQuizDraft,
+  getTeacherQuizResults,
   getTeacherQuizSummariesForCourse,
   getTeacherQuizSummariesForLesson,
   type StudentQuizSummary,
   type TeacherQuizDraftView,
+  type TeacherQuizResultsView,
   type TeacherQuizSummary,
 } from "./queries";

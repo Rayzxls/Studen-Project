@@ -61,6 +61,17 @@ export function effectiveAttemptDeadline(
   return earliest;
 }
 
+export function effectiveQuizAccessDeadline(
+  courseDeadline: Date | null,
+  studentExtension: Date | null
+): Date | null {
+  if (!courseDeadline) return studentExtension;
+  if (!studentExtension) return courseDeadline;
+  return courseDeadline.getTime() >= studentExtension.getTime()
+    ? courseDeadline
+    : studentExtension;
+}
+
 export function decideAttemptWrite(input: {
   status: QuizAttemptState;
   currentLeaseVersion: number;

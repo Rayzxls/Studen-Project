@@ -73,7 +73,11 @@ export default async function TeacherQuizzesPage({ params }: PageProps) {
             {quizzes.map((quiz) => (
               <Link
                 key={quiz.id}
-                href={`/teacher/courses/${id}/quizzes/${quiz.id}`}
+                href={
+                  quiz.status === "DRAFT"
+                    ? `/teacher/courses/${id}/quizzes/${quiz.id}`
+                    : `/teacher/courses/${id}/quizzes/${quiz.id}/results`
+                }
                 className="group flex items-center justify-between gap-4 border-b border-hairline px-5 py-4 last:border-0 hover:bg-blue-50/50 hover:no-underline"
               >
                 <span className="min-w-0">

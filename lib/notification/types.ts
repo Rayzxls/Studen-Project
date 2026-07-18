@@ -87,6 +87,19 @@ export interface ClassCodeJoinedPayload extends BasePayload {
   classCode: string;
 }
 
+export interface QuizReopenedPayload extends BasePayload {
+  quizTitle: string;
+  quizId: string;
+  newClosesAt: string;
+}
+
+export interface QuizExceptionGrantedPayload extends BasePayload {
+  quizTitle: string;
+  quizId: string;
+  extendedDeadline: string | null;
+  extraAttempts: number;
+}
+
 // ─── Discriminated union ─────────────────────────────────────
 
 export type NotificationPayload =
@@ -98,7 +111,9 @@ export type NotificationPayload =
   | { kind: "SUBMISSION_GRADED"; data: SubmissionGradedPayload }
   | { kind: "SUBMISSION_RETURNED"; data: SubmissionReturnedPayload }
   | { kind: "COMMENT_REPLIED"; data: CommentRepliedPayload }
-  | { kind: "CLASS_CODE_JOINED"; data: ClassCodeJoinedPayload };
+  | { kind: "CLASS_CODE_JOINED"; data: ClassCodeJoinedPayload }
+  | { kind: "QUIZ_REOPENED"; data: QuizReopenedPayload }
+  | { kind: "QUIZ_EXCEPTION_GRANTED"; data: QuizExceptionGrantedPayload };
 
 /** Compile-time check that the discriminator covers every NotificationKind. */
 type _AssertKindCoverage = NotificationPayload["kind"] extends NotificationKind

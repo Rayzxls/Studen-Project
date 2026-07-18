@@ -171,9 +171,20 @@ export const QuizStudentExceptionSchema = z
     { message: "ต้องขยายเวลาหรือเพิ่มจำนวนครั้งอย่างน้อย 1 อย่าง" }
   );
 
+export const ReopenQuizSchema = z.object({
+  newClosesAt: z.coerce.date(),
+  reason: QuizReasonSchema,
+});
+
+export const PublishQuizResultsSchema = z.object({
+  missingStudentsConfirmed: z.boolean(),
+});
+
 export type CreateQuizDraftInput = z.input<typeof CreateQuizDraftSchema>;
 export type CreateQuizDraftData = z.output<typeof CreateQuizDraftSchema>;
 export type QuizAttemptAnswerInput = z.input<typeof QuizAttemptAnswerSchema>;
 export type QuizStudentExceptionInput = z.input<
   typeof QuizStudentExceptionSchema
 >;
+export type ReopenQuizInput = z.input<typeof ReopenQuizSchema>;
+export type PublishQuizResultsInput = z.input<typeof PublishQuizResultsSchema>;

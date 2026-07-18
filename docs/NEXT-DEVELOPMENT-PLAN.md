@@ -397,10 +397,13 @@ Implementation sequence:
    server-authoritative timer/deadline auto-submit, final confirmation, objective
    auto-grading, score-visibility rules, and responsive Desktop/iPhone UI. Student
    payloads are sanitized so answer keys and Teacher explanations stay Server-only.
-6. In progress: best submitted Attempt now updates the linked draft Score Entry.
-   Teacher results, close/reopen, exception-management UI, and one-way publication
-   remain the next implementation slice.
-7. Add private attachments, notifications, Moderation evidence, CSV analytics, and Admin aggregate observer.
+6. Isolated-QA accepted 2026-07-18: Teacher Results, close/finalize, audited
+   reopen, private per-Student deadline/attempt exceptions, response analysis,
+   and one-way Scored Quiz publication. Publication requires explicit confirmation
+   of missing active Students and records their zero Score Entries before the
+   linked `QUIZ_LINKED` Score Item is published. Production migration/flags remain
+   off.
+7. Add private attachments, Moderation evidence, CSV analytics, and Admin aggregate observer. Quiz lifecycle notifications and destination routing are complete.
 8. Run isolated-Neon permission, theme, mobile, concurrency, expiry, private-file, and rollback acceptance before a one-course Production pilot.
 
 Question bank, cross-course copy, spreadsheet import, essay/short-answer grading,

@@ -1,5 +1,14 @@
 # HANDOFF — Beagle Classroom
 
+## QUIZ C4 TEACHER RESULTS AND PUBLICATION — 2026-07-18
+
+- Added the real feature-gated Teacher Quiz Results workspace for Open and Closed Quiz states. It shows Student status counts, best-Attempt history, average/high/low/pass metrics, duration, and per-question response/correctness analysis while keeping Admin outside academic mutations.
+- Completed the Teacher lifecycle: close finalizes every in-progress Attempt, reopen is allowed only before publication with a future close time plus required reason, and per-Student deadline/attempt exceptions are private, audited, and notify only the affected Student. A later global reopen deadline cannot be shortened by an older exception.
+- Scored Quiz publication is one-way and remains owned by the Quiz workflow. It requires Closed status, explicitly lists missing active Students, requires Teacher confirmation, and writes an explicit zero Score Entry for every confirmed missing Student before publishing the linked `QUIZ_LINKED` Score Item. Published result metrics use the score ledger as their source of truth; item analysis continues to use submitted Attempts only.
+- Added Quiz reopen/exception notification kinds, safe destination routing, audit labels/tiers, and generic Score Item guards so Quiz-linked rows cannot be edited or published through the normal gradebook workflow.
+- Applied the additive lifecycle-notification enum migration to isolated Neon QA only. Production migration and Quiz rollout flags remain unchanged and require separate explicit approval.
+- Acceptance passed: full unit `612/612`, authenticated Teacher Results lifecycle Playwright `1/1`, Desktop/iPhone responsive and overflow checks, targeted ESLint/TypeScript, and the Next.js Production build including `/teacher/courses/[id]/quizzes/[quizId]/results`.
+
 ## QUIZ C3 STUDENT ATTEMPT — 2026-07-18
 
 - Added the real feature-gated Student Quiz center, Lesson-linked Quiz cards, Quiz detail/start flow, and one-question-per-page Attempt workspace. The responsive UI includes question checkpoints, answered progress, server-adjusted timer, autosave feedback, final unanswered-question confirmation, a sticky mobile action bar, and a clear submitted/result state.

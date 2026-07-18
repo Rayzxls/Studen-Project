@@ -5,6 +5,7 @@ import { Conflict, Forbidden, NotFound, ValidationError } from "@/lib/errors";
 import {
   decideAttemptWrite,
   effectiveAttemptDeadline,
+  effectiveQuizAccessDeadline,
   scoreObjectiveAnswer,
 } from "./policy";
 import {
@@ -26,12 +27,12 @@ type Tx = Prisma.TransactionClient;
 export const prismaQuizAttemptRepository: QuizAttemptRepository = {
   async startOrResume(command) {
     return db.$transaction(async (tx) => {
-      const quiz = await loadStartableQuiz(tx, command);
       const enrollment = await activeEnrollment(
         tx,
         command.studentUserId,
         command.courseOfferingId
       );
+      const quiz = await loadStartableQuiz(tx, command, enrollment.id);
       const existing = await tx.quizAttempt.findFirst({
         where: {
           quizId: quiz.id,
@@ -96,7 +97,10 @@ export const prismaQuizAttemptRepository: QuizAttemptRepository = {
         ? new Date(command.now.getTime() + quiz.timeLimitMinutes * 60_000)
         : null;
       const effectiveDeadline = effectiveAttemptDeadline([
-        exception?.extendedDeadline ?? quiz.closesAt,
+        effectiveQuizAccessDeadline(
+          quiz.closesAt,
+          exception?.extendedDeadline ?? null
+        ),
         timedDeadline,
       ]);
       const created = await tx.quizAttempt.create({
@@ -339,7 +343,11 @@ export const prismaQuizAttemptRepository: QuizAttemptRepository = {
   },
 };
 
-async function loadStartableQuiz(tx: Tx, command: StartAttemptCommand) {
+async function loadStartableQuiz(
+  tx: Tx,
+  command: StartAttemptCommand,
+  enrollmentId: string
+) {
   const quiz = await tx.quiz.findFirst({
     where: {
       id: command.quizId,
@@ -365,6 +373,11 @@ async function loadStartableQuiz(tx: Tx, command: StartAttemptCommand) {
       hideExplanations: true,
       course: { select: { archivedAt: true } },
       lesson: { select: { archivedAt: true } },
+      studentExceptions: {
+        where: { enrollmentId },
+        take: 1,
+        select: { extendedDeadline: true },
+      },
       questions: {
         where: { voidedAt: null },
         orderBy: { position: "asc" },
@@ -390,7 +403,11 @@ async function loadStartableQuiz(tx: Tx, command: StartAttemptCommand) {
   if (quiz.opensAt && command.now.getTime() < quiz.opensAt.getTime()) {
     throw new Conflict("quiz_not_started");
   }
-  if (quiz.closesAt && command.now.getTime() >= quiz.closesAt.getTime()) {
+  const studentDeadline = effectiveQuizAccessDeadline(
+    quiz.closesAt,
+    quiz.studentExceptions[0]?.extendedDeadline ?? null
+  );
+  if (studentDeadline && command.now.getTime() >= studentDeadline.getTime()) {
     throw new Conflict("quiz_closed");
   }
   if (quiz.questions.length === 0) throw new Conflict("quiz_has_no_questions");
@@ -483,10 +500,7 @@ function attemptDeadline(
   now: Date
 ) {
   if (attempt.quiz.status === "CLOSED") return now;
-  return effectiveAttemptDeadline([
-    attempt.effectiveDeadline,
-    attempt.quiz.closesAt,
-  ]);
+  return attempt.effectiveDeadline;
 }
 
 function assertLease(current: string | null, supplied: string) {
@@ -529,7 +543,7 @@ async function mutationResponse(
   return row ? (row.responseJson as unknown as MutationResponse) : null;
 }
 
-async function finalizeAttempt(
+export async function finalizeAttempt(
   tx: Tx,
   attemptId: string,
   trigger: "MANUAL" | "DEADLINE" | "QUIZ_CLOSED",
@@ -625,6 +639,21 @@ async function finalizeAttempt(
       attempt.quiz.mode === "PRACTICE" ||
       attempt.quiz.scoreItem?.publishedAt != null,
   };
+}
+
+export async function finalizeQuizAttemptsAtClose(
+  tx: Tx,
+  quizId: string,
+  now: Date
+): Promise<number> {
+  const active = await tx.quizAttempt.findMany({
+    where: { quizId, status: "IN_PROGRESS" },
+    select: { id: true },
+  });
+  for (const attempt of active) {
+    await finalizeAttempt(tx, attempt.id, "QUIZ_CLOSED", now);
+  }
+  return active.length;
 }
 
 async function loadAttemptViewRow(tx: Tx, command: GetAttemptCommand) {

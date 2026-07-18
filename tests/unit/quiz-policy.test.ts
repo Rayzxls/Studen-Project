@@ -7,6 +7,7 @@ import {
   canReopenQuiz,
   decideAttemptWrite,
   effectiveAttemptDeadline,
+  effectiveQuizAccessDeadline,
   scoreObjectiveAnswer,
   selectBestAttempt,
 } from "@/lib/quiz/policy";
@@ -44,6 +45,21 @@ describe("Quiz domain policy", () => {
         new Date("2026-07-17T11:30:00Z"),
       ])?.toISOString()
     ).toBe("2026-07-17T11:30:00.000Z");
+  });
+
+  it("never lets an older student extension shorten a reopened Quiz", () => {
+    expect(
+      effectiveQuizAccessDeadline(
+        new Date("2026-07-20T12:00:00Z"),
+        new Date("2026-07-19T12:00:00Z")
+      )?.toISOString()
+    ).toBe("2026-07-20T12:00:00.000Z");
+    expect(
+      effectiveQuizAccessDeadline(
+        new Date("2026-07-20T12:00:00Z"),
+        new Date("2026-07-21T12:00:00Z")
+      )?.toISOString()
+    ).toBe("2026-07-21T12:00:00.000Z");
   });
 
   it("rejects stale devices, stale revisions, and expired writes", () => {

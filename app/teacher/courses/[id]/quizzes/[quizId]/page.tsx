@@ -45,6 +45,9 @@ export default async function TeacherQuizBuilderPage({
     }),
   ]);
   if (!course) notFound();
+  if (quiz.status !== "DRAFT") {
+    redirect(`/teacher/courses/${id}/quizzes/${quizId}/results`);
+  }
 
   return (
     <CourseShell

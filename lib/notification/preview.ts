@@ -53,6 +53,14 @@ function readString(payload: unknown, key: string): string | null {
   return null;
 }
 
+function readNumber(payload: unknown, key: string): number | null {
+  if (payload && typeof payload === "object" && key in payload) {
+    const value = (payload as Record<string, unknown>)[key];
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+  }
+  return null;
+}
+
 function buildMeta(courseName: string | null, tail?: string | null): string {
   const parts: string[] = [];
   if (courseName) parts.push(courseName);
@@ -187,6 +195,42 @@ export function buildNotificationPreview(args: {
         iconKey: "UserPlus",
         bold: `${studentName} เข้าร่วมห้องเรียน`,
         meta: buildMeta(courseName, tail),
+      };
+    }
+
+    case "QUIZ_REOPENED": {
+      const title = readString(payload, "quizTitle");
+      const closesAt = readString(payload, "newClosesAt");
+      if (!title || !closesAt) return GENERIC_FALLBACK;
+      const deadline = new Date(closesAt);
+      return {
+        iconKey: "RotateCcw",
+        bold: `เปิดแบบทดสอบ "${title}" อีกครั้ง`,
+        meta: buildMeta(
+          courseName,
+          Number.isNaN(deadline.getTime())
+            ? null
+            : `ปิด ${formatThaiDateShort(deadline)}`
+        ),
+      };
+    }
+
+    case "QUIZ_EXCEPTION_GRANTED": {
+      const title = readString(payload, "quizTitle");
+      if (!title) return GENERIC_FALLBACK;
+      const deadlineText = readString(payload, "extendedDeadline");
+      const deadline = deadlineText ? new Date(deadlineText) : null;
+      const extraAttempts = readNumber(payload, "extraAttempts") ?? 0;
+      const grants = [
+        extraAttempts > 0 ? `เพิ่ม ${extraAttempts} ครั้ง` : null,
+        deadline && !Number.isNaN(deadline.getTime())
+          ? `ถึง ${formatThaiDateShort(deadline)}`
+          : null,
+      ].filter((value): value is string => value !== null);
+      return {
+        iconKey: "Clock3",
+        bold: `ครูปรับสิทธิ์แบบทดสอบ "${title}" ให้คุณ`,
+        meta: buildMeta(courseName, grants.join(" · ")),
       };
     }
   }

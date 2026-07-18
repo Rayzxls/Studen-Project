@@ -54,6 +54,8 @@ const ACTION_LABEL_TH: Record<AuditEvent, string> = {
   SCORE_ITEM_PUBLISHED: "เผยแพร่รายการคะแนน",
   SCORE_EDIT_AFTER_PUBLISH: "แก้คะแนนหลังเผยแพร่",
   SCORE_DELETE_AFTER_PUBLISH: "ลบรายการคะแนนหลังเผยแพร่",
+  QUIZ_REOPENED: "เปิดแบบทดสอบอีกครั้ง",
+  QUIZ_STUDENT_EXCEPTION_GRANTED: "ให้สิทธิ์พิเศษแบบทดสอบ",
   // Attendance
   ATTENDANCE_BACK_EDIT: "แก้การเข้าเรียนย้อนหลัง",
   SESSION_CANCELLED: "ยกเลิกคาบเรียน",

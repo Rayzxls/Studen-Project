@@ -9,6 +9,41 @@
 import { describe, expect, it } from "vitest";
 import { buildNotificationPreview } from "@/lib/notification/preview";
 
+describe("Quiz notification previews", () => {
+  it("shows the reopened quiz and new deadline", () => {
+    const preview = buildNotificationPreview({
+      kind: "QUIZ_REOPENED",
+      payload: {
+        courseId: "c1",
+        courseName: "English",
+        quizId: "quiz-1",
+        quizTitle: "Checkpoint",
+        newClosesAt: "2026-07-20T09:00:00Z",
+      },
+    });
+    expect(preview.iconKey).toBe("RotateCcw");
+    expect(preview.bold).toContain("Checkpoint");
+    expect(preview.meta).toContain("English");
+  });
+
+  it("describes a private extra-attempt grant", () => {
+    const preview = buildNotificationPreview({
+      kind: "QUIZ_EXCEPTION_GRANTED",
+      payload: {
+        courseId: "c1",
+        courseName: "English",
+        quizId: "quiz-1",
+        quizTitle: "Checkpoint",
+        extendedDeadline: null,
+        extraAttempts: 1,
+      },
+    });
+    expect(preview.iconKey).toBe("Clock3");
+    expect(preview.bold).toContain("Checkpoint");
+    expect(preview.meta).toContain("1");
+  });
+});
+
 describe("buildNotificationPreview — happy paths", () => {
   it("SCORE_ITEM_PUBLISHED", () => {
     const p = buildNotificationPreview({

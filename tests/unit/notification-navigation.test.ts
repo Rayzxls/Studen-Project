@@ -15,6 +15,34 @@ import {
 
 const COURSE_ID = "course-abc";
 
+describe("Quiz notification routes", () => {
+  it("opens the Student quiz for reopen and exception notifications", () => {
+    for (const kind of ["QUIZ_REOPENED", "QUIZ_EXCEPTION_GRANTED"] as const) {
+      expect(
+        resolveNotificationHref({
+          kind,
+          role: "STUDENT",
+          courseOfferingId: COURSE_ID,
+          sourceEntityId: "quiz-1",
+          payload: { quizId: "quiz-1" },
+        })
+      ).toBe(`/student/courses/${COURSE_ID}/quizzes/quiz-1`);
+    }
+  });
+
+  it("opens Teacher Results for a quiz lifecycle notification", () => {
+    expect(
+      resolveNotificationHref({
+        kind: "QUIZ_REOPENED",
+        role: "TEACHER",
+        courseOfferingId: COURSE_ID,
+        sourceEntityId: "quiz-1",
+        payload: { quizId: "quiz-1" },
+      })
+    ).toBe(`/teacher/courses/${COURSE_ID}/quizzes/quiz-1/results`);
+  });
+});
+
 describe("resolveNotificationHref — STUDENT recipient", () => {
   it("SCORE_ITEM_PUBLISHED → /student/courses/{id}/scores", () => {
     expect(

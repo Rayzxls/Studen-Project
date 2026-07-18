@@ -1027,6 +1027,9 @@ enum NotificationKind {
   COMMENT_REPLIED
   // Teacher
   CLASS_CODE_JOINED
+  // Quiz lifecycle (Release C)
+  QUIZ_REOPENED
+  QUIZ_EXCEPTION_GRANTED
 }
 
 enum NotifEntityType {
@@ -1037,6 +1040,7 @@ enum NotifEntityType {
   SUBMISSION
   COMMENT
   ENROLLMENT // for CLASS_CODE_JOINED
+  QUIZ
 }
 
 model Notification {
