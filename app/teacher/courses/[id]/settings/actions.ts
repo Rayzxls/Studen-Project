@@ -11,6 +11,7 @@ import { archiveCourseOffering } from "@/lib/course/archive";
 import {
   createTimetableSlot,
   deleteTimetableSlot,
+  updateTimetableSlot,
 } from "@/lib/attendance/timetable";
 import { getRequestMeta } from "@/lib/utils/request";
 import { HttpError, ValidationError } from "@/lib/errors";
@@ -39,6 +40,8 @@ function revalidateAll(courseId: string) {
   revalidatePath(`/teacher/courses/${courseId}/settings`);
   // Slot edits affect what the attendance list dialog auto-selects.
   revalidatePath(`/teacher/courses/${courseId}/attendance`);
+  revalidatePath("/teacher/timetable");
+  revalidatePath("/student/timetable");
 }
 
 // `courseId` lives in a hidden form field (not `.bind`) because the
@@ -184,6 +187,55 @@ export async function createSlotAction(
   try {
     await createTimetableSlot({
       courseOfferingId: courseId,
+      dayOfWeek,
+      startTime,
+      endTime,
+      location: location || null,
+      actorUserId: session.user.id,
+    });
+  } catch (err) {
+    if (err instanceof ValidationError) return { fieldErrors: err.errors };
+    if (err instanceof HttpError) {
+      if (err.code === "slot_overlap") {
+        return {
+          fieldErrors: { endTime: "ทับซ้อนกับคาบอื่นในวันเดียวกัน" },
+        };
+      }
+      return { error: err.message };
+    }
+    throw err;
+  }
+
+  revalidateAll(courseId);
+  return { ok: true };
+}
+
+export async function updateSlotAction(
+  _prev: TimetableSlotActionState,
+  formData: FormData
+): Promise<TimetableSlotActionState> {
+  const session = await requireRole(["TEACHER"]);
+
+  const courseId = readCourseId(formData);
+  const slotId = String(formData.get("slotId") ?? "").trim();
+  if (!courseId) return { error: "missing_course_id" };
+  if (!slotId) return { fieldErrors: { slotId: "missing" } };
+
+  const dayOfWeek = Number.parseInt(
+    String(formData.get("dayOfWeek") ?? ""),
+    10
+  );
+  const startTime = String(formData.get("startTime") ?? "");
+  const endTime = String(formData.get("endTime") ?? "");
+  const location = String(formData.get("location") ?? "").trim();
+
+  if (!Number.isInteger(dayOfWeek)) {
+    return { fieldErrors: { dayOfWeek: "เลือกวัน" } };
+  }
+
+  try {
+    await updateTimetableSlot({
+      slotId,
       dayOfWeek,
       startTime,
       endTime,

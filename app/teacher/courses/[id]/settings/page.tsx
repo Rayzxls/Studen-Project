@@ -80,7 +80,14 @@ export default async function CourseSettingsPage({ params }: PageProps) {
           codeActive={course.codeActive}
           codeExpiresAt={course.codeExpiresAt}
         />
-        <TimetableEditor courseId={id} slots={slots} />
+        <TimetableEditor
+          courseId={id}
+          courseName={course.name}
+          subjectCode={course.subjectCode}
+          classId={course.class.id}
+          className={course.class.name}
+          slots={slots}
+        />
         <GradeThresholdsCard />
         <ArchiveCourseDialog courseId={id} courseName={course.name} />
       </div>

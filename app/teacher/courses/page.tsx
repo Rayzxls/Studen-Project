@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ChevronLeft, Plus } from "lucide-react";
+import { CalendarDays, ChevronLeft, Plus } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { listTeacherCourses } from "@/lib/course/enrollment";
@@ -58,10 +58,16 @@ export default async function TeacherCoursesPage() {
               Dashboard
             </p>
           </div>
-          <Link href="/teacher/courses/new" className="btn-primary btn-sm">
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            สร้างวิชาใหม่
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link href="/teacher/timetable" className="btn-secondary btn-sm">
+              <CalendarDays className="h-4 w-4" aria-hidden="true" />
+              ตารางสอน
+            </Link>
+            <Link href="/teacher/courses/new" className="btn-primary btn-sm">
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              สร้างวิชาใหม่
+            </Link>
+          </div>
         </div>
 
         <section className="mt-7">

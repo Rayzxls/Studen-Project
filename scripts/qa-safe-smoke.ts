@@ -2,6 +2,7 @@ const baseUrl = (process.env.QA_BASE_URL ?? "http://localhost:3000").replace(
   /\/$/,
   ""
 );
+const pilotCourseId = process.env.QA_PILOT_COURSE_ID?.trim();
 
 export {};
 
@@ -33,13 +34,28 @@ const checks: Check[] = [
     path: "/dashboard",
     accept: isLoginRedirect,
   },
-  ...["/teacher/courses", "/student/courses", "/admin/dashboard"].map(
-    (path) => ({
-      name: `protected ${path}`,
-      path,
-      accept: isRoleGateRedirect,
-    })
-  ),
+  ...[
+    "/teacher/courses",
+    "/teacher/timetable",
+    "/student/courses",
+    "/student/timetable",
+    "/admin/dashboard",
+  ].map((path) => ({
+    name: `protected ${path}`,
+    path,
+    accept: isRoleGateRedirect,
+  })),
+  ...(pilotCourseId
+    ? [
+        `/teacher/courses/${pilotCourseId}/quizzes`,
+        `/student/courses/${pilotCourseId}/quizzes`,
+        `/admin/courses/${pilotCourseId}/quizzes`,
+      ].map((path) => ({
+        name: `protected pilot ${path}`,
+        path,
+        accept: isRoleGateRedirect,
+      }))
+    : []),
   ...[
     "/teacher/courses/not-a-course/scores/export",
     "/teacher/courses/not-a-course/attendance/export",

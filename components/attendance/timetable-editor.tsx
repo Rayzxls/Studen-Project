@@ -1,18 +1,23 @@
 "use client";
 
-import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
-import { Plus, Trash2 } from "lucide-react";
-import { TimePicker } from "@/components/ui/time-picker";
+import Link from "next/link";
+import { useState } from "react";
 import {
-  createSlotAction,
-  deleteSlotAction,
-  type TimetableSlotActionState,
-} from "@/app/teacher/courses/[id]/settings/actions";
-import { dayOfWeekLabel } from "@/lib/attendance/format";
-
-const INITIAL_CREATE: TimetableSlotActionState = {};
-const INITIAL_DELETE: TimetableSlotActionState = {};
+  CalendarDays,
+  ChevronRight,
+  Clock3,
+  MapPin,
+  PencilLine,
+  Plus,
+} from "lucide-react";
+import {
+  TimetableSlotDialog,
+  type TimetableCourseOption,
+} from "@/components/timetable/timetable-manager";
+import {
+  TIMETABLE_DAY_LABELS,
+  type TimetableDisplaySlot,
+} from "@/lib/timetable/view-model";
 
 export type TimetableSlotRow = {
   id: string;
@@ -24,206 +29,144 @@ export type TimetableSlotRow = {
 
 type Props = {
   courseId: string;
+  courseName: string;
+  subjectCode: string | null;
+  classId: string;
+  className: string;
   slots: TimetableSlotRow[];
 };
 
-const DOW_OPTIONS = [0, 1, 2, 3, 4, 5, 6] as const;
+export function TimetableEditor({
+  courseId,
+  courseName,
+  subjectCode,
+  classId,
+  className,
+  slots,
+}: Props) {
+  const [dialog, setDialog] = useState<TimetableDisplaySlot | "create" | null>(
+    null
+  );
+  const course: TimetableCourseOption = {
+    id: courseId,
+    name: courseName,
+    subjectCode,
+    className,
+  };
+  const displaySlots: TimetableDisplaySlot[] = slots.map((slot) => ({
+    ...slot,
+    courseId,
+    courseName,
+    subjectCode,
+    classId,
+    className,
+    href: `/teacher/courses/${courseId}/settings`,
+  }));
 
-export function TimetableEditor({ courseId, slots }: Props) {
   return (
-    <div className="card p-6">
-      <div className="mb-4">
-        <h3
-          className="text-base font-medium text-black"
-          style={{ letterSpacing: "-0.02em" }}
+    <section className="rounded-2xl border border-hairline bg-surface p-5 shadow-sm sm:p-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-700">
+            <CalendarDays className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <div>
+            <h3 className="text-base font-semibold text-ink">ตารางสอน</h3>
+            <p className="mt-0.5 max-w-xl text-xs leading-5 text-ink-mute">
+              ใช้เป็นเวลาเริ่มต้นเมื่อเปิดคาบ
+              การแก้ไขจะไม่เปลี่ยนคาบที่เปิดไปแล้ว
+            </p>
+            <Link
+              href="/teacher/timetable"
+              className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:no-underline"
+            >
+              ดูตารางสอนทุกวิชา
+              <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </Link>
+          </div>
+        </div>
+        <button
+          type="button"
+          className="btn-primary btn-sm"
+          onClick={() => setDialog("create")}
         >
-          ตารางสอน
-        </h3>
-        <p className="mt-0.5 text-xs text-black/50">
-          ใช้ตั้ง default เวลาตอน &ldquo;เปิดคาบ&rdquo; —
-          แก้ภายหลังไม่กระทบคาบที่เปิดไปแล้ว
-        </p>
+          <Plus className="h-4 w-4" aria-hidden="true" />
+          เพิ่มคาบ
+        </button>
       </div>
 
-      {slots.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-slate-200 px-4 py-6 text-center text-xs text-black/50">
-          ยังไม่มีตารางสอน — เพิ่มด้านล่าง (จะใช้ได้กับการเปิดคาบครั้งถัดไป)
-        </p>
+      {displaySlots.length === 0 ? (
+        <button
+          type="button"
+          onClick={() => setDialog("create")}
+          className="mt-5 grid min-h-32 w-full place-items-center rounded-xl border border-dashed border-hairline bg-bg p-5 text-center transition-colors hover:border-blue-500/40 hover:bg-blue-50"
+        >
+          <span>
+            <Clock3
+              className="mx-auto h-5 w-5 text-ink-faint"
+              aria-hidden="true"
+            />
+            <span className="mt-2 block text-sm font-semibold text-ink">
+              ยังไม่มีคาบประจำสัปดาห์
+            </span>
+            <span className="mt-1 block text-xs text-ink-mute">
+              กดเพื่อเพิ่มวัน เวลา และสถานที่ของวิชานี้
+            </span>
+          </span>
+        </button>
       ) : (
-        <ul className="mb-4 divide-y divide-slate-100">
-          {slots.map((slot) => (
-            <SlotRow key={slot.id} courseId={courseId} slot={slot} />
+        <ul className="mt-5 grid gap-2 sm:grid-cols-2">
+          {displaySlots.map((slot) => (
+            <li key={slot.id}>
+              <button
+                type="button"
+                onClick={() => setDialog(slot)}
+                className="group flex min-h-20 w-full items-center gap-3 rounded-xl border border-hairline bg-bg p-3 text-left transition-all hover:-translate-y-0.5 hover:border-blue-500/30 hover:shadow-sm"
+              >
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-700">
+                  <span className="text-xs font-bold">
+                    {TIMETABLE_DAY_LABELS[slot.dayOfWeek].slice(0, 2)}
+                  </span>
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold text-ink">
+                    วัน{TIMETABLE_DAY_LABELS[slot.dayOfWeek]}
+                  </span>
+                  <span className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-mute">
+                    <span className="inline-flex items-center gap-1 font-mono">
+                      <Clock3 className="h-3 w-3" aria-hidden="true" />
+                      {slot.startTime}–{slot.endTime}
+                    </span>
+                    {slot.location && (
+                      <span className="inline-flex min-w-0 items-center gap-1">
+                        <MapPin
+                          className="h-3 w-3 shrink-0"
+                          aria-hidden="true"
+                        />
+                        <span className="truncate">{slot.location}</span>
+                      </span>
+                    )}
+                  </span>
+                </span>
+                <PencilLine
+                  className="h-4 w-4 shrink-0 text-ink-faint transition-colors group-hover:text-blue-700"
+                  aria-hidden="true"
+                />
+              </button>
+            </li>
           ))}
         </ul>
       )}
 
-      <AddSlotForm courseId={courseId} />
-    </div>
-  );
-}
-
-function SlotRow({
-  courseId,
-  slot,
-}: {
-  courseId: string;
-  slot: TimetableSlotRow;
-}) {
-  const [state, formAction] = useActionState(deleteSlotAction, INITIAL_DELETE);
-  return (
-    <li className="flex items-center justify-between gap-3 py-2.5">
-      <div className="min-w-0">
-        <p className="truncate text-sm font-medium text-black">
-          วัน{dayOfWeekLabel(slot.dayOfWeek)} · {slot.startTime}–{slot.endTime}{" "}
-          น.
-        </p>
-        {slot.location && (
-          <p className="mt-0.5 truncate text-xs text-black/50">
-            {slot.location}
-          </p>
-        )}
-        {state.error && (
-          <p className="mt-0.5 text-xs text-red-700">{state.error}</p>
-        )}
-      </div>
-      <form action={formAction}>
-        <input type="hidden" name="courseId" value={courseId} />
-        <input type="hidden" name="slotId" value={slot.id} />
-        <DeleteButton />
-      </form>
-    </li>
-  );
-}
-
-function DeleteButton() {
-  const { pending } = useFormStatus();
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      aria-label="ลบ"
-      className="rounded-full p-1.5 text-black/40 transition-colors hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
-    >
-      <Trash2 className="h-4 w-4" />
-    </button>
-  );
-}
-
-function AddSlotForm({ courseId }: { courseId: string }) {
-  const [state, formAction] = useActionState(createSlotAction, INITIAL_CREATE);
-  return (
-    <form
-      action={formAction}
-      className="rounded-xl border border-slate-200 p-3"
-    >
-      <input type="hidden" name="courseId" value={courseId} />
-      <div className="grid grid-cols-1 gap-2 md:grid-cols-[8rem_6rem_6rem_1fr_auto] md:items-end">
-        <div>
-          <label
-            htmlFor="dayOfWeek"
-            className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-black/40"
-          >
-            วัน
-          </label>
-          <select
-            id="dayOfWeek"
-            name="dayOfWeek"
-            required
-            defaultValue="1"
-            className="input"
-            aria-invalid={state.fieldErrors?.dayOfWeek ? true : undefined}
-          >
-            {DOW_OPTIONS.map((d) => (
-              <option key={d} value={d}>
-                {dayOfWeekLabel(d)}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label
-            htmlFor="startTime"
-            className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-black/40"
-          >
-            เริ่ม
-          </label>
-          <TimePicker
-            id="startTime"
-            name="startTime"
-            required
-            defaultValue="13:00"
-            ariaLabel="เวลาเริ่มคาบ"
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="endTime"
-            className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-black/40"
-          >
-            สิ้นสุด
-          </label>
-          <TimePicker
-            id="endTime"
-            name="endTime"
-            required
-            defaultValue="14:00"
-            ariaLabel="เวลาสิ้นสุดคาบ"
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="location"
-            className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-black/40"
-          >
-            สถานที่ (ทางเลือก)
-          </label>
-          <input
-            type="text"
-            id="location"
-            name="location"
-            placeholder="เช่น อาคาร 3 ห้อง 305"
-            maxLength={200}
-            className="input"
-          />
-        </div>
-        <AddButton />
-      </div>
-      {(state.fieldErrors?.dayOfWeek ||
-        state.fieldErrors?.startTime ||
-        state.fieldErrors?.endTime ||
-        state.fieldErrors?.location) && (
-        <ul className="mt-2 space-y-0.5 text-xs text-red-700">
-          {state.fieldErrors?.dayOfWeek && (
-            <li>วัน: {state.fieldErrors.dayOfWeek}</li>
-          )}
-          {state.fieldErrors?.startTime && (
-            <li>เริ่ม: {state.fieldErrors.startTime}</li>
-          )}
-          {state.fieldErrors?.endTime && (
-            <li>สิ้นสุด: {state.fieldErrors.endTime}</li>
-          )}
-          {state.fieldErrors?.location && (
-            <li>สถานที่: {state.fieldErrors.location}</li>
-          )}
-        </ul>
+      {dialog && (
+        <TimetableSlotDialog
+          key={dialog === "create" ? "new-course-slot" : dialog.id}
+          slot={dialog === "create" ? undefined : dialog}
+          courses={[course]}
+          existingSlots={displaySlots}
+          onClose={() => setDialog(null)}
+        />
       )}
-      {state.error && (
-        <p className="mt-2 text-xs text-red-700">{state.error}</p>
-      )}
-    </form>
-  );
-}
-
-function AddButton() {
-  const { pending } = useFormStatus();
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="btn-primary btn-sm h-[42px] disabled:opacity-50"
-    >
-      <Plus className="mr-1 inline h-3.5 w-3.5" />
-      {pending ? "กำลังเพิ่ม…" : "เพิ่ม"}
-    </button>
+    </section>
   );
 }
