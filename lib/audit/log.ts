@@ -43,6 +43,9 @@ export type AuditEvent =
   | "SCORE_ITEM_PUBLISHED"
   | "SCORE_EDIT_AFTER_PUBLISH"
   | "SCORE_DELETE_AFTER_PUBLISH"
+  // Quiz lifecycle (Release C)
+  | "QUIZ_REOPENED"
+  | "QUIZ_STUDENT_EXCEPTION_GRANTED"
   // Attendance (Phase 4)
   | "ATTENDANCE_BACK_EDIT"
   | "SESSION_CANCELLED"

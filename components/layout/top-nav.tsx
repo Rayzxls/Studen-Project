@@ -1,6 +1,13 @@
 import Link from "next/link";
 import type { Role } from "@prisma/client";
-import { Palette, LogOut, Scale, UserRound } from "lucide-react";
+import {
+  ChevronDown,
+  LogOut,
+  Palette,
+  Scale,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react";
 import { signOut } from "@/lib/auth";
 import { db } from "@/lib/db/client";
 import { Bell } from "@/components/notification/bell";
@@ -39,7 +46,10 @@ export interface TopNavProps {
   /** Render a role badge next to the logo (admin layout uses this). */
   showRoleBadge?: boolean;
   /** Max width of inner container — defaults to `max-w-6xl`. */
-  maxWidth?: "max-w-4xl" | "max-w-5xl" | "max-w-6xl";
+  maxWidth?: "max-w-4xl" | "max-w-5xl" | "max-w-6xl" | "max-w-[1480px]";
+  /** Optional expanded account chip, used by the operating dashboard. */
+  accountLabel?: string;
+  accountSubtitle?: string;
 }
 
 export async function TopNav({
@@ -47,6 +57,8 @@ export async function TopNav({
   showBell = true,
   showRoleBadge = false,
   maxWidth = "max-w-6xl",
+  accountLabel,
+  accountSubtitle,
 }: TopNavProps) {
   const showBellResolved = showBell && Boolean(session);
   const showModeration = Boolean(session) && moderationCenterEnabled();
@@ -89,7 +101,11 @@ export async function TopNav({
           {session && (
             <details className="group relative ml-1">
               <summary
-                className="grid h-10 w-10 cursor-pointer list-none place-items-center rounded-full transition-colors hover:bg-black/[0.04] [&::-webkit-details-marker]:hidden"
+                className={`flex h-11 cursor-pointer list-none items-center rounded-xl border border-hairline bg-surface transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-sm [&::-webkit-details-marker]:hidden ${
+                  accountLabel
+                    ? "gap-2 px-1.5 pr-2 sm:pr-3"
+                    : "w-11 justify-center"
+                }`}
                 aria-label="เมนูบัญชีผู้ใช้"
               >
                 <UserAvatar
@@ -98,14 +114,52 @@ export async function TopNav({
                   version={me?.profileImageId}
                   size={32}
                 />
+                {accountLabel && (
+                  <>
+                    <span className="hidden min-w-0 text-left sm:block">
+                      <span className="block max-w-36 truncate text-xs font-semibold text-ink">
+                        {accountLabel}
+                      </span>
+                      <span className="block max-w-36 truncate text-[10px] text-ink-mute">
+                        {accountSubtitle ?? ROLE_LABEL[session.user.role]}
+                      </span>
+                    </span>
+                    <ChevronDown
+                      className="hidden h-3.5 w-3.5 text-ink-mute transition-transform group-open:rotate-180 sm:block"
+                      aria-hidden="true"
+                    />
+                  </>
+                )}
               </summary>
-              <div className="absolute right-0 z-40 mt-1.5 w-52 overflow-hidden rounded-2xl border border-black/[0.08] bg-white p-1.5 shadow-lift">
+              <div className="absolute right-0 z-40 mt-1.5 w-72 overflow-hidden rounded-2xl border border-hairline bg-surface p-1.5 shadow-lift">
+                {accountLabel && (
+                  <div className="mb-1 flex items-center gap-3 rounded-xl bg-bg p-3">
+                    <UserAvatar
+                      userId={session.user.id}
+                      hasImage={Boolean(me?.profileImageId)}
+                      version={me?.profileImageId}
+                      size={40}
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold text-ink">
+                        {accountLabel}
+                      </span>
+                      <span className="block truncate text-xs text-ink-mute">
+                        {accountSubtitle ?? ROLE_LABEL[session.user.role]}
+                      </span>
+                    </span>
+                    <ShieldCheck
+                      className="h-4 w-4 shrink-0 text-green-600"
+                      aria-label="บัญชีได้รับการยืนยันแล้ว"
+                    />
+                  </div>
+                )}
                 <Link
                   href="/profile"
-                  className="flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-sm text-black transition-colors hover:bg-black/[0.04] hover:no-underline"
+                  className="flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-sm text-ink transition-colors hover:bg-bg hover:no-underline"
                 >
                   <UserRound
-                    className="h-4 w-4 text-black/45"
+                    className="h-4 w-4 text-ink-mute"
                     aria-hidden="true"
                   />
                   โปรไฟล์
@@ -113,17 +167,17 @@ export async function TopNav({
                 {showModeration && (
                   <Link
                     href="/moderation"
-                    className="flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-sm text-black transition-colors hover:bg-black/[0.04] hover:no-underline"
+                    className="flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-sm text-ink transition-colors hover:bg-bg hover:no-underline"
                   >
                     <Scale
-                      className="h-4 w-4 text-black/45"
+                      className="h-4 w-4 text-ink-mute"
                       aria-hidden="true"
                     />
                     การตรวจสอบเนื้อหา
                   </Link>
                 )}
                 <div className="rounded-xl px-2.5 py-2">
-                  <div className="mb-2 flex items-center gap-2 text-xs font-medium text-black/55">
+                  <div className="mb-2 flex items-center gap-2 text-xs font-medium text-ink-mute">
                     <Palette className="h-4 w-4" aria-hidden="true" />
                     ธีม
                   </div>

@@ -41,6 +41,25 @@ type ResolvedTarget = {
   ownerUserId: string | null;
 };
 
+type ModerationAttachmentSnapshot = {
+  id: string;
+  originalFilename: string;
+  mimeType: string;
+  sizeBytes: number;
+};
+
+type ModerationQuestionSnapshot = {
+  id: string;
+  type: string;
+  prompt: string;
+  attachments: ModerationAttachmentSnapshot[];
+  options: Array<{
+    id: string;
+    text: string;
+    attachments: ModerationAttachmentSnapshot[];
+  }>;
+};
+
 export type CreateModerationReportInput = {
   actor: Actor;
   targetType: ModerationTargetType;
@@ -258,6 +277,214 @@ async function resolveTarget(
     };
   }
 
+  if (targetType === "QUIZ") {
+    const row = await client.quiz.findUnique({
+      where: { id: targetId },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        mode: true,
+        status: true,
+        required: true,
+        fileAttachmentIds: true,
+        createdById: true,
+        courseOfferingId: true,
+        archivedAt: true,
+        cancelledAt: true,
+        lesson: { select: { archivedAt: true } },
+        questions: {
+          where: { voidedAt: null },
+          orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+          select: {
+            id: true,
+            type: true,
+            prompt: true,
+            fileAttachmentIds: true,
+            options: {
+              orderBy: { position: "asc" },
+              select: { id: true, text: true, fileAttachmentIds: true },
+            },
+          },
+        },
+      },
+    });
+    if (
+      !row ||
+      row.archivedAt ||
+      row.cancelledAt ||
+      row.lesson.archivedAt ||
+      (actor.role === "STUDENT" && row.status === "DRAFT")
+    ) {
+      throw new NotFound("moderation_target_not_found");
+    }
+    await assertCourseAccess(client, actor, row.courseOfferingId);
+
+    const quizFileIds = jsonStrings(row.fileAttachmentIds);
+    const questionFileIds = row.questions.flatMap((question) =>
+      jsonStrings(question.fileAttachmentIds)
+    );
+    const optionFileIds = row.questions.flatMap((question) =>
+      question.options.flatMap((option) =>
+        jsonStrings(option.fileAttachmentIds)
+      )
+    );
+    const allFileIds = uniqueStrings([
+      ...quizFileIds,
+      ...questionFileIds,
+      ...optionFileIds,
+    ]);
+    const attachmentById = await moderationAttachmentMap(client, allFileIds);
+    const questions: ModerationQuestionSnapshot[] = row.questions.map(
+      (question) => ({
+        id: question.id,
+        type: question.type,
+        prompt: question.prompt,
+        attachments: orderedSnapshotAttachments(
+          jsonStrings(question.fileAttachmentIds),
+          attachmentById
+        ),
+        options: question.options.map((option) => ({
+          id: option.id,
+          text: option.text,
+          attachments: orderedSnapshotAttachments(
+            jsonStrings(option.fileAttachmentIds),
+            attachmentById
+          ),
+        })),
+      })
+    );
+
+    return {
+      targetType,
+      targetId,
+      targetLabel: compactLabel(row.title, "แบบทดสอบ"),
+      targetSnapshot: {
+        kind: "QUIZ",
+        title: row.title,
+        description: row.description ?? "",
+        mode: row.mode,
+        status: row.status,
+        required: row.required,
+        fileAttachmentIds: allFileIds,
+        attachments: orderedSnapshotAttachments(quizFileIds, attachmentById),
+        questions,
+      },
+      courseOfferingId: row.courseOfferingId,
+      ownerUserId: row.createdById,
+    };
+  }
+
+  if (targetType === "QUIZ_QUESTION") {
+    const row = await client.quizQuestion.findUnique({
+      where: { id: targetId },
+      select: {
+        id: true,
+        type: true,
+        prompt: true,
+        fileAttachmentIds: true,
+        voidedAt: true,
+        options: {
+          orderBy: { position: "asc" },
+          select: { id: true, text: true, fileAttachmentIds: true },
+        },
+        quiz: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            createdById: true,
+            courseOfferingId: true,
+            archivedAt: true,
+            cancelledAt: true,
+            lesson: { select: { archivedAt: true } },
+          },
+        },
+      },
+    });
+    if (!row) throw new NotFound("moderation_target_not_found");
+    await assertCourseAccess(client, actor, row.quiz.courseOfferingId);
+
+    if (actor.role === "STUDENT") {
+      const attempts = await client.quizAttempt.findMany({
+        where: {
+          quizId: row.quiz.id,
+          enrollment: { studentId: actor.userId, removedAt: null },
+        },
+        orderBy: { startedAt: "desc" },
+        take: 10,
+        select: { snapshotJson: true },
+      });
+      const captured = attempts
+        .map((attempt) =>
+          questionFromAttemptSnapshot(attempt.snapshotJson, targetId)
+        )
+        .find(
+          (question): question is ModerationQuestionSnapshot =>
+            question !== null
+        );
+      if (!captured) throw new NotFound("moderation_target_not_found");
+      const fileAttachmentIds = questionAttachmentIds(captured);
+      return {
+        targetType,
+        targetId,
+        targetLabel: compactLabel(captured.prompt, "คำถามแบบทดสอบ"),
+        targetSnapshot: {
+          kind: "QUIZ_QUESTION",
+          title: row.quiz.title,
+          description: "คำถามที่นักเรียนเห็นในชุดแบบทดสอบ",
+          fileAttachmentIds,
+          questions: [captured],
+        },
+        courseOfferingId: row.quiz.courseOfferingId,
+        ownerUserId: row.quiz.createdById,
+      };
+    }
+
+    if (
+      row.voidedAt ||
+      row.quiz.archivedAt ||
+      row.quiz.cancelledAt ||
+      row.quiz.lesson.archivedAt
+    ) {
+      throw new NotFound("moderation_target_not_found");
+    }
+    const questionFileIds = jsonStrings(row.fileAttachmentIds);
+    const optionFileIds = row.options.flatMap((option) =>
+      jsonStrings(option.fileAttachmentIds)
+    );
+    const allFileIds = uniqueStrings([...questionFileIds, ...optionFileIds]);
+    const attachmentById = await moderationAttachmentMap(client, allFileIds);
+    const captured: ModerationQuestionSnapshot = {
+      id: row.id,
+      type: row.type,
+      prompt: row.prompt,
+      attachments: orderedSnapshotAttachments(questionFileIds, attachmentById),
+      options: row.options.map((option) => ({
+        id: option.id,
+        text: option.text,
+        attachments: orderedSnapshotAttachments(
+          jsonStrings(option.fileAttachmentIds),
+          attachmentById
+        ),
+      })),
+    };
+    return {
+      targetType,
+      targetId,
+      targetLabel: compactLabel(row.prompt, "คำถามแบบทดสอบ"),
+      targetSnapshot: {
+        kind: "QUIZ_QUESTION",
+        title: row.quiz.title,
+        description: "คำถามในแบบทดสอบ",
+        fileAttachmentIds: allFileIds,
+        questions: [captured],
+      },
+      courseOfferingId: row.quiz.courseOfferingId,
+      ownerUserId: row.quiz.createdById,
+    };
+  }
+
   if (targetType === "COMMENT") {
     const row = await client.comment.findUnique({
       where: { id: targetId },
@@ -362,6 +589,120 @@ function jsonStrings(value: Prisma.JsonValue): string[] {
     : [];
 }
 
+function uniqueStrings(values: string[]): string[] {
+  return [...new Set(values)];
+}
+
+async function moderationAttachmentMap(
+  client: DatabaseClient,
+  ids: string[]
+): Promise<Map<string, ModerationAttachmentSnapshot>> {
+  if (ids.length === 0) return new Map();
+  const rows = await client.fileAttachment.findMany({
+    where: { id: { in: ids }, deletedAt: null },
+    select: {
+      id: true,
+      originalFilename: true,
+      mimeType: true,
+      sizeBytes: true,
+    },
+  });
+  return new Map(rows.map((file) => [file.id, file]));
+}
+
+function orderedSnapshotAttachments(
+  ids: string[],
+  attachmentById: Map<string, ModerationAttachmentSnapshot>
+): ModerationAttachmentSnapshot[] {
+  return ids.flatMap((id) => {
+    const attachment = attachmentById.get(id);
+    return attachment ? [attachment] : [];
+  });
+}
+
+function questionFromAttemptSnapshot(
+  value: Prisma.JsonValue,
+  questionId: string
+): ModerationQuestionSnapshot | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const questions = (value as Prisma.JsonObject).questions;
+  if (!Array.isArray(questions)) return null;
+  const question = questions.find(
+    (item) =>
+      item !== null &&
+      typeof item === "object" &&
+      !Array.isArray(item) &&
+      item.id === questionId
+  );
+  if (!question || Array.isArray(question)) return null;
+  const record = question as Prisma.JsonObject;
+  if (
+    typeof record.id !== "string" ||
+    typeof record.type !== "string" ||
+    typeof record.prompt !== "string"
+  ) {
+    return null;
+  }
+  const options = Array.isArray(record.options)
+    ? record.options.flatMap((item) => {
+        if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+        const option = item as Prisma.JsonObject;
+        if (typeof option.id !== "string" || typeof option.text !== "string") {
+          return [];
+        }
+        return [
+          {
+            id: option.id,
+            text: option.text,
+            attachments: snapshotAttachmentMetadata(option.attachments),
+          },
+        ];
+      })
+    : [];
+  return {
+    id: record.id,
+    type: record.type,
+    prompt: record.prompt,
+    attachments: snapshotAttachmentMetadata(record.attachments),
+    options,
+  };
+}
+
+function snapshotAttachmentMetadata(
+  value: Prisma.JsonValue | undefined
+): ModerationAttachmentSnapshot[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+    const attachment = item as Prisma.JsonObject;
+    if (
+      typeof attachment.id !== "string" ||
+      typeof attachment.originalFilename !== "string" ||
+      typeof attachment.mimeType !== "string" ||
+      typeof attachment.sizeBytes !== "number"
+    ) {
+      return [];
+    }
+    return [
+      {
+        id: attachment.id,
+        originalFilename: attachment.originalFilename,
+        mimeType: attachment.mimeType,
+        sizeBytes: attachment.sizeBytes,
+      },
+    ];
+  });
+}
+
+function questionAttachmentIds(question: ModerationQuestionSnapshot): string[] {
+  return uniqueStrings([
+    ...question.attachments.map((attachment) => attachment.id),
+    ...question.options.flatMap((option) =>
+      option.attachments.map((attachment) => attachment.id)
+    ),
+  ]);
+}
+
 async function courseIdForFileOwner(
   client: DatabaseClient,
   ownerType:
@@ -370,7 +711,10 @@ async function courseIdForFileOwner(
     | "ANNOUNCEMENT"
     | "SUBMISSION"
     | "COMMENT"
-    | "PROFILE_IMAGE",
+    | "PROFILE_IMAGE"
+    | "QUIZ"
+    | "QUIZ_QUESTION"
+    | "QUIZ_OPTION",
   ownerId: string
 ): Promise<string | null> {
   if (ownerType === "PROFILE_IMAGE") return null;
@@ -382,6 +726,31 @@ async function courseIdForFileOwner(
     return comment
       ? courseIdForCommentOwner(client, comment.ownerType, comment.ownerId)
       : null;
+  }
+  if (ownerType === "QUIZ") {
+    const quiz = await client.quiz.findUnique({
+      where: { id: ownerId },
+      select: { courseOfferingId: true },
+    });
+    return quiz?.courseOfferingId ?? null;
+  }
+  if (ownerType === "QUIZ_QUESTION") {
+    const question = await client.quizQuestion.findUnique({
+      where: { id: ownerId },
+      select: { quiz: { select: { courseOfferingId: true } } },
+    });
+    return question?.quiz.courseOfferingId ?? null;
+  }
+  if (ownerType === "QUIZ_OPTION") {
+    const option = await client.quizOption.findUnique({
+      where: { id: ownerId },
+      select: {
+        question: {
+          select: { quiz: { select: { courseOfferingId: true } } },
+        },
+      },
+    });
+    return option?.question.quiz.courseOfferingId ?? null;
   }
   return courseIdForCommentOwner(client, ownerType, ownerId);
 }

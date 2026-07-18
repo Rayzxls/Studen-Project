@@ -1,8 +1,8 @@
 # Next Development Plan
 
-**Updated:** 2026-07-17
+**Updated:** 2026-07-18
 **Sequence:** Core completion -> Lesson Workspace -> Quiz -> Identity/Integrations -> AI -> Optional product modules  
-**Current state:** A0 Documentation Alignment, A1 Report/Export v1, the A2 automated QA gate, and A3/A3.1 static correctness work are complete. QR/invite browser acceptance is now automated; physical phone-camera and production private-R2 smoke remain manual release checks. A4 Account Lifecycle and the operational Moderation Center have additive persistence, audited transactions, and feature-flagged Admin surfaces. Lesson Workspace B1-B6 are implemented and accepted on isolated Neon QA. Its Production migration, backfill, pilot flags, and default-route cutover remain separate unapproved rollout operations.
+**Current state:** A0 Documentation Alignment, A1 Report/Export v1, the A2 automated QA gate, and A3/A3.1 static correctness work are complete. QR/invite browser acceptance is now automated; physical phone-camera and production private-R2 smoke remain manual release checks. A4 Account Lifecycle and the operational Moderation Center have additive persistence, audited transactions, and feature-flagged Admin surfaces. Lesson Workspace B1-B6 are implemented and accepted on isolated Neon QA. Quiz C1-C4 are accepted on isolated Neon QA; C5a private attachments, C5b Moderation evidence, and C5c Teacher CSV analytics plus the Admin aggregate observer are implemented locally with automated verification. Lesson and Quiz Production rollout operations remain separately unapproved.
 
 ## Why this order
 
@@ -22,7 +22,7 @@ This matrix prevents an implemented screen or database field from being mistaken
 | QR and invite link | Class Code, `qrcode.react`, `ClassCodeCard`, and join route exist | Implemented foundation, not accepted until QR scan, invite copy, expiry, deactivate, regenerate, mobile, and rejoin flows pass QA |
 | Moderation | Existing Teacher comment moderation plus a case-based Admin queue for reports, evidence snapshots, temporary restrictions, decisions, restore, and one-time appeal | Code/schema deployed behind `MODERATION_CENTER_ENABLED`; flag cutover and manual all-theme/mobile/private-R2 acceptance remain open |
 | Profile personal information | Avatar, display name, read-only real identity, password, and theme exist | Intentionally minimal learning identity; a full personal profile requires a privacy/scope decision, not an automatic expansion |
-| Quiz / Testing | No domain model or route found | Not implemented; planned after Lesson Workspace |
+| Quiz / Testing | Approved contract, four ADRs, additive schema, Teacher Builder, Student Attempt/autosave/auto-grading, Teacher Results/lifecycle/publication, private attachments, Moderation evidence, Teacher CSV analytics, and an aggregate-only Admin observer | C1-C4 accepted on isolated QA; C5a-C5c implemented locally and automated checks pass; authenticated private-R2/all-theme/mobile/expiry/concurrency/rollback acceptance and Production rollout remain |
 | AI Assistant | No model-provider integration found | Not implemented; planned only after stable Lesson/Quiz contracts |
 | Google Login | NextAuth currently uses Credentials only | Not implemented; identity-linking rules must be designed first |
 | Chat Room, Reward, Meeting | No domain model or route found | Candidate backlog; not committed to the current release plan |
@@ -372,14 +372,44 @@ Status: implemented on `phase-11` and verified locally plus isolated Neon QA on 
 
 ## Release C: Quiz
 
-Quiz requires a separate Grill session before implementation. Recommended MVP direction:
+**Grill status:** Complete 2026-07-17. The approved contract is recorded in
+[`docs/QUIZ-MVP-DECISIONS.md`](./QUIZ-MVP-DECISIONS.md).
 
-- Quiz belongs to one Lesson Workspace.
-- Start with objective question types only; define supported types during Grill.
-- Attempts, availability window, result visibility, retake policy, and auto-grading must be explicit domain decisions.
-- Scored Quiz uses the existing Score Item and publish contract instead of creating a second grade system.
-- Teacher sees attempt and grading backlog; Student sees only their own attempt and published result.
-- Question bank, randomization, anti-cheat, essay AI grading, and cross-course copy are not assumed in v1.
+**Prototype status:** Complete for product review 2026-07-17. The development-only
+route `/teacher/courses/[id]/quiz-prototype` covers Teacher Builder, Student
+Attempt, and Teacher Results without persistence. Desktop 1440x900, mobile
+390x844, and Light/Dark/Cream visual acceptance passed. This is not evidence of
+Production readiness. The later C1 slice adds a domain model and prepares an
+offline migration, but does not apply it to a database.
+
+Implementation sequence:
+
+1. Completed: validate Teacher Builder, Student Attempt, and Teacher Results in a throwaway responsive prototype.
+2. Completed 2026-07-17: Quiz domain ADRs lock lifecycle/snapshot, Score Item coupling, Attempt concurrency, and archive/moderation evidence (ADR-0035 through ADR-0038).
+3. Completed 2026-07-17: additive schema, offline unapplied migration, fail-closed flags, and pure validation/state-policy layer.
+4. Isolated-QA accepted 2026-07-18: Teacher draft Builder, atomic create/replace,
+   scored `QUIZ_LINKED` Score Item coupling, debounced auto-save, Lesson entry
+   point, and read-only Student preview. The additive migration is applied to
+   Neon QA only, and authenticated desktop/mobile Playwright acceptance passes.
+   Student mutations remain absent and Production migration/flags remain off.
+5. Isolated-QA accepted 2026-07-18: Student Quiz center and Lesson entry,
+   start/resume with device lease takeover, revision/idempotency-safe auto-save,
+   server-authoritative timer/deadline auto-submit, final confirmation, objective
+   auto-grading, score-visibility rules, and responsive Desktop/iPhone UI. Student
+   payloads are sanitized so answer keys and Teacher explanations stay Server-only.
+6. Isolated-QA accepted 2026-07-18: Teacher Results, close/finalize, audited
+   reopen, private per-Student deadline/attempt exceptions, response analysis,
+   and one-way Scored Quiz publication. Publication requires explicit confirmation
+   of missing active Students and records their zero Score Entries before the
+   linked `QUIZ_LINKED` Score Item is published. Production migration/flags remain
+   off.
+7. C5a implemented locally 2026-07-18: private multi-file attachments for the Quiz brief, questions, and options; exact owner/uploader validation; authenticated previews; immutable Student-safe Attempt metadata; legacy snapshot compatibility; and Moderation filtering. Full unit `616/616`, targeted lint/TypeScript, and Production build pass. Authenticated isolated-QA upload/R2 smoke remains before acceptance.
+8. C5b implemented locally and integration-verified on isolated Neon QA 2026-07-18: Students can report a Quiz or the exact immutable question snapshot they saw; cases preserve Teacher content, option text, and private attachment metadata without correctness, explanations, Student answers, grading, scores, exceptions, or submitted files. Active restrictions hide Student Quiz discovery and fail closed on start, save, submit, and direct Attempt reads without mutating academic records. Admin evidence is theme-safe and remains observer-only. Focused integration `2/2`, full unit `616/616`, targeted ESLint, TypeScript, and Production build pass.
+9. C5c implemented locally 2026-07-18: Teacher Results CSV uses the Results source of truth and audits the export; Admin receives feature-gated aggregate list/detail views without Student identities, answers, per-Student scores, private files, or mutation controls. Focused tests `11/11`, full unit `621/621`, targeted ESLint, TypeScript, and Production build pass.
+10. Next: run isolated-Neon permission, all-theme/mobile, concurrency, expiry, authenticated private-R2, and rollback acceptance before a one-course Production pilot.
+
+Question bank, cross-course copy, spreadsheet import, essay/short-answer grading,
+AI grading, invasive proctoring, and full offline exams remain outside MVP.
 
 **Start condition:** Lesson Workspace is stable in production and Release A QA remains green.
 

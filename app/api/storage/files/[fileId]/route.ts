@@ -133,7 +133,94 @@ async function assertCanReadFile(
     );
     return;
   }
+  if (ownerType === "QUIZ") {
+    const row = await db.quiz.findUnique({
+      where: { id: ownerId },
+      select: {
+        courseOfferingId: true,
+        status: true,
+        opensAt: true,
+        cancelledAt: true,
+        archivedAt: true,
+        course: { select: { teacherId: true } },
+      },
+    });
+    if (!row) throw new NotFound("quiz_not_found");
+    await assertCanReadQuizFile(row, actor);
+    return;
+  }
+  if (ownerType === "QUIZ_QUESTION") {
+    const row = await db.quizQuestion.findUnique({
+      where: { id: ownerId },
+      select: {
+        quiz: {
+          select: {
+            courseOfferingId: true,
+            status: true,
+            opensAt: true,
+            cancelledAt: true,
+            archivedAt: true,
+            course: { select: { teacherId: true } },
+          },
+        },
+      },
+    });
+    if (!row) throw new NotFound("quiz_question_not_found");
+    await assertCanReadQuizFile(row.quiz, actor);
+    return;
+  }
+  if (ownerType === "QUIZ_OPTION") {
+    const row = await db.quizOption.findUnique({
+      where: { id: ownerId },
+      select: {
+        question: {
+          select: {
+            quiz: {
+              select: {
+                courseOfferingId: true,
+                status: true,
+                opensAt: true,
+                cancelledAt: true,
+                archivedAt: true,
+                course: { select: { teacherId: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!row) throw new NotFound("quiz_option_not_found");
+    await assertCanReadQuizFile(row.question.quiz, actor);
+    return;
+  }
   throw new Forbidden("file_owner_type_not_readable");
+}
+
+async function assertCanReadQuizFile(
+  quiz: {
+    courseOfferingId: string;
+    status: "DRAFT" | "OPEN" | "CLOSED";
+    opensAt: Date | null;
+    cancelledAt: Date | null;
+    archivedAt: Date | null;
+    course: { teacherId: string };
+  },
+  actor: { id: string; role: "ADMIN" | "TEACHER" | "STUDENT" }
+): Promise<void> {
+  if (
+    actor.role === "STUDENT" &&
+    (quiz.status === "DRAFT" ||
+      quiz.cancelledAt !== null ||
+      quiz.archivedAt !== null ||
+      (quiz.opensAt !== null && quiz.opensAt.getTime() > Date.now()))
+  ) {
+    throw new Forbidden("quiz_file_not_visible");
+  }
+  await assertCanReadCourseFile(
+    quiz.courseOfferingId,
+    quiz.course.teacherId,
+    actor
+  );
 }
 
 async function assertCanReadCourseFile(

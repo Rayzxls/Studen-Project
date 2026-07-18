@@ -1,5 +1,6 @@
 import type { CourseTab } from "@/components/course/tab-nav";
 import { lessonWorkspaceCourseEnabled } from "@/lib/lesson";
+import { quizCourseEnabled } from "@/lib/quiz";
 
 /**
  * Teacher CourseOffering tab list — Phase 10C reshape per ADR-0025.
@@ -15,6 +16,9 @@ export const teacherCourseTabs = (courseId: string): CourseTab[] => [
   { label: "ฟีด", href: `/teacher/courses/${courseId}/feed` },
   ...(lessonWorkspaceCourseEnabled(courseId)
     ? [{ label: "บทเรียน", href: `/teacher/courses/${courseId}/lessons` }]
+    : []),
+  ...(quizCourseEnabled(courseId)
+    ? [{ label: "แบบทดสอบ", href: `/teacher/courses/${courseId}/quizzes` }]
     : []),
   { label: "งาน", href: `/teacher/courses/${courseId}/assignments` },
   { label: "สมาชิก", href: `/teacher/courses/${courseId}/members` },

@@ -6,6 +6,7 @@ import {
   ArrowRight,
   BookOpen,
   CheckCircle2,
+  CircleHelp,
   ClipboardList,
   Clock3,
   FileText,
@@ -22,6 +23,10 @@ import {
   type StudentLessonAssignment,
 } from "@/lib/lesson";
 import { moderationCenterEnabled } from "@/lib/moderation/feature-flags";
+import {
+  getStudentQuizSummariesForLesson,
+  quizCourseEnabled,
+} from "@/lib/quiz";
 import { studentCourseTabs } from "../../_tabs";
 
 export const dynamic = "force-dynamic";
@@ -52,6 +57,14 @@ export default async function StudentLessonDetailPage({ params }: PageProps) {
   const lesson = workspace.lessons.find((item) => item.id === lessonId);
   if (!lesson) notFound();
   const canReport = moderationCenterEnabled();
+  const quizEnabled = quizCourseEnabled(id);
+  const quizzes = quizEnabled
+    ? await getStudentQuizSummariesForLesson({
+        courseOfferingId: id,
+        lessonId,
+        studentId: guard.session.user.id,
+      })
+    : [];
 
   return (
     <CourseShell
@@ -187,6 +200,57 @@ export default async function StudentLessonDetailPage({ params }: PageProps) {
               </div>
             )}
           </ContentSection>
+
+          {quizEnabled && (
+            <ContentSection
+              icon={CircleHelp}
+              title="แบบทดสอบ"
+              subtitle="ทำแบบฝึกหัดและติดตามผลของบทนี้"
+            >
+              {quizzes.length === 0 ? (
+                <EmptyState
+                  icon={CircleHelp}
+                  text={`ยังไม่มีแบบทดสอบใน ${lesson.title}`}
+                />
+              ) : (
+                <div className="divide-y divide-hairline">
+                  {quizzes.map((quiz) => (
+                    <Link
+                      key={quiz.id}
+                      href={`/student/courses/${id}/quizzes/${quiz.id}`}
+                      className="group flex items-center justify-between gap-3 py-4 first:pt-1 last:pb-1 hover:no-underline"
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate font-medium text-ink">
+                          {quiz.title}
+                        </span>
+                        <span className="mt-1 block text-xs text-ink-mute">
+                          {quiz.questionCount} ข้อ · {quiz.totalPoints} คะแนน
+                          {quiz.mode === "PRACTICE"
+                            ? " · แบบฝึกหัด"
+                            : " · เก็บคะแนน"}
+                        </span>
+                      </span>
+                      <span className="flex shrink-0 items-center gap-2">
+                        {quiz.activeAttemptId ? (
+                          <span className="badge badge-info">กำลังทำ</span>
+                        ) : quiz.scoreVisible && quiz.latestScore !== null ? (
+                          <span className="badge badge-success">
+                            {quiz.latestScore}/{quiz.totalPoints}
+                          </span>
+                        ) : quiz.status === "CLOSED" ? (
+                          <span className="badge">ปิดแล้ว</span>
+                        ) : (
+                          <span className="badge badge-info">พร้อมทำ</span>
+                        )}
+                        <ArrowRight className="h-4 w-4 text-ink-mute transition-transform group-hover:translate-x-0.5" />
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </ContentSection>
+          )}
 
           <ContentSection
             icon={ClipboardList}

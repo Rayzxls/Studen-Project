@@ -562,6 +562,72 @@ export const assert = {
       if (ownerId !== session.user.id) throw new Forbidden();
       return session;
     }
+    if (ownerType === "QUIZ") {
+      const quiz = await db.quiz.findUnique({
+        where: { id: ownerId },
+        select: {
+          status: true,
+          cancelledAt: true,
+          archivedAt: true,
+          course: { select: { teacherId: true, archivedAt: true } },
+          _count: { select: { attempts: true } },
+        },
+      });
+      if (!quiz) {
+        await assertDraftUploadOwner(session, ownerId);
+        return session;
+      }
+      assertCanUploadToQuiz(session, quiz);
+      return session;
+    }
+    if (ownerType === "QUIZ_QUESTION") {
+      const question = await db.quizQuestion.findUnique({
+        where: { id: ownerId },
+        select: {
+          quiz: {
+            select: {
+              status: true,
+              cancelledAt: true,
+              archivedAt: true,
+              course: { select: { teacherId: true, archivedAt: true } },
+              _count: { select: { attempts: true } },
+            },
+          },
+        },
+      });
+      if (!question) {
+        await assertDraftUploadOwner(session, ownerId);
+        return session;
+      }
+      assertCanUploadToQuiz(session, question.quiz);
+      return session;
+    }
+    if (ownerType === "QUIZ_OPTION") {
+      const option = await db.quizOption.findUnique({
+        where: { id: ownerId },
+        select: {
+          question: {
+            select: {
+              quiz: {
+                select: {
+                  status: true,
+                  cancelledAt: true,
+                  archivedAt: true,
+                  course: { select: { teacherId: true, archivedAt: true } },
+                  _count: { select: { attempts: true } },
+                },
+              },
+            },
+          },
+        },
+      });
+      if (!option) {
+        await assertDraftUploadOwner(session, ownerId);
+        return session;
+      }
+      assertCanUploadToQuiz(session, option.question.quiz);
+      return session;
+    }
     throw new Forbidden("owner_type_not_supported_yet");
   },
 };
@@ -626,4 +692,28 @@ async function assertDraftUploadOwner(
   if (!course || course.archivedAt !== null)
     throw new NotFound("course_not_found");
   if (course.teacherId !== session.user.id) throw new Forbidden();
+}
+
+function assertCanUploadToQuiz(
+  session: Session,
+  quiz: {
+    status: "DRAFT" | "OPEN" | "CLOSED";
+    cancelledAt: Date | null;
+    archivedAt: Date | null;
+    course: { teacherId: string; archivedAt: Date | null };
+    _count: { attempts: number };
+  }
+): void {
+  if (!can.uploadToQuiz(session, quiz)) {
+    throw new Forbidden();
+  }
+  if (
+    quiz.status !== "DRAFT" ||
+    quiz.cancelledAt !== null ||
+    quiz.archivedAt !== null ||
+    quiz.course.archivedAt !== null ||
+    quiz._count.attempts > 0
+  ) {
+    throw new Forbidden("quiz_attachments_locked");
+  }
 }

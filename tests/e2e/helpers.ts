@@ -31,8 +31,13 @@ export async function signIn(
 }
 
 export async function signOut(page: Page): Promise<void> {
-  const accountMenu = page.locator("header details");
-  await accountMenu.locator("summary").click();
-  await page.click('header form button:has-text("ออกจากระบบ")');
+  const accountSummary = page
+    .locator('header summary[aria-label="เมนูบัญชีผู้ใช้"]')
+    .first();
+  await accountSummary.click();
+  await accountSummary
+    .locator("xpath=ancestor::details[1]")
+    .locator('form button:has-text("ออกจากระบบ")')
+    .click();
   await page.waitForURL("**/login", { timeout: 20_000 });
 }

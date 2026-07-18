@@ -23,6 +23,8 @@ export type {
   SubmissionReturnedPayload,
   CommentRepliedPayload,
   ClassCodeJoinedPayload,
+  QuizReopenedPayload,
+  QuizExceptionGrantedPayload,
 } from "./types";
 
 export {

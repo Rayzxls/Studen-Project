@@ -68,6 +68,9 @@ export function resolveNotificationDestinationLabel(
       return "อ่านประกาศ";
     case "CLASS_CODE_JOINED":
       return args.role === "TEACHER" ? "ดูสมาชิก" : "เปิดวิชา";
+    case "QUIZ_REOPENED":
+    case "QUIZ_EXCEPTION_GRANTED":
+      return "เปิดแบบทดสอบ";
     case "COMMENT_REPLIED": {
       switch (payloadString(args.payload, "entityKind")) {
         case "ASSIGNMENT":
@@ -113,6 +116,13 @@ export function resolveNotificationHref(
     switch (kind) {
       case "CLASS_CODE_JOINED":
         return `/teacher/courses/${courseOfferingId}/members`;
+      case "QUIZ_REOPENED":
+      case "QUIZ_EXCEPTION_GRANTED": {
+        const quizId = payloadString(args.payload, "quizId") ?? sourceEntityId;
+        return quizId
+          ? `/teacher/courses/${courseOfferingId}/quizzes/${quizId}/results`
+          : `/teacher/courses/${courseOfferingId}/quizzes`;
+      }
       case "COMMENT_REPLIED": {
         // P9-1: payload now carries `entityOwnerId`. Teacher branches
         // deep-link to the teacher-side detail page for each entity.
@@ -238,5 +248,12 @@ export function resolveNotificationHref(
     case "CLASS_CODE_JOINED":
       // Shouldn't reach a student recipient, but stay safe.
       return `/student/courses/${courseOfferingId}`;
+    case "QUIZ_REOPENED":
+    case "QUIZ_EXCEPTION_GRANTED": {
+      const quizId = payloadString(args.payload, "quizId") ?? sourceEntityId;
+      return quizId
+        ? `/student/courses/${courseOfferingId}/quizzes/${quizId}`
+        : `/student/courses/${courseOfferingId}/quizzes`;
+    }
   }
 }

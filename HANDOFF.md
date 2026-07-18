@@ -1,5 +1,101 @@
 # HANDOFF — Beagle Classroom
 
+## QUIZ C5C CSV ANALYTICS AND ADMIN OBSERVER — 2026-07-18
+
+- Added a Teacher-owned Quiz Results CSV export from the same aggregate projection used by the Results workspace. The private no-store download includes summary metrics, per-Student best-attempt rows, and per-question analysis, protects spreadsheet formula injection, and records `CLASS_ANALYTICS_EXPORTED` in Audit Log.
+- Added feature-gated Admin Quiz list and detail surfaces as aggregate-only observer views. Admin can see lifecycle state, participation/completion/pass metrics, score aggregates, and question-level correctness, but receives no Student identity, answer, score-per-Student, private file, or academic mutation control.
+- Kept the existing ownership and rollout boundaries intact: Teacher export asserts Course ownership, Admin reads require the Admin role, Quiz reads fail closed behind the existing Course flags, and no schema, database row, R2 object, Production flag, or deployment setting changed.
+- Acceptance passed locally: focused Quiz report/query/route tests `11/11`, full unit `621/621`, targeted ESLint, TypeScript, and the Next.js Production build. Authenticated isolated-QA private-R2 smoke, all-theme/mobile visual acceptance, expiry/concurrency/rollback drills, and the one-course Production pilot remain separate rollout gates.
+
+## QUIZ C5B MODERATION EVIDENCE — 2026-07-18
+
+- Added Student reporting for a complete Quiz and for an individual question. A question report captures the immutable Attempt snapshot that Student actually saw, so a later Teacher edit cannot rewrite case evidence.
+- Quiz evidence stores Teacher-authored title/description, question and option text, plus private attachment metadata. It deliberately excludes correct-option secrets, Teacher explanations, Student answers, Attempt grading/scores, personal exceptions, submitted files, R2 keys, and public/signed URLs.
+- Moderation restrictions now hide a Quiz from Student discovery and fail closed on overview, start, save, submit, and direct Attempt reads. Existing Attempts, answers, grading, Score Item, and Score Entries remain untouched; Admin stays a safety observer and receives no academic mutation.
+- Extended the Admin case detail with theme-safe Quiz/question evidence rendering and the existing authenticated evidence-file route. Student restricted routes return a normal 404 instead of an error boundary.
+- Acceptance passed: focused isolated-Neon integration `2/2`, full unit `616/616`, targeted ESLint, TypeScript, `git diff --check`, and Next.js Production build. Production Quiz migration, rollout flags, database data, and R2 objects were not changed. C5a authenticated private-R2 smoke and the broader one-course Quiz rollout gate remain open.
+
+## QUIZ C5A PRIVATE ATTACHMENTS — 2026-07-18
+
+- Enabled private multi-file attachments for the Quiz brief, individual questions, and individual answer options. Teacher uploads keep stable Quiz/Question/Option owner ids, validate uploader plus exact owner scope transactionally, and remain accessible only through the authenticated `/api/storage/files/[fileId]` route.
+- Added Teacher Builder upload/replace support, Student-safe Quiz overview and immutable Attempt snapshot metadata, Teacher full-page preview, responsive image grids, keyboard/arrow galleries, and authenticated document links. Student payloads still exclude answer keys and explanations; snapshots contain no R2 key or public file URL.
+- Moderation remains fail closed: restricted file metadata is filtered before a new Attempt snapshot is created and the download route rejects restricted files for every non-Admin role. Legacy Attempt snapshots without attachment arrays remain readable.
+- Fixed multi-select upload capacity so an existing batch cannot race past the 10-file limit. Duplicate questions receive fresh owner ids and intentionally do not copy private attachments across ownership boundaries.
+- Acceptance passed: targeted ESLint, TypeScript, full unit `616/616`, focused attachment/permission/Attempt tests `77/77`, `git diff --check`, HTTP `200` on the isolated login surface, and the Next.js Production build. Authenticated isolated-QA upload/R2 smoke and all Production migration/flag changes remain separate rollout gates; Production data and flags were not mutated.
+
+## DASHBOARD VARIANT B PRODUCT CUTOVER — 2026-07-18
+
+- Replaced the Student and Teacher Dashboard body with the approved Variant B operating layout while preserving the existing course-card visual language and real database projections.
+- Added a theme-safe focus dock, an expanding left navigation rail, a two-column course workspace, and a right-side actionable brief. Repeated metrics were removed: each surface now owns a distinct decision or shortcut instead of restating the same count.
+- Restored and upgraded the TopNav account/notification area with the existing Profile, Theme, Notification, and feature-gated Moderation destinations intact. Admin Dashboard behavior remains unchanged.
+- Removed the absorbed development-only Dashboard prototype route and prototype-only mascot asset. No schema, database row, R2 object, Production flag, or role permission changed.
+- Acceptance passed: targeted ESLint, `git diff --check`, TypeScript through the Next.js Production build, and all 22 production routes. Authenticated visual acceptance still requires a signed-in QA session because the current isolated-QA seed credentials are not reusable.
+
+## QUIZ C4 TEACHER RESULTS AND PUBLICATION — 2026-07-18
+
+- Added the real feature-gated Teacher Quiz Results workspace for Open and Closed Quiz states. It shows Student status counts, best-Attempt history, average/high/low/pass metrics, duration, and per-question response/correctness analysis while keeping Admin outside academic mutations.
+- Completed the Teacher lifecycle: close finalizes every in-progress Attempt, reopen is allowed only before publication with a future close time plus required reason, and per-Student deadline/attempt exceptions are private, audited, and notify only the affected Student. A later global reopen deadline cannot be shortened by an older exception.
+- Scored Quiz publication is one-way and remains owned by the Quiz workflow. It requires Closed status, explicitly lists missing active Students, requires Teacher confirmation, and writes an explicit zero Score Entry for every confirmed missing Student before publishing the linked `QUIZ_LINKED` Score Item. Published result metrics use the score ledger as their source of truth; item analysis continues to use submitted Attempts only.
+- Added Quiz reopen/exception notification kinds, safe destination routing, audit labels/tiers, and generic Score Item guards so Quiz-linked rows cannot be edited or published through the normal gradebook workflow.
+- Applied the additive lifecycle-notification enum migration to isolated Neon QA only. Production migration and Quiz rollout flags remain unchanged and require separate explicit approval.
+- Acceptance passed: full unit `612/612`, authenticated Teacher Results lifecycle Playwright `1/1`, Desktop/iPhone responsive and overflow checks, targeted ESLint/TypeScript, and the Next.js Production build including `/teacher/courses/[id]/quizzes/[quizId]/results`.
+
+## QUIZ C3 STUDENT ATTEMPT — 2026-07-18
+
+- Added the real feature-gated Student Quiz center, Lesson-linked Quiz cards, Quiz detail/start flow, and one-question-per-page Attempt workspace. The responsive UI includes question checkpoints, answered progress, server-adjusted timer, autosave feedback, final unanswered-question confirmation, a sticky mobile action bar, and a clear submitted/result state.
+- Student Attempt persistence now supports start/resume, device lease takeover, hashed lease cookies, optimistic write revisions, idempotent answer/submit mutations, immutable Attempt snapshots, server-authoritative deadline or closed-Quiz auto-submit, exact all-or-nothing objective auto-grading, Attempt limits, and per-Student deadline/attempt exceptions already present in the schema.
+- Teachers can open a valid Draft Quiz from its Builder and both roles now have a dedicated feature-gated Quiz tab and course-level list. Open validation rejects archived parents, empty quizzes, expired close times, invalid scored Score Item coupling, and any Quiz that already has an Attempt.
+- Scored Quiz submission writes the Student's best submitted Attempt into the linked draft Score Entry while preserving one-way score publication. Practice scores are visible immediately; Scored Quiz scores remain hidden until the linked Score Item is published. Teacher results, close/reopen, exception management UI, and publication workflow remain the next slice.
+- Closed a security boundary found during final review: the Student React payload is now a sanitized snapshot with no `isCorrect` field or Teacher explanation. The complete answer key remains Server/DB-only. Raw lease tokens are never persisted, and read-only feature-flag mode cannot finalize or mutate an Attempt.
+- Isolated Neon QA acceptance passes for Student sign-in, Quiz discovery, start, autosave persistence, final submit, visible Practice score, cleanup, and Desktop 1440×900 plus iPhone 390×844 visual/overflow checks. Full unit passes `602/602`, Quiz E2E passes `1/1`, targeted ESLint, TypeScript, and the Production build pass.
+- Production remains unchanged: Quiz migration/flags and pilot rollout still require a separate explicit approval. C3 code is accepted on isolated QA only.
+
+## QUIZ C2 ISOLATED QA ACCEPTANCE — 2026-07-18
+
+- Applied `20260717010000_add_quiz_foundation` to the identity-checked Neon QA branch only. Prisma reports all five QA migrations up to date; Production schema and Vercel flags remain unchanged.
+- The isolated QA server now enables Quiz reads and mutations with the QA-only wildcard allowlist after `prepareIsolatedDatabaseEnv` proves `QA_DATABASE_URL` is distinct from the primary database. Explicit `QUIZ_ENABLED=0` and `QUIZ_MUTATIONS_ENABLED=0` overrides still fail closed.
+- Added authenticated Playwright acceptance for the real Teacher Builder. It creates a Practice draft through the UI, verifies debounced autosave, switches to Scored mode, proves atomic `QUIZ_LINKED` Score Item creation and score updates, duplicates a question, opens both previews without creating an Attempt, and checks 390 px document overflow.
+- Visual review passed for desktop 1440×900 and mobile 390×844. Focused Quiz/QA unit tests pass `12/12`, the Playwright flow passes `1/1`, targeted ESLint and TypeScript pass, and the fixture removes its temporary Quiz, Score Item, Lesson, Course, and users from QA.
+- C2 is accepted on isolated QA. Production migration/flags remain a later explicit rollout decision. The next implementation slice is C3 Student Attempt, autosave, timer, resume, and objective auto-grading.
+
+## TEACHER QUIZ BUILDER C2 — 2026-07-17
+
+- Added the real feature-gated Teacher Quiz draft workflow under a Lesson. Teachers can create a free-form Quiz, edit metadata and settings, add/delete/duplicate/reorder questions, manage objective options and correct answers, see the calculated total score, and open an in-context or full-page Student preview.
+- Draft persistence replaces the complete validated Quiz atomically. Scored Quiz creation creates exactly one `QUIZ_LINKED` Score Item in the same transaction; switching modes creates/deletes the still-unpublished empty linked item safely. Draft content locks after the first Attempt, and Preview never creates an Attempt, answer, Score Entry, notification, or audit row.
+- Existing drafts use a 1.2-second debounced auto-save with explicit saving/saved/error feedback. The initial new Quiz still requires one deliberate save to create its record. Pre-open draft CUD stays Verbose-tier and intentionally emits no Audit event.
+- All Teacher routes and Lesson entry points fail closed through `QUIZ_ENABLED`, `QUIZ_MUTATIONS_ENABLED`, and exact `QUIZ_PILOT_COURSE_IDS` checks before any Quiz database read. With the current disabled flags, existing Production UI and unmigrated databases do not query Quiz tables.
+- Private Quiz attachment ids are still rejected by the service. The UI states that multi-file support is a later boundary; Student Attempt, open/close, grading/results, notifications, Moderation evidence, and Admin observer are not implemented in C2.
+- Focused Quiz unit tests pass `22/22`, full unit passes `580/580`, targeted ESLint and TypeScript pass, and the Next.js Production build includes all three gated Teacher routes. The additive Quiz migration remains unapplied to Neon QA and Production, so real database/visual acceptance is still pending and no rollout flag should be enabled yet.
+
+## QUIZ FOUNDATION C1 — 2026-07-17
+
+- Added the additive Quiz persistence foundation: Quiz, questions, options, Attempts, answers, idempotent Attempt mutations, per-Student exceptions, immutable Attempt snapshots, lease/revision fields, and `QUIZ_LINKED` Score Item provenance.
+- Prepared migration `20260717010000_add_quiz_foundation` offline from the committed schema. It has **not** been applied to Neon QA or Production; no database data, R2 object, or Vercel flag was mutated in this slice.
+- Added fail-closed `QUIZ_ENABLED`, `QUIZ_MUTATIONS_ENABLED`, and exact-course `QUIZ_PILOT_COURSE_IDS` policy. Missing or empty pilot ids enable no course; `*` is reserved for isolated QA.
+- Added pure Zod validation and lifecycle/Attempt policy for objective question limits, scored defaults, immutable-content guards, server-authoritative deadlines, one-writer lease/revision checks, all-or-nothing objective grading, and best-Attempt selection.
+- Extended private-file owner compatibility for Quiz/Question/Option. Student reads fail closed for drafts, future-open, cancelled, or archived Quiz content; Presign mutations remain rejected by the existing upload guard until the Teacher Builder service slice is implemented.
+- Gradebook recognizes `QUIZ_LINKED` items but hides publish/delete actions there. Quiz-linked scores must be managed by the future Quiz workflow, preserving ADR-0036 coupling.
+- Verification passed: Prisma validate/generate, targeted ESLint, TypeScript, focused Quiz/storage unit `59/59`, full unit `574/574`, and Next.js Production build. Repository-wide `eslint .` remains blocked by the documented generated `.next-qa` and bundled `.claude` files; no changed Quiz file has a lint finding.
+- Next implementation slice: Teacher draft Builder and preview only. Student Attempt mutations and any database migration remain separately gated.
+
+## QUIZ DOMAIN ADRS — 2026-07-17
+
+- Release C architecture design is now locked in ADR-0035 through ADR-0038: immutable Attempt snapshots, atomic Scored Quiz/Score Item coupling, one-writer device leases with Server-authoritative expiry, and archive/moderation/private-file evidence rules.
+- Practice Quiz never creates a Score Item. Scored Quiz introduces immutable `QUIZ_LINKED` provenance, uses the existing sum-based score ledger, and must close before one-way publication. Best submitted Attempt supplies the draft Score Entry while preserving auto-grade evidence.
+- The first Student Attempt freezes Teacher-authored questions, answers, points, and assigned order. Post-start correction is an irreversible audited question void plus recalculation; normal editing or hard deletion is blocked.
+- Attempt writes require the current lease, revision, and idempotency key. Device takeover invalidates the old writer, Server time determines expiry, and correctness does not depend only on cron.
+- Quiz/question reports snapshot Teacher-authored content but exclude Student answers, scores, exceptions, and private Attempt files. Admin remains read-only and cannot perform academic actions.
+- This ADR slice itself changed no schema or data. The subsequent C1 foundation described above now implements the additive schema and pure policy layer, while all database rollout remains unapproved.
+
+## QUIZ MVP GRILL AND PROTOTYPE — 2026-07-17
+
+- Quiz MVP decision Grill is complete. The approved product contract lives in `docs/QUIZ-MVP-DECISIONS.md` and covers lifecycle, scoring, Attempts, files, privacy, notifications, analytics, limits, feature flags, and rollout guardrails.
+- Added a non-persistent, development-only prototype at `/teacher/courses/[id]/quiz-prototype`. Production returns `notFound()` and the prototype does not read or write Quiz data.
+- The prototype provides three switchable surfaces: Teacher Builder, Student Attempt, and Teacher Results. It also includes Light, Dark, and Cream theme controls, responsive question navigation, attachment affordances, timer/auto-save language, result metrics, Student status, and item analysis.
+- Visual acceptance passed at 1440x900 and 390x844 for all three surfaces. Light, Dark, and Cream were inspected; document-level horizontal overflow is zero. Teacher question cards intentionally scroll inside their own mobile strip, and the results table intentionally scrolls inside its own container.
+- Targeted ESLint and full TypeScript typecheck pass. No Prisma schema, Neon data, R2 object, feature flag, Production route, or existing Feed/Lesson/Score behavior was changed.
+- Prototype review, the four prerequisite ADRs, and the additive C1 schema/policy foundation are complete. The next step is the Teacher draft Builder and preview; Production migration remains separately unapproved.
+
 ## NOTIFICATION SHORTCUT AND ROUTER ACCEPTANCE — 2026-07-17
 
 - Every bell row now exposes a visible destination shortcut instead of relying on an invisible whole-row click. Labels match the destination: scores, work, document, announcement, course, or members.

@@ -107,6 +107,8 @@ enum ModerationTargetType {
   ANNOUNCEMENT
   MATERIAL
   ASSIGNMENT
+  QUIZ
+  QUIZ_QUESTION
   FILE_ATTACHMENT
   PROFILE_IMAGE
 }
@@ -353,6 +355,7 @@ model CourseOffering {
   sessions       Session[]
   scoreItems     ScoreItem[]
   lessons        Lesson[]
+  quizzes        Quiz[]
   assignments    Assignment[]
   materials      Material[] // Phase 7
   announcements  Announcement[] // Phase 7
@@ -379,6 +382,8 @@ model Enrollment {
   attendanceRecords AttendanceRecord[]
   scoreEntries      ScoreEntry[]
   submissions       Submission[]
+  quizAttempts      QuizAttempt[]
+  quizExceptions    QuizStudentException[]
 
   @@unique([studentId, courseOfferingId])
   @@index([courseOfferingId])
@@ -476,6 +481,7 @@ model AttendanceRecord {
 enum ScoreItemSource {
   MANUAL // teacher created manually via Score Item form
   ASSIGNMENT_LINKED // created automatically when Assignment.isScored=true (Phase 6)
+  QUIZ_LINKED // created atomically for a scored Quiz (Release C, ADR-0036)
 }
 
 // One scoring "slot" per CourseOffering — name + fullScore.
@@ -495,6 +501,7 @@ model ScoreItem {
 
   entries    ScoreEntry[]
   assignment Assignment? // 1:1 reverse — set when source=ASSIGNMENT_LINKED (ADR-0019)
+  quiz       Quiz? // 1:1 reverse — set when source=QUIZ_LINKED (ADR-0036)
 
   @@index([courseOfferingId, position]) // ordered list rendering
   @@index([courseOfferingId, publishedAt]) // term-GPA completion check
@@ -557,9 +564,226 @@ model Lesson {
 
   assignments Assignment[]
   materials   Material[]
+  quizzes     Quiz[]
 
   @@index([courseOfferingId, position])
   @@index([courseOfferingId, archivedAt])
+}
+
+// ═══════════════════════════════════════════════════════════
+// Quiz (Release C foundation) — ADR-0035..0038
+// Additive only. No route or mutation is enabled without fail-closed flags.
+// ═══════════════════════════════════════════════════════════
+
+enum QuizMode {
+  PRACTICE
+  SCORED
+}
+
+enum QuizStatus {
+  DRAFT
+  OPEN
+  CLOSED
+}
+
+enum QuizQuestionType {
+  SINGLE_CHOICE
+  MULTIPLE_SELECT
+  TRUE_FALSE
+}
+
+enum QuizAttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  AUTO_SUBMITTED
+}
+
+enum QuizSubmissionTrigger {
+  MANUAL
+  DEADLINE
+  QUIZ_CLOSED
+}
+
+model Quiz {
+  id               String         @id @default(cuid())
+  courseOfferingId String
+  course           CourseOffering @relation(fields: [courseOfferingId], references: [id], onDelete: Cascade)
+  lessonId         String
+  lesson           Lesson         @relation(fields: [lessonId], references: [id], onDelete: Restrict)
+
+  title       String
+  description String?
+  mode        QuizMode
+  status      QuizStatus @default(DRAFT)
+  required    Boolean    @default(false)
+  position    Int        @default(0)
+  revision    Int        @default(1)
+
+  opensAt              DateTime?
+  closesAt             DateTime?
+  timeLimitMinutes     Int?
+  maxAttempts          Int?
+  passThresholdPercent Int?
+  shuffleQuestions     Boolean   @default(false)
+  shuffleOptions       Boolean   @default(false)
+  hideExplanations     Boolean   @default(false)
+  fileAttachmentIds    Json      @default("[]")
+
+  // Practice has no ScoreItem. Scored owns exactly one QUIZ_LINKED ScoreItem;
+  // the atomic invariant is enforced by the service boundary (ADR-0036).
+  scoreItemId String?    @unique
+  scoreItem   ScoreItem? @relation(fields: [scoreItemId], references: [id], onDelete: SetNull)
+
+  cancelledAt     DateTime?
+  cancelledById   String?
+  cancelledReason String?
+  archivedAt      DateTime?
+  archivedById    String?
+  archivedReason  String?
+
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  questions         QuizQuestion[]
+  attempts          QuizAttempt[]
+  studentExceptions QuizStudentException[]
+
+  @@index([courseOfferingId, status, position])
+  @@index([lessonId, status, position])
+  @@index([scoreItemId])
+  @@index([archivedAt])
+}
+
+model QuizQuestion {
+  id     String @id @default(cuid())
+  quizId String
+  quiz   Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  type              QuizQuestionType
+  prompt            String
+  explanation       String?
+  points            Int
+  position          Int
+  fileAttachmentIds Json             @default("[]")
+
+  voidedAt     DateTime?
+  voidedById   String?
+  voidedReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  options QuizOption[]
+  answers QuizAnswer[]
+
+  @@unique([quizId, position])
+  @@index([quizId, voidedAt])
+}
+
+model QuizOption {
+  id         String       @id @default(cuid())
+  questionId String
+  question   QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  text              String
+  isCorrect         Boolean @default(false)
+  position          Int
+  fileAttachmentIds Json    @default("[]")
+
+  @@unique([questionId, position])
+  @@index([questionId])
+}
+
+model QuizAttempt {
+  id           String     @id @default(cuid())
+  quizId       String
+  quiz         Quiz       @relation(fields: [quizId], references: [id], onDelete: Restrict)
+  enrollmentId String
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+
+  attemptNumber     Int
+  status            QuizAttemptStatus      @default(IN_PROGRESS)
+  startedAt         DateTime               @default(now())
+  effectiveDeadline DateTime?
+  submittedAt       DateTime?
+  submissionTrigger QuizSubmissionTrigger?
+
+  // Complete immutable content/grading snapshot. Attachment entries contain
+  // ids and display metadata only, never an R2 key or reusable signed URL.
+  snapshotRevision Int
+  snapshotJson     Json
+
+  autoScore      Int?
+  finalScore     Int?
+  adjustedAt     DateTime?
+  adjustedById   String?
+  adjustedReason String?
+
+  // One active writer. Only the hash is stored; takeover increments version.
+  leaseVersion   Int       @default(1)
+  leaseTokenHash String?
+  leaseExpiresAt DateTime?
+  writeRevision  Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  answers   QuizAnswer[]
+  mutations QuizAttemptMutation[]
+
+  @@unique([quizId, enrollmentId, attemptNumber])
+  @@index([quizId, status])
+  @@index([enrollmentId, status])
+  @@index([effectiveDeadline, status])
+}
+
+model QuizAnswer {
+  id         String       @id @default(cuid())
+  attemptId  String
+  attempt    QuizAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId String
+  question   QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Restrict)
+
+  answerJson    Json
+  isCorrect     Boolean?
+  awardedPoints Int?
+  answeredAt    DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([attemptId, questionId])
+  @@index([questionId])
+}
+
+model QuizAttemptMutation {
+  id             String      @id @default(cuid())
+  attemptId      String
+  attempt        QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  idempotencyKey String
+  resultRevision Int
+  responseJson   Json
+  createdAt      DateTime    @default(now())
+
+  @@unique([attemptId, idempotencyKey])
+  @@index([attemptId, createdAt])
+}
+
+model QuizStudentException {
+  id           String     @id @default(cuid())
+  quizId       String
+  quiz         Quiz       @relation(fields: [quizId], references: [id], onDelete: Restrict)
+  enrollmentId String
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+
+  extendedDeadline DateTime?
+  extraAttempts    Int       @default(0)
+  reason           String
+  createdById      String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@unique([quizId, enrollmentId])
+  @@index([enrollmentId])
 }
 
 // Per CourseOffering — title, description, deadline, file/text/link toggles.
@@ -683,6 +907,9 @@ enum FileOwnerType {
   ASSIGNMENT // attached by teacher to the assignment brief
   MATERIAL // teacher post (Phase 7 — reserved)
   ANNOUNCEMENT // teacher post (Phase 7 — reserved)
+  QUIZ // Quiz-level reference file (Release C)
+  QUIZ_QUESTION // question/explanation file (Release C)
+  QUIZ_OPTION // option-level file (Release C)
   SUBMISSION // student-submitted file — attached to parent Submission (P7-0a); SubmissionVersion.fileAttachmentIds is the per-version pointer array
   COMMENT // file embedded in a comment (Phase 7 — reserved)
   PROFILE_IMAGE // user's own cropped avatar — ownerId = User.id (Phase 13)
@@ -800,6 +1027,9 @@ enum NotificationKind {
   COMMENT_REPLIED
   // Teacher
   CLASS_CODE_JOINED
+  // Quiz lifecycle (Release C)
+  QUIZ_REOPENED
+  QUIZ_EXCEPTION_GRANTED
 }
 
 enum NotifEntityType {
@@ -810,6 +1040,7 @@ enum NotifEntityType {
   SUBMISSION
   COMMENT
   ENROLLMENT // for CLASS_CODE_JOINED
+  QUIZ
 }
 
 model Notification {

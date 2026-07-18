@@ -73,6 +73,9 @@ export async function createScoreItem(
   input: CreateScoreItemInput,
   ctx: ActorCtx
 ): Promise<ScoreItem> {
+  if (input.source === "QUIZ_LINKED") {
+    throw new Conflict("quiz_score_item_managed_by_quiz");
+  }
   validateName(input.name);
   validateFullScore(input.fullScore);
   if (input.position !== undefined && !Number.isInteger(input.position)) {
@@ -119,6 +122,9 @@ export async function updateScoreItem(
   patch: UpdateScoreItemPatch,
   ctx: ActorCtx & { reason?: string | null }
 ): Promise<ScoreItem> {
+  if (patch.source === "QUIZ_LINKED") {
+    throw new Conflict("quiz_score_item_managed_by_quiz");
+  }
   const reasonTrimmed = ctx.reason?.trim() ?? "";
   if (reasonTrimmed.length > REASON_MAX) {
     throw new ValidationError({
@@ -261,6 +267,7 @@ export async function publishScoreItem(
         courseOfferingId: true,
         name: true,
         fullScore: true,
+        source: true,
         publishedAt: true,
         course: { select: { teacherId: true } },
       },
@@ -271,6 +278,9 @@ export async function publishScoreItem(
     }
     if (current.publishedAt !== null) {
       throw new Conflict("already_published");
+    }
+    if (current.source === "QUIZ_LINKED") {
+      throw new Conflict("quiz_results_must_publish_from_quiz");
     }
 
     const updated = await tx.scoreItem.update({
