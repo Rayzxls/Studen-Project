@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { Plus, Trash2 } from "lucide-react";
+import { TimePicker } from "@/components/ui/time-picker";
 import {
   createSlotAction,
   deleteSlotAction,
@@ -146,14 +147,12 @@ function AddSlotForm({ courseId }: { courseId: string }) {
           >
             เริ่ม
           </label>
-          <input
-            type="time"
+          <TimePicker
             id="startTime"
             name="startTime"
             required
             defaultValue="13:00"
-            className="input"
-            aria-invalid={state.fieldErrors?.startTime ? true : undefined}
+            ariaLabel="เวลาเริ่มคาบ"
           />
         </div>
         <div>
@@ -163,14 +162,12 @@ function AddSlotForm({ courseId }: { courseId: string }) {
           >
             สิ้นสุด
           </label>
-          <input
-            type="time"
+          <TimePicker
             id="endTime"
             name="endTime"
             required
             defaultValue="14:00"
-            className="input"
-            aria-invalid={state.fieldErrors?.endTime ? true : undefined}
+            ariaLabel="เวลาสิ้นสุดคาบ"
           />
         </div>
         <div>
