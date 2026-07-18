@@ -1,5 +1,13 @@
 # HANDOFF — Beagle Classroom
 
+## DASHBOARD + QUIZ PRODUCTION ROLLOUT — 2026-07-18
+
+- Merged PR #16 (`phase-11` -> `main`) at `bf34af69`; GitHub main CI passed lint/typecheck, all unit tests, and Production build. Vercel Production deployment and the final flag-aware redeploy both completed successfully at `https://studen-project.vercel.app`.
+- Shipped the approved Student/Teacher Dashboard operating layout, including the follow-up removal of the duplicated focus mission dock. Admin Dashboard behavior remains unchanged.
+- Applied additive Production migrations `20260717010000_add_quiz_foundation` and `20260718010000_add_quiz_lifecycle_notifications`. Prisma reports all six migrations up to date; no existing academic record or private R2 object was rewritten.
+- Enabled `QUIZ_ENABLED=1` and `QUIZ_MUTATIONS_ENABLED=1` in Vercel Production. `QUIZ_PILOT_COURSE_IDS` is the exact active ENG 4/3 CourseOffering id `cmr1fxlhd0005if04q7fi04qk`; wildcard is not used and future/new courses remain disabled until explicitly added.
+- Production env verification passed through the real feature helpers: global read/mutation true, pilot read/mutation true, and an unknown CourseOffering false. Public landing/login smoke returns `200`; protected Dashboard and Quiz routes preserve the authentication boundary. Authenticated Teacher/Student/Admin workflow and private-R2 browser smoke remain the manual post-rollout check.
+
 ## QUIZ C5C CSV ANALYTICS AND ADMIN OBSERVER — 2026-07-18
 
 - Added a Teacher-owned Quiz Results CSV export from the same aggregate projection used by the Results workspace. The private no-store download includes summary metrics, per-Student best-attempt rows, and per-question analysis, protects spreadsheet formula injection, and records `CLASS_ANALYTICS_EXPORTED` in Audit Log.
