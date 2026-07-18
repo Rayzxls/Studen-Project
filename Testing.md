@@ -1,7 +1,7 @@
 # Testing.md
 
 > Source of truth for Beagle Classroom test safety and release QA.
-> Updated: 2026-07-14.
+> Updated: 2026-07-19.
 
 ## 1. Safety first
 
@@ -98,6 +98,12 @@ Current Playwright specs are:
 
 - `tests/e2e/01-announcement-feed.spec.ts`
 - `tests/e2e/02-material-bell.spec.ts`
+- `tests/e2e/03-moderation-report.spec.ts`
+- `tests/e2e/04-class-code-invite.spec.ts`
+- `tests/e2e/05-quiz-builder.spec.ts`
+- `tests/e2e/06-quiz-student-attempt.spec.ts`
+- `tests/e2e/07-quiz-teacher-results.spec.ts`
+- `tests/e2e/08-timetable.spec.ts`
 
 They mutate course content and rate-limit state, so they require the isolated
 QA database:
@@ -114,6 +120,11 @@ The historical `scripts/smoke-test.ts` is also mutating. It is now guarded and
 hard-bound to port `3100`. Run `pnpm dev:qa` in one terminal, then
 `pnpm test:smoke` in another. Both commands fail closed without a separate QA
 database. Do not run that TypeScript file directly.
+
+Timetable acceptance now covers Teacher create/edit/delete, Student read-only
+projection, persisted time/location, Dark and Cream themes, and iPhone
+`390x844` overflow. It runs only through the guarded isolated-Neon runner and
+does not mutate Production.
 
 This is not yet a complete critical-path browser suite. A2 must add or manually
 verify the remaining paths before it can be called closed:

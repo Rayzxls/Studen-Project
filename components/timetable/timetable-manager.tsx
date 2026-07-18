@@ -68,6 +68,7 @@ export function TimetableManager({ slots, courses, nowIso }: Props) {
         </div>
         <button
           type="button"
+          data-testid="timetable-add-slot"
           className="btn-primary btn-sm"
           onClick={() => setDialog({ mode: "create" })}
         >
@@ -165,6 +166,8 @@ export function TimetableSlotDialog({
   return (
     <dialog
       ref={dialogRef}
+      data-testid="timetable-slot-dialog"
+      data-mode={slot ? "edit" : "create"}
       onCancel={(event) => {
         event.preventDefault();
         onClose();
@@ -327,6 +330,7 @@ export function TimetableSlotDialog({
             <button
               type="submit"
               form="delete-timetable-slot"
+              data-testid="timetable-delete-slot"
               disabled={saving || deleting}
               className="btn-danger btn-sm"
             >
@@ -346,6 +350,7 @@ export function TimetableSlotDialog({
             </button>
             <button
               type="submit"
+              data-testid="timetable-save-slot"
               className="btn-primary btn-sm"
               disabled={
                 saving || deleting || courses.length === 0 || !!blockingOverlap

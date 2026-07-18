@@ -1,5 +1,12 @@
 # HANDOFF — Beagle Classroom
 
+## TIMETABLE AUTHENTICATED ACCEPTANCE — 2026-07-19
+
+- Added an isolated-Neon Playwright tracer for the released responsive timetable. The Teacher signs in with Dark theme, creates a Wednesday slot through the aggregate timetable UI, edits its location, and deletes it; persistence is asserted after each mutation.
+- The enrolled Student signs in with Cream theme at iPhone `390x844`, selects the matching day, sees the same slot and location, has no create/edit dialog, and has no document-level horizontal overflow. This closes the timetable-specific authenticated role/theme/mobile evidence gap without touching Production data.
+- Added stable public-control test ids to the timetable manager, desktop/mobile slot cards, day tabs, and Time Picker hour/minute options. These attributes do not change visual behavior or role permissions.
+- Verification passed: timetable E2E `1/1`, full unit `627/627`, targeted ESLint, and TypeScript. Production private-R2 upload/preview and the broader manual Student/Teacher/Admin acceptance checklist remain separate A2 release checks.
+
 ## RESPONSIVE TIMETABLE WORKSPACE — 2026-07-19
 
 - Replaced the Student timetable list with a shared responsive weekly timetable and added the Teacher-owned `/teacher/timetable` workspace. Desktop uses a horizontal time grid with overlap lanes and a current-time marker; Mobile uses day tabs and a readable daily timeline. Both roles receive current/next-class context, while Student remains read-only and sees only active enrolled courses.
@@ -7,7 +14,7 @@
 - Added immediate overlap feedback. Same-course overlap blocks the save action before submission and remains rejected by the Server; cross-course overlap shows an advisory but remains allowed per the existing Q4b domain decision. All file/data access boundaries are unchanged and Admin remains read-only.
 - Navigation now exposes Student `ตารางเรียน` and Teacher `ตารางสอน` shortcuts from Dashboard/course surfaces. The shared Time Picker and timetable cards use the existing Light/Dark/Cream tokens.
 - Released through PR #19 (`phase-11` -> `main`) at merge commit `9ce14f7c`. Pull-request and post-merge CI both passed Unit Tests, Lint & Typecheck, and the Production build; Vercel Production now serves the new timetable routes at `https://studen-project.vercel.app`.
-- Acceptance passed: timetable view-model unit `6/6`, focused timetable/Quiz/storage regression `65/65`, targeted ESLint, TypeScript, `git diff --check`, Next.js Production build, Local safe smoke `15/15`, and post-deploy Production safe smoke `15/15`. The smoke covers Student/Teacher timetable plus the exact Quiz pilot routes for Teacher/Student/Admin. Browser-plugin visual automation could not attach because its local runtime asset bootstrap failed; authenticated manual Desktop/Mobile visual acceptance and private-R2 browser smoke remain manual checks. This release makes no Prisma migration, Neon row, R2 object, Vercel flag, or Production data mutation.
+- Acceptance passed: timetable view-model unit `6/6`, focused timetable/Quiz/storage regression `65/65`, targeted ESLint, TypeScript, `git diff --check`, Next.js Production build, Local safe smoke `15/15`, and post-deploy Production safe smoke `15/15`. The smoke covers Student/Teacher timetable plus the exact Quiz pilot routes for Teacher/Student/Admin. Authenticated timetable role/theme/mobile acceptance was subsequently automated on isolated Neon QA; private-R2 browser smoke remains manual. This release makes no Prisma migration, Neon row, R2 object, Vercel flag, or Production data mutation.
 
 ## DASHBOARD + QUIZ PRODUCTION ROLLOUT — 2026-07-18
 
