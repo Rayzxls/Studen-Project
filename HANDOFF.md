@@ -1,5 +1,13 @@
 # HANDOFF — Beagle Classroom
 
+## QUIZ C5A PRIVATE ATTACHMENTS — 2026-07-18
+
+- Enabled private multi-file attachments for the Quiz brief, individual questions, and individual answer options. Teacher uploads keep stable Quiz/Question/Option owner ids, validate uploader plus exact owner scope transactionally, and remain accessible only through the authenticated `/api/storage/files/[fileId]` route.
+- Added Teacher Builder upload/replace support, Student-safe Quiz overview and immutable Attempt snapshot metadata, Teacher full-page preview, responsive image grids, keyboard/arrow galleries, and authenticated document links. Student payloads still exclude answer keys and explanations; snapshots contain no R2 key or public file URL.
+- Moderation remains fail closed: restricted file metadata is filtered before a new Attempt snapshot is created and the download route rejects restricted files for every non-Admin role. Legacy Attempt snapshots without attachment arrays remain readable.
+- Fixed multi-select upload capacity so an existing batch cannot race past the 10-file limit. Duplicate questions receive fresh owner ids and intentionally do not copy private attachments across ownership boundaries.
+- Acceptance passed: targeted ESLint, TypeScript, full unit `616/616`, focused attachment/permission/Attempt tests `77/77`, `git diff --check`, HTTP `200` on the isolated login surface, and the Next.js Production build. Authenticated isolated-QA upload/R2 smoke and all Production migration/flag changes remain separate rollout gates; Production data and flags were not mutated.
+
 ## DASHBOARD VARIANT B PRODUCT CUTOVER — 2026-07-18
 
 - Replaced the Student and Teacher Dashboard body with the approved Variant B operating layout while preserving the existing course-card visual language and real database projections.

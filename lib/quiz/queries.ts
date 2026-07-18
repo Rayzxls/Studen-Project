@@ -1,5 +1,10 @@
 import { db } from "@/lib/db/client";
 import { Forbidden, NotFound } from "@/lib/errors";
+import type { FeedAttachment } from "@/lib/feed/aggregator";
+import {
+  attachmentIds,
+  getOrderedAttachments,
+} from "@/lib/storage/attachments";
 import { quizCourseEnabled, type QuizFeatureFlagEnv } from "./feature-flags";
 import { selectBestAttempt } from "./policy";
 
@@ -35,16 +40,22 @@ export type TeacherQuizDraftView = {
   hideExplanations: boolean;
   revision: number;
   attemptCount: number;
+  fileAttachmentIds: string[];
+  attachments: FeedAttachment[];
   questions: Array<{
     id: string;
     type: "SINGLE_CHOICE" | "MULTIPLE_SELECT" | "TRUE_FALSE";
     prompt: string;
     explanation: string | null;
     points: number;
+    fileAttachmentIds: string[];
+    attachments: FeedAttachment[];
     options: Array<{
       id: string;
       text: string;
       isCorrect: boolean;
+      fileAttachmentIds: string[];
+      attachments: FeedAttachment[];
     }>;
   }>;
 };
@@ -128,6 +139,7 @@ export type StudentQuizSummary = {
   submittedAttemptCount: number;
   latestScore: number | null;
   scoreVisible: boolean;
+  attachments: FeedAttachment[];
 };
 
 export async function getTeacherQuizSummariesForLesson(input: {
@@ -229,6 +241,7 @@ export async function getTeacherQuizDraft(input: {
       shuffleOptions: true,
       hideExplanations: true,
       revision: true,
+      fileAttachmentIds: true,
       lesson: { select: { title: true, archivedAt: true } },
       _count: { select: { attempts: true } },
       questions: {
@@ -240,9 +253,15 @@ export async function getTeacherQuizDraft(input: {
           prompt: true,
           explanation: true,
           points: true,
+          fileAttachmentIds: true,
           options: {
             orderBy: { position: "asc" },
-            select: { id: true, text: true, isCorrect: true },
+            select: {
+              id: true,
+              text: true,
+              isCorrect: true,
+              fileAttachmentIds: true,
+            },
           },
         },
       },
@@ -252,12 +271,51 @@ export async function getTeacherQuizDraft(input: {
     throw new NotFound("quiz_not_found");
   }
 
-  const { lesson, _count, ...draft } = quiz;
+  const quizFileIds = attachmentIds(quiz.fileAttachmentIds);
+  const questionFileIds = quiz.questions.flatMap((question) =>
+    attachmentIds(question.fileAttachmentIds)
+  );
+  const optionFileIds = quiz.questions.flatMap((question) =>
+    question.options.flatMap((option) =>
+      attachmentIds(option.fileAttachmentIds)
+    )
+  );
+  const orderedAttachments = await getOrderedAttachments([
+    ...quizFileIds,
+    ...questionFileIds,
+    ...optionFileIds,
+  ]);
+  const attachmentById = new Map(
+    orderedAttachments.map((attachment) => [attachment.id, attachment])
+  );
+  const resolve = (ids: string[]) =>
+    ids
+      .map((id) => attachmentById.get(id))
+      .filter((item): item is FeedAttachment => item !== undefined);
+
+  const { lesson, _count, fileAttachmentIds: _files, ...draft } = quiz;
   return {
     ...draft,
     lessonTitle: lesson.title,
     attemptCount: _count.attempts,
-    questions: quiz.questions,
+    fileAttachmentIds: quizFileIds,
+    attachments: resolve(quizFileIds),
+    questions: quiz.questions.map((question) => {
+      const ids = attachmentIds(question.fileAttachmentIds);
+      return {
+        ...question,
+        fileAttachmentIds: ids,
+        attachments: resolve(ids),
+        options: question.options.map((option) => {
+          const optionIds = attachmentIds(option.fileAttachmentIds);
+          return {
+            ...option,
+            fileAttachmentIds: optionIds,
+            attachments: resolve(optionIds),
+          };
+        }),
+      };
+    }),
   };
 }
 
@@ -576,6 +634,7 @@ async function getStudentQuizSummaries(input: {
       closesAt: true,
       timeLimitMinutes: true,
       maxAttempts: true,
+      fileAttachmentIds: true,
       lesson: { select: { title: true } },
       scoreItem: { select: { publishedAt: true } },
       questions: {
@@ -593,6 +652,13 @@ async function getStudentQuizSummaries(input: {
       },
     },
   });
+
+  const allAttachments = await getOrderedAttachments(
+    rows.flatMap((row) => attachmentIds(row.fileAttachmentIds))
+  );
+  const attachmentById = new Map(
+    allAttachments.map((attachment) => [attachment.id, attachment])
+  );
 
   return rows.map((row) => {
     const active = row.attempts.find(
@@ -625,6 +691,11 @@ async function getStudentQuizSummaries(input: {
       latestScore: submitted[0]?.finalScore ?? null,
       scoreVisible:
         row.mode === "PRACTICE" || row.scoreItem?.publishedAt != null,
+      attachments: attachmentIds(row.fileAttachmentIds)
+        .map((id) => attachmentById.get(id))
+        .filter(
+          (attachment): attachment is FeedAttachment => attachment !== undefined
+        ),
     };
   });
 }

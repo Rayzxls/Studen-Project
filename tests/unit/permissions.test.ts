@@ -456,6 +456,20 @@ describe("can.uploadToSubmission (Phase 7 · P7-0b · ADR-0021 + ADR-0022 siblin
   });
 });
 
+describe("can.uploadToQuiz (Quiz C5a private attachments)", () => {
+  const quiz = { course: { teacherId: "t1" } };
+
+  it("allows only the teacher who owns the course", () => {
+    expect(can.uploadToQuiz(mkSession("TEACHER", "t1"), quiz)).toBe(true);
+    expect(can.uploadToQuiz(mkSession("TEACHER", "t2"), quiz)).toBe(false);
+  });
+
+  it("keeps students and read-only admins outside the upload boundary", () => {
+    expect(can.uploadToQuiz(mkSession("STUDENT", "t1"), quiz)).toBe(false);
+    expect(can.uploadToQuiz(mkSession("ADMIN", "t1"), quiz)).toBe(false);
+  });
+});
+
 describe("L1 visibility (Phase 1) — students never see others", () => {
   it("STUDENT cannot view audit logs", () => {
     expect(can.viewAuditLog(mkSession("STUDENT"))).toBe(false);

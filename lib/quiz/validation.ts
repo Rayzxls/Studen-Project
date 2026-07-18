@@ -43,6 +43,7 @@ export const QuizOptionSchema = z.object({
 
 export const QuizQuestionSchema = z
   .object({
+    id: z.string().trim().min(1).optional(),
     type: z.enum(["SINGLE_CHOICE", "MULTIPLE_SELECT", "TRUE_FALSE"]),
     prompt: z.string().trim().min(1).max(QUIZ_TEXT_MAX),
     explanation: nullableText.optional().default(null),
@@ -94,6 +95,7 @@ export const QuizQuestionSchema = z
 
 export const CreateQuizDraftSchema = z
   .object({
+    id: z.string().trim().min(1).optional(),
     courseOfferingId: z.string().trim().min(1),
     lessonId: z.string().trim().min(1),
     title: z.string().trim().min(1).max(QUIZ_TITLE_MAX),

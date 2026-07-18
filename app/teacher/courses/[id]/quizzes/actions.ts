@@ -152,8 +152,8 @@ function errorNotice(error: unknown): string {
   if (error instanceof HttpError) {
     const messages: Record<string, string> = {
       quiz_mutations_disabled: "ยังไม่เปิดการสร้างแบบทดสอบสำหรับห้องนี้",
-      quiz_attachments_not_enabled:
-        "ไฟล์แนบแบบทดสอบจะเปิดในขั้นถัดไป กรุณาบันทึกข้อความก่อน",
+      quiz_attachments_locked:
+        "ไฟล์แนบแก้ไขได้เฉพาะฉบับร่างที่ยังไม่มีนักเรียนเริ่มทำ",
       not_course_owner: "เฉพาะครูเจ้าของวิชาเท่านั้นที่แก้แบบทดสอบได้",
       lesson_archived: "บทเรียนนี้ถูกเก็บเข้าคลังแล้ว",
       quiz_not_editable: "แบบทดสอบนี้ไม่ได้อยู่ในสถานะฉบับร่าง",

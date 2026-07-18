@@ -9,10 +9,12 @@ import {
   scoreObjectiveAnswer,
 } from "./policy";
 import {
+  filterVisibleQuizAttachments,
   toStudentQuizAttemptSnapshot,
   type QuizAttemptSnapshot,
   type QuizSnapshotQuestion,
 } from "./attempt-snapshot";
+import { moderationCenterEnabled } from "@/lib/moderation/feature-flags";
 import type {
   GetAttemptCommand,
   QuizAttemptRepository,
@@ -92,7 +94,7 @@ export const prismaQuizAttemptRepository: QuizAttemptRepository = {
         throw new Conflict("quiz_attempt_limit_reached");
       }
 
-      const snapshot = buildSnapshot(quiz);
+      const snapshot = await buildSnapshot(tx, quiz);
       const timedDeadline = quiz.timeLimitMinutes
         ? new Date(command.now.getTime() + quiz.timeLimitMinutes * 60_000)
         : null;
@@ -371,6 +373,7 @@ async function loadStartableQuiz(
       shuffleQuestions: true,
       shuffleOptions: true,
       hideExplanations: true,
+      fileAttachmentIds: true,
       course: { select: { archivedAt: true } },
       lesson: { select: { archivedAt: true } },
       studentExceptions: {
@@ -387,9 +390,15 @@ async function loadStartableQuiz(
           prompt: true,
           explanation: true,
           points: true,
+          fileAttachmentIds: true,
           options: {
             orderBy: { position: "asc" },
-            select: { id: true, text: true, isCorrect: true },
+            select: {
+              id: true,
+              text: true,
+              isCorrect: true,
+              fileAttachmentIds: true,
+            },
           },
         },
       },
@@ -433,14 +442,69 @@ async function activeEnrollment(
   return enrollment;
 }
 
-function buildSnapshot(
+async function buildSnapshot(
+  tx: Tx,
   quiz: Awaited<ReturnType<typeof loadStartableQuiz>>
-): QuizAttemptSnapshot {
+): Promise<QuizAttemptSnapshot> {
+  const quizFileIds = jsonIds(quiz.fileAttachmentIds);
+  const questionFileIds = quiz.questions.flatMap((question) =>
+    jsonIds(question.fileAttachmentIds)
+  );
+  const optionFileIds = quiz.questions.flatMap((question) =>
+    question.options.flatMap((option) => jsonIds(option.fileAttachmentIds))
+  );
+  const rows = await tx.fileAttachment.findMany({
+    where: {
+      id: { in: [...quizFileIds, ...questionFileIds, ...optionFileIds] },
+      deletedAt: null,
+    },
+    select: {
+      id: true,
+      originalFilename: true,
+      mimeType: true,
+      sizeBytes: true,
+    },
+  });
+  const restrictedRows = moderationCenterEnabled()
+    ? await tx.moderationCase.findMany({
+        where: {
+          targetType: "FILE_ATTACHMENT",
+          targetId: { in: rows.map((row) => row.id) },
+          restrictionKind: { not: null },
+        },
+        select: { targetId: true },
+      })
+    : [];
+  const restrictedIds = new Set(restrictedRows.map((row) => row.targetId));
+  const visibleRows = filterVisibleQuizAttachments(rows, restrictedIds);
+  const attachmentById = new Map(visibleRows.map((row) => [row.id, row]));
+  const resolve = (ids: string[]) =>
+    ids
+      .map((id) => attachmentById.get(id))
+      .filter((row): row is (typeof visibleRows)[number] => row !== undefined);
+
   let questions = quiz.questions.map((question) => ({
-    ...question,
+    id: question.id,
+    type: question.type,
+    prompt: question.prompt,
+    explanation: question.explanation,
+    points: question.points,
+    attachments: resolve(jsonIds(question.fileAttachmentIds)),
     options: quiz.shuffleOptions
-      ? shuffled(question.options)
-      : question.options.map((option) => ({ ...option })),
+      ? shuffled(
+          question.options.map((option) => ({
+            id: option.id,
+            text: option.text,
+            isCorrect: option.isCorrect,
+            attachments: resolve(jsonIds(option.fileAttachmentIds)),
+          }))
+        )
+      : question.options.map((option) => ({
+          id: option.id,
+          text: option.text,
+          isCorrect: option.isCorrect,
+          attachments: resolve(jsonIds(option.fileAttachmentIds)),
+        })),
   }));
   if (quiz.shuffleQuestions) questions = shuffled(questions);
   return {
@@ -451,8 +515,15 @@ function buildSnapshot(
     mode: quiz.mode,
     hideExplanations: quiz.hideExplanations,
     totalPoints: questions.reduce((sum, question) => sum + question.points, 0),
+    attachments: resolve(quizFileIds),
     questions,
   };
+}
+
+function jsonIds(value: Prisma.JsonValue): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
 }
 
 function shuffled<T extends object>(rows: ReadonlyArray<T>): T[] {
@@ -694,7 +765,19 @@ async function loadAttemptViewRow(tx: Tx, command: GetAttemptCommand) {
 }
 
 function parseSnapshot(value: Prisma.JsonValue): QuizAttemptSnapshot {
-  return value as unknown as QuizAttemptSnapshot;
+  const snapshot = value as unknown as QuizAttemptSnapshot;
+  return {
+    ...snapshot,
+    attachments: snapshot.attachments ?? [],
+    questions: snapshot.questions.map((question) => ({
+      ...question,
+      attachments: question.attachments ?? [],
+      options: question.options.map((option) => ({
+        ...option,
+        attachments: option.attachments ?? [],
+      })),
+    })),
+  };
 }
 
 function selectedIds(value: Prisma.JsonValue): string[] {

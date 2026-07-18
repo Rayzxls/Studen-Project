@@ -89,23 +89,26 @@ describe("Quiz draft service", () => {
     );
   });
 
-  it("rejects private attachments until the quiz upload boundary is enabled", async () => {
+  it("passes private attachment ids through the validated repository boundary", async () => {
     const repo = repository();
 
-    await expect(
-      createQuizDraft(
-        { ...validDraft, fileAttachmentIds: ["file-1"] },
-        {
-          actorUserId: "teacher-1",
-          repository: repo,
-          env: enabledEnv,
-        }
-      )
-    ).rejects.toMatchObject({
-      code: "quiz_attachments_not_enabled",
-    });
+    await createQuizDraft(
+      { ...validDraft, id: "quiz-draft-1", fileAttachmentIds: ["file-1"] },
+      {
+        actorUserId: "teacher-1",
+        repository: repo,
+        env: enabledEnv,
+      }
+    );
 
-    expect(repo.createDraft).not.toHaveBeenCalled();
+    expect(repo.createDraft).toHaveBeenCalledWith(
+      expect.objectContaining({
+        draft: expect.objectContaining({
+          id: "quiz-draft-1",
+          fileAttachmentIds: ["file-1"],
+        }),
+      })
+    );
   });
 
   it("replaces an editable draft through the same validated boundary", async () => {

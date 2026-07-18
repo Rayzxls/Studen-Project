@@ -15,6 +15,7 @@ import {
   Send,
 } from "lucide-react";
 import type { StudentQuizAttemptView } from "@/lib/quiz";
+import { QuizAttachmentPreview } from "@/components/quiz/quiz-attachment-preview";
 import type { QuizAttemptActionResult } from "@/app/student/courses/[id]/quizzes/actions";
 
 type Props = {
@@ -183,6 +184,7 @@ export function StudentQuizAttempt({
             )}
           </div>
         </div>
+        <QuizAttachmentPreview attachments={initial.snapshot.attachments} />
         <div className="mt-5 flex items-center gap-3">
           <div className="h-2 flex-1 overflow-hidden rounded-full bg-hairline">
             <div
@@ -253,6 +255,7 @@ export function StudentQuizAttempt({
               <h2 className="mt-2 text-lg font-semibold leading-8 text-ink md:text-xl">
                 {current.prompt}
               </h2>
+              <QuizAttachmentPreview attachments={current.attachments} />
               {current.type === "MULTIPLE_SELECT" && (
                 <p className="mt-2 text-sm text-ink-mute">
                   เลือกได้มากกว่าหนึ่งคำตอบ
@@ -268,28 +271,40 @@ export function StudentQuizAttempt({
             {current.options.map((option, index) => {
               const selected = (answers[current.id] ?? []).includes(option.id);
               return (
-                <button
+                <div
                   key={option.id}
-                  type="button"
-                  disabled={!initial.writable || pending}
-                  onClick={() => choose(option.id)}
-                  className={`flex min-h-14 w-full items-center gap-4 rounded-lg border px-4 py-3 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-70 ${
+                  className={`rounded-lg border transition-colors ${
                     selected
                       ? "border-blue-500 bg-blue-50 text-blue-900"
-                      : "border-hairline bg-surface text-ink hover:border-blue-300 hover:bg-blue-50/40"
+                      : "border-hairline bg-surface text-ink"
                   }`}
                 >
-                  <span
-                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold ${
-                      selected
-                        ? "border-blue-500 bg-blue-500 text-white"
-                        : "border-hairline bg-bg text-ink-mute"
-                    }`}
+                  <button
+                    type="button"
+                    disabled={!initial.writable || pending}
+                    onClick={() => choose(option.id)}
+                    className="flex min-h-14 w-full items-center gap-4 px-4 py-3 text-left text-sm disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    {selected ? <Check className="h-4 w-4" /> : letter(index)}
-                  </span>
-                  <span className="min-w-0 leading-6">{option.text}</span>
-                </button>
+                    <span
+                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold ${
+                        selected
+                          ? "border-blue-500 bg-blue-500 text-white"
+                          : "border-hairline bg-bg text-ink-mute"
+                      }`}
+                    >
+                      {selected ? <Check className="h-4 w-4" /> : letter(index)}
+                    </span>
+                    <span className="min-w-0 leading-6">{option.text}</span>
+                  </button>
+                  {option.attachments.length > 0 && (
+                    <div className="border-t border-hairline px-4 pb-3 pt-3">
+                      <QuizAttachmentPreview
+                        attachments={option.attachments}
+                        compact
+                      />
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>

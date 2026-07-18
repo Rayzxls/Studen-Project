@@ -40,6 +40,7 @@ const view = {
     mode: "PRACTICE",
     hideExplanations: false,
     totalPoints: 1,
+    attachments: [],
     questions: [],
   },
   answers: {},

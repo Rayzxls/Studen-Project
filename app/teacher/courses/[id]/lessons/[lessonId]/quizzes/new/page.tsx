@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { randomBytes } from "node:crypto";
 import { CourseShell } from "@/components/course/course-shell";
 import { TeacherQuizBuilder } from "@/components/quiz/teacher-quiz-builder";
 import { requireRole } from "@/lib/auth/guards";
@@ -38,6 +39,7 @@ export default async function NewTeacherQuizPage({
     }),
   ]);
   if (!course || lesson.state !== "ACTIVE") notFound();
+  const quizDraftId = draftOwnerId(id);
 
   return (
     <CourseShell
@@ -51,6 +53,7 @@ export default async function NewTeacherQuizPage({
         action={createQuizDraftAction}
         notice={notice}
         initial={{
+          id: quizDraftId,
           courseOfferingId: id,
           lessonId,
           lessonTitle: lesson.title,
@@ -66,16 +69,28 @@ export default async function NewTeacherQuizPage({
           shuffleQuestions: false,
           shuffleOptions: false,
           hideExplanations: false,
+          attachments: [],
           questions: [
             {
-              id: "new-question-1",
+              id: draftOwnerId(id),
               type: "SINGLE_CHOICE",
               prompt: "",
               explanation: "",
               points: 1,
+              attachments: [],
               options: [
-                { id: "new-option-1", text: "", isCorrect: true },
-                { id: "new-option-2", text: "", isCorrect: false },
+                {
+                  id: draftOwnerId(id),
+                  text: "",
+                  isCorrect: true,
+                  attachments: [],
+                },
+                {
+                  id: draftOwnerId(id),
+                  text: "",
+                  isCorrect: false,
+                  attachments: [],
+                },
               ],
             },
           ],
@@ -83,4 +98,8 @@ export default async function NewTeacherQuizPage({
       />
     </CourseShell>
   );
+}
+
+function draftOwnerId(courseOfferingId: string): string {
+  return `${courseOfferingId}_d_${randomBytes(12).toString("hex")}`;
 }

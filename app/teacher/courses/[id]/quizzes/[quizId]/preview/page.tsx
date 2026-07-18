@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, CheckCircle2, Clock3, ListChecks } from "lucide-react";
 import { CourseShell } from "@/components/course/course-shell";
+import { QuizAttachmentPreview } from "@/components/quiz/quiz-attachment-preview";
 import { requireRole } from "@/lib/auth/guards";
 import { getCourseOfferingForTeacher } from "@/lib/course/queries";
 import { getTeacherQuizDraft, quizCourseEnabled } from "@/lib/quiz";
@@ -71,6 +72,7 @@ export default async function TeacherQuizPreviewPage({ params }: PageProps) {
               </span>
             )}
           </div>
+          <QuizAttachmentPreview attachments={quiz.attachments} />
         </header>
         <div className="space-y-4">
           {quiz.questions.map((question, index) => (
@@ -86,6 +88,10 @@ export default async function TeacherQuizPreviewPage({ params }: PageProps) {
                   <h2 className="mt-2 text-base font-semibold leading-7 text-ink md:text-lg">
                     {question.prompt}
                   </h2>
+                  <QuizAttachmentPreview
+                    attachments={question.attachments}
+                    compact
+                  />
                 </div>
                 <span className="shrink-0 text-xs text-ink-mute">
                   {question.points} คะแนน
@@ -95,10 +101,16 @@ export default async function TeacherQuizPreviewPage({ params }: PageProps) {
                 {question.options.map((option) => (
                   <div
                     key={option.id}
-                    className="flex min-h-12 items-center gap-3 rounded-lg border border-hairline bg-bg/50 px-4 text-sm text-ink"
+                    className="rounded-lg border border-hairline bg-bg/50 p-3 text-sm text-ink"
                   >
-                    <span className="h-4 w-4 shrink-0 rounded-full border border-hairline" />
-                    {option.text}
+                    <div className="flex min-h-8 items-center gap-3">
+                      <span className="h-4 w-4 shrink-0 rounded-full border border-hairline" />
+                      {option.text}
+                    </div>
+                    <QuizAttachmentPreview
+                      attachments={option.attachments}
+                      compact
+                    />
                   </div>
                 ))}
               </div>

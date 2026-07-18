@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db/client";
-import { Conflict, Forbidden, NotFound } from "@/lib/errors";
+import { Conflict, Forbidden, NotFound, ValidationError } from "@/lib/errors";
 import { TX_OPTS } from "@/lib/assignment/constants";
 import type {
   QuizDraftReplace,
@@ -12,6 +12,7 @@ export const prismaQuizDraftRepository: QuizDraftRepository = {
   async createDraft(command) {
     return db.$transaction(async (tx) => {
       await assertWritableLesson(tx, command);
+      await assertOwnedAttachments(tx, command);
 
       const last = await tx.quiz.findFirst({
         where: { lessonId: command.draft.lessonId, archivedAt: null },
@@ -32,6 +33,7 @@ export const prismaQuizDraftRepository: QuizDraftRepository = {
 
       const quiz = await tx.quiz.create({
         data: {
+          ...(command.draft.id && { id: command.draft.id }),
           ...quizFields(command),
           position: (last?.position ?? -1) + 1,
           createdById: command.actorUserId,
@@ -83,6 +85,7 @@ export const prismaQuizDraftRepository: QuizDraftRepository = {
         throw new Conflict("quiz_content_locked_after_attempt");
       }
       await assertWritableLesson(tx, command);
+      await assertOwnedAttachments(tx, command);
 
       let scoreItemId = current.scoreItemId;
       if (command.draft.mode === "SCORED") {
@@ -200,6 +203,7 @@ function quizFields(command: QuizDraftWrite | QuizDraftReplace) {
 
 function questionRows(command: QuizDraftWrite | QuizDraftReplace) {
   return command.draft.questions.map((question, position) => ({
+    ...(question.id && { id: question.id }),
     type: question.type,
     prompt: question.prompt,
     explanation: question.explanation,
@@ -208,6 +212,7 @@ function questionRows(command: QuizDraftWrite | QuizDraftReplace) {
     fileAttachmentIds: question.fileAttachmentIds as Prisma.InputJsonValue,
     options: {
       create: question.options.map((option, optionPosition) => ({
+        id: option.id,
         text: option.text,
         isCorrect: option.isCorrect,
         position: optionPosition,
@@ -215,4 +220,101 @@ function questionRows(command: QuizDraftWrite | QuizDraftReplace) {
       })),
     },
   }));
+}
+
+async function assertOwnedAttachments(
+  tx: Transaction,
+  command: QuizDraftWrite | QuizDraftReplace
+): Promise<void> {
+  const expected: Array<{
+    fileId: string;
+    ownerType: "QUIZ" | "QUIZ_QUESTION" | "QUIZ_OPTION";
+    ownerId: string;
+  }> = [];
+
+  collectExpectedFiles(
+    expected,
+    "QUIZ",
+    command.draft.id,
+    command.draft.fileAttachmentIds
+  );
+  for (const question of command.draft.questions) {
+    collectExpectedFiles(
+      expected,
+      "QUIZ_QUESTION",
+      question.id,
+      question.fileAttachmentIds
+    );
+    for (const option of question.options) {
+      collectExpectedFiles(
+        expected,
+        "QUIZ_OPTION",
+        option.id,
+        option.fileAttachmentIds
+      );
+    }
+  }
+  if (expected.length === 0) return;
+
+  const expectedById = new Map<
+    string,
+    { ownerType: (typeof expected)[number]["ownerType"]; ownerId: string }
+  >();
+  for (const item of expected) {
+    const previous = expectedById.get(item.fileId);
+    if (
+      previous &&
+      (previous.ownerType !== item.ownerType ||
+        previous.ownerId !== item.ownerId)
+    ) {
+      throw new ValidationError({
+        fileAttachmentIds: "quiz_file_reused_across_owners",
+      });
+    }
+    expectedById.set(item.fileId, item);
+  }
+
+  const rows = await tx.fileAttachment.findMany({
+    where: {
+      id: { in: [...expectedById.keys()] },
+      uploadedById: command.actorUserId,
+      deletedAt: null,
+    },
+    select: { id: true, ownerType: true, ownerId: true },
+  });
+  const valid = new Set(
+    rows
+      .filter((row) => {
+        const item = expectedById.get(row.id);
+        return (
+          item?.ownerType === row.ownerType && item.ownerId === row.ownerId
+        );
+      })
+      .map((row) => row.id)
+  );
+  const invalid = [...expectedById.keys()].filter((id) => !valid.has(id));
+  if (invalid.length > 0) {
+    throw new ValidationError({
+      fileAttachmentIds: `quiz_file_not_owned — ${invalid.join(",")}`,
+    });
+  }
+}
+
+function collectExpectedFiles(
+  target: Array<{
+    fileId: string;
+    ownerType: "QUIZ" | "QUIZ_QUESTION" | "QUIZ_OPTION";
+    ownerId: string;
+  }>,
+  ownerType: "QUIZ" | "QUIZ_QUESTION" | "QUIZ_OPTION",
+  ownerId: string | undefined,
+  fileIds: string[]
+) {
+  if (fileIds.length === 0) return;
+  if (!ownerId) {
+    throw new ValidationError({
+      fileAttachmentIds: "missing_quiz_attachment_owner_id",
+    });
+  }
+  for (const fileId of fileIds) target.push({ fileId, ownerType, ownerId });
 }

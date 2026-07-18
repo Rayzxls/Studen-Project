@@ -331,4 +331,18 @@ export const can = {
     if (submission.enrollment.removedAt !== null) return false;
     return session.user.id === submission.enrollment.studentId;
   },
+
+  /**
+   * Quiz attachment owner check. Lifecycle locking remains in guards.ts;
+   * this pure predicate answers only who may upload to a course-owned Quiz.
+   */
+  uploadToQuiz(
+    session: Session,
+    quiz: { course: { teacherId: string } }
+  ): boolean {
+    return (
+      session.user.role === "TEACHER" &&
+      session.user.id === quiz.course.teacherId
+    );
+  },
 };

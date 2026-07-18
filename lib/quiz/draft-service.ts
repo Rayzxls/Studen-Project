@@ -37,7 +37,6 @@ export async function createQuizDraft(
 ): Promise<QuizDraftResult> {
   assertMutationsEnabled(input.courseOfferingId, ctx.env);
   const draft = CreateQuizDraftSchema.parse(input);
-  assertAttachmentsDisabled(draft);
 
   return (ctx.repository ?? prismaQuizDraftRepository).createDraft({
     actorUserId: ctx.actorUserId,
@@ -53,7 +52,6 @@ export async function saveQuizDraft(
 ): Promise<QuizDraftResult> {
   assertMutationsEnabled(input.courseOfferingId, ctx.env);
   const draft = CreateQuizDraftSchema.parse(input);
-  assertAttachmentsDisabled(draft);
 
   return (ctx.repository ?? prismaQuizDraftRepository).replaceDraft({
     quizId,
@@ -74,17 +72,4 @@ function assertMutationsEnabled(
 
 function totalPoints(draft: CreateQuizDraftData): number {
   return draft.questions.reduce((sum, question) => sum + question.points, 0);
-}
-
-function assertAttachmentsDisabled(draft: CreateQuizDraftData) {
-  const hasAttachments =
-    draft.fileAttachmentIds.length > 0 ||
-    draft.questions.some(
-      (question) =>
-        question.fileAttachmentIds.length > 0 ||
-        question.options.some((option) => option.fileAttachmentIds.length > 0)
-    );
-  if (hasAttachments) {
-    throw new Forbidden("quiz_attachments_not_enabled");
-  }
 }

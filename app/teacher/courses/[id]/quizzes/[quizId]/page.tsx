@@ -68,6 +68,7 @@ export default async function TeacherQuizBuilderPage({
           quiz.attemptCount > 0
         }
         initial={{
+          id: quiz.id,
           quizId: quiz.id,
           courseOfferingId: quiz.courseOfferingId,
           lessonId: quiz.lessonId,
@@ -84,9 +85,30 @@ export default async function TeacherQuizBuilderPage({
           shuffleQuestions: quiz.shuffleQuestions,
           shuffleOptions: quiz.shuffleOptions,
           hideExplanations: quiz.hideExplanations,
+          attachments: quiz.attachments.map((file) => ({
+            id: file.id,
+            name: file.originalFilename,
+            sizeBytes: file.sizeBytes,
+            mimeType: file.mimeType,
+          })),
           questions: quiz.questions.map((question) => ({
             ...question,
             explanation: question.explanation ?? "",
+            attachments: question.attachments.map((file) => ({
+              id: file.id,
+              name: file.originalFilename,
+              sizeBytes: file.sizeBytes,
+              mimeType: file.mimeType,
+            })),
+            options: question.options.map((option) => ({
+              ...option,
+              attachments: option.attachments.map((file) => ({
+                id: file.id,
+                name: file.originalFilename,
+                sizeBytes: file.sizeBytes,
+                mimeType: file.mimeType,
+              })),
+            })),
           })),
         }}
       />

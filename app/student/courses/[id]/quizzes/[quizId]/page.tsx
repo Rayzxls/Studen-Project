@@ -9,6 +9,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { CourseShell } from "@/components/course/course-shell";
+import { QuizAttachmentPreview } from "@/components/quiz/quiz-attachment-preview";
 import { assert } from "@/lib/auth/guards";
 import { getCourseOfferingForStudent } from "@/lib/course/queries";
 import {
@@ -100,6 +101,7 @@ export default async function StudentQuizOverviewPage({
               </div>
             )}
           </div>
+          <QuizAttachmentPreview attachments={quiz.attachments} />
         </header>
 
         <section className="grid gap-px overflow-hidden rounded-lg border border-hairline bg-hairline sm:grid-cols-3">

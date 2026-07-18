@@ -4,15 +4,22 @@ import { useEffect, useRef, useState } from "react";
 import { FileText, ImageIcon, Loader2, Paperclip, X } from "lucide-react";
 import { ALLOWED_MIME_TYPES, FILE_MAX_BYTES } from "@/lib/assignment/constants";
 
-type OwnerType = "ASSIGNMENT" | "MATERIAL" | "ANNOUNCEMENT";
+type OwnerType =
+  | "ASSIGNMENT"
+  | "MATERIAL"
+  | "ANNOUNCEMENT"
+  | "QUIZ"
+  | "QUIZ_QUESTION"
+  | "QUIZ_OPTION";
 
-type UploadedFile = {
+export type TeacherUploadedFile = {
   id: string;
   name: string;
   sizeBytes: number;
   mimeType: string;
-  previewUrl: string | null;
 };
+
+type UploadedFile = TeacherUploadedFile & { previewUrl: string | null };
 
 type UploadProgressEntry = {
   localId: string;
@@ -59,16 +66,34 @@ export function TeacherAttachmentUploader({
   ownerId,
   error,
   onBusyChange,
+  initialFiles = [],
+  maxFiles = MAX_FILES,
+  fieldName = "fileAttachmentIds",
+  disabled = false,
+  onChange,
 }: {
   ownerType: OwnerType;
   ownerId: string;
   error?: string;
   onBusyChange?: (busy: boolean) => void;
+  initialFiles?: TeacherUploadedFile[];
+  maxFiles?: number;
+  fieldName?: string;
+  disabled?: boolean;
+  onChange?: (files: TeacherUploadedFile[]) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const uploadedRef = useRef<UploadedFile[]>([]);
   const inFlightRef = useRef<UploadProgressEntry[]>([]);
-  const [uploaded, setUploaded] = useState<UploadedFile[]>([]);
+  const onChangeRef = useRef(onChange);
+  const [uploaded, setUploaded] = useState<UploadedFile[]>(() =>
+    initialFiles.map((file) => ({
+      ...file,
+      previewUrl: file.mimeType.startsWith("image/")
+        ? `/api/storage/files/${file.id}`
+        : null,
+    }))
+  );
   const [inFlight, setInFlight] = useState<UploadProgressEntry[]>([]);
   const [localError, setLocalError] = useState<string | null>(null);
   const busy = inFlight.some((e) => e.status !== "error");
@@ -79,7 +104,14 @@ export function TeacherAttachmentUploader({
 
   useEffect(() => {
     uploadedRef.current = uploaded;
+    onChangeRef.current?.(
+      uploaded.map(({ previewUrl: _previewUrl, ...file }) => file)
+    );
   }, [uploaded]);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   useEffect(() => {
     inFlightRef.current = inFlight;
@@ -88,10 +120,14 @@ export function TeacherAttachmentUploader({
   useEffect(() => {
     return () => {
       uploadedRef.current.forEach((file) => {
-        if (file.previewUrl) URL.revokeObjectURL(file.previewUrl);
+        if (file.previewUrl?.startsWith("blob:")) {
+          URL.revokeObjectURL(file.previewUrl);
+        }
       });
       inFlightRef.current.forEach((file) => {
-        if (file.previewUrl) URL.revokeObjectURL(file.previewUrl);
+        if (file.previewUrl?.startsWith("blob:")) {
+          URL.revokeObjectURL(file.previewUrl);
+        }
       });
     };
   }, []);
@@ -118,8 +154,8 @@ export function TeacherAttachmentUploader({
     }
 
     const totalFiles = uploaded.length + inFlight.length;
-    if (totalFiles >= MAX_FILES) {
-      setLocalError(`แนบไฟล์ได้สูงสุด ${MAX_FILES} ไฟล์`);
+    if (totalFiles >= maxFiles) {
+      setLocalError(`แนบไฟล์ได้สูงสุด ${maxFiles} ไฟล์`);
       return;
     }
 
@@ -230,7 +266,14 @@ export function TeacherAttachmentUploader({
 
   function onFilesPicked(files: FileList | null) {
     if (!files) return;
-    for (const file of Array.from(files).slice(0, MAX_FILES)) {
+    const remaining = Math.max(0, maxFiles - uploaded.length - inFlight.length);
+    const selected = Array.from(files);
+    if (selected.length > remaining) {
+      setLocalError(
+        `แนบไฟล์ได้อีก ${remaining} ไฟล์ (สูงสุด ${maxFiles} ไฟล์)`
+      );
+    }
+    for (const file of selected.slice(0, remaining)) {
       void uploadOne(file);
     }
     if (inputRef.current) inputRef.current.value = "";
@@ -239,7 +282,9 @@ export function TeacherAttachmentUploader({
   function removeUploaded(fileId: string) {
     setUploaded((prev) => {
       const removed = prev.find((file) => file.id === fileId);
-      if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl);
+      if (removed?.previewUrl?.startsWith("blob:")) {
+        URL.revokeObjectURL(removed.previewUrl);
+      }
       return prev.filter((file) => file.id !== fileId);
     });
   }
@@ -247,7 +292,9 @@ export function TeacherAttachmentUploader({
   function removeInFlight(localId: string) {
     setInFlight((prev) => {
       const removed = prev.find((file) => file.localId === localId);
-      if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl);
+      if (removed?.previewUrl?.startsWith("blob:")) {
+        URL.revokeObjectURL(removed.previewUrl);
+      }
       return prev.filter((file) => file.localId !== localId);
     });
   }
@@ -257,7 +304,7 @@ export function TeacherAttachmentUploader({
       <input type="hidden" name="ownerId" value={ownerId} />
       <input
         type="hidden"
-        name="fileAttachmentIds"
+        name={fieldName}
         value={JSON.stringify(uploaded.map((file) => file.id))}
       />
       <input
@@ -272,18 +319,20 @@ export function TeacherAttachmentUploader({
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        disabled={!ownerId || uploaded.length + inFlight.length >= MAX_FILES}
-        className="flex w-full items-center gap-2 rounded-xl border border-dashed border-black/15 bg-black/[0.015] px-3 py-2.5 text-left text-xs font-medium text-black/55 transition-colors hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+        disabled={
+          disabled || !ownerId || uploaded.length + inFlight.length >= maxFiles
+        }
+        className="flex w-full items-center gap-2 rounded-xl border border-dashed border-hairline bg-bg/45 px-3 py-2.5 text-left text-xs font-medium text-ink-mute transition-colors hover:border-blue-400 hover:bg-blue-500/5 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Paperclip className="h-4 w-4 shrink-0" aria-hidden="true" />
         แนบไฟล์ / รูป
-        <span className="ml-auto text-[11px] font-normal text-black/35">
-          สูงสุด {MAX_FILES} ไฟล์ · {HUMAN_MAX_MB} MB/ไฟล์
+        <span className="ml-auto text-[11px] font-normal text-ink-faint">
+          สูงสุด {maxFiles} ไฟล์ · {HUMAN_MAX_MB} MB/ไฟล์
         </span>
       </button>
 
       {(uploaded.length > 0 || inFlight.length > 0) && (
-        <div className="space-y-2 rounded-xl bg-black/[0.02] p-2">
+        <div className="space-y-2 rounded-xl bg-bg/55 p-2">
           {uploaded.map((file) => (
             <FileRow
               key={file.id}
@@ -340,20 +389,20 @@ function FileRow({
 }) {
   const isImage = mimeType?.startsWith("image/") ?? false;
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-black/[0.06] bg-white px-2.5 py-2">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-black/[0.04]">
+    <div className="flex items-center gap-3 rounded-lg border border-hairline bg-surface px-2.5 py-2">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-bg">
         {previewUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={previewUrl} alt="" className="h-full w-full object-cover" />
         ) : isImage ? (
-          <ImageIcon className="h-4 w-4 text-black/45" />
+          <ImageIcon className="h-4 w-4 text-ink-mute" />
         ) : (
-          <FileText className="h-4 w-4 text-black/45" />
+          <FileText className="h-4 w-4 text-ink-mute" />
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-xs font-medium text-black">{name}</p>
-        <p className="mt-0.5 text-[11px] text-black/40">
+        <p className="truncate text-xs font-medium text-ink">{name}</p>
+        <p className="mt-0.5 text-[11px] text-ink-mute">
           {error
             ? error
             : busy
@@ -361,7 +410,7 @@ function FileRow({
               : `อัปโหลดแล้ว · ${formatBytes(sizeBytes)}`}
         </p>
         {busy && (
-          <div className="mt-1 h-1 overflow-hidden rounded-full bg-black/[0.06]">
+          <div className="mt-1 h-1 overflow-hidden rounded-full bg-hairline">
             <div
               className="h-full rounded-full bg-blue-500"
               style={{ width: `${Math.max(progress ?? 0, 4)}%` }}
@@ -373,7 +422,7 @@ function FileRow({
       <button
         type="button"
         onClick={onRemove}
-        className="rounded-full p-1 text-black/35 transition-colors hover:bg-black/[0.05] hover:text-black"
+        className="rounded-full p-1 text-ink-faint transition-colors hover:bg-bg hover:text-ink"
         aria-label={`เอาไฟล์ ${name} ออก`}
       >
         <X className="h-4 w-4" />

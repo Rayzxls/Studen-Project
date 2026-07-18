@@ -21,6 +21,11 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import {
+  TeacherAttachmentUploader,
+  type TeacherUploadedFile,
+} from "@/components/attachment/teacher-attachment-uploader";
+import { QuizAttachmentPreview } from "@/components/quiz/quiz-attachment-preview";
 
 type QuestionType = "SINGLE_CHOICE" | "MULTIPLE_SELECT" | "TRUE_FALSE";
 
@@ -28,6 +33,7 @@ type BuilderOption = {
   id: string;
   text: string;
   isCorrect: boolean;
+  attachments: TeacherUploadedFile[];
 };
 
 type BuilderQuestion = {
@@ -36,10 +42,12 @@ type BuilderQuestion = {
   prompt: string;
   explanation: string;
   points: number;
+  attachments: TeacherUploadedFile[];
   options: BuilderOption[];
 };
 
 export type QuizBuilderInitialData = {
+  id: string;
   quizId?: string;
   courseOfferingId: string;
   lessonId: string;
@@ -56,6 +64,7 @@ export type QuizBuilderInitialData = {
   shuffleQuestions: boolean;
   shuffleOptions: boolean;
   hideExplanations: boolean;
+  attachments: TeacherUploadedFile[];
   questions: BuilderQuestion[];
 };
 
@@ -110,7 +119,7 @@ export function TeacherQuizBuilder({
   }
 
   function addQuestion() {
-    const next = blankQuestion();
+    const next = blankQuestion(data.courseOfferingId);
     setData((current) => ({
       ...current,
       questions: [...current.questions, next],
@@ -121,11 +130,13 @@ export function TeacherQuizBuilder({
   function duplicateQuestion() {
     const copy = {
       ...selected,
-      id: newId(),
+      id: newId(data.courseOfferingId),
       prompt: `${selected.prompt} (สำเนา)`,
+      attachments: [],
       options: selected.options.map((option) => ({
         ...option,
-        id: newId(),
+        id: newId(data.courseOfferingId),
+        attachments: [],
       })),
     };
     setData((current) => {
@@ -166,8 +177,18 @@ export function TeacherQuizBuilder({
       updateQuestion({
         type,
         options: [
-          { id: newId(), text: "จริง", isCorrect: true },
-          { id: newId(), text: "เท็จ", isCorrect: false },
+          {
+            id: newId(data.courseOfferingId),
+            text: "จริง",
+            isCorrect: true,
+            attachments: [],
+          },
+          {
+            id: newId(data.courseOfferingId),
+            text: "เท็จ",
+            isCorrect: false,
+            attachments: [],
+          },
         ],
       });
       return;
@@ -215,7 +236,12 @@ export function TeacherQuizBuilder({
     updateQuestion({
       options: [
         ...selected.options,
-        { id: newId(), text: "", isCorrect: false },
+        {
+          id: newId(data.courseOfferingId),
+          text: "",
+          isCorrect: false,
+          attachments: [],
+        },
       ],
     });
   }
@@ -230,6 +256,7 @@ export function TeacherQuizBuilder({
   }
 
   const payload = JSON.stringify({
+    id: data.id,
     courseOfferingId: data.courseOfferingId,
     lessonId: data.lessonId,
     title: data.title,
@@ -244,16 +271,19 @@ export function TeacherQuizBuilder({
     shuffleQuestions: data.shuffleQuestions,
     shuffleOptions: data.shuffleOptions,
     hideExplanations: data.hideExplanations,
-    fileAttachmentIds: [],
+    fileAttachmentIds: data.attachments.map((file) => file.id),
     questions: data.questions.map((question) => ({
+      id: question.id,
       type: question.type,
       prompt: question.prompt,
       explanation: question.explanation,
       points: question.points,
-      fileAttachmentIds: [],
+      fileAttachmentIds: question.attachments.map((file) => file.id),
       options: question.options.map((option) => ({
-        ...option,
-        fileAttachmentIds: [],
+        id: option.id,
+        text: option.text,
+        isCorrect: option.isCorrect,
+        fileAttachmentIds: option.attachments.map((file) => file.id),
       })),
     })),
   });
@@ -497,6 +527,20 @@ export function TeacherQuizBuilder({
               />
             </label>
 
+            <div>
+              <span className="mb-2 block text-sm font-medium text-ink">
+                ไฟล์ประกอบคำถาม
+              </span>
+              <TeacherAttachmentUploader
+                key={selected.id}
+                ownerType="QUIZ_QUESTION"
+                ownerId={selected.id}
+                initialFiles={selected.attachments}
+                disabled={locked}
+                onChange={(attachments) => updateQuestion({ attachments })}
+              />
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_120px]">
               <label className="block">
                 <span className="mb-2 block text-sm font-medium text-ink">
@@ -548,39 +592,54 @@ export function TeacherQuizBuilder({
                 {selected.options.map((option, index) => (
                   <div
                     key={option.id}
-                    className="flex items-center gap-2 rounded-lg border border-hairline bg-bg/40 p-2"
+                    className="rounded-lg border border-hairline bg-bg/40 p-2"
                   >
-                    <button
-                      type="button"
-                      onClick={() => markCorrect(index)}
-                      disabled={locked}
-                      title="กำหนดเป็นคำตอบที่ถูก"
-                      className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border ${option.isCorrect ? "border-emerald-600 bg-emerald-600 text-white" : "border-hairline text-transparent"}`}
-                    >
-                      <Check className="h-4 w-4" />
-                    </button>
-                    <input
-                      value={option.text}
-                      disabled={locked || selected.type === "TRUE_FALSE"}
-                      onChange={(event) =>
-                        updateOption(index, { text: event.target.value })
-                      }
-                      required
-                      maxLength={5000}
-                      className="min-w-0 flex-1 border-0 bg-transparent px-2 py-1.5 text-sm text-ink outline-none"
-                      placeholder={`ตัวเลือก ${index + 1}`}
-                    />
-                    {selected.type !== "TRUE_FALSE" && (
+                    <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => removeOption(index)}
-                        disabled={locked || selected.options.length <= 2}
-                        className="icon-btn h-8 w-8 text-red-600"
-                        title="ลบตัวเลือก"
+                        onClick={() => markCorrect(index)}
+                        disabled={locked}
+                        title="กำหนดเป็นคำตอบที่ถูก"
+                        className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border ${option.isCorrect ? "border-emerald-600 bg-emerald-600 text-white" : "border-hairline text-transparent"}`}
                       >
-                        <X className="h-4 w-4" />
+                        <Check className="h-4 w-4" />
                       </button>
-                    )}
+                      <input
+                        value={option.text}
+                        disabled={locked || selected.type === "TRUE_FALSE"}
+                        onChange={(event) =>
+                          updateOption(index, { text: event.target.value })
+                        }
+                        required
+                        maxLength={5000}
+                        className="min-w-0 flex-1 border-0 bg-transparent px-2 py-1.5 text-sm text-ink outline-none"
+                        placeholder={`ตัวเลือก ${index + 1}`}
+                      />
+                      {selected.type !== "TRUE_FALSE" && (
+                        <button
+                          type="button"
+                          onClick={() => removeOption(index)}
+                          disabled={locked || selected.options.length <= 2}
+                          className="icon-btn h-8 w-8 text-red-600"
+                          title="ลบตัวเลือก"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="mt-2 border-t border-hairline pt-2">
+                      <TeacherAttachmentUploader
+                        key={option.id}
+                        ownerType="QUIZ_OPTION"
+                        ownerId={option.id}
+                        initialFiles={option.attachments}
+                        maxFiles={5}
+                        disabled={locked}
+                        onChange={(attachments) =>
+                          updateOption(index, { attachments })
+                        }
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -753,9 +812,20 @@ export function TeacherQuizBuilder({
                 className="input text-xs"
               />
             </label>
-            <div className="rounded-lg border border-dashed border-hairline p-3 text-xs leading-5 text-ink-mute">
-              รูปและไฟล์หลายรายการจะเปิดหลังเชื่อม private upload boundary
-              ในขั้นถัดไป
+            <div>
+              <span className="mb-2 block text-xs font-medium text-ink">
+                ไฟล์ประกอบแบบทดสอบ
+              </span>
+              <TeacherAttachmentUploader
+                key={data.id}
+                ownerType="QUIZ"
+                ownerId={data.id}
+                initialFiles={data.attachments}
+                disabled={locked}
+                onChange={(attachments) =>
+                  setData((current) => ({ ...current, attachments }))
+                }
+              />
             </div>
           </aside>
         </div>
@@ -898,14 +968,23 @@ function StudentPreview({
             <h3 className="mt-5 text-lg font-semibold leading-8 text-ink">
               {question.prompt || "ยังไม่ได้เขียนโจทย์"}
             </h3>
+            <QuizAttachmentPreview
+              attachments={previewFiles(question.attachments)}
+            />
             <div className="mt-6 space-y-3">
               {question.options.map((option) => (
                 <div
                   key={option.id}
-                  className="flex min-h-12 items-center gap-3 rounded-lg border border-hairline bg-surface px-4 text-sm text-ink"
+                  className="rounded-lg border border-hairline bg-surface p-3 text-sm text-ink"
                 >
-                  <span className="h-4 w-4 rounded-full border border-hairline" />
-                  {option.text || "ตัวเลือกที่ยังไม่มีข้อความ"}
+                  <div className="flex min-h-8 items-center gap-3">
+                    <span className="h-4 w-4 rounded-full border border-hairline" />
+                    {option.text || "ตัวเลือกที่ยังไม่มีข้อความ"}
+                  </div>
+                  <QuizAttachmentPreview
+                    attachments={previewFiles(option.attachments)}
+                    compact
+                  />
                 </div>
               ))}
             </div>
@@ -943,6 +1022,7 @@ export function createBlankQuizData(input: {
 }): QuizBuilderInitialData {
   return {
     ...input,
+    id: newId(input.courseOfferingId),
     title: "",
     description: "",
     mode: "PRACTICE",
@@ -955,28 +1035,52 @@ export function createBlankQuizData(input: {
     shuffleQuestions: false,
     shuffleOptions: false,
     hideExplanations: false,
-    questions: [blankQuestion()],
+    attachments: [],
+    questions: [blankQuestion(input.courseOfferingId)],
   };
 }
 
-function blankQuestion(): BuilderQuestion {
+function blankQuestion(courseOfferingId: string): BuilderQuestion {
   return {
-    id: newId(),
+    id: newId(courseOfferingId),
     type: "SINGLE_CHOICE",
     prompt: "",
     explanation: "",
     points: 1,
+    attachments: [],
     options: [
-      { id: newId(), text: "", isCorrect: true },
-      { id: newId(), text: "", isCorrect: false },
+      {
+        id: newId(courseOfferingId),
+        text: "",
+        isCorrect: true,
+        attachments: [],
+      },
+      {
+        id: newId(courseOfferingId),
+        text: "",
+        isCorrect: false,
+        attachments: [],
+      },
     ],
   };
 }
 
-function newId(): string {
-  return typeof crypto !== "undefined" && "randomUUID" in crypto
-    ? crypto.randomUUID()
-    : `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+function newId(courseOfferingId: string): string {
+  const bytes = new Uint8Array(12);
+  crypto.getRandomValues(bytes);
+  const nonce = Array.from(bytes, (byte) =>
+    byte.toString(16).padStart(2, "0")
+  ).join("");
+  return `${courseOfferingId}_d_${nonce}`;
+}
+
+function previewFiles(files: TeacherUploadedFile[]) {
+  return files.map((file) => ({
+    id: file.id,
+    originalFilename: file.name,
+    mimeType: file.mimeType,
+    sizeBytes: file.sizeBytes,
+  }));
 }
 
 function toIsoOrNull(value: string): string | null {
