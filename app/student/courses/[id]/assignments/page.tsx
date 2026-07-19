@@ -14,16 +14,22 @@ import {
 import { requireRole } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { CourseShell } from "@/components/course/course-shell";
+import { DueCountdown } from "@/components/assignment/due-countdown";
+import {
+  AssignmentTimeline,
+  type TimelineItem,
+} from "@/components/assignment/assignment-timeline";
 import { studentCourseTabs } from "../_tabs";
 
 /**
- * Student Assignments tab — Phase 6 · P6-6, Phase 11 visual upgrade.
+ * Student Assignments tab — Phase 12 "งาน cockpit".
  *
- * Splits the flat list into a mobile-first workspace:
- *   - summary strip (ต้องส่ง / ส่งแล้ว / ตรวจแล้ว) tinted by status
- *   - "ต้องส่ง" section sorted by due date (closest first, no-due last)
- *   - "เสร็จแล้ว" section (submitted / late / graded), newest first
- *   - per-row status icon circle + due-countdown chip
+ * A mobile-first work cockpit rather than a flat list:
+ *   - live countdown hero for the single most urgent pending assignment
+ *   - due-date timeline plotting every dated assignment
+ *   - summary strip (ต้องส่ง / ส่งแล้ว / ตรวจแล้ว)
+ *   - auto-planned pending groups (เลยกำหนด / วันนี้ / สัปดาห์นี้ / ภายหลัง /
+ *     ไม่มีกำหนด), then a "เสร็จแล้ว" section
  *
  * The L1 boundary: a student NEVER sees other students' submissions or
  * counts. Only own Submission row joins.
@@ -45,12 +51,7 @@ type StatusKey =
 
 const STATUS_META: Record<
   StatusKey,
-  {
-    label: string;
-    badge: string;
-    iconBg: string;
-    icon: LucideIcon;
-  }
+  { label: string; badge: string; iconBg: string; icon: LucideIcon }
 > = {
   NOT_SUBMITTED: {
     label: "ยังไม่ส่ง",
@@ -105,36 +106,61 @@ const DUE_FMT = new Intl.DateTimeFormat("th-TH-u-ca-buddhist", {
   minute: "2-digit",
 });
 
-/** Coarse time-based countdown — enough precision for a due chip. */
+const BKK_DAY = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Bangkok",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+type Bucket = "overdue" | "today" | "week" | "later" | "none";
+
+const BUCKET_RANK: Record<Bucket, number> = {
+  overdue: 1,
+  today: 2,
+  week: 3,
+  later: 4,
+  none: 5,
+};
+
+const PLAN_GROUPS: { key: Bucket; label: string }[] = [
+  { key: "overdue", label: "เลยกำหนด" },
+  { key: "today", label: "ครบกำหนดวันนี้" },
+  { key: "week", label: "ภายในสัปดาห์นี้" },
+  { key: "later", label: "ภายหลัง" },
+  { key: "none", label: "ไม่มีกำหนดส่ง" },
+];
+
+function bucketOf(dueAt: Date | null, nowMs: number, todayStr: string): Bucket {
+  if (dueAt === null) return "none";
+  if (dueAt.getTime() < nowMs) return "overdue";
+  if (BKK_DAY.format(dueAt) === todayStr) return "today";
+  if (dueAt.getTime() - nowMs <= 7 * 86_400_000) return "week";
+  return "later";
+}
+
+/** Coarse due chip for a pending row. */
 function dueChip(
   dueAt: Date | null,
-  nowMs: number,
-  isDone: boolean
+  nowMs: number
 ): { label: string; className: string } | null {
-  if (dueAt === null || isDone) return null;
+  if (dueAt === null) return null;
   const diffMs = dueAt.getTime() - nowMs;
-  if (diffMs < 0) {
-    return {
-      label: "เลยกำหนด",
-      className: "bg-red-50 text-red-700",
-    };
-  }
+  if (diffMs < 0)
+    return { label: "เลยกำหนด", className: "bg-red-50 text-red-700" };
   const days = Math.floor(diffMs / 86_400_000);
-  if (days === 0) {
+  if (days === 0)
     return {
       label: "ครบกำหนดวันนี้",
       className: "bg-orange-50 text-orange-700",
     };
-  }
-  if (days === 1) {
+  if (days === 1)
     return { label: "พรุ่งนี้", className: "bg-orange-50 text-orange-700" };
-  }
-  if (days <= 7) {
+  if (days <= 7)
     return {
       label: `เหลืออีก ${days} วัน`,
       className: "bg-black/[0.05] text-black/60",
     };
-  }
   return null;
 }
 
@@ -150,7 +176,6 @@ export default async function StudentAssignmentsListPage({
 
   const { id } = await params;
 
-  // Authz: must be active member of this CourseOffering.
   const enrollment = await db.enrollment.findUnique({
     where: {
       studentId_courseOfferingId: {
@@ -201,26 +226,84 @@ export default async function StudentAssignmentsListPage({
 
   // eslint-disable-next-line react-hooks/purity
   const renderNow = Date.now();
+  const todayStr = BKK_DAY.format(new Date(renderNow));
 
-  const withStatus = assignments.map((a) => {
-    const status: StatusKey = (a.submissions[0]?.status ??
-      "NOT_SUBMITTED") as StatusKey;
-    return { ...a, status };
-  });
+  const withStatus = assignments.map((a) => ({
+    ...a,
+    status: (a.submissions[0]?.status ?? "NOT_SUBMITTED") as StatusKey,
+  }));
 
-  // ต้องส่ง — closest due first, no-due last (createdAt DESC preserved).
-  const todo = withStatus
-    .filter((a) => TODO_STATUSES.has(a.status))
-    .sort((a, b) => {
-      if (a.dueAt === null && b.dueAt === null) return 0;
-      if (a.dueAt === null) return 1;
-      if (b.dueAt === null) return -1;
-      return a.dueAt.getTime() - b.dueAt.getTime();
-    });
+  const pending = withStatus.filter((a) => TODO_STATUSES.has(a.status));
   const done = withStatus.filter((a) => !TODO_STATUSES.has(a.status));
 
+  // ── Hero: single most urgent pending item ─────────────────────
+  // RETURNED (must fix) first, then by due bucket, then soonest due.
+  const heroRank = (a: (typeof pending)[number]) =>
+    a.status === "RETURNED"
+      ? 0
+      : BUCKET_RANK[bucketOf(a.dueAt, renderNow, todayStr)];
+  const pendingSorted = [...pending].sort((a, b) => {
+    const r = heroRank(a) - heroRank(b);
+    if (r !== 0) return r;
+    if (a.dueAt && b.dueAt) return a.dueAt.getTime() - b.dueAt.getTime();
+    if (a.dueAt) return -1;
+    if (b.dueAt) return 1;
+    return 0;
+  });
+  const heroItem = pendingSorted[0] ?? null;
+
+  // ── Timeline: every dated assignment ──────────────────────────
+  const timelineItems: TimelineItem[] = withStatus
+    .filter((a) => a.dueAt !== null)
+    .map((a) => {
+      const isDone = !TODO_STATUSES.has(a.status);
+      const b = bucketOf(a.dueAt, renderNow, todayStr);
+      const soon =
+        a.dueAt !== null && a.dueAt.getTime() - renderNow <= 2 * 86_400_000;
+      const tone: TimelineItem["tone"] = isDone
+        ? "done"
+        : b === "overdue"
+          ? "overdue"
+          : b === "today" || soon
+            ? "soon"
+            : "future";
+      return {
+        id: a.id,
+        title: a.title,
+        href: `/student/courses/${id}/assignments/${a.id}`,
+        dueMs: a.dueAt!.getTime(),
+        tone,
+        isNext: heroItem !== null && a.id === heroItem.id,
+        dueLabel: DUE_FMT.format(a.dueAt!),
+      };
+    });
+
+  // ── Auto-plan groups (hero excluded to avoid showing it twice) ─
+  const groupedPending = pending.filter((a) => a.id !== heroItem?.id);
+  const planSections = PLAN_GROUPS.map((g) => ({
+    ...g,
+    rows: groupedPending
+      .filter((a) => bucketOf(a.dueAt, renderNow, todayStr) === g.key)
+      .sort((a, b) => {
+        if (a.dueAt && b.dueAt) return a.dueAt.getTime() - b.dueAt.getTime();
+        if (a.dueAt) return -1;
+        if (b.dueAt) return 1;
+        return 0;
+      }),
+  })).filter((g) => g.rows.length > 0);
+
   const gradedCount = done.filter((a) => a.status === "GRADED").length;
-  const submittedCount = done.length;
+
+  const heroNote =
+    heroItem === null
+      ? ""
+      : heroItem.status === "RETURNED"
+        ? "อ่านคำแนะนำจากครู แล้วส่งใหม่"
+        : heroItem.status === "DRAFT"
+          ? "มีร่างค้างอยู่ ทำต่อได้เลย"
+          : heroItem.dueAt === null
+            ? "ส่งเมื่อพร้อม"
+            : `กำหนดส่ง ${DUE_FMT.format(heroItem.dueAt)}`;
 
   return (
     <CourseShell
@@ -231,28 +314,6 @@ export default async function StudentAssignmentsListPage({
       tabs={studentCourseTabs(id)}
     >
       <div className="space-y-4">
-        {/* Summary strip — same tinted-KPI idiom as the Overview tab. */}
-        <div className="grid grid-cols-3 gap-2 md:gap-4">
-          <SummaryTile
-            label="ต้องส่ง"
-            value={todo.length}
-            tone={todo.length > 0 ? "orange" : "green"}
-            icon={<ClipboardList className="h-3.5 w-3.5" aria-hidden="true" />}
-          />
-          <SummaryTile
-            label="ส่งแล้ว"
-            value={submittedCount}
-            tone={submittedCount > 0 ? "green" : "neutral"}
-            icon={<Send className="h-3.5 w-3.5" aria-hidden="true" />}
-          />
-          <SummaryTile
-            label="ตรวจแล้ว"
-            value={gradedCount}
-            tone={gradedCount > 0 ? "blue" : "neutral"}
-            icon={<GraduationCap className="h-3.5 w-3.5" aria-hidden="true" />}
-          />
-        </div>
-
         {assignments.length === 0 ? (
           <div className="card p-6">
             <div className="rounded-xl border border-dashed border-black/15 p-10 text-center">
@@ -267,33 +328,75 @@ export default async function StudentAssignmentsListPage({
           </div>
         ) : (
           <>
-            {/* ต้องส่ง */}
-            <section className="card p-5 md:p-6">
-              <header className="flex items-baseline justify-between gap-3">
-                <h2
-                  className="text-base font-medium text-black"
-                  style={{ letterSpacing: "-0.01em" }}
-                >
-                  ต้องส่ง
-                </h2>
-                <span className="text-xs text-black/50">
-                  {todo.length === 0 ? "ไม่มีงานค้าง" : `${todo.length} รายการ`}
-                </span>
-              </header>
-
-              {todo.length === 0 ? (
-                <div className="mt-3 flex items-center gap-3 rounded-xl bg-green-50 px-4 py-3">
-                  <CheckCircle2
-                    className="h-5 w-5 shrink-0 text-green-700"
-                    aria-hidden="true"
-                  />
-                  <p className="text-sm text-green-700">
-                    ส่งงานครบทุกรายการแล้ว เยี่ยมมาก
+            {heroItem ? (
+              <DueCountdown
+                title={heroItem.title}
+                href={`/student/courses/${id}/assignments/${heroItem.id}`}
+                dueAtISO={heroItem.dueAt ? heroItem.dueAt.toISOString() : null}
+                note={heroNote}
+                isReturned={heroItem.status === "RETURNED"}
+              />
+            ) : (
+              <div className="card-tinted card-tinted-green flex items-center gap-3 p-5">
+                <CheckCircle2
+                  className="h-6 w-6 shrink-0 text-green-700"
+                  aria-hidden="true"
+                />
+                <div>
+                  <p className="text-sm font-medium text-green-700">
+                    ส่งงานครบทุกรายการแล้ว
+                  </p>
+                  <p className="text-xs text-green-700/80">
+                    เยี่ยมมาก ไม่มีงานค้างในวิชานี้
                   </p>
                 </div>
-              ) : (
+              </div>
+            )}
+
+            <AssignmentTimeline items={timelineItems} nowMs={renderNow} />
+
+            {/* Summary strip */}
+            <div className="grid grid-cols-3 gap-2 md:gap-4">
+              <SummaryTile
+                label="ต้องส่ง"
+                value={pending.length}
+                tone={pending.length > 0 ? "orange" : "green"}
+                icon={
+                  <ClipboardList className="h-3.5 w-3.5" aria-hidden="true" />
+                }
+              />
+              <SummaryTile
+                label="ส่งแล้ว"
+                value={done.length}
+                tone={done.length > 0 ? "green" : "neutral"}
+                icon={<Send className="h-3.5 w-3.5" aria-hidden="true" />}
+              />
+              <SummaryTile
+                label="ตรวจแล้ว"
+                value={gradedCount}
+                tone={gradedCount > 0 ? "blue" : "neutral"}
+                icon={
+                  <GraduationCap className="h-3.5 w-3.5" aria-hidden="true" />
+                }
+              />
+            </div>
+
+            {/* Auto-planned pending groups */}
+            {planSections.map((g) => (
+              <section key={g.key} className="card p-5 md:p-6">
+                <header className="flex items-baseline justify-between gap-3">
+                  <h2
+                    className="text-base font-medium text-black"
+                    style={{ letterSpacing: "-0.01em" }}
+                  >
+                    {g.label}
+                  </h2>
+                  <span className="text-xs text-black/50">
+                    {g.rows.length} รายการ
+                  </span>
+                </header>
                 <ul className="mt-2 divide-y divide-black/5">
-                  {todo.map((a) => (
+                  {g.rows.map((a) => (
                     <AssignmentRow
                       key={a.id}
                       courseId={id}
@@ -302,8 +405,8 @@ export default async function StudentAssignmentsListPage({
                     />
                   ))}
                 </ul>
-              )}
-            </section>
+              </section>
+            ))}
 
             {/* เสร็จแล้ว */}
             {done.length > 0 && (
@@ -385,7 +488,7 @@ function AssignmentRow({
   const meta = STATUS_META[assignment.status];
   const Icon = meta.icon;
   const isDone = !TODO_STATUSES.has(assignment.status);
-  const chip = dueChip(assignment.dueAt, nowMs, isDone);
+  const chip = isDone ? null : dueChip(assignment.dueAt, nowMs);
   const isOverdue =
     !isDone && assignment.dueAt !== null && assignment.dueAt.getTime() < nowMs;
   const dueLabel = assignment.dueAt
