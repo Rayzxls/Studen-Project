@@ -138,7 +138,7 @@ export function DueCountdown({
 
 function CountCell({ value, label }: { value: string; label: string }) {
   return (
-    <div className="rounded-xl bg-white/70 px-2 py-2.5 text-center">
+    <div className="rounded-xl bg-surface px-2 py-2.5 text-center shadow-sm ring-1 ring-black/[0.05]">
       <span
         suppressHydrationWarning
         className="block text-2xl font-semibold leading-none text-blue-700"
@@ -146,7 +146,9 @@ function CountCell({ value, label }: { value: string; label: string }) {
       >
         {value}
       </span>
-      <span className="mt-1 block text-[10px] text-blue-700/70">{label}</span>
+      <span className="mt-1 block text-[10px] font-medium text-blue-700/70">
+        {label}
+      </span>
     </div>
   );
 }
