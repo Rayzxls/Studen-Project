@@ -19,7 +19,6 @@ import {
   AssignmentTimeline,
   type TimelineItem,
 } from "@/components/assignment/assignment-timeline";
-import { WorkloadHeatmap } from "@/components/assignment/workload-heatmap";
 import { FocusMode, type FocusItem } from "@/components/assignment/focus-mode";
 import { studentCourseTabs } from "../_tabs";
 
@@ -296,10 +295,7 @@ export default async function StudentAssignmentsListPage({
 
   const gradedCount = done.filter((a) => a.status === "GRADED").length;
 
-  // ── Workload heatmap (pending due dates) + focus queue ─────────
-  const heatmapDueDates = pending
-    .filter((a) => a.dueAt !== null)
-    .map((a) => a.dueAt!.getTime());
+  // ── Focus queue (urgency-ordered pending) ─────────────────────
   const focusItems: FocusItem[] = pendingSorted.map((a) => {
     const chip = dueChip(a.dueAt, renderNow);
     return {
@@ -375,8 +371,6 @@ export default async function StudentAssignmentsListPage({
             )}
 
             <AssignmentTimeline items={timelineItems} nowMs={renderNow} />
-
-            <WorkloadHeatmap dueDates={heatmapDueDates} nowMs={renderNow} />
 
             {/* Summary strip */}
             <div className="grid grid-cols-3 gap-2 md:gap-4">
