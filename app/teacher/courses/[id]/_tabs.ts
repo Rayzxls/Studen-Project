@@ -10,20 +10,57 @@ import { quizCourseEnabled } from "@/lib/quiz";
  * edit, delete, and grade assignment work.
  *
  * Detail routes (assignments/[aid]) inherit the active "งาน" tab via
- * prefix matching in TabNav.
+ * prefix matching in TabNav. `icon` is a serializable key (not the
+ * component) so this server-built list crosses the RSC boundary safely.
  */
 export const teacherCourseTabs = (courseId: string): CourseTab[] => [
-  { label: "ฟีด", href: `/teacher/courses/${courseId}/feed` },
+  { label: "ฟีด", href: `/teacher/courses/${courseId}/feed`, icon: "feed" },
   ...(lessonWorkspaceCourseEnabled(courseId)
-    ? [{ label: "บทเรียน", href: `/teacher/courses/${courseId}/lessons` }]
+    ? [
+        {
+          label: "บทเรียน",
+          href: `/teacher/courses/${courseId}/lessons`,
+          icon: "lessons" as const,
+        },
+      ]
     : []),
   ...(quizCourseEnabled(courseId)
-    ? [{ label: "แบบทดสอบ", href: `/teacher/courses/${courseId}/quizzes` }]
+    ? [
+        {
+          label: "แบบทดสอบ",
+          href: `/teacher/courses/${courseId}/quizzes`,
+          icon: "quizzes" as const,
+        },
+      ]
     : []),
-  { label: "งาน", href: `/teacher/courses/${courseId}/assignments` },
-  { label: "สมาชิก", href: `/teacher/courses/${courseId}/members` },
-  { label: "เช็คชื่อ", href: `/teacher/courses/${courseId}/attendance` },
-  { label: "คะแนน", href: `/teacher/courses/${courseId}/scores` },
-  { label: "ตั้งค่า", href: `/teacher/courses/${courseId}/settings` },
-  { label: "ภาพรวม", href: `/teacher/courses/${courseId}/overview` },
+  {
+    label: "งาน",
+    href: `/teacher/courses/${courseId}/assignments`,
+    icon: "assignments",
+  },
+  {
+    label: "สมาชิก",
+    href: `/teacher/courses/${courseId}/members`,
+    icon: "members",
+  },
+  {
+    label: "เช็คชื่อ",
+    href: `/teacher/courses/${courseId}/attendance`,
+    icon: "attendance",
+  },
+  {
+    label: "คะแนน",
+    href: `/teacher/courses/${courseId}/scores`,
+    icon: "scores",
+  },
+  {
+    label: "ตั้งค่า",
+    href: `/teacher/courses/${courseId}/settings`,
+    icon: "settings",
+  },
+  {
+    label: "ภาพรวม",
+    href: `/teacher/courses/${courseId}/overview`,
+    icon: "overview",
+  },
 ];

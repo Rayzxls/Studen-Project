@@ -109,7 +109,7 @@ export function CourseShell({
           {/* Content zone — themed surface with content sitting up against
               the banner edge. The teacher avatar overlaps the banner
               so every course carries its owner's identity. */}
-          <div className="card-hero-content relative -mt-10 pb-0">
+          <div className="card-hero-content relative -mt-10">
             <div className="flex items-start gap-4">
               <span
                 className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-surface shadow-card"
@@ -138,13 +138,12 @@ export function CourseShell({
                 </p>
               </div>
             </div>
-
-            {/* iOS-segmented tab nav along the bottom edge of the card. */}
-            <div className="mt-5 -mx-6 px-6 pt-2 pb-0">
-              <TabNav tabs={tabs} />
-            </div>
           </div>
         </section>
+
+        {/* Underline tab bar — its own bar below the hero (Phase 11.8), so the
+            hero stays "just a hero". Scrolls horizontally on narrow screens. */}
+        <TabNav tabs={tabs} />
 
         <div>{children}</div>
       </main>
