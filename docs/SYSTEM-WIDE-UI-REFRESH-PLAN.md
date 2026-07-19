@@ -2,7 +2,7 @@
 
 **Status:** Proposed for product review  
 **Created:** 2026-07-19  
-**Scope:** every current page surface, before another major Feature release  
+**Scope:** every Student, Teacher, Shared, Auth, and Public page surface; Admin is deferred
 **Reference:** Dashboard Variant B, ADR-0028 Calm Ledger v2, ADR-0029 task-modulated motion
 
 ## Product intent
@@ -21,16 +21,23 @@ This is a presentation and information-architecture release. It must not change 
 
 ## Current inventory
 
-There are **86 `page.tsx` routes** in the current tree:
+There are **86 `page.tsx` routes** in the current tree. This release includes **60 routes** and defers all 26 Admin routes:
 
 | Area | Page count | Notes |
 | --- | ---: | --- |
 | Student | 21 | course discovery, timetable, results, and course workspaces |
 | Teacher | 29 | includes Lesson/Quiz design-reference Prototype routes |
-| Admin | 26 | existing Admin sidebar and read-only course observer |
+| Admin | 26 | deferred; keep the existing UI and behavior unchanged |
 | Shared, Auth, and Public | 10 | Dashboard, Profile, Moderation entry, auth, privacy, and landing |
 
-There are **54 course-scoped pages** under Student, Teacher, and Admin. These must be migrated through a shared Course Workspace contract instead of being restyled independently.
+There are **46 in-scope course pages** under Student and Teacher. These must be migrated through a shared Course Workspace contract instead of being restyled independently.
+
+## Explicitly deferred
+
+- No Admin route receives a visual migration in this release.
+- Do not remove or redesign the existing Admin sidebar, Dashboard, lists, imports, Audit, Moderation operations, Setup, user detail, or observer pages.
+- Shared-component changes must preserve existing Admin behavior, authorization, and read-only observer boundaries, but Admin visual parity is not an acceptance requirement for this release.
+- Admin UI planning resumes only after the Student/Teacher/Public refresh is accepted.
 
 ## Design rules
 
@@ -57,7 +64,7 @@ T4 pages may use responsive layout, sticky context, clear status, and press feed
 
 - Student sees only their own learning, score, attendance, submission, and enrolled-course data.
 - Teacher context is limited to CourseOfferings they own.
-- Admin keeps the existing global sidebar and remains a read-only observer of teaching data.
+- Admin remains unchanged and outside the visual migration scope.
 - Files remain private. The UI must never introduce a public object URL.
 - A UI refresh must not create a hidden mutation or new role capability.
 
@@ -134,15 +141,6 @@ Routes:
 - Teacher grading/review queue
 - Password reset and forced reset
 
-### Mode A: Admin operations
-
-Admin already has a global sidebar. Do not add the Student/Teacher rail again.
-
-- Widen operational list and detail pages consistently inside the existing layout.
-- Use dense filters, tables/cards, and a case/detail aside only where it improves comparison.
-- Preserve T4 Calm behavior for Audit, imports, account lifecycle, Moderation decisions, and Admin Observer pages.
-- Keep teaching actions hidden in observer routes.
-
 ### Mode P: Public and authentication
 
 - Landing remains a T1 showcase and is not made to resemble Dashboard.
@@ -168,7 +166,6 @@ Admin already has a global sidebar. Do not add the Student/Teacher rail again.
 | Settings | grouped settings forms | section index, save state, danger-zone guidance | form fields |
 | Profile | identity and account controls | security state and theme preview | identity fields |
 | Moderation | queue/case evidence and decisions | policy/state timeline | evidence content |
-| Admin lists | filters and records | operational alerts when actionable | table totals already visible |
 
 ## Delivery waves
 
@@ -179,7 +176,7 @@ Admin already has a global sidebar. Do not add the Student/Teacher rail again.
 3. Record each route's motion tier and role boundary.
 4. Define a no-duplicate-content checklist.
 
-Exit: every current page belongs to one layout mode and one motion tier.
+Exit: every in-scope page belongs to one layout mode and one motion tier.
 
 ### UI1 - Shared workspace foundation
 
@@ -248,13 +245,7 @@ Migrate T3 and T4 pages without adding decorative motion:
 
 Exit: workflows keep keyboard efficiency, sticky actions, error states, and role permissions.
 
-### UI6 - Admin operations
-
-Standardise Admin Dashboard, Teachers, Students, Classes, Imports, Activity Review, Audit, Moderation, Setup, User detail, and course observer pages inside the existing Admin layout.
-
-Exit: Admin has one dense operational language and no Teacher mutation appears.
-
-### UI7 - Public/auth polish and cleanup
+### UI6 - Public/auth polish and cleanup
 
 - Align Login, Signup, Join, Reset, Privacy, Not Found, and public theme behavior.
 - Keep Landing's separate showcase composition.
@@ -284,9 +275,9 @@ Every migrated family must pass:
 3. No horizontal overflow or overlapping text/actions.
 4. Keyboard navigation, visible focus, semantic headings, and accessible dialog/sheet behavior.
 5. `prefers-reduced-motion` fallback.
-6. Student, Teacher, and Admin authorization regression tests.
-7. Admin observer remains read-only.
-8. Private file routes remain authenticated and no public R2 URL appears.
+6. Student and Teacher authorization regression tests.
+7. Private file routes remain authenticated and no public R2 URL appears.
+8. Existing Admin smoke tests remain green even though Admin UI is not being migrated.
 9. Existing critical workflow E2E remains green.
 10. Lint, TypeScript, unit tests, Production build, and safe smoke pass.
 
