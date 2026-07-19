@@ -19,6 +19,8 @@ import {
   AssignmentTimeline,
   type TimelineItem,
 } from "@/components/assignment/assignment-timeline";
+import { WorkloadHeatmap } from "@/components/assignment/workload-heatmap";
+import { FocusMode, type FocusItem } from "@/components/assignment/focus-mode";
 import { studentCourseTabs } from "../_tabs";
 
 /**
@@ -294,6 +296,25 @@ export default async function StudentAssignmentsListPage({
 
   const gradedCount = done.filter((a) => a.status === "GRADED").length;
 
+  // ── Workload heatmap (pending due dates) + focus queue ─────────
+  const heatmapDueDates = pending
+    .filter((a) => a.dueAt !== null)
+    .map((a) => a.dueAt!.getTime());
+  const focusItems: FocusItem[] = pendingSorted.map((a) => {
+    const chip = dueChip(a.dueAt, renderNow);
+    return {
+      id: a.id,
+      title: a.title,
+      href: `/student/courses/${id}/assignments/${a.id}`,
+      dueLabel: a.dueAt
+        ? `กำหนดส่ง ${DUE_FMT.format(a.dueAt)}`
+        : "ส่งเมื่อพร้อม",
+      statusLabel: STATUS_META[a.status].label,
+      statusClass: STATUS_META[a.status].badge,
+      note: chip ? chip.label : null,
+    };
+  });
+
   const heroNote =
     heroItem === null
       ? ""
@@ -355,6 +376,8 @@ export default async function StudentAssignmentsListPage({
 
             <AssignmentTimeline items={timelineItems} nowMs={renderNow} />
 
+            <WorkloadHeatmap dueDates={heatmapDueDates} nowMs={renderNow} />
+
             {/* Summary strip */}
             <div className="grid grid-cols-3 gap-2 md:gap-4">
               <SummaryTile
@@ -380,6 +403,8 @@ export default async function StudentAssignmentsListPage({
                 }
               />
             </div>
+
+            <FocusMode items={focusItems} />
 
             {/* Auto-planned pending groups */}
             {planSections.map((g) => (
