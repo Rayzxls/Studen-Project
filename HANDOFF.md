@@ -1,5 +1,12 @@
 # HANDOFF — Beagle Classroom
 
+## SYSTEM-WIDE UI REFRESH PLANNING — 2026-07-19
+
+- Product scope is now every current page surface, not only Dashboard or Timetable. The repository currently has 86 `page.tsx` routes: 21 Student, 29 Teacher, 26 Admin, and 10 Shared/Auth/Public; 54 are course-scoped.
+- Added `docs/SYSTEM-WIDE-UI-REFRESH-PLAN.md` as a Proposed design and rollout contract. It defines Operating, Course, Focus, Admin, and Public/Auth layout modes; page-specific context ownership; seven delivery waves; and acceptance gates for all themes, Mobile/Desktop, accessibility, reduced motion, roles, private files, and Admin read-only behavior.
+- The refresh is gated before another major Feature. The first real product checkpoint is Teacher/Student Timetable using a shared Dashboard-level workspace shell without duplicating schedule data or changing Teacher CRUD/Student read-only behavior.
+- This planning update authorises no Production route cutover, schema migration, Neon mutation, R2 change, or new role capability. ADR-0028/0029 remain authoritative: arrival surfaces may be interactive, while grading, attendance, review, Audit, settings, imports, and Admin CRUD stay calm.
+
 ## TIMETABLE AUTHENTICATED ACCEPTANCE — 2026-07-19
 
 - Added an isolated-Neon Playwright tracer for the released responsive timetable. The Teacher signs in with Dark theme, creates a Wednesday slot through the aggregate timetable UI, edits its location, and deletes it; persistence is asserted after each mutation.

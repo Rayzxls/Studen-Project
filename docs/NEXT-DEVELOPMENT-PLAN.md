@@ -1,8 +1,16 @@
 # Next Development Plan
 
-**Updated:** 2026-07-18
-**Sequence:** Core completion -> Lesson Workspace -> Quiz -> Identity/Integrations -> AI -> Optional product modules  
-**Current state:** A0 Documentation Alignment, A1 Report/Export v1, the A2 automated QA gate, and A3/A3.1 static correctness work are complete. QR/invite browser acceptance is now automated; physical phone-camera and production private-R2 smoke remain manual release checks. A4 Account Lifecycle and the operational Moderation Center have additive persistence, audited transactions, and feature-flagged Admin surfaces. Lesson Workspace B1-B6 are implemented and accepted on isolated Neon QA. Quiz C1-C5c are implemented; the additive Quiz migrations are current in Production and the exact ENG 4/3 CourseOffering pilot has read/mutations enabled. Authenticated role/private-R2 browser acceptance remains a manual post-rollout check; other and future CourseOfferings remain fail-closed.
+**Updated:** 2026-07-19
+**Sequence:** Core completion -> Lesson Workspace -> Quiz -> System-wide UI completion -> Identity/Integrations -> AI -> Optional product modules
+**Current state:** A0 Documentation Alignment, A1 Report/Export v1, the A2 automated QA gate, and A3/A3.1 static correctness work are complete. QR/invite browser acceptance is now automated; physical phone-camera and production private-R2 smoke remain manual release checks. A4 Account Lifecycle and the operational Moderation Center have additive persistence, audited transactions, and feature-flagged Admin surfaces. Lesson Workspace B1-B6 are implemented and accepted on isolated Neon QA. Quiz C1-C5c are implemented; the additive Quiz migrations are current in Production and the exact ENG 4/3 CourseOffering pilot has read/mutations enabled. Before another major Feature release, the proposed System-wide UI Refresh must bring all 86 current page surfaces into a shared, role-aware, responsive workspace system. Authenticated role/private-R2 browser acceptance remains a manual post-rollout check; other and future CourseOfferings remain fail-closed.
+
+## UI completion gate before new Features
+
+**Status:** Proposed 2026-07-19; planning only, no route cutover authorised yet.
+
+The product owner requires every page, including Feed, Lessons, Assignments, Quiz, Scores, Attendance, Members, Settings, Profile, Moderation, and Admin operations, to feel as complete as the approved Dashboard without duplicating information or distracting from data entry.
+
+The source plan is [SYSTEM-WIDE-UI-REFRESH-PLAN.md](./SYSTEM-WIDE-UI-REFRESH-PLAN.md). It classifies all current routes into Operating, Course, Focus, Admin, and Public/Auth layout modes; preserves ADR-0029 motion tiers; and migrates the real Teacher/Student Timetable first as the product checkpoint. Identity, external integration, AI, Chat, Reward, Meeting, Subscription, and other major Features remain behind this UI completion gate.
 
 ## Why this order
 
