@@ -150,6 +150,9 @@ Automate and manually verify these end-to-end paths:
   expired/deleted as planned.
 - Integration tests passed on QA; critical Playwright passed 2/2 on the isolated
   port-3100 app; the anonymous safe smoke passed 10/10.
+- Responsive timetable acceptance passed on isolated Neon QA on 2026-07-19:
+  Teacher Dark create/edit/delete, Student Cream read-only projection, persisted
+  time/location, and iPhone `390x844` overflow are covered by Playwright `1/1`.
 - Remaining before full A2 closure: complete the Student/Teacher/Admin manual
   workflow checklist, mobile viewport and all-theme acceptance, QR handoff, and
   private production-R2 upload/preview smoke. These are manual release checks,

@@ -365,6 +365,9 @@ function ScheduleBlock({
   return (
     <Link
       href={slot.href}
+      data-testid="timetable-slot"
+      data-view="desktop"
+      data-course-id={slot.courseId}
       onClick={(event) => {
         if (!onSelect) return;
         event.stopPropagation();
@@ -443,6 +446,8 @@ function MobileTimetable({
               key={day}
               type="button"
               role="tab"
+              data-testid="timetable-day-tab"
+              data-day={day}
               aria-selected={active}
               onClick={() => onSelectDay(day)}
               className={`flex h-11 min-w-[66px] shrink-0 items-center justify-center gap-1.5 rounded-xl border px-3 text-sm font-semibold transition-colors ${
@@ -522,6 +527,9 @@ function MobileTimetable({
                   />
                   <Link
                     href={slot.href}
+                    data-testid="timetable-slot"
+                    data-view="mobile"
+                    data-course-id={slot.courseId}
                     onClick={(event) => {
                       if (!onSlotSelect) return;
                       event.preventDefault();

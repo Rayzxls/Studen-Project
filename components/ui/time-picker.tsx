@@ -101,7 +101,7 @@ export function TimePicker({
     "grid h-9 min-w-9 place-items-center rounded-lg text-sm tabular-nums transition-colors";
 
   return (
-    <div ref={rootRef} className="relative">
+    <div ref={rootRef} className="relative" data-testid={`time-picker-${name}`}>
       <input type="hidden" name={name} value={current} required={required} />
 
       <button
@@ -138,6 +138,7 @@ export function TimePicker({
                 <button
                   key={h}
                   type="button"
+                  data-testid={`time-picker-hour-${pad(h)}`}
                   onClick={() => pickHour(h)}
                   aria-pressed={selected}
                   className={`${gridBtn} ${
@@ -164,6 +165,7 @@ export function TimePicker({
                 <button
                   key={m}
                   type="button"
+                  data-testid={`time-picker-minute-${pad(m)}`}
                   onClick={() => pickMinute(m)}
                   aria-pressed={selected}
                   className={`${gridBtn} ${
