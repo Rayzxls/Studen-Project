@@ -37,7 +37,7 @@ export default async function StudentCourseMembersPage({ params }: PageProps) {
       backHref="/dashboard"
       tabs={studentCourseTabs(id)}
     >
-      <StudentMembersList members={members} />
+      <StudentMembersList members={members} teacher={course.teacher} />
     </CourseShell>
   );
 }
