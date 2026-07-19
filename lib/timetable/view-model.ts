@@ -22,6 +22,12 @@ export const TIMETABLE_DAY_SHORT_LABELS = [
 
 export type TimetableRole = "student" | "teacher";
 
+export interface BangkokClock {
+  dayOfWeek: number;
+  minutes: number;
+  timeLabel: string;
+}
+
 export interface TimetableDisplaySlot {
   id: string;
   courseId: string;
@@ -196,4 +202,46 @@ export function getNextTimetableSlot(
   }
 
   return next;
+}
+
+export function getBangkokClock(date: Date): BangkokClock {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Bangkok",
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const values = Object.fromEntries(
+    parts.map((part) => [part.type, part.value])
+  );
+  const dayMap: Record<string, number> = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
+  };
+  const hours = Number(values.hour ?? 0);
+  const minutes = Number(values.minute ?? 0);
+  return {
+    dayOfWeek: dayMap[values.weekday ?? "Mon"] ?? 1,
+    minutes: hours * 60 + minutes,
+    timeLabel: `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`,
+  };
+}
+
+export function formatTimetableDistance(distanceMinutes: number): string {
+  if (distanceMinutes < 60) return `อีก ${distanceMinutes} นาที`;
+  if (distanceMinutes < 24 * 60) {
+    const hours = Math.floor(distanceMinutes / 60);
+    const minutes = distanceMinutes % 60;
+    return minutes > 0
+      ? `อีก ${hours} ชม. ${minutes} นาที`
+      : `อีก ${hours} ชม.`;
+  }
+  const days = Math.floor(distanceMinutes / (24 * 60));
+  return days === 1 ? "พรุ่งนี้" : `อีก ${days} วัน`;
 }

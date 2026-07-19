@@ -3,8 +3,15 @@ import { redirect } from "next/navigation";
 import { CalendarDays, ChevronLeft } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
+import { moderationCenterEnabled } from "@/lib/moderation/feature-flags";
 import { TopNav } from "@/components/layout/top-nav";
 import { StudentBottomNav } from "@/components/layout/student-bottom-nav";
+import {
+  OperatingWorkspaceGrid,
+  WorkspaceEmptyState,
+  WorkspacePageHeader,
+} from "@/components/layout/operating-workspace";
+import { TimetableContextRail } from "@/components/timetable/timetable-context-rail";
 import { WeeklyTimetable } from "@/components/timetable/weekly-timetable";
 import type { TimetableDisplaySlot } from "@/lib/timetable/view-model";
 
@@ -58,6 +65,16 @@ export default async function StudentTimetablePage() {
       href: `/student/courses/${course.id}`,
     }))
   );
+  const unscheduledCourses = enrollments
+    .filter(({ course }) => course.timetableSlots.length === 0)
+    .map(({ course }) => ({
+      id: course.id,
+      name: course.name,
+      className: course.class.name,
+      classId: course.classId,
+      href: `/student/courses/${course.id}`,
+    }));
+  const nowIso = new Date().toISOString();
 
   return (
     <div className="min-h-screen bg-bg">
@@ -72,50 +89,54 @@ export default async function StudentTimetablePage() {
           กลับไป Dashboard
         </Link>
 
-        <div className="mt-5 flex items-center gap-3">
-          <span className="grid h-12 w-12 place-items-center rounded-xl bg-blue-50 text-blue-700">
-            <CalendarDays className="h-5 w-5" aria-hidden="true" />
-          </span>
-          <div>
-            <h1 className="text-2xl font-semibold text-ink md:text-3xl">
-              ตารางเรียนของฉัน
-            </h1>
-            <p className="mt-0.5 text-sm text-ink-mute">
-              รวมทุกวิชาที่กำลังเรียน · ดูคาบปัจจุบันและคาบถัดไปได้ในหน้าเดียว
-            </p>
-          </div>
+        <div className="mt-5">
+          <WorkspacePageHeader
+            icon={CalendarDays}
+            eyebrow="พื้นที่ของนักเรียน"
+            title="ตารางเรียนของฉัน"
+            description="รวมทุกวิชาที่กำลังเรียน ดูคาบปัจจุบันและคาบถัดไปได้ในหน้าเดียว"
+          />
         </div>
 
-        {slots.length === 0 ? (
-          <div className="mt-6 grid min-h-64 place-items-center rounded-2xl border border-dashed border-hairline bg-surface p-8 text-center">
-            <div>
-              <span className="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-blue-50 text-blue-700">
-                <CalendarDays className="h-5 w-5" aria-hidden="true" />
-              </span>
-              <p className="mt-4 text-sm font-semibold text-ink">
-                ยังไม่มีตารางเรียน
-              </p>
-              <p className="mt-1 max-w-sm text-xs leading-5 text-ink-mute">
-                เมื่อครูตั้งตารางสอนของวิชาที่คุณเรียน
-                คาบเรียนจะปรากฏที่นี่โดยอัตโนมัติ
-              </p>
-              <Link
-                href="/student/courses"
-                className="btn-secondary btn-sm mt-4"
-              >
-                ดูห้องเรียนของฉัน
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <div className="mt-6">
-            <WeeklyTimetable
+        <OperatingWorkspaceGrid
+          role="student"
+          showModeration={moderationCenterEnabled()}
+          activeHref="/student/timetable"
+          desktopNavigationOnly
+          main={
+            slots.length === 0 ? (
+              <WorkspaceEmptyState
+                icon={CalendarDays}
+                title="ยังไม่มีตารางเรียน"
+                description="เมื่อครูตั้งตารางสอนของวิชาที่คุณเรียน คาบเรียนจะปรากฏที่นี่โดยอัตโนมัติ"
+                action={
+                  <Link
+                    href="/student/courses"
+                    className="btn-secondary btn-sm"
+                  >
+                    ดูห้องเรียนของฉัน
+                  </Link>
+                }
+              />
+            ) : (
+              <WeeklyTimetable
+                slots={slots}
+                role="student"
+                nowIso={nowIso}
+                showBrief={false}
+              />
+            )
+          }
+          aside={
+            <TimetableContextRail
               slots={slots}
               role="student"
-              nowIso={new Date().toISOString()}
+              nowIso={nowIso}
+              totalCourseCount={enrollments.length}
+              unscheduledCourses={unscheduledCourses}
             />
-          </div>
-        )}
+          }
+        />
 
         <div className="h-20 md:hidden" />
       </main>
