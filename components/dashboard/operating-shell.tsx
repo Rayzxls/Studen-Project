@@ -2,17 +2,93 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import {
   BookOpen,
+  CalendarDays,
   ChevronRight,
   ClipboardCheck,
   GraduationCap,
+  LayoutDashboard,
+  Plus,
+  Scale,
+  UserRound,
   UsersRound,
 } from "lucide-react";
-export {
-  OperatingWorkspaceGrid as DashboardOperatingGrid,
-  WorkspaceNavigationRail as DashboardNavigationRail,
-} from "@/components/layout/operating-workspace";
 
 type DashboardRole = "student" | "teacher";
+
+function navigationFor(role: DashboardRole, showModeration: boolean) {
+  const common = [
+    { href: "/dashboard", label: "ภาพรวม", icon: LayoutDashboard },
+  ];
+
+  const roleItems =
+    role === "student"
+      ? [
+          { href: "/student/courses", label: "ห้องเรียน", icon: BookOpen },
+          { href: "/student/terms", label: "ผลการเรียน", icon: GraduationCap },
+          {
+            href: "/student/timetable",
+            label: "ตารางเรียน",
+            icon: CalendarDays,
+          },
+        ]
+      : [
+          { href: "/teacher/courses", label: "วิชาที่สอน", icon: BookOpen },
+          {
+            href: "/teacher/timetable",
+            label: "ตารางสอน",
+            icon: CalendarDays,
+          },
+          { href: "/teacher/courses/new", label: "สร้างวิชา", icon: Plus },
+        ];
+
+  return [
+    ...common,
+    ...roleItems,
+    ...(showModeration
+      ? [{ href: "/moderation", label: "Moderation", icon: Scale }]
+      : []),
+    { href: "/profile", label: "โปรไฟล์", icon: UserRound },
+  ];
+}
+
+export function DashboardNavigationRail({
+  role,
+  showModeration,
+}: {
+  role: DashboardRole;
+  showModeration: boolean;
+}) {
+  const items = navigationFor(role, showModeration);
+
+  return (
+    <nav
+      className="group/rail relative z-20 flex gap-2 overflow-x-auto rounded-2xl border border-hairline bg-surface p-2 shadow-sm xl:sticky xl:top-24 xl:h-fit xl:w-[76px] xl:flex-col xl:overflow-visible xl:transition-[width] xl:duration-300 xl:hover:w-[220px]"
+      aria-label="ทางลัด Dashboard"
+    >
+      {items.map(({ href, label, icon: Icon }, index) => {
+        const active = index === 0;
+        return (
+          <Link
+            key={href}
+            href={href}
+            title={label}
+            aria-current={active ? "page" : undefined}
+            className={`group/item flex h-12 min-w-12 items-center gap-3 overflow-hidden rounded-xl px-3 transition-all duration-200 hover:no-underline ${
+              active
+                ? "bg-blue-600 text-white shadow-sm"
+                : "text-ink-mute hover:bg-bg hover:text-blue-700"
+            }`}
+          >
+            <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+            <span className="whitespace-nowrap text-sm font-semibold xl:translate-x-1 xl:opacity-0 xl:transition-all xl:duration-200 xl:group-hover/rail:translate-x-0 xl:group-hover/rail:opacity-100">
+              {label}
+            </span>
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
 
 export function DashboardFocusBrief({
   role,
@@ -53,6 +129,26 @@ export function DashboardFocusBrief({
         <ChevronRight className="h-4 w-4" aria-hidden="true" />
       </Link>
     </section>
+  );
+}
+
+export function DashboardOperatingGrid({
+  role,
+  showModeration,
+  main,
+  aside,
+}: {
+  role: DashboardRole;
+  showModeration: boolean;
+  main: ReactNode;
+  aside: ReactNode;
+}) {
+  return (
+    <div className="mt-6 grid gap-5 xl:grid-cols-[76px_minmax(0,1fr)_350px] xl:items-start">
+      <DashboardNavigationRail role={role} showModeration={showModeration} />
+      <div className="min-w-0">{main}</div>
+      <aside className="space-y-4 xl:sticky xl:top-24">{aside}</aside>
+    </div>
   );
 }
 

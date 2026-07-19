@@ -43,17 +43,11 @@ type Props = {
   slots: TimetableDisplaySlot[];
   courses: TimetableCourseOption[];
   nowIso: string;
-  showBrief?: boolean;
 };
 
 const INITIAL_STATE: TimetableSlotActionState = {};
 
-export function TimetableManager({
-  slots,
-  courses,
-  nowIso,
-  showBrief = true,
-}: Props) {
+export function TimetableManager({ slots, courses, nowIso }: Props) {
   const [dialog, setDialog] = useState<DialogState>(null);
 
   return (
@@ -91,7 +85,6 @@ export function TimetableManager({
         onEmptyCellSelect={(defaults) =>
           setDialog({ mode: "create", defaults })
         }
-        showBrief={showBrief}
       />
 
       {dialog && (

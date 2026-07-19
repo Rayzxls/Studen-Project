@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  formatTimetableDistance,
-  getBangkokClock,
   getNextTimetableSlot,
   positionDaySlots,
   suggestTimetableSlot,
@@ -94,19 +92,5 @@ describe("timetable view model", () => {
       startTime: "08:00",
       endTime: "09:00",
     });
-  });
-
-  it("projects a fixed instant into Bangkok classroom time", () => {
-    expect(getBangkokClock(new Date("2026-07-19T02:15:00.000Z"))).toEqual({
-      dayOfWeek: 0,
-      minutes: 9 * 60 + 15,
-      timeLabel: "09:15",
-    });
-  });
-
-  it("formats the next-class distance for quick scanning", () => {
-    expect(formatTimetableDistance(35)).toBe("อีก 35 นาที");
-    expect(formatTimetableDistance(125)).toBe("อีก 2 ชม. 5 นาที");
-    expect(formatTimetableDistance(24 * 60)).toBe("พรุ่งนี้");
   });
 });
