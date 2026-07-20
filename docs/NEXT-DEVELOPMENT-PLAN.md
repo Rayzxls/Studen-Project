@@ -1,7 +1,7 @@
 # Next Development Plan
 
 **Updated:** 2026-07-18
-**Sequence:** Core completion -> Lesson Workspace -> Quiz -> Identity/Integrations -> AI -> Optional product modules  
+**Sequence:** Core completion -> Lesson Workspace -> Quiz -> Identity/Integrations -> AI -> Optional product modules
 **Current state:** A0 Documentation Alignment, A1 Report/Export v1, the A2 automated QA gate, and A3/A3.1 static correctness work are complete. QR/invite browser acceptance is now automated; physical phone-camera and production private-R2 smoke remain manual release checks. A4 Account Lifecycle and the operational Moderation Center have additive persistence, audited transactions, and feature-flagged Admin surfaces. Lesson Workspace B1-B6 are implemented and accepted on isolated Neon QA. Quiz C1-C5c are implemented; the additive Quiz migrations are current in Production and the exact ENG 4/3 CourseOffering pilot has read/mutations enabled. Authenticated role/private-R2 browser acceptance remains a manual post-rollout check; other and future CourseOfferings remain fail-closed.
 
 ## Why this order

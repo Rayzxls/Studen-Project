@@ -202,6 +202,9 @@ export default async function StudentCourseOverviewPage({ params }: PageProps) {
   });
   const recent = merged.slice(0, RECENT_LIMIT);
 
+  // ── Current / next timetable slot (Asia/Bangkok wall clock) ───
+  const highlightedSlot = findHighlightedSlot(slots);
+
   return (
     <CourseShell
       session={session}
@@ -211,39 +214,82 @@ export default async function StudentCourseOverviewPage({ params }: PageProps) {
       tabs={studentCourseTabs(id)}
     >
       <div className="space-y-6">
-        {/* 1) Class info card */}
-        <div className="card p-6">
-          <h2
-            className="mb-3 flex items-center gap-2 text-base font-medium text-black"
-            style={{ letterSpacing: "-0.01em" }}
-          >
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
-              <CalendarClock className="h-4 w-4" aria-hidden="true" />
-            </span>
-            ตารางเรียน
-          </h2>
+        {/* 1) Class info card — weekly timetable with the current / next
+            slot highlighted so the card answers "เรียนคาบต่อไปเมื่อไหร่"
+            at a glance. */}
+        <div className="card p-5 md:p-6">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2
+              className="flex items-center gap-2 text-base font-medium text-black"
+              style={{ letterSpacing: "-0.01em" }}
+            >
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+                <CalendarClock className="h-4 w-4" aria-hidden="true" />
+              </span>
+              ตารางเรียน
+            </h2>
+            {slots.length > 0 && (
+              <span className="text-xs text-black/50">
+                {slots.length} คาบ/สัปดาห์
+              </span>
+            )}
+          </div>
           {slots.length === 0 ? (
-            <p className="text-sm text-black/50">
+            <p className="mt-3 text-sm text-black/50">
               ครูยังไม่ได้ตั้งตารางเรียนประจำสัปดาห์
             </p>
           ) : (
-            <ul className="space-y-1.5 text-sm text-black/80">
-              {slots.map((s) => (
-                <li key={s.id} className="flex flex-wrap items-center gap-2">
-                  <span className="inline-flex h-6 w-9 items-center justify-center rounded bg-black/[0.04] text-xs font-medium text-black/70">
-                    {dayOfWeekShort(s.dayOfWeek)}
-                  </span>
-                  <span className="font-mono text-xs text-black">
-                    {s.startTime}–{s.endTime}
-                  </span>
-                  {s.location && (
-                    <span className="inline-flex items-center gap-0.5 text-xs text-black/60">
-                      <MapPin className="h-3 w-3" aria-hidden="true" />
-                      {s.location}
+            <ul className="mt-3 space-y-1 text-sm text-black/80">
+              {slots.map((s) => {
+                const highlight =
+                  highlightedSlot !== null && s.id === highlightedSlot.id;
+                return (
+                  <li
+                    key={s.id}
+                    className={
+                      "-mx-2 flex min-h-9 flex-wrap items-center gap-2 rounded-xl px-2 py-1.5 " +
+                      (highlight ? "bg-blue-50" : "")
+                    }
+                  >
+                    <span
+                      className={
+                        "inline-flex h-6 w-9 items-center justify-center rounded text-xs font-medium " +
+                        (highlight
+                          ? "bg-blue-500 text-white"
+                          : "bg-black/[0.04] text-black/70")
+                      }
+                    >
+                      {dayOfWeekShort(s.dayOfWeek)}
                     </span>
-                  )}
-                </li>
-              ))}
+                    <span
+                      className={
+                        "font-mono text-xs " +
+                        (highlight ? "text-blue-700" : "text-black")
+                      }
+                    >
+                      {s.startTime}–{s.endTime}
+                    </span>
+                    {s.location && (
+                      <span
+                        className={
+                          "inline-flex items-center gap-0.5 text-xs " +
+                          (highlight ? "text-blue-700/80" : "text-black/60")
+                        }
+                      >
+                        <MapPin className="h-3 w-3" aria-hidden="true" />
+                        {s.location}
+                      </span>
+                    )}
+                    {highlight && (
+                      <span className="ml-auto inline-flex rounded-full bg-blue-500 px-2 py-px text-[10px] font-medium text-white">
+                        {highlightedSlot.kind === "now"
+                          ? "กำลังเรียน"
+                          : "คาบถัดไป"}
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
@@ -346,6 +392,79 @@ export default async function StudentCourseOverviewPage({ params }: PageProps) {
       </div>
     </CourseShell>
   );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Timetable highlight — current or next weekly slot
+// ─────────────────────────────────────────────────────────────
+
+type TimetableSlotRow = {
+  id: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  location: string | null;
+};
+
+/**
+ * Pick the slot to highlight: the slot in progress right now (Bangkok wall
+ * clock), else the nearest upcoming slot in the weekly cycle. Pure over
+ * the injected slot list; reads the clock once per render.
+ */
+function findHighlightedSlot(
+  slots: TimetableSlotRow[]
+): { id: string; kind: "now" | "next" } | null {
+  if (slots.length === 0) return null;
+
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Bangkok",
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(now);
+  const dowMap: Record<string, number> = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
+  };
+  const weekday = parts.find((p) => p.type === "weekday")?.value ?? "";
+  const hour = parts.find((p) => p.type === "hour")?.value ?? "00";
+  const minute = parts.find((p) => p.type === "minute")?.value ?? "00";
+  const nowDow = dowMap[weekday];
+  if (nowDow === undefined) return null;
+  const nowMinutes = Number(hour) * 60 + Number(minute);
+
+  const toMinutes = (t: string): number => {
+    const [h, m] = t.split(":").map(Number);
+    return (h ?? 0) * 60 + (m ?? 0);
+  };
+
+  // In progress right now?
+  const current = slots.find(
+    (s) =>
+      s.dayOfWeek === nowDow &&
+      toMinutes(s.startTime) <= nowMinutes &&
+      nowMinutes < toMinutes(s.endTime)
+  );
+  if (current) return { id: current.id, kind: "now" };
+
+  // Nearest upcoming occurrence in the 7-day cycle.
+  let best: { id: string; delta: number } | null = null;
+  for (const s of slots) {
+    const dayDelta = (s.dayOfWeek - nowDow + 7) % 7;
+    let delta = dayDelta * 1440 + (toMinutes(s.startTime) - nowMinutes);
+    if (delta <= 0) delta += 7 * 1440; // already passed today → next week
+    if (best === null || delta < best.delta) {
+      best = { id: s.id, delta };
+    }
+  }
+  return best ? { id: best.id, kind: "next" } : null;
 }
 
 // ─────────────────────────────────────────────────────────────

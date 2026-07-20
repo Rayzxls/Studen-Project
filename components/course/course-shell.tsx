@@ -8,15 +8,14 @@ import { TabNav, type CourseTab } from "./tab-nav";
 
 /**
  * Layout shell shared by teacher (P3-5) and student (P3-6) CourseOffering
- * tabs. Phase 11.7 redesign: course header becomes a `.card-hero` surface
- * with the course-slot gradient mesh banner (same hash as /admin/dashboard
- * class cards + /dashboard course lists), giving each course a stable
- * visual identity carried through every tab.
+ * tabs. The course header is a `.card-hero` surface with the classroom
+ * banner; Phase 11.8 widened the shell to 1480px (matching the dashboard)
+ * and moved the tab bar out of the hero so the hero stays "just a hero".
  *
  *   - <TopNav> (shared, sticky frosted)
  *   - course context bar (back link + term name)
- *   - .card-hero (course slot banner + content zone with course title)
- *   - <TabNav> as iOS-segmented control on the card edge
+ *   - .card-hero (banner + content zone with course title)
+ *   - <TabNav> underline bar below the hero
  *   - children
  *
  * Action buttons (e.g. teacher's "QR ของห้องนี้", "regen code") live INSIDE
@@ -58,10 +57,10 @@ export function CourseShell({
 }: CourseShellProps) {
   return (
     <div className="min-h-screen bg-bg">
-      <TopNav session={session} maxWidth="max-w-5xl" />
+      <TopNav session={session} maxWidth="max-w-[1480px]" />
 
       <div className="border-b border-black/[0.06] glass-nav print:hidden">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
+        <div className="mx-auto flex max-w-[1480px] items-center justify-between px-6 py-3">
           <Link href={backHref} className="btn-ghost btn-sm">
             <ChevronLeft className="h-4 w-4" />
             กลับ
@@ -70,10 +69,9 @@ export function CourseShell({
         </div>
       </div>
 
-      <main className="mx-auto max-w-5xl animate-fade-in space-y-6 px-6 py-8">
-        {/* Course hero — .card-hero with banner zone + content zone +
-            segmented tab nav sitting on the card edge. ADR-0028 § 4 +
-            § 5. */}
+      <main className="mx-auto max-w-[1480px] animate-fade-in space-y-6 px-6 py-8">
+        {/* Course hero — .card-hero with banner zone + content zone. The tab
+            bar renders as its own bar after this section. ADR-0028 § 4. */}
         <section className="card-hero">
           {/* Banner zone — immersive 3D classroom scene (teacher teaching),
               shared by both teacher and student course shells. */}
@@ -109,7 +107,7 @@ export function CourseShell({
           {/* Content zone — themed surface with content sitting up against
               the banner edge. The teacher avatar overlaps the banner
               so every course carries its owner's identity. */}
-          <div className="card-hero-content relative -mt-10 pb-0">
+          <div className="card-hero-content relative -mt-10">
             <div className="flex items-start gap-4">
               <span
                 className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-surface shadow-card"
@@ -138,13 +136,12 @@ export function CourseShell({
                 </p>
               </div>
             </div>
-
-            {/* iOS-segmented tab nav along the bottom edge of the card. */}
-            <div className="mt-5 -mx-6 px-6 pt-2 pb-0">
-              <TabNav tabs={tabs} />
-            </div>
           </div>
         </section>
+
+        {/* Underline tab bar — its own bar below the hero (Phase 11.8), so the
+            hero stays "just a hero". Scrolls horizontally on narrow screens. */}
+        <TabNav tabs={tabs} />
 
         <div>{children}</div>
       </main>
