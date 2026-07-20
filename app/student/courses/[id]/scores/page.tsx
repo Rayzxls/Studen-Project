@@ -92,12 +92,22 @@ export default async function StudentScoresPage({ params }: PageProps) {
                 className="mt-1 text-3xl font-semibold tracking-tight text-black"
                 style={{ letterSpacing: "-0.02em" }}
               >
-                {hasAnyPublished ? formatPercent(percent) : "ยังไม่มีคะแนน"}
+                {hasAnyPublished ? (
+                  <>
+                    {earnedPoints}
+                    <span className="text-xl font-medium text-black/40">
+                      {" "}
+                      / {fullPoints} คะแนน
+                    </span>
+                  </>
+                ) : (
+                  "ยังไม่มีคะแนน"
+                )}
               </p>
               {hasAnyPublished && (
                 <p className="mt-1 text-xs text-black/50">
-                  เก็บแล้ว {earnedPoints} จาก {fullPoints} คะแนน · ประกาศแล้ว{" "}
-                  {publishedItems}/{totalItems} รายการ
+                  คิดเป็น {formatPercent(percent)} · ประกาศแล้ว {publishedItems}
+                  /{totalItems} รายการ
                 </p>
               )}
             </div>
