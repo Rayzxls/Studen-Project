@@ -11,6 +11,7 @@ import {
   ImageIcon,
   X,
 } from "lucide-react";
+import { fileDeliveryUrl } from "@/lib/storage/delivery";
 
 export type AssignmentAttachmentFile = {
   id: string;
@@ -176,7 +177,7 @@ function ImagePreviewDialog({
         <div className="absolute left-0 top-0 z-10 flex max-w-[calc(100%-4rem)] items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-xs font-medium text-white backdrop-blur">
           <span className="truncate">{active.originalFilename}</span>
           <a
-            href={fileHref(active.id)}
+            href={fileHref(active.id, "download")}
             download={active.originalFilename}
             className="inline-flex shrink-0 items-center gap-1 text-white/75 hover:text-white hover:no-underline"
           >
@@ -236,8 +237,11 @@ function ImagePreviewDialog({
   );
 }
 
-function fileHref(fileId: string): string {
-  return `/api/storage/files/${fileId}`;
+function fileHref(
+  fileId: string,
+  mode: "preview" | "download" = "preview"
+): string {
+  return fileDeliveryUrl(fileId, undefined, mode);
 }
 
 function formatBytes(bytes: number): string {

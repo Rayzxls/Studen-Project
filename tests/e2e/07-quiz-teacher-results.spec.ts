@@ -288,6 +288,7 @@ test("teacher manages Quiz results and publishes explicit zero scores", async ({
   await page.screenshot({
     path: testInfo.outputPath("teacher-quiz-results-published-desktop.png"),
     fullPage: true,
+    caret: "initial",
   });
   await page.setViewportSize({ width: 390, height: 844 });
   const layout = await page.evaluate(() => ({
@@ -298,6 +299,7 @@ test("teacher manages Quiz results and publishes explicit zero scores", async ({
   await page.screenshot({
     path: testInfo.outputPath("teacher-quiz-results-published-mobile.png"),
     fullPage: true,
+    caret: "initial",
   });
 
   await page.setViewportSize({ width: 1440, height: 900 });

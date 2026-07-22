@@ -121,6 +121,7 @@ test("student completes a Practice Quiz with autosave and visible score", async 
   await page.screenshot({
     path: testInfo.outputPath("student-quiz-attempt-desktop.png"),
     fullPage: true,
+    caret: "initial",
   });
 
   await page.setViewportSize({ width: 390, height: 844 });
@@ -134,6 +135,7 @@ test("student completes a Practice Quiz with autosave and visible score", async 
   await page.screenshot({
     path: testInfo.outputPath("student-quiz-attempt-mobile.png"),
     fullPage: true,
+    caret: "initial",
   });
   await page.setViewportSize({ width: 1440, height: 900 });
 
@@ -156,6 +158,7 @@ test("student completes a Practice Quiz with autosave and visible score", async 
   await page.screenshot({
     path: testInfo.outputPath("student-quiz-result-desktop.png"),
     fullPage: true,
+    caret: "initial",
   });
 
   await page.setViewportSize({ width: 390, height: 844 });
@@ -169,5 +172,6 @@ test("student completes a Practice Quiz with autosave and visible score", async 
   await page.screenshot({
     path: testInfo.outputPath("student-quiz-list-mobile.png"),
     fullPage: true,
+    caret: "initial",
   });
 });

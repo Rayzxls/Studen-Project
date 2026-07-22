@@ -80,7 +80,7 @@ export async function TopNav({
           href={session ? "/dashboard" : "/"}
           className="inline-flex items-center gap-2 hover:no-underline"
         >
-          <BeagleLogo className="h-7 w-7 object-contain" />
+          <BeagleLogo className="h-7 w-auto object-contain" />
           <span
             className="text-base font-semibold text-black"
             style={{ letterSpacing: "-0.03em" }}

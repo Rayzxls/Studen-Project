@@ -184,7 +184,7 @@ export default async function HomePage() {
       <footer className="px-6 pb-12">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-y-4 border-t border-black/[0.08] pt-8 text-sm text-black/55">
           <div className="flex items-center gap-2">
-            <BeagleLogo className="h-6 w-6" />
+            <BeagleLogo className="h-6 w-auto" />
             <span style={{ letterSpacing: "-0.01em" }}>
               Beagle Classroom · ปีการศึกษา 2568
             </span>

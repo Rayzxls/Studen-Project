@@ -13,8 +13,8 @@ export function BeagleLogo({ className }: { className?: string }) {
     <Image
       src="/brand/beagle-mark.png"
       alt="Beagle Classroom"
-      width={96}
-      height={100}
+      width={464}
+      height={483}
       className={className}
       priority
     />
@@ -31,7 +31,7 @@ export function BeagleWordmark({
 }) {
   return (
     <span className={"inline-flex items-center gap-2 " + (className ?? "")}>
-      <BeagleLogo className="h-8 w-8 object-contain" />
+      <BeagleLogo className="h-8 w-auto object-contain" />
       <span
         className={"text-xl font-semibold text-black " + (textClassName ?? "")}
         style={{ letterSpacing: "-0.03em" }}

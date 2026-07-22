@@ -7,14 +7,23 @@ type Mode = "integration" | "all" | "e2e" | "smoke";
 
 const mode = process.argv[2] as Mode | undefined;
 const extraArgs = process.argv.slice(3);
+const remoteDatabaseTimeoutArgs = [
+  "--testTimeout=30000",
+  "--hookTimeout=30000",
+];
 const commands: Record<Mode, { entry: string; args: string[] }> = {
   integration: {
     entry: resolve("node_modules/vitest/vitest.mjs"),
-    args: ["run", "tests/integration", "--no-file-parallelism"],
+    args: [
+      "run",
+      "tests/integration",
+      "--no-file-parallelism",
+      ...remoteDatabaseTimeoutArgs,
+    ],
   },
   all: {
     entry: resolve("node_modules/vitest/vitest.mjs"),
-    args: ["run", "--no-file-parallelism"],
+    args: ["run", "--no-file-parallelism", ...remoteDatabaseTimeoutArgs],
   },
   e2e: {
     entry: resolve("node_modules/@playwright/test/cli.js"),
@@ -53,7 +62,12 @@ isolatedEnv = {
 const command = commands[mode];
 const commandArgs =
   mode === "integration" && extraArgs.length > 0
-    ? ["run", ...extraArgs, "--no-file-parallelism"]
+    ? [
+        "run",
+        ...extraArgs,
+        "--no-file-parallelism",
+        ...remoteDatabaseTimeoutArgs,
+      ]
     : [...command.args, ...extraArgs];
 const child = spawn(process.execPath, [command.entry, ...commandArgs], {
   cwd: process.cwd(),

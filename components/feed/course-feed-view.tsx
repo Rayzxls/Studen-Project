@@ -494,9 +494,9 @@ function EmptyState({ filter }: { filter: CourseFeedFilter }) {
       <Image
         src="/brand/beagle-mark.png"
         alt=""
-        width={56}
-        height={58}
-        className="mx-auto mb-3 opacity-80"
+        width={464}
+        height={483}
+        className="mx-auto mb-3 h-[58px] w-auto opacity-80"
         aria-hidden="true"
       />
       <p>{label}</p>

@@ -4,6 +4,7 @@ import { db } from "@/lib/db/client";
 import { Forbidden, NotFound, errorResponse } from "@/lib/errors";
 import { isModerationEvidenceFile } from "@/lib/moderation/evidence";
 import { moderationCenterEnabled } from "@/lib/moderation/feature-flags";
+import { resolveFileDisposition } from "@/lib/storage/delivery";
 import { buildContentDisposition } from "@/lib/storage/keys";
 import {
   isLocalStorageFallbackEnabled,
@@ -23,7 +24,7 @@ interface RouteProps {
  * Authorization is deliberately scoped to the case snapshot: knowing a file
  * id alone is insufficient, and the object never becomes publicly readable.
  */
-export async function GET(_request: Request, { params }: RouteProps) {
+export async function GET(request: Request, { params }: RouteProps) {
   try {
     await requireRole(["ADMIN"]);
     if (!moderationCenterEnabled()) {
@@ -54,9 +55,11 @@ export async function GET(_request: Request, { params }: RouteProps) {
     });
     if (!file) throw new NotFound("moderation_evidence_not_found");
 
+    const forceDownload =
+      new URL(request.url).searchParams.get("download") === "1";
     const disposition = buildContentDisposition({
       filename: file.originalFilename,
-      disposition: isInlinePreviewMime(file.mimeType) ? "inline" : "attachment",
+      disposition: resolveFileDisposition(file.mimeType, forceDownload),
     });
 
     if (isLocalStorageFallbackEnabled()) {
@@ -85,8 +88,4 @@ export async function GET(_request: Request, { params }: RouteProps) {
     const { status, body } = errorResponse(error);
     return NextResponse.json(body, { status });
   }
-}
-
-function isInlinePreviewMime(mimeType: string): boolean {
-  return mimeType === "application/pdf" || mimeType.startsWith("image/");
 }

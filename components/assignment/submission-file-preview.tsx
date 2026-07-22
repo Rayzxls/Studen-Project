@@ -10,6 +10,7 @@ import {
   Paperclip,
   X,
 } from "lucide-react";
+import { fileDeliveryUrl } from "@/lib/storage/delivery";
 
 export type SubmissionPreviewFile = {
   id: string;
@@ -110,7 +111,7 @@ export function SubmissionFilePreview({
                     {imageCount > 1 ? ` · รูปภาพ ${imageCount} ไฟล์` : ""}
                   </span>
                   <a
-                    href={fileUrl(activeFile.id)}
+                    href={fileUrl(activeFile.id, "download")}
                     download={activeFile.originalFilename}
                     className="inline-flex shrink-0 items-center justify-center rounded-full text-white/75 transition hover:text-white"
                     title="ดาวน์โหลด"
@@ -171,7 +172,7 @@ export function SubmissionFilePreview({
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
                     <a
-                      href={fileUrl(activeFile.id)}
+                      href={fileUrl(activeFile.id, "download")}
                       download={activeFile.originalFilename}
                       className="inline-flex h-9 w-9 items-center justify-center rounded-full text-black/55 transition hover:bg-black/[0.05] hover:text-black"
                       title="ดาวน์โหลด"
@@ -227,7 +228,7 @@ export function SubmissionFilePreview({
                         ดาวน์โหลดไฟล์เพื่อเปิดด้วยโปรแกรมที่รองรับ
                       </p>
                       <a
-                        href={fileUrl(activeFile.id)}
+                        href={fileUrl(activeFile.id, "download")}
                         download={activeFile.originalFilename}
                         className="btn-primary mt-4 inline-flex"
                       >
@@ -246,8 +247,11 @@ export function SubmissionFilePreview({
   );
 }
 
-function fileUrl(fileId: string): string {
-  return `/api/storage/files/${fileId}`;
+function fileUrl(
+  fileId: string,
+  mode: "preview" | "download" = "preview"
+): string {
+  return fileDeliveryUrl(fileId, undefined, mode);
 }
 
 function isImage(mimeType?: string | null): boolean {
