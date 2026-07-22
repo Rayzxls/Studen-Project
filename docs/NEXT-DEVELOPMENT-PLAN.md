@@ -167,13 +167,14 @@ Automate and manually verify these end-to-end paths:
   file could replace the current Beagle tab instead of downloading. The fix now
   gives download controls an explicit `?download=1` attachment contract across
   Feed, Assignment, Submission review, and Admin moderation evidence. Focused
-  regression `8/8`, TypeScript, ESLint, and Production build pass; deployment
-  plus the post-deploy authenticated download re-test remain required.
-- Remaining before full A2 closure: authenticated Production private-R2
-  download re-test with the current app tab preserved and a physical-phone QR
-  scan. These are manual release checks, not evidence gaps in the automated
-  isolation gate. No Production academic mutation is authorized by this
-  automated result.
+  regression `8/8`, full Unit `635/635`, TypeScript, ESLint, and Production
+  build pass. PR #24 deployed at `b9f29594`; the authenticated post-deploy PDF
+  smoke produced a real download with the expected filename while preserving
+  the current Beagle Feed URL.
+- Remaining before full A2 closure: one physical-phone Production QR scan. The
+  invite must resolve to the intended CourseOffering and preserve the expected
+  authentication/join boundary without mutating an existing enrollment. This
+  is a manual device check, not an evidence gap in the automated isolation gate.
 
 ### A3. Functional completeness audit
 

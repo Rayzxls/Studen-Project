@@ -5,8 +5,9 @@
 - Authenticated Production smoke confirmed that Teacher private-R2 upload and authenticated image/PDF preview work. No Feed post was published and no academic record was mutated during the check.
 - The smoke exposed one browser-level defect: download controls relied on the HTML `download` attribute while the authenticated endpoint redirected to a cross-origin signed R2 URL with an inline disposition. Chrome therefore opened the file in the current Beagle tab instead of downloading it.
 - Added an explicit `?download=1` delivery contract. Normal image/PDF previews remain inline, while download controls now request an attachment disposition from both the normal authenticated file route and the Admin moderation-evidence route. Feed, Assignment brief, and Submission review download controls use the same shared URL policy.
-- Regression evidence is green: storage-delivery unit `8/8`, TypeScript, ESLint with zero errors (one pre-existing Admin `<img>` warning), and the Next.js Production build.
-- A2 remains open until this fix is deployed and the authenticated Production download is re-tested without leaving the current app page. The separate physical-phone QR scan is also still required.
+- Regression evidence is green: storage-delivery unit `8/8`, full Unit `635/635`, TypeScript, ESLint with zero errors (one pre-existing Admin `<img>` warning), and the Next.js Production build.
+- Released through PR #24 at merge commit `b9f29594`. Main CI and Vercel Production completed successfully. The authenticated post-deploy PDF smoke produced a real download event with the correct filename while preserving the current Beagle Feed URL; preview remained visible and private.
+- A2 now has one remaining manual check only: scan the real Production class QR with a physical phone camera, confirm the invite resolves to the expected CourseOffering, and verify authentication/join behavior without changing an existing enrollment.
 
 ## STUDENT WORKSPACE + A2 AUTOMATED RELEASE GATES — 2026-07-22
 
