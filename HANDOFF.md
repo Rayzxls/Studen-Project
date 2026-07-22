@@ -1,5 +1,12 @@
 # HANDOFF — Beagle Classroom
 
+## QUIZ PILOT EXPANSION REVIEW — 2026-07-22
+
+- A read-only authenticated Production Teacher check reached the exact pilot CourseOffering Quiz center successfully with no Server error or document-level horizontal overflow.
+- The pilot CourseOffering currently has no Quiz destination to exercise. Production therefore has no direct evidence yet for the complete create/open/attempt/submit/results/private-attachment workflow, even though isolated-Neon automated acceptance is green.
+- Decision: keep `QUIZ_PILOT_COURSE_IDS` restricted to the existing exact CourseOffering. Do not add another id or use `*` yet. Expansion requires one disposable pilot Quiz, Teacher and Student role acceptance, authenticated private attachment delivery, lifecycle/result verification, cleanup, and rollback confirmation.
+- This review made no Production data mutation and changed no Vercel environment variable.
+
 ## PRIVATE R2 DOWNLOAD HARDENING — 2026-07-22
 
 - Authenticated Production smoke confirmed that Teacher private-R2 upload and authenticated image/PDF preview work. No Feed post was published and no academic record was mutated during the check.
@@ -7,7 +14,7 @@
 - Added an explicit `?download=1` delivery contract. Normal image/PDF previews remain inline, while download controls now request an attachment disposition from both the normal authenticated file route and the Admin moderation-evidence route. Feed, Assignment brief, and Submission review download controls use the same shared URL policy.
 - Regression evidence is green: storage-delivery unit `8/8`, full Unit `635/635`, TypeScript, ESLint with zero errors (one pre-existing Admin `<img>` warning), and the Next.js Production build.
 - Released through PR #24 at merge commit `b9f29594`. Main CI and Vercel Production completed successfully. The authenticated post-deploy PDF smoke produced a real download event with the correct filename while preserving the current Beagle Feed URL; preview remained visible and private.
-- A2 now has one remaining manual check only: scan the real Production class QR with a physical phone camera, confirm the invite resolves to the expected CourseOffering, and verify authentication/join behavior without changing an existing enrollment.
+- Physical-phone Production QR acceptance passed on 2026-07-22: the camera opened the Beagle join flow with the room code prefilled, and the check stopped before changing enrollment. Together with the authenticated private-R2 upload/preview/download smoke, this closes A2.
 
 ## STUDENT WORKSPACE + A2 AUTOMATED RELEASE GATES — 2026-07-22
 
@@ -16,7 +23,7 @@
 - Hardened the isolated remote-database runner with 30-second test/hook timeouts. The full Integration suite now completes against Neon QA instead of failing intermittently at the previous local timeout boundary.
 - Removed QA-only browser noise: screenshot capture no longer injects a caret style that races lazy hydration, the Beagle logo uses its correct intrinsic ratio on every shared surface, and repository lint ignores generated Next QA output plus vendored Agent skill bundles.
 - Automated release evidence is green: Unit `627/627`, full Integration, full Playwright E2E `10/10`, TypeScript, repository ESLint with zero errors, Next.js Production build, and safe read-only Production smoke `15/15`.
-- A2 is not fully closed. Remaining manual release checks are an authenticated Production private-R2 upload/preview/download using disposable content and a physical-phone QR scan. The exact Quiz pilot CourseOffering allowlist must remain unchanged until those checks pass; then review expansion before starting the Google Login identity-linking Grill.
+- A2 is fully closed. Authenticated Production private-R2 upload/preview/download and the physical-phone Production QR flow both passed without mutating academic or enrollment data. The next release decision is a controlled Quiz pilot expansion review; the allowlist remains exact until that review is approved.
 
 ## TIMETABLE AUTHENTICATED ACCEPTANCE — 2026-07-19
 

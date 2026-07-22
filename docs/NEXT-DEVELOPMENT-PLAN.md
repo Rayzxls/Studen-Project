@@ -1,8 +1,8 @@
 # Next Development Plan
 
-**Updated:** 2026-07-18
+**Updated:** 2026-07-22
 **Sequence:** Core completion -> Lesson Workspace -> Quiz -> Identity/Integrations -> AI -> Optional product modules
-**Current state:** A0 Documentation Alignment, A1 Report/Export v1, the A2 automated QA gate, and A3/A3.1 static correctness work are complete. QR/invite browser acceptance is now automated; physical phone-camera and production private-R2 smoke remain manual release checks. A4 Account Lifecycle and the operational Moderation Center have additive persistence, audited transactions, and feature-flagged Admin surfaces. Lesson Workspace B1-B6 are implemented and accepted on isolated Neon QA. Quiz C1-C5c are implemented; the additive Quiz migrations are current in Production and the exact ENG 4/3 CourseOffering pilot has read/mutations enabled. Authenticated role/private-R2 browser acceptance remains a manual post-rollout check; other and future CourseOfferings remain fail-closed.
+**Current state:** A0 Documentation Alignment, A1 Report/Export v1, A2 Critical-path QA, and A3/A3.1 static correctness work are complete. Automated invite coverage plus a physical-phone Production QR scan passed, and authenticated Production private-R2 upload/preview/download passed after the explicit attachment-disposition fix. A4 Account Lifecycle and the operational Moderation Center have additive persistence, audited transactions, and feature-flagged Admin surfaces. Lesson Workspace B1-B6 are implemented and accepted on isolated Neon QA. Quiz C1-C5c are implemented; the additive Quiz migrations are current in Production and the exact ENG 4/3 CourseOffering pilot has read/mutations enabled. The first expansion review kept that exact allowlist because the Production pilot has no Quiz record yet for full role/lifecycle/private-file acceptance; other and future CourseOfferings remain fail-closed.
 
 ## Why this order
 
@@ -19,10 +19,10 @@ This matrix prevents an implemented screen or database field from being mistaken
 | Role dashboards | Operational dashboards exist for Admin, Teacher, and Student | Partial: advanced trends, usage statistics, and report export need a separate scope decision |
 | Report and export | Student Learning Results has browser Print to PDF; Teacher score and attendance summaries have course-level CSV; Admin Audit has filtered CSV | V1 shipped: full report-card PDF generation is explicitly deferred pending a separate layout, identity, signature, and authorization decision |
 | Admin user management | Create/import Teacher, list users, reset password, reset avatar, and user drill-down exist | Partial: deactivate, restore, delete-request, and anonymize workflows are not complete even though `User.deletedAt` and `Student.anonymized` exist |
-| QR and invite link | Class Code, `qrcode.react`, `ClassCodeCard`, and join route exist | Implemented foundation, not accepted until QR scan, invite copy, expiry, deactivate, regenerate, mobile, and rejoin flows pass QA |
+| QR and invite link | Class Code, `qrcode.react`, `ClassCodeCard`, join route, automated lifecycle/mobile coverage, and physical-phone Production scan exist | Accepted: invite copy, expiry, deactivate, regenerate, mobile, rejoin, and Production camera-to-prefilled-code flow passed QA |
 | Moderation | Existing Teacher comment moderation plus a case-based Admin queue for reports, evidence snapshots, temporary restrictions, decisions, restore, and one-time appeal | Code/schema deployed behind `MODERATION_CENTER_ENABLED`; flag cutover and manual all-theme/mobile/private-R2 acceptance remain open |
 | Profile personal information | Avatar, display name, read-only real identity, password, and theme exist | Intentionally minimal learning identity; a full personal profile requires a privacy/scope decision, not an automatic expansion |
-| Quiz / Testing | Approved contract, four ADRs, additive schema, Teacher Builder, Student Attempt/autosave/auto-grading, Teacher Results/lifecycle/publication, private attachments, Moderation evidence, Teacher CSV analytics, and an aggregate-only Admin observer | Production schema current and exact ENG 4/3 pilot enabled; automated gates pass; authenticated role/private-R2 post-rollout smoke remains, while every non-allowlisted CourseOffering stays fail-closed |
+| Quiz / Testing | Approved contract, four ADRs, additive schema, Teacher Builder, Student Attempt/autosave/auto-grading, Teacher Results/lifecycle/publication, private attachments, Moderation evidence, Teacher CSV analytics, and an aggregate-only Admin observer | Production schema and exact ENG 4/3 pilot are enabled; authenticated Teacher list-route smoke passes, but the empty pilot has not exercised the full role/lifecycle/private-file workflow, so expansion is deferred and non-allowlisted CourseOfferings stay fail-closed |
 | AI Assistant | No model-provider integration found | Not implemented; planned only after stable Lesson/Quiz contracts |
 | Google Login | NextAuth currently uses Credentials only | Not implemented; identity-linking rules must be designed first |
 | Chat Room, Reward, Meeting | No domain model or route found | Candidate backlog; not committed to the current release plan |
@@ -171,10 +171,10 @@ Automate and manually verify these end-to-end paths:
   build pass. PR #24 deployed at `b9f29594`; the authenticated post-deploy PDF
   smoke produced a real download with the expected filename while preserving
   the current Beagle Feed URL.
-- Remaining before full A2 closure: one physical-phone Production QR scan. The
-  invite must resolve to the intended CourseOffering and preserve the expected
-  authentication/join boundary without mutating an existing enrollment. This
-  is a manual device check, not an evidence gap in the automated isolation gate.
+- Physical-phone Production QR acceptance passed on 2026-07-22. The camera
+  opened the Beagle join flow with the room code prefilled, and testing stopped
+  before changing enrollment. A2 is closed; the Quiz pilot allowlist remains
+  exact until the separate controlled expansion review is approved.
 
 ### A3. Functional completeness audit
 
@@ -183,8 +183,8 @@ Automate and manually verify these end-to-end paths:
 **Static audit completed 2026-07-14:** classifications and code evidence are
 recorded in [`FUNCTIONAL-COMPLETENESS-AUDIT.md`](./FUNCTIONAL-COMPLETENESS-AUDIT.md).
 The audit closes the ambiguous inventory, but it does not claim that deferred
-capabilities were implemented. A2 acceptance remains open, followed by the
-small A3.1 correctness pass and A4 account/content-retention decisions.
+capabilities were implemented. A2 acceptance and the small A3.1 correctness
+pass are closed; A4 account/content-retention decisions remain separately scoped.
 
 The first A3.1 correctness item is closed: Admin Dashboard Teacher/Student
 headcounts now exclude soft-deleted accounts and anonymized Students using the
@@ -427,7 +427,8 @@ Implementation sequence:
 7. C5a implemented locally 2026-07-18: private multi-file attachments for the Quiz brief, questions, and options; exact owner/uploader validation; authenticated previews; immutable Student-safe Attempt metadata; legacy snapshot compatibility; and Moderation filtering. Full unit `616/616`, targeted lint/TypeScript, and Production build pass. Authenticated isolated-QA upload/R2 smoke remains before acceptance.
 8. C5b implemented locally and integration-verified on isolated Neon QA 2026-07-18: Students can report a Quiz or the exact immutable question snapshot they saw; cases preserve Teacher content, option text, and private attachment metadata without correctness, explanations, Student answers, grading, scores, exceptions, or submitted files. Active restrictions hide Student Quiz discovery and fail closed on start, save, submit, and direct Attempt reads without mutating academic records. Admin evidence is theme-safe and remains observer-only. Focused integration `2/2`, full unit `616/616`, targeted ESLint, TypeScript, and Production build pass.
 9. C5c implemented locally 2026-07-18: Teacher Results CSV uses the Results source of truth and audits the export; Admin receives feature-gated aggregate list/detail views without Student identities, answers, per-Student scores, private files, or mutation controls. Focused tests `11/11`, full unit `621/621`, targeted ESLint, TypeScript, and Production build pass.
-10. One-course Production pilot enabled 2026-07-18 for exact CourseOffering `cmr1fxlhd0005if04q7fi04qk` after additive migrations, main CI, Vercel deployment, environment-helper verification, and public/auth-boundary smoke passed. The 2026-07-22 automated gate reconfirmed full Quiz E2E, Integration, Unit, build, and safe Production route/auth boundaries. Keep this exact allowlist until authenticated Production private-R2 acceptance passes; then review a controlled multi-course expansion before any global enablement.
+10. One-course Production pilot enabled 2026-07-18 for exact CourseOffering `cmr1fxlhd0005if04q7fi04qk` after additive migrations, main CI, Vercel deployment, environment-helper verification, and public/auth-boundary smoke passed. The 2026-07-22 gate reconfirmed full Quiz E2E, Integration, Unit, build, safe Production route/auth boundaries, authenticated private-R2 delivery, and the physical-phone QR flow. Keep this exact allowlist while reviewing a controlled multi-course expansion; never switch to a wildcard or global enablement as part of the review.
+11. Expansion review completed 2026-07-22 without widening. The authenticated Production Teacher Quiz center loads cleanly, but the pilot CourseOffering has no Quiz record to validate create/open, Student attempt/submit, Teacher results, or Quiz-owned private attachments. Before adding a second CourseOffering id, run one disposable pilot Quiz through those role and lifecycle checks, remove the disposable data, and confirm the exact allowlist rollback. No wildcard is permitted.
 
 Question bank, cross-course copy, spreadsheet import, essay/short-answer grading,
 AI grading, invasive proctoring, and full offline exams remain outside MVP.
