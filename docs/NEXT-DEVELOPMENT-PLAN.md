@@ -96,7 +96,7 @@ This matrix prevents an implemented screen or database field from being mistaken
 
 **Goal:** prove the existing core before changing its content hierarchy.
 
-**Status (2026-07-15): Automated gate passed; manual acceptance remains open.**
+**Status (2026-07-22): Automated gate passed; two manual release checks remain open.**
 The isolated Neon QA branch, fail-closed runners, dedicated Playwright server,
 and disposable-child restore rehearsal are complete. Mutating tests are now
 authorized only against `QA_DATABASE_URL`; the normal `DATABASE_URL` remains
@@ -153,10 +153,19 @@ Automate and manually verify these end-to-end paths:
 - Responsive timetable acceptance passed on isolated Neon QA on 2026-07-19:
   Teacher Dark create/edit/delete, Student Cream read-only projection, persisted
   time/location, and iPhone `390x844` overflow are covered by Playwright `1/1`.
-- Remaining before full A2 closure: complete the Student/Teacher/Admin manual
-  workflow checklist, mobile viewport and all-theme acceptance, QR handoff, and
-  private production-R2 upload/preview smoke. These are manual release checks,
-  not evidence gaps in the automated isolation gate.
+- Student course-workspace acceptance passed on isolated Neon QA on 2026-07-22:
+  authenticated Overview, Assignments, Members, and Scores routes pass Desktop
+  and iPhone checks across Light, Dark, Cream, and System themes without
+  document-level horizontal overflow.
+- The 2026-07-22 release gate is green: Unit `627/627`, full Integration, full
+  Playwright E2E `10/10`, TypeScript, repository ESLint with zero errors,
+  Production build, and safe read-only Production smoke `15/15`. The remote
+  Neon runner now uses explicit 30-second test/hook timeouts, and screenshot
+  capture no longer introduces a QA-only hydration race.
+- Remaining before full A2 closure: authenticated Production private-R2
+  upload/preview/download with disposable content and a physical-phone QR scan.
+  These are manual release checks, not evidence gaps in the automated isolation
+  gate. No Production mutation is authorized by this automated result.
 
 ### A3. Functional completeness audit
 
@@ -409,7 +418,7 @@ Implementation sequence:
 7. C5a implemented locally 2026-07-18: private multi-file attachments for the Quiz brief, questions, and options; exact owner/uploader validation; authenticated previews; immutable Student-safe Attempt metadata; legacy snapshot compatibility; and Moderation filtering. Full unit `616/616`, targeted lint/TypeScript, and Production build pass. Authenticated isolated-QA upload/R2 smoke remains before acceptance.
 8. C5b implemented locally and integration-verified on isolated Neon QA 2026-07-18: Students can report a Quiz or the exact immutable question snapshot they saw; cases preserve Teacher content, option text, and private attachment metadata without correctness, explanations, Student answers, grading, scores, exceptions, or submitted files. Active restrictions hide Student Quiz discovery and fail closed on start, save, submit, and direct Attempt reads without mutating academic records. Admin evidence is theme-safe and remains observer-only. Focused integration `2/2`, full unit `616/616`, targeted ESLint, TypeScript, and Production build pass.
 9. C5c implemented locally 2026-07-18: Teacher Results CSV uses the Results source of truth and audits the export; Admin receives feature-gated aggregate list/detail views without Student identities, answers, per-Student scores, private files, or mutation controls. Focused tests `11/11`, full unit `621/621`, targeted ESLint, TypeScript, and Production build pass.
-10. One-course Production pilot enabled 2026-07-18 for exact CourseOffering `cmr1fxlhd0005if04q7fi04qk` after additive migrations, main CI, Vercel deployment, environment-helper verification, and public/auth-boundary smoke passed. Next: complete authenticated Teacher/Student/Admin and private-R2 post-rollout browser acceptance before expanding the allowlist.
+10. One-course Production pilot enabled 2026-07-18 for exact CourseOffering `cmr1fxlhd0005if04q7fi04qk` after additive migrations, main CI, Vercel deployment, environment-helper verification, and public/auth-boundary smoke passed. The 2026-07-22 automated gate reconfirmed full Quiz E2E, Integration, Unit, build, and safe Production route/auth boundaries. Keep this exact allowlist until authenticated Production private-R2 acceptance passes; then review a controlled multi-course expansion before any global enablement.
 
 Question bank, cross-course copy, spreadsheet import, essay/short-answer grading,
 AI grading, invasive proctoring, and full offline exams remain outside MVP.
@@ -426,6 +435,7 @@ These items do not block Lesson Workspace or Quiz and must not be bundled into t
 - Keep role assignment controlled by the existing account record; Google sign-in must not grant a role by email guesswork.
 - Define account recovery, revoked Google access, email changes, school-domain restrictions, and fallback Credentials login.
 - Implement only after identity-linking, audit, and test-account migration decisions are approved.
+- Begin the next Grill only after the Quiz pilot expansion decision. Lock decisions for verified-email linking versus invite linking, personal Gmail versus school Workspace accounts, multi-role handling, Admin provisioning, collision/recovery behavior, PDPA consent, revocation, and compatibility with a future Global User model before selecting an OAuth provider implementation.
 
 ### D2. Other program integrations
 

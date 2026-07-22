@@ -7,7 +7,7 @@ export default function PrivacyPage() {
       <header className="border-b border-black/[0.06] bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
           <Link href="/" className="inline-flex items-center gap-2">
-            <BeagleLogo className="h-7 w-7 object-contain" />
+            <BeagleLogo className="h-7 w-auto object-contain" />
             <span
               className="text-lg font-semibold text-black"
               style={{ letterSpacing: "-0.03em" }}

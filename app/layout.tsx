@@ -37,6 +37,7 @@ async function RootLayoutInner({ children }: { children: React.ReactNode }) {
       lang="th"
       className={anuphan.variable}
       data-theme-mode={themeMode.toLowerCase()}
+      data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-bg font-sans text-ink antialiased">

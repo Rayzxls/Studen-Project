@@ -440,9 +440,9 @@ export function EmptyState({
         <Image
           src="/brand/beagle-mark.png"
           alt=""
-          width={56}
-          height={58}
-          className="mx-auto opacity-90"
+          width={464}
+          height={483}
+          className="mx-auto h-[58px] w-auto opacity-90"
           aria-hidden="true"
         />
       ) : (

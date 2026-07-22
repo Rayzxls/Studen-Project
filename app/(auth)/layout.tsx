@@ -22,7 +22,7 @@ export default function AuthLayout({
       <div className="relative z-10">
         <header className="mx-auto max-w-5xl px-6 py-6">
           <Link href="/" className="inline-flex items-center gap-2">
-            <BeagleLogo className="h-8 w-8 object-contain" />
+            <BeagleLogo className="h-8 w-auto object-contain" />
             <span
               className="text-xl font-semibold text-black"
               style={{ letterSpacing: "-0.03em" }}

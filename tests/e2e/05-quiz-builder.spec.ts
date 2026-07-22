@@ -138,6 +138,7 @@ test("teacher creates, auto-saves, scores, and previews a Quiz draft", async ({
   await page.screenshot({
     path: testInfo.outputPath("quiz-builder-desktop.png"),
     fullPage: true,
+    caret: "initial",
   });
   await page.getByRole("button", { name: "ดูตัวอย่าง" }).click();
   await expect(page.getByText("ตัวอย่างสำหรับนักเรียน")).toBeVisible();
@@ -165,5 +166,6 @@ test("teacher creates, auto-saves, scores, and previews a Quiz draft", async ({
   await page.screenshot({
     path: testInfo.outputPath("quiz-builder-mobile.png"),
     fullPage: true,
+    caret: "initial",
   });
 });

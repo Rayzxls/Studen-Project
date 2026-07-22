@@ -187,7 +187,7 @@ export function AuroraShowcase() {
               boxShadow: "inset 0 0 0 1px var(--color-hairline)",
             }}
           >
-            <BeagleLogo className="h-4 w-4" />
+            <BeagleLogo className="h-4 w-auto" />
             Beagle Classroom
           </span>
           <h2

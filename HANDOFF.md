@@ -1,5 +1,14 @@
 # HANDOFF — Beagle Classroom
 
+## STUDENT WORKSPACE + A2 AUTOMATED RELEASE GATES — 2026-07-22
+
+- Synced `phase-11` to the latest `main` baseline at `9da4bd5` before verification. No Production database row, R2 object, Vercel variable, or rollout allowlist was changed.
+- Added isolated-Neon Playwright coverage for the Student course workspace: Overview, Assignments, Members, and Scores now pass authenticated Desktop/iPhone acceptance across Light, Dark, Cream, and System themes with no document-level horizontal overflow.
+- Hardened the isolated remote-database runner with 30-second test/hook timeouts. The full Integration suite now completes against Neon QA instead of failing intermittently at the previous local timeout boundary.
+- Removed QA-only browser noise: screenshot capture no longer injects a caret style that races lazy hydration, the Beagle logo uses its correct intrinsic ratio on every shared surface, and repository lint ignores generated Next QA output plus vendored Agent skill bundles.
+- Automated release evidence is green: Unit `627/627`, full Integration, full Playwright E2E `10/10`, TypeScript, repository ESLint with zero errors, Next.js Production build, and safe read-only Production smoke `15/15`.
+- A2 is not fully closed. Remaining manual release checks are an authenticated Production private-R2 upload/preview/download using disposable content and a physical-phone QR scan. The exact Quiz pilot CourseOffering allowlist must remain unchanged until those checks pass; then review expansion before starting the Google Login identity-linking Grill.
+
 ## TIMETABLE AUTHENTICATED ACCEPTANCE — 2026-07-19
 
 - Added an isolated-Neon Playwright tracer for the released responsive timetable. The Teacher signs in with Dark theme, creates a Wednesday slot through the aggregate timetable UI, edits its location, and deletes it; persistence is asserted after each mutation.
