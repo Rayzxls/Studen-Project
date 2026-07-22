@@ -3,6 +3,7 @@ import { assert, requireAuth } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { Forbidden, NotFound, errorResponse } from "@/lib/errors";
 import { getModerationRestriction } from "@/lib/moderation/queries";
+import { resolveFileDisposition } from "@/lib/storage/delivery";
 import {
   buildContentDisposition,
   type FileOwnerTypeLiteral,
@@ -20,7 +21,7 @@ interface RouteProps {
   params: Promise<{ fileId: string }>;
 }
 
-export async function GET(_req: Request, { params }: RouteProps) {
+export async function GET(req: Request, { params }: RouteProps) {
   try {
     const { fileId } = await params;
     const file = await db.fileAttachment.findFirst({
@@ -46,9 +47,10 @@ export async function GET(_req: Request, { params }: RouteProps) {
       throw new Forbidden("file_temporarily_restricted");
     }
 
+    const forceDownload = new URL(req.url).searchParams.get("download") === "1";
     const disposition = buildContentDisposition({
       filename: file.originalFilename,
-      disposition: isInlinePreviewMime(file.mimeType) ? "inline" : "attachment",
+      disposition: resolveFileDisposition(file.mimeType, forceDownload),
     });
 
     if (isLocalStorageFallbackEnabled()) {
@@ -248,8 +250,4 @@ async function assertCanReadCourseFile(
     }
   }
   throw new Forbidden();
-}
-
-function isInlinePreviewMime(mimeType: string): boolean {
-  return mimeType === "application/pdf" || mimeType.startsWith("image/");
 }

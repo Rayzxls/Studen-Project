@@ -162,10 +162,18 @@ Automate and manually verify these end-to-end paths:
   Production build, and safe read-only Production smoke `15/15`. The remote
   Neon runner now uses explicit 30-second test/hook timeouts, and screenshot
   capture no longer introduces a QA-only hydration race.
+- Authenticated Production private-R2 upload plus image/PDF preview passed on
+  2026-07-22. That smoke found a cross-origin download-disposition defect: a
+  file could replace the current Beagle tab instead of downloading. The fix now
+  gives download controls an explicit `?download=1` attachment contract across
+  Feed, Assignment, Submission review, and Admin moderation evidence. Focused
+  regression `8/8`, TypeScript, ESLint, and Production build pass; deployment
+  plus the post-deploy authenticated download re-test remain required.
 - Remaining before full A2 closure: authenticated Production private-R2
-  upload/preview/download with disposable content and a physical-phone QR scan.
-  These are manual release checks, not evidence gaps in the automated isolation
-  gate. No Production mutation is authorized by this automated result.
+  download re-test with the current app tab preserved and a physical-phone QR
+  scan. These are manual release checks, not evidence gaps in the automated
+  isolation gate. No Production academic mutation is authorized by this
+  automated result.
 
 ### A3. Functional completeness audit
 

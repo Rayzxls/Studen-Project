@@ -11,6 +11,7 @@ import {
   Link2,
   X,
 } from "lucide-react";
+import { fileDeliveryUrl } from "@/lib/storage/delivery";
 import type { FeedAttachment } from "@/lib/feed/aggregator";
 import { SafeExternalLinkButton } from "@/components/link/safe-external-link-button";
 
@@ -324,7 +325,7 @@ function DocumentPreviewDialog({
               <ExternalLink className="h-4 w-4" aria-hidden="true" />
             </a>
             <a
-              href={fileHref(file.id, fileBasePath)}
+              href={fileHref(file.id, fileBasePath, "download")}
               download={file.originalFilename}
               className="inline-flex h-9 w-9 items-center justify-center rounded-full text-black/55 transition hover:bg-black/[0.05] hover:text-black"
               title="ดาวน์โหลด"
@@ -369,7 +370,7 @@ function DocumentPreviewDialog({
                   เปิดไฟล์
                 </a>
                 <a
-                  href={fileHref(file.id, fileBasePath)}
+                  href={fileHref(file.id, fileBasePath, "download")}
                   download={file.originalFilename}
                   className="btn-ghost btn-sm"
                 >
@@ -386,8 +387,12 @@ function DocumentPreviewDialog({
   );
 }
 
-function fileHref(fileId: string, fileBasePath: string): string {
-  return `${fileBasePath}/${fileId}`;
+function fileHref(
+  fileId: string,
+  fileBasePath: string,
+  mode: "preview" | "download" = "preview"
+): string {
+  return fileDeliveryUrl(fileId, fileBasePath, mode);
 }
 
 function formatLinkLabel(href: string): string {
