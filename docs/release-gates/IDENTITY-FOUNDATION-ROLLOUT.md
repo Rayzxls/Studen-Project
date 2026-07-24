@@ -216,14 +216,22 @@ existing-account linking, session issue, recovery, or deletion workflows.
   login path is unchanged. The login button is behind its own default-off
   public flag, so the deployed login page is visually unchanged. No new page or
   route is added yet.
-- New-user onboarding is partially built. The `/onboarding` page, its form, the
-  completion server action, the signed pending-handoff token, and the
-  orchestrator all exist and are tested; the page renders the collected form
-  from a valid pending token and an empty "start again" state otherwise, gated
-  by the identity mutation flag. What is not wired is the OAuth-side glue that
-  mints the pending cookie for a brand-new Google user and the post-onboarding
-  session establishment. Both require a live Google OAuth credential and a
-  browser walkthrough, so the sign-in button flag stays off until that is done.
+- New-user onboarding is now wired end to end except the final Google-account
+  round trip. On a verified Google sign-in the provider `profile` no longer
+  fails for an unlinked user: it returns an onboarding sentinel (or a
+  consent-refresh sentinel), and the NextAuth `signIn` callback mints the
+  single-use pending cookie and redirects to `/onboarding`, or sends a
+  stale-consent account back to login. Neither sentinel reaches a JWT or
+  session. After onboarding the account and its Google identity exist, so the
+  person signs in with one more Google click (the login page shows a success
+  banner); no session is forged.
+- Verified locally on 2026-07-24 with the real OAuth client: the Google button
+  renders behind its flag, and the NextAuth-generated authorization URL is
+  correct — `accounts.google.com/o/oauth2/v2/auth`, the exact client id, the
+  `…/api/auth/callback/google` redirect uri, `openid email` scope, code flow,
+  and nonce/state/PKCE all present. The only unverified step is the Google
+  consent screen and the callback it drives, which needs a real Google account
+  in a browser.
 - Google is still not wired into NextAuth. The ID-token verifier exists and is
   tested, but no route, callback, or provider calls it yet, and the live
   Credentials login path is unchanged.

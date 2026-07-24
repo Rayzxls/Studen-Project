@@ -15,6 +15,8 @@ function LoginForm() {
   const [state, action, pending] = useActionState(loginAction, initial);
   const search = useSearchParams();
   const resetSuccess = search.get("reset") === "success";
+  const onboarded = search.get("onboarded") === "1";
+  const consentRefresh = search.get("error") === "consent_refresh";
 
   return (
     <div className="animate-fade-in rounded-2xl bg-white p-8 shadow-card">
@@ -33,6 +35,18 @@ function LoginForm() {
       {resetSuccess && (
         <div className="mb-4 rounded-xl bg-green-50 px-3 py-2 text-sm text-green-700">
           เปลี่ยนรหัสผ่านสำเร็จ — กรุณาเข้าสู่ระบบด้วยรหัสใหม่
+        </div>
+      )}
+
+      {onboarded && (
+        <div className="mb-4 rounded-xl bg-green-50 px-3 py-2 text-sm text-green-700">
+          สร้างบัญชีสำเร็จ — เข้าสู่ระบบด้วย Google อีกครั้งเพื่อเริ่มใช้งาน
+        </div>
+      )}
+
+      {consentRefresh && (
+        <div className="mb-4 rounded-xl bg-orange-50 px-3 py-2 text-sm text-orange-700">
+          มีข้อกำหนดฉบับใหม่ที่ต้องยอมรับก่อน กรุณาติดต่อผู้ดูแลระบบ
         </div>
       )}
 

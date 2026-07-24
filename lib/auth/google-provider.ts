@@ -1,7 +1,9 @@
 import Google from "next-auth/providers/google";
 import type { Provider } from "next-auth/providers";
+import type { User } from "next-auth";
 import type { Role } from "@prisma/client";
 
+import { HttpError } from "@/lib/errors";
 import { identityFoundationMutationsEnabled } from "@/lib/identity/feature-flags";
 
 export type GoogleSignInResolver = (input: {
@@ -39,19 +41,34 @@ export function createGoogleProvider(input: {
       params: { scope: "openid email", prompt: "select_account" },
     },
     checks: ["pkce", "state", "nonce"],
-    async profile(profile) {
-      const resolved = await input.resolveSignIn({
+    async profile(profile): Promise<User> {
+      const claims = {
         providerAccountId: profile.sub,
         email: profile.email,
         emailVerified: profile.email_verified === true,
-        occurredAt: now(),
-      });
+      };
 
-      // There is no consent-refresh surface yet, so letting a stale-consent
-      // account in would strand it with no way to become current. Refusing is
-      // reversible; the flag stays off until that surface exists.
+      let resolved;
+      try {
+        resolved = await input.resolveSignIn({ ...claims, occurredAt: now() });
+      } catch (error) {
+        // A brand-new verified Google user has no linked account yet. Rather
+        // than fail the sign-in, carry the verified claims to the sign-in
+        // callback, which mints the onboarding handoff and redirects. No
+        // account is created here; every other error still propagates.
+        if (
+          error instanceof HttpError &&
+          error.code === "google_identity_not_linked"
+        ) {
+          return onboardingSentinel(claims.providerAccountId, claims.email);
+        }
+        throw error;
+      }
+
+      // A stale-consent account authenticates but has no way to re-accept yet,
+      // so route it back to login instead of stranding it in a half state.
       if (resolved.requiresConsentRefresh) {
-        throw new Error("identity_consent_refresh_required");
+        return consentRefreshSentinel(resolved.email);
       }
 
       return {
@@ -65,6 +82,37 @@ export function createGoogleProvider(input: {
       };
     },
   });
+}
+
+/**
+ * Sentinel users never reach a JWT or session: the sign-in callback returns a
+ * redirect for them instead of `true`. The required role/identifier fields
+ * carry placeholders only to satisfy the `User` shape and are never read.
+ */
+function onboardingSentinel(providerAccountId: string, email: string): User {
+  return {
+    id: `google-onboarding:${providerAccountId}`,
+    role: "STUDENT",
+    identifier: email,
+    mustResetPwd: false, // dependency-gate-allow(temporary-password): sentinel placeholder, never persisted
+    name: email,
+    email,
+    image: null,
+    googleOnboarding: { providerAccountId, email },
+  };
+}
+
+function consentRefreshSentinel(email: string): User {
+  return {
+    id: "google-consent-refresh",
+    role: "STUDENT",
+    identifier: email,
+    mustResetPwd: false, // dependency-gate-allow(temporary-password): sentinel placeholder, never persisted
+    name: email,
+    email,
+    image: null,
+    consentRefresh: true,
+  };
 }
 
 /**

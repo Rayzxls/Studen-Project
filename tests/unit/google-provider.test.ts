@@ -136,7 +136,33 @@ describe("Google provider registration", () => {
     });
   });
 
-  it("refuses sign-in while the account owes fresh consent", async () => {
+  it("marks a brand-new verified user for onboarding instead of failing", async () => {
+    const { NotFound } = await import("@/lib/errors");
+    const resolveSignIn = vi.fn(async () => {
+      throw new NotFound("google_identity_not_linked");
+    });
+    const [provider] = googleProvidersIfEnabled({
+      env: enabledEnv,
+      resolveSignIn: resolveSignIn as unknown as GoogleSignInResolver,
+    });
+
+    const result = await optionsOf(provider).profile({
+      sub: "new-subject",
+      email: "new@example.com",
+      email_verified: true,
+    });
+
+    expect(result).toMatchObject({
+      googleOnboarding: {
+        providerAccountId: "new-subject",
+        email: "new@example.com",
+      },
+    });
+    // No real role/identity is asserted: the sign-in callback redirects this
+    // sentinel to onboarding before it can become a session.
+  });
+
+  it("marks a stale-consent account for a consent refresh instead of signing in", async () => {
     const resolveSignIn = vi.fn(async () => ({
       userId: "user-1",
       role: "STUDENT" as const,
@@ -148,12 +174,31 @@ describe("Google provider registration", () => {
       resolveSignIn: resolveSignIn as unknown as GoogleSignInResolver,
     });
 
+    const result = await optionsOf(provider).profile({
+      sub: "google-subject-1",
+      email: "student@example.com",
+      email_verified: true,
+    });
+
+    expect(result).toMatchObject({ consentRefresh: true });
+  });
+
+  it("propagates a hard failure such as a suspended account", async () => {
+    const { Forbidden } = await import("@/lib/errors");
+    const resolveSignIn = vi.fn(async () => {
+      throw new Forbidden("account_not_available");
+    });
+    const [provider] = googleProvidersIfEnabled({
+      env: enabledEnv,
+      resolveSignIn: resolveSignIn as unknown as GoogleSignInResolver,
+    });
+
     await expect(
       optionsOf(provider).profile({
         sub: "google-subject-1",
         email: "student@example.com",
         email_verified: true,
       })
-    ).rejects.toThrowError("identity_consent_refresh_required");
+    ).rejects.toMatchObject({ code: "account_not_available" });
   });
 });

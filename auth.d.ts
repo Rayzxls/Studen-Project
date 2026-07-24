@@ -7,6 +7,14 @@ declare module "next-auth" {
     role: "ADMIN" | "TEACHER" | "STUDENT";
     identifier: string;
     mustResetPwd: boolean;
+    /**
+     * Transient markers a verified Google sign-in attaches before the session
+     * exists. The sign-in callback consumes them to redirect a brand-new user
+     * into onboarding, or a stale-consent user back to login, and returns a
+     * redirect instead of `true`, so neither marker ever reaches a JWT/session.
+     */
+    googleOnboarding?: { providerAccountId: string; email: string };
+    consentRefresh?: boolean;
   }
 
   interface Session {

@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import { cookies } from "next/headers";
 import { db } from "@/lib/db/client";
 import { verifyPassword } from "@/lib/auth/password";
 import { authConfig } from "@/lib/auth/config";
@@ -10,9 +11,42 @@ import { LoginSchema } from "@/lib/validation/schemas";
 import { isAccountAvailableForAuthentication } from "@/lib/account/status";
 import { googleProvidersIfEnabled } from "@/lib/auth/google-provider";
 import { createPrismaGoogleSignInService } from "@/lib/identity/google-signin-prisma";
+import {
+  PENDING_ONBOARDING_COOKIE,
+  PENDING_ONBOARDING_TTL_MS,
+  createPendingGoogleOnboardingToken,
+} from "@/lib/identity/pending-google-onboarding";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
+  callbacks: {
+    ...authConfig.callbacks,
+    async signIn({ user }) {
+      // A brand-new verified Google user carries no session yet: mint the
+      // single-use onboarding handoff and redirect to collect a real name and
+      // consent. Returning a string aborts session creation and redirects.
+      if (user.googleOnboarding) {
+        const token = await createPendingGoogleOnboardingToken({
+          pending: user.googleOnboarding,
+          secret: process.env.AUTH_SECRET ?? "",
+        });
+        (await cookies()).set(PENDING_ONBOARDING_COOKIE, token, {
+          httpOnly: true,
+          sameSite: "lax",
+          secure: process.env.NODE_ENV === "production",
+          path: "/",
+          maxAge: Math.floor(PENDING_ONBOARDING_TTL_MS / 1000),
+        });
+        return "/onboarding";
+      }
+
+      if (user.consentRefresh) {
+        return "/login?error=consent_refresh";
+      }
+
+      return true;
+    },
+  },
   providers: [
     Credentials({
       credentials: {
