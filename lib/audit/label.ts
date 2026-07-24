@@ -36,6 +36,7 @@ const ACTION_LABEL_TH: Record<AuditEvent, string> = {
   TEACHER_INVITE_REPLACED: "Teacher invite replaced",
   TEACHER_INVITE_REVOKED: "Teacher invite revoked",
   TEACHER_INVITE_ACCEPTED: "Teacher invite accepted",
+  AUTH_PROVIDER_LINKED: "ผูกผู้ให้บริการเข้าสู่ระบบ",
   // CSV Import
   CSV_IMPORT: "นำเข้า CSV",
   COURSE_OFFERING_CREATED: "ครูสร้างวิชาใหม่",

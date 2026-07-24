@@ -330,6 +330,7 @@ Response = 429 + `Retry-After`
 - `TEACHER_INVITE_REPLACED` (prior pending Invites are revoked atomically)
 - `TEACHER_INVITE_REVOKED` (with Admin reason)
 - `TEACHER_INVITE_ACCEPTED` (Google identity, account, consent, and Invite commit atomically)
+- `AUTH_PROVIDER_LINKED` (Critical — attaching a sign-in provider changes who can authenticate as this User; requires re-authentication)
 - `CLASS_CODE_EXPIRY_SET` (clearing → before:{expiry}, after:{expiry: null})
 - `ADMIN_VIEW_STUDENT_DATA` (เข้าดูข้อมูลรายคน)
 - `ASSIGNMENT_CREATE/EDIT/DELETE`

@@ -32,6 +32,8 @@ const CRITICAL: ReadonlySet<string> = new Set([
   "ROLE_CHANGE",
   "USER_CREATED_BY_ADMIN",
   "STUDENT_SELF_REGISTERED",
+  // Attaching a new sign-in provider changes who can authenticate as this User.
+  "AUTH_PROVIDER_LINKED",
   "USER_LOCKED",
   "USER_ANONYMIZED",
   "COURSE_MEMBER_REMOVED",

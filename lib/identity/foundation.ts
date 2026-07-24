@@ -8,6 +8,13 @@ export const TEACHER_INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 export const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 export const SESSION_IDLE_TIMEOUT_MS = 7 * 24 * 60 * 60 * 1000;
 export const ACCOUNT_DELETION_RECOVERY_MS = 30 * 24 * 60 * 60 * 1000;
+/**
+ * ADR-0041 requires re-authentication for sensitive identity changes but does
+ * not fix the window. Fifteen minutes keeps a stolen idle session from
+ * attaching a new sign-in provider while staying long enough to complete one
+ * deliberate Profile action.
+ */
+export const REAUTHENTICATION_WINDOW_MS = 15 * 60 * 1000;
 export const NAME_CONTINUITY_MS = 14 * 24 * 60 * 60 * 1000;
 
 const VerifiedEmailSchema = z
@@ -183,6 +190,15 @@ export function isIdentitySessionActive(input: {
     input.now.getTime() < deadlines.absoluteExpiresAt.getTime() &&
     input.now.getTime() < deadlines.idleExpiresAt.getTime()
   );
+}
+
+export function hasRecentReauthentication(input: {
+  reauthenticatedAt: Date | null;
+  now: Date;
+}): boolean {
+  if (!input.reauthenticatedAt) return false;
+  const age = input.now.getTime() - input.reauthenticatedAt.getTime();
+  return age >= 0 && age < REAUTHENTICATION_WINDOW_MS;
 }
 
 export function deletionScheduledFor(requestedAt: Date): Date {
