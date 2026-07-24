@@ -1,11 +1,13 @@
 import type { Role } from "@prisma/client";
 import { z } from "zod";
 
-import { Conflict, Forbidden, NotFound, ValidationError } from "@/lib/errors";
+import { Conflict, Forbidden, NotFound } from "@/lib/errors";
 import {
+  DISABLED_COMPATIBILITY_PASSWORD_HASH,
   effectiveTeacherInviteStatus,
   hashIdentityToken,
   normalizeVerifiedEmail,
+  parseAcceptedConsentVersions,
   parseRealName,
   type PersistedTeacherInviteStatus,
 } from "./foundation";
@@ -17,13 +19,6 @@ const ProviderAccountIdSchema = z
   .min(1)
   .max(255)
   .refine((value) => !/[\u0000-\u001f\u007f]/u.test(value));
-const ConsentVersionSchema = z.string().trim().min(1).max(100);
-
-// Legacy User.passwordHash is non-null. The random source for this bcrypt hash
-// was discarded, so it cannot be used as a fallback credential.
-const DISABLED_COMPATIBILITY_PASSWORD_HASH =
-  "$2b$12$WdTDhMd30SXNvxTGCidMdeqzArfRCLJM/Kx7PqHXQf9qKvLxVtUbe";
-
 export type TeacherOnboardingInviteRecord = {
   inviteId: string;
   email: string;
@@ -117,45 +112,6 @@ function assertMutationsEnabled(enabled: boolean): void {
   }
 }
 
-function parseConsentVersions(input: {
-  accepted: {
-    termsOfUseVersion: string;
-    privacyNoticeVersion: string;
-  };
-  required: {
-    termsOfUseVersion: string;
-    privacyNoticeVersion: string;
-  };
-}) {
-  const accepted = {
-    termsOfUseVersion: ConsentVersionSchema.parse(
-      input.accepted.termsOfUseVersion
-    ),
-    privacyNoticeVersion: ConsentVersionSchema.parse(
-      input.accepted.privacyNoticeVersion
-    ),
-  };
-  const required = {
-    termsOfUseVersion: ConsentVersionSchema.parse(
-      input.required.termsOfUseVersion
-    ),
-    privacyNoticeVersion: ConsentVersionSchema.parse(
-      input.required.privacyNoticeVersion
-    ),
-  };
-
-  if (
-    accepted.termsOfUseVersion !== required.termsOfUseVersion ||
-    accepted.privacyNoticeVersion !== required.privacyNoticeVersion
-  ) {
-    throw new ValidationError({
-      consent: "identity_consent_version_mismatch",
-    });
-  }
-
-  return accepted;
-}
-
 function assertInviteCanBeAccepted(
   invite: TeacherOnboardingInviteRecord,
   now: Date
@@ -225,7 +181,7 @@ export function createTeacherOnboardingService(
         firstName: input.firstName,
         lastName: input.lastName,
       });
-      const consent = parseConsentVersions({
+      const consent = parseAcceptedConsentVersions({
         accepted: input.consent,
         required: options.requiredConsent,
       });

@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 
 import { z } from "zod";
 
+import { ValidationError } from "@/lib/errors";
+
 export const TEACHER_INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 export const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 export const SESSION_IDLE_TIMEOUT_MS = 7 * 24 * 60 * 60 * 1000;
@@ -27,6 +29,17 @@ const RealNameSchema = z.object({
   firstName: RealNamePartSchema,
   lastName: RealNamePartSchema,
 });
+
+const ConsentVersionSchema = z.string().trim().min(1).max(100);
+
+/**
+ * Legacy `User.passwordHash` is non-null. The random source for this bcrypt
+ * hash was discarded, so it cannot be used as a fallback credential. Sharing
+ * one precomputed constant also avoids per-request bcrypt work before an
+ * onboarding request has been validated.
+ */
+export const DISABLED_COMPATIBILITY_PASSWORD_HASH =
+  "$2b$12$WdTDhMd30SXNvxTGCidMdeqzArfRCLJM/Kx7PqHXQf9qKvLxVtUbe";
 
 export type RealName = z.infer<typeof RealNameSchema>;
 export type ConsentDocument = "TERMS_OF_USE" | "PRIVACY_NOTICE";
@@ -85,6 +98,50 @@ export function hasRequiredConsent(
     accepted.has(`TERMS_OF_USE:${required.termsOfUseVersion}`) &&
     accepted.has(`PRIVACY_NOTICE:${required.privacyNoticeVersion}`)
   );
+}
+
+/**
+ * Onboarding accepts consent only for the exact versions the deployment
+ * currently requires, so a stale client cannot register an account against a
+ * superseded Terms or Privacy document.
+ */
+export function parseAcceptedConsentVersions(input: {
+  accepted: {
+    termsOfUseVersion: string;
+    privacyNoticeVersion: string;
+  };
+  required: {
+    termsOfUseVersion: string;
+    privacyNoticeVersion: string;
+  };
+}) {
+  const accepted = {
+    termsOfUseVersion: ConsentVersionSchema.parse(
+      input.accepted.termsOfUseVersion
+    ),
+    privacyNoticeVersion: ConsentVersionSchema.parse(
+      input.accepted.privacyNoticeVersion
+    ),
+  };
+  const required = {
+    termsOfUseVersion: ConsentVersionSchema.parse(
+      input.required.termsOfUseVersion
+    ),
+    privacyNoticeVersion: ConsentVersionSchema.parse(
+      input.required.privacyNoticeVersion
+    ),
+  };
+
+  if (
+    accepted.termsOfUseVersion !== required.termsOfUseVersion ||
+    accepted.privacyNoticeVersion !== required.privacyNoticeVersion
+  ) {
+    throw new ValidationError({
+      consent: "identity_consent_version_mismatch",
+    });
+  }
+
+  return accepted;
 }
 
 export function defaultAvatarVariant(
