@@ -1,9 +1,15 @@
 # Identity V2 Foundation Rollout
 
-**Status:** Stage 2A accepted; Stage 2B Teacher Invite issue, Google-first
-Teacher acceptance, Google-first Student onboarding, returning-user sign-in,
-authenticated-Profile provider linking, optional fallback-password setup, and
-the Google ID-token verifier accepted on isolated Neon QA on 2026-07-24  
+**Status:** Stage 2A plus these Stage 2B slices are implemented and tested on
+2026-07-24: Teacher Invite issue, Google-first Teacher acceptance, Google-first
+Student onboarding, returning-user sign-in, authenticated-Profile provider
+linking, optional fallback-password setup, the Google ID-token verifier, a
+flag-gated NextAuth Google provider, the login sign-in button, and the
+`/onboarding` page with its signed pending-token handoff and completion action.
+Remaining before the feature can be switched on: the OAuth-side glue that mints
+the pending cookie for a brand-new user and establishes the post-onboarding
+session, both of which need a live Google OAuth credential and a browser
+walkthrough.  
 **Production:** unchanged  
 **Runtime:** disabled by default
 
