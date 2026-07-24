@@ -1,6 +1,6 @@
 # Next Development Plan
 
-**Updated:** 2026-07-22
+**Updated:** 2026-07-24
 **Sequence:** Core completion -> Lesson Workspace -> Quiz -> Identity/Integrations -> AI -> Optional product modules
 **Current state:** A0 Documentation Alignment, A1 Report/Export v1, A2 Critical-path QA, and A3/A3.1 static correctness work are complete. Automated invite coverage plus a physical-phone Production QR scan passed, and authenticated Production private-R2 upload/preview/download passed after the explicit attachment-disposition fix. A4 Account Lifecycle and the operational Moderation Center have additive persistence, audited transactions, and feature-flagged Admin surfaces. Lesson Workspace B1-B6 are implemented and accepted on isolated Neon QA. Quiz C1-C5c are implemented; the additive Quiz migrations are current in Production and the exact ENG 4/3 CourseOffering pilot has read/mutations enabled. The first expansion review kept that exact allowlist because the Production pilot has no Quiz record yet for full role/lifecycle/private-file acceptance; other and future CourseOfferings remain fail-closed.
 
@@ -18,10 +18,10 @@ This matrix prevents an implemented screen or database field from being mistaken
 | --- | --- | --- |
 | Role dashboards | Operational dashboards exist for Admin, Teacher, and Student | Partial: advanced trends, usage statistics, and report export need a separate scope decision |
 | Report and export | Student Learning Results has browser Print to PDF; Teacher score and attendance summaries have course-level CSV; Admin Audit has filtered CSV | V1 shipped: full report-card PDF generation is explicitly deferred pending a separate layout, identity, signature, and authorization decision |
-| Admin user management | Create/import Teacher, list users, reset password, reset avatar, and user drill-down exist | Partial: deactivate, restore, delete-request, and anonymize workflows are not complete even though `User.deletedAt` and `Student.anonymized` exist |
+| Admin user management | Legacy create/import Teacher, list users, reset password, reset avatar, and user drill-down exist | Target identity supersedes account/password creation: Add Teacher creates single-use email-bound Invites only; another User's password is never visible or reset by Admin |
 | QR and invite link | Class Code, `qrcode.react`, `ClassCodeCard`, join route, automated lifecycle/mobile coverage, and physical-phone Production scan exist | Accepted: invite copy, expiry, deactivate, regenerate, mobile, rejoin, and Production camera-to-prefilled-code flow passed QA |
 | Moderation | Existing Teacher comment moderation plus a case-based Admin queue for reports, evidence snapshots, temporary restrictions, decisions, restore, and one-time appeal | Code/schema deployed behind `MODERATION_CENTER_ENABLED`; flag cutover and manual all-theme/mobile/private-R2 acceptance remain open |
-| Profile personal information | Avatar, display name, read-only real identity, password, and theme exist | Intentionally minimal learning identity; a full personal profile requires a privacy/scope decision, not an automatic expansion |
+| Profile personal information | Avatar, legacy display-name behavior, real identity, password, and theme exist | Target profile is intentionally minimal: editable re-authenticated Real Name, user-uploaded Avatar, owner/Admin-only verified email, optional fallback password, and theme; no separate Display Name |
 | Quiz / Testing | Approved contract, four ADRs, additive schema, Teacher Builder, Student Attempt/autosave/auto-grading, Teacher Results/lifecycle/publication, private attachments, Moderation evidence, Teacher CSV analytics, and an aggregate-only Admin observer | Production schema and exact ENG 4/3 pilot are enabled; authenticated Teacher list-route smoke passes, but the empty pilot has not exercised the full role/lifecycle/private-file workflow, so expansion is deferred and non-allowlisted CourseOfferings stay fail-closed |
 | AI Assistant | No model-provider integration found | Not implemented; planned only after stable Lesson/Quiz contracts |
 | Google Login | NextAuth currently uses Credentials only | Not implemented; identity-linking rules must be designed first |
@@ -52,7 +52,7 @@ This matrix prevents an implemented screen or database field from being mistaken
 - Align Profile, avatar, System/Light/Dark/Cream themes, Dashboard behavior, mobile FAB, Feed, notifications, and private file delivery with the current code.
 - Reconcile Proposal statements about GPA, PDF, reporting, and exports with the current product language.
 - Replace every remaining active weighted-score statement with the current `fullScore`-based sum model. Historical references may remain only when labeled superseded. `ScoreItem` has no separate weight channel.
-- Treat course score and course grade as the primary Student result. Term GPA may remain a calculated/report value, but must not return as a large Dashboard metric or confusing completion trend.
+- Treat course score and course grade as the primary Student result. **Superseded by D0 on 2026-07-24:** Term GPA and cross-course GPA are removed entirely rather than retained as secondary report values.
 - Mark old HANDOFF and Task sections as historical when they conflict with the latest ledger.
 
 **Exit gate:** CONTEXT, ADRs, Proposal, deployment notes, and HANDOFF do not contradict the current code or one another.
@@ -236,14 +236,7 @@ successfully on 2026-07-15 and the mutation flag remains disabled. See ADR-0031.
 - Production rollout and forward-only rollback gates are recorded in
   [`ACCOUNT-LIFECYCLE-ROLLOUT.md`](./ACCOUNT-LIFECYCLE-ROLLOUT.md).
 
-- Use one Account Status: Active, Suspended, Terminated, or Anonymized. Migrate legacy flags additively before removing them.
-- Suspended affects authentication only. Terminated removes current participation but preserves history. Anonymized removes identity and is irreversible.
-- Admin is the global lifecycle operator. Teacher and Student can submit a termination request; Teacher can remove a Student only from an owned CourseOffering.
-- Require an internal reason, separate user-facing message, confirmation, session revocation, audit, self-protection, and last-Admin protection.
-- Block Teacher termination while an owned CourseOffering is active. Emergency suspension remains available; ownership transfer is a separate future decision.
-- Terminating a Student withdraws active enrollments while retaining submissions, scores, attendance, and Teacher review access. Restoration does not rejoin prior courses.
-- Restoring a terminated account requires a temporary password and first-login reset. An anonymized account cannot be restored.
-- Anonymization is explicit and never automatic. It is allowed only after termination and open-work/dispute checks, and preserves pseudonymous academic evidence.
+**Superseded target-policy note (2026-07-24):** the earlier Terminated/Admin-approved request design above remains an implementation-history record, not the target identity contract. Release D replaces the target lifecycle with Active, Suspended, Deletion Pending, and Anonymized; account deletion is self-service with a 30-day recovery window and no Temporary Password. This Release D identity phase intentionally does not mutate CourseOffering lifecycle when a Teacher deletes an account.
 
 #### QR and invite acceptance
 
@@ -286,7 +279,7 @@ Status: decision lock completed 2026-07-14. The first operational slice was impl
 
 #### Profile scope
 
-- Keep the current minimal learning identity by default: avatar, friendly display name, real identity read-only, password, and theme.
+- Keep a minimal learning identity: re-authenticated editable Real Name, privacy-safe Default Avatar or user-uploaded Avatar, owner/Admin-only verified email, optional Fallback Password, and theme. Do not maintain a separate Display Name.
 - Grill separately before adding phone, address, birth date, bio, guardian, or social fields because they increase PII collection and PDPA obligations.
 - Ensure avatars and real names are used consistently across Feed, comments, course cards, submissions, and review.
 
@@ -439,13 +432,126 @@ AI grading, invasive proctoring, and full offline exams remain outside MVP.
 
 These items do not block Lesson Workspace or Quiz and must not be bundled into their database rollout.
 
+### D0. Remove Student Number from the product identity
+
+**Decision locked 2026-07-24:** Student Number is no longer part of the target identity model. It must not be required for sign-up, used as a login identifier, used as an authorization input, or shown in normal Profile, CourseOffering, member, attendance, score, submission, report, search, import, or export surfaces. Academic relationships continue to use the immutable internal User id.
+
+The project is still using disposable development data. Decision locked 2026-07-24: do not build a legacy Student Number account-migration flow. Replace the identity model, reset explicitly approved development/QA data, and recreate test users under the new model.
+
+1. Inventory every use of the human-facing `Student.studentId` separately from internal foreign keys named `studentId` that actually reference `User.id`. Do not bulk-rename or drop the latter.
+2. Implement the replacement Authentication identity and account-creation path before removing the old Credentials fields from code.
+3. Remove Student Number from schema, validation, login, search, import, report, export, Profile, CourseOffering, member, attendance, score, and submission projections.
+4. Rename internal foreign-key terminology where practical so a User relation is not confused with the retired human-facing Student Number. Preserve referential behavior even though disposable rows will be reset.
+5. Generate and apply the destructive schema migration only after code, type, unit, integration, and build checks pass against an isolated database.
+6. Reset only the explicitly named development/QA environments, reseed role accounts and representative course data, then run the critical-path QA checklist.
+7. Production data is never reset as an implicit side effect. If the current Production dataset is also declared disposable, require a separate named approval, backup/restore drill, and post-reset acceptance before deletion.
+
+**Environment cutover decision locked 2026-07-24:**
+
+1. Create or refresh an isolated Neon QA branch.
+2. Apply the new schema and representative seed to QA.
+3. Run role, critical-flow, file, theme, responsive, migration, and rollback acceptance there.
+4. Deploy only code that is compatible with the approved target schema.
+5. Back up Production and verify restore before destructive cutover.
+6. Require a separate approval naming Production immediately before reset.
+7. Reset and seed Production, then run authenticated Production smoke tests.
+
+**Selective preserve decision locked 2026-07-24:** retain the existing Razyxls Admin identity across the reset without retaining the retired username credential or unrelated test data.
+
+- Preserve the internal User id, Admin Role, real-name Profile, avatar linkage when the private object still exists, Theme preference, required consent, and active account status.
+- Replace the `Rayzxls` username with a separately supplied unique verified email and establish new Google/fallback authentication under the target model.
+- Do not preserve the old password hash, sessions, test Audit rows, Academic Year, Term, Class, CourseOffering, Enrollment, score, attendance, submission, Lesson, Quiz, notification, or other disposable development records merely because they relate to the old database.
+- Export and validate the preserve bundle before reset; import it idempotently after the target schema is applied. Fail closed if the verified email is missing, duplicated, or unverified.
+
+**Acceptance gates:**
+
+- A new Student can create and use an account without a Student Number.
+- Newly seeded Students can authenticate and complete join, submission, score, attendance, notification, file, Lesson, and Quiz flows without a Student Number.
+- Duplicate real names remain valid; identity and authorization never infer a User from a name.
+- Teacher and Admin surfaces do not display or require Student Number.
+- Database and route tests prove that no authorization decision reads the legacy value.
+- Schema migration and seed scripts are reproducible on an isolated database before any shared environment reset.
+
+### D0.1. Teacher-owned course labels and academic period
+
+The desired product direction removes Admin-managed Class, Academic Year, and Term setup from the course-creation dependency. Teacher will describe the learner group and academic period while creating a CourseOffering. This change requires a separate migration plan because the current timetable, dashboard, reports, course colors, GPA remnants, and Admin Observer queries still traverse Class and Term relations.
+
+Plan this as an additive compatibility migration:
+
+1. Define the final teacher-entered labels and which are required.
+2. Add teacher-owned CourseOffering metadata and backfill it from the current Class, Term, and Academic Year records.
+3. Move all reads, filters, reports, timetable projections, and course cards to the new metadata.
+4. Remove Admin create/edit surfaces for Class, Academic Year, and Term while retaining read-only legacy observation during rollout.
+5. Make legacy relations non-blocking, verify old and new CourseOfferings together, then remove unused tables and code only after dependency scans and Production acceptance pass.
+
+Decision locked 2026-07-24: `learnerGroupLabel` and `academicPeriodLabel` are independent free-text CourseOffering metadata and both are optional. A Teacher can create a CourseOffering with only its name; no hidden Class, Academic Year, or Term validation may make either label effectively required.
+Decision locked 2026-07-24: empty optional labels are omitted from Course cards, Feed headers, dashboards, reports, timetable, and detail views. Layout must collapse the unused space; do not render `-`, `ไม่ระบุ`, or an empty year/term badge.
+Decision locked 2026-07-24: CourseOffering lifecycle is `active` versus `archived`, using the existing archive concept rather than Academic Year or Term inference. Active courses are the default list; archived courses live in a separate archive surface and preserve academic history. Free-text labels never determine lifecycle.
+Decision locked 2026-07-24: an archived CourseOffering is read-only for Teacher and Student across Feed, Lesson, Assignment, Material, Announcement, Comment, Submission, Attendance, Score, Quiz, and file mutations. Existing history remains readable under normal visibility rules. The owning Teacher may restore the course; Admin remains observer-only. Enforce this at authorization/service boundaries, not only by hiding controls.
+Decision locked 2026-07-24: remove Term GPA, GPAX, Term Status, term-completion progress, and every aggregate result calculated across CourseOfferings. Student Learning Results lists active and archived CourseOfferings and shows Score Total, percentage, and Grade per CourseOffering only. `academicPeriodLabel` is display metadata and never participates in calculation or completeness.
+
+Decision locked 2026-07-24: keep Credit Hours as display/report metadata for one CourseOffering. It never calculates GPA or aggregates results across CourseOfferings.
+Decision locked 2026-07-24: Credit Hours is optional during course creation. Empty values are omitted and collapse their UI space; do not coerce missing data to zero or show a placeholder.
+Decision locked 2026-07-24: retire Admin-managed Academic Year, Term, Class, and Homeroom Teacher concepts from the target model and remove their management surfaces. Admin Observer View remains read-only over Teacher-owned CourseOfferings and their permitted operational aggregates.
+Decision locked 2026-07-24: equal free-text labels across CourseOfferings never imply shared identity or membership. Do not normalize, upsert, join, authorize, aggregate, or synchronize CourseOfferings from matching `learnerGroupLabel` or `academicPeriodLabel` values.
+Decision locked 2026-07-24: retire the required `gradeLevel` field. Grade or education level may appear inside optional `learnerGroupLabel`; it must not be independently required, normalized, or used for authorization or aggregation.
+
+Removal sequence:
+
+1. Add optional teacher-owned metadata to CourseOffering and move course creation off Term/Class lookup and implicit Class upsert.
+2. Replace Class-derived timetable labels and color keys with CourseOffering identity plus optional learner-group display.
+3. Replace Term/Class traversal in dashboards, reports, Learning Results, course cards, queries, exports, and Admin Observer projections.
+4. Remove Homeroom Teacher behavior and every permission/query path that depends on a shared Class.
+5. Remove Admin setup actions, routes, navigation, validation, audit labels, and tests for Academic Year, Term, Class, and Homeroom Teacher.
+6. Verify no runtime or report query reads the retired relations, then drop their foreign keys, models, and seed data in the destructive reset migration.
+
 ### D1. Google Login
 
-- Define how a Google identity links to an existing Credentials account for Student, Teacher, and Admin without creating duplicate users.
-- Keep role assignment controlled by the existing account record; Google sign-in must not grant a role by email guesswork.
-- Define account recovery, revoked Google access, email changes, school-domain restrictions, and fallback Credentials login.
-- Implement only after identity-linking, audit, and test-account migration decisions are approved.
-- Begin the next Grill only after the Quiz pilot expansion decision. Lock decisions for verified-email linking versus invite linking, personal Gmail versus school Workspace accounts, multi-role handling, Admin provisioning, collision/recovery behavior, PDPA consent, revocation, and compatibility with a future Global User model before selecting an OAuth provider implementation.
+Architecture decision: [`ADR-0041`](./adr/0041-google-first-identity-uses-gated-role-onboarding.md).
+
+- Decision locked 2026-07-24: use Google-first onboarding. A new Student may authenticate with Google, provide real name once, and then return to the same linked User Account on later Google sign-ins without repeating onboarding or supplying a Student Number.
+- Decision locked 2026-07-24: never treat the Google display name as the authoritative Real Name because it may be a nickname or arbitrary text. Every new User must explicitly enter separate real first-name and last-name fields in Beagle Classroom and confirm them before account creation; Google proves ownership of the verified email only.
+- Decision locked 2026-07-24: do not import the Google profile image automatically. New Users receive the stable privacy-safe Default Avatar and may upload their own Avatar later.
+- Decision locked 2026-07-24: Users may edit their own real first name and last name in Profile without Admin approval, but must re-authenticate and every change must write an Audit Log event.
+- Decision locked 2026-07-24: a Student real-name change creates one deduplicated Notification per Teacher who owns an actively enrolled CourseOffering, showing Avatar, old and new names, timestamp, and all affected courses. It routes to that Student's member context. A “เพิ่งเปลี่ยนชื่อ” badge and prior name remain visible to those Teachers for 14 days only; peers never see the prior name, while Admin retains permanent Audit history.
+- Decision locked 2026-07-24: apply the same continuity rule to Teacher real-name changes. Students actively enrolled in that Teacher's CourseOfferings receive a deduplicated old-to-new name Notification, and may see a “เพิ่งเปลี่ยนชื่อ” badge plus the prior Teacher name for 14 days.
+- Decision locked 2026-07-24: CourseOffering members may report a misleading or inappropriate Real Name or Avatar. The Moderation case stores an immutable snapshot of both at report time. Reporting alone never auto-hides identity content or restricts/suspends the User; Admin must review and decide through the Moderation workflow.
+- Simplicity decision locked 2026-07-24: Student onboarding does not require a pre-imported roster, per-Student invite, Student Number, or approval before account creation. Course data remains protected behind the separate Class Code enrollment flow.
+- A new Teacher requires a valid Teacher Invite before Google-first onboarding can create the Teacher account. Admin cannot self-register; an existing provisioned Admin account must explicitly link Google.
+- Decision locked 2026-07-24: do not expose Admin invite, self-signup, or Role elevation in the web UI. Provision a new Admin only through a secret-gated Bootstrap/Deployment command, audit the result, and never log the secret, token, or credentials.
+- Decision locked 2026-07-24: first account creation requires separate acceptance of versioned Terms of Use and Privacy Notice, storing each version and acceptance timestamp. Re-consent only for material changes. Do not add marketing consent in this release. Any minor/guardian consent flow requires separate school-policy and legal review before implementation.
+- Keep role assignment controlled by the approved onboarding path or existing account record. Google email alone never grants Teacher/Admin access, Google does not change an existing Role, and one Google Identity cannot link to multiple User Accounts.
+- Decision locked 2026-07-24: retain one Role per User Account for this release. If a Teacher Invite targets a verified email already owned by another Role, fail closed and tell Admin; never auto-convert the Role or create a duplicate account. Multi-role identity is a separately designed future capability.
+- Decision locked 2026-07-24: Google is the primary sign-in path but not the only path. Every fallback email/password login must resolve to the same User Account as the linked Google Identity, never create a duplicate account, never infer or change a Role, and never use Student Number.
+- Decision locked 2026-07-24: fallback password setup is optional in Profile and does not block Google-first onboarding. The product may show a non-blocking reminder until it is configured.
+- Decision locked 2026-07-24: every User requires one unique verified email as the Authentication identifier. Google and fallback credentials resolve to the same internal User id. Email is private from CourseOffering peers, does not key academic relations, and can change only through verification of the new address.
+- Decision locked 2026-07-24: matching Google email never auto-links to an existing account. Link only after the existing fallback password is verified or from an already authenticated Profile. Teacher Invite email must match; Admin links only from an authenticated provisioned Admin account.
+- Decision locked 2026-07-24: Admin-created Teacher Invites are email-bound, single-use, and expire after 7 days. Admin may revoke an unused invite or resend a replacement; replacement must invalidate the prior invite and must not create a duplicate User Account. The invite grants only Teacher onboarding and never creates academic structure on the Teacher's behalf.
+- Decision locked 2026-07-24: consolidate single-Teacher entry and bulk CSV import into one Add Teacher workflow. Both paths create Teacher Invites only; they do not pre-create User Accounts or temporary passwords, and each invited Teacher completes Google sign-in personally.
+- Decision locked 2026-07-24: fallback password recovery uses a single-use email link with a 15-minute expiry. Successful reset revokes other sessions. Teacher and Admin no longer view, generate, or reset another User's password.
+- Decision locked 2026-07-24: voluntary Google disconnect requires an existing fallback password. External Google revocation never deletes the User or academic data; a User without fallback password recovers it through verified email.
+- Decision locked 2026-07-24: allow verified Gmail and Google Workspace identities from any domain. Domain never grants Teacher or Admin Role; those roles retain their Invite/provisioning gates.
+- Decision locked 2026-07-24: request only minimum Google OAuth/OIDC scopes for authentication and verified email. Do not request Drive, Contacts, Calendar, Classroom, or other integration permissions. Future integrations require a separate feature-specific consent and must not silently widen login scopes.
+- Decision locked 2026-07-24: authentication sessions last at most 30 days on the same device and expire after 7 continuous days of inactivity. Real-name, verified-email, fallback-password, and account-deletion changes require re-authentication. Logout revokes the current session immediately.
+- Decision locked 2026-07-24: email change requires re-authentication and verification of the new unique address. On success, update the canonical identifier, revoke other sessions, and audit the change. Existing Google linkage remains keyed by provider identity even when its email differs from the new canonical email.
+- Decision locked 2026-07-24: Student email is hidden from CourseOffering peers and the owning Teacher. Teacher-facing member, score, attendance, review, and submission surfaces show only real name and Avatar. Only the account owner and account-managing Admin may see the verified email.
+- Decision locked 2026-07-24: when a User has no uploaded Avatar, generate a stable privacy-safe Default Avatar variant from the internal User id. It may vary color or pattern so duplicate real names remain distinguishable, but must not display or expose the id and is replaced by the User's uploaded Avatar.
+- Decision locked 2026-07-24: self-service account deletion immediately changes the account to Deletion Pending, blocks sign-in, and revokes sessions without waiting for Admin approval. The owner may recover it within 30 days. After the window, anonymize verified email, Real Name, Avatar, and displayable personal data while preserving required Score, Submission, Attendance, and Audit history under a non-public internal identity. Admin User management must not expose direct hard deletion of learning history.
+- Scope boundary locked 2026-07-24: this identity work does not change CourseOffering lifecycle behavior when a Teacher account is deleted. Do not add automatic archive/restore or other CourseOffering mutations in this phase; retain the current behavior and treat any ownership-transfer policy as a separate future decision.
+**Grill status:** complete 2026-07-24 for the current single-tenant school release. Verified-email linking, Teacher Invite, Google/fallback collision handling, one-Role policy, Admin provisioning, recovery, consent, minimal OAuth scope, session policy, profile identity, name-change continuity, moderation, deletion/anonymization, and Razyxls preservation are locked above. Multi-role and global multi-tenant identity remain separate future architecture.
+
+**Staged implementation and cutover order:**
+
+1. **Complete 2026-07-24:** Build an executable dependency inventory and release gate before schema edits. The committed baseline now separates retired Student Number blockers from ambiguous internal `studentId` User relations and inventories Class/Term/AcademicYear, identity, report, seed, and test dependencies. See `docs/release-gates/IDENTITY-COURSE-DEPENDENCY-GATE.md`; the initial baseline is 637 blockers and 240 review findings, with zero new dependencies permitted.
+2. **Stage 2A complete 2026-07-24; Stage 2B in progress:** the additive Identity V2 schema/domain foundation is implemented behind fail-closed read/mutation flags. It adds verified-email fields, Google provider-link persistence, Teacher Invite persistence, separate versioned consent records, session-revocation metadata, Real Name history, deterministic Default Avatar policy, and Deletion Pending metadata while retaining legacy login. The migration was applied and verified on isolated Neon QA only; it created no identity rows and changed no existing User status. Stage 2B now supports fail-closed Admin issue/replace/revoke of Teacher Invites plus atomic Google-first Teacher Invite acceptance: User, Teacher, Google identity, exact-version consent, Invite state, and Audit events commit together. Both transaction slices passed isolated-Neon tests and clean up their disposable rows. Google/OIDC assertion verification, routes/UI/email delivery, Student onboarding, existing-account provider linking, session, verified-email change, recovery, and deletion services remain disabled and unfinished. See `docs/release-gates/IDENTITY-FOUNDATION-ROLLOUT.md`.
+3. Add Google-first Student/Teacher onboarding and provisioned-Admin linking. Add optional Fallback Password and email-link recovery. Prove collision, Role, Invite expiry/revoke/resend, session revocation, and minimum-scope behavior before changing the default login.
+4. Add optional teacher-owned `learnerGroupLabel`, `academicPeriodLabel`, and optional Credit Hours to CourseOffering. Move Teacher course creation and all reads to CourseOffering-owned metadata while legacy Class/Term relations remain compatibility-only.
+5. Migrate Profile, members, attendance, scores, submissions, reports, exports, notifications, moderation, dashboards, timetable, Admin Observer, Lesson, Quiz, and file permission projections to the new identity and CourseOffering contracts. Remove Student Number and retired academic-setup controls from every visible surface.
+6. Run static and runtime dependency gates proving no authorization, calculation, route, report, seed, or UI requires Student Number, Class, Term, AcademicYear, gradeLevel, Term GPA/GPAX, Display Name, Temporary Password, or Admin-created Teacher Account.
+7. Apply the target destructive migration and representative seed to isolated Neon QA only. Exercise backup/restore, Razyxls preserve-bundle export/import, role flows, Google/fallback auth, invites, course creation, join, Feed, Lesson, Quiz, submission/review, score publication, attendance, notifications, moderation, account recovery/deletion, private files, all themes, and desktop/mobile.
+8. Promote only after QA has no P0/P1 defects and rollback is rehearsed. Back up Production, verify restore, request a separate approval explicitly naming Production, run the reset/cutover, import the validated Razyxls Admin bundle, and complete authenticated Production smoke acceptance.
+
+Do not combine additive rollout, default-login switch, destructive schema removal, and Production reset into one release. Each stage has its own flag, verification evidence, and rollback point.
 
 ### D2. Other program integrations
 

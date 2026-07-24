@@ -326,6 +326,10 @@ Response = 429 + `Retry-After`
 - `CSV_IMPORT`
 - `CLASS_CODE_REGENERATED`
 - `CLASS_CODE_DEACTIVATED` / `CLASS_CODE_REACTIVATED` (ADR-0013 kill switch)
+- `TEACHER_INVITE_ISSUED`
+- `TEACHER_INVITE_REPLACED` (prior pending Invites are revoked atomically)
+- `TEACHER_INVITE_REVOKED` (with Admin reason)
+- `TEACHER_INVITE_ACCEPTED` (Google identity, account, consent, and Invite commit atomically)
 - `CLASS_CODE_EXPIRY_SET` (clearing → before:{expiry}, after:{expiry: null})
 - `ADMIN_VIEW_STUDENT_DATA` (เข้าดูข้อมูลรายคน)
 - `ASSIGNMENT_CREATE/EDIT/DELETE`
