@@ -1,11 +1,15 @@
 "use server";
 
+import { AuthError } from "next-auth";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { signIn } from "@/lib/auth";
+import { ONBOARDING_SESSION_PROVIDER_ID } from "@/lib/auth/onboarding-session-provider";
 import { HttpError } from "@/lib/errors";
 import { completeGoogleOnboarding } from "@/lib/identity/complete-google-onboarding";
 import { identityFoundationMutationsEnabled } from "@/lib/identity/feature-flags";
+import { createOnboardingSessionHandoff } from "@/lib/identity/onboarding-session-handoff";
 import {
   PENDING_ONBOARDING_COOKIE,
   readPendingGoogleOnboardingToken,
@@ -40,8 +44,9 @@ export async function completeGoogleOnboardingAction(
 
   const meta = await getRequestMeta();
 
+  let userId: string;
   try {
-    await completeGoogleOnboarding(
+    const result = await completeGoogleOnboarding(
       {
         onboardingService: createPrismaStudentOnboardingService(),
         requiredConsent: {
@@ -60,6 +65,7 @@ export async function completeGoogleOnboardingAction(
         userAgent: meta.userAgent ?? undefined,
       }
     );
+    userId = result.userId;
   } catch (error) {
     // A specific validation message is safe to show; anything else stays
     // generic so account state is never leaked through the onboarding form.
@@ -72,8 +78,24 @@ export async function completeGoogleOnboardingAction(
   // The pending handoff is single-use: clear it so a reload cannot replay it.
   cookieStore.delete(PENDING_ONBOARDING_COOKIE);
 
-  // The account and its Google identity now exist, so the standard sign-in
-  // resolver will recognise the next Google click. Session establishment is a
-  // separate concern from account creation and is not forged here.
-  redirect("/login?onboarded=1");
+  // Sign the brand-new Student in immediately so onboarding is a single Google
+  // click rather than two. The handoff is a signed, short-lived proof of the
+  // account just created; the credentials provider re-checks availability
+  // before issuing the session. If establishing it fails for any reason the
+  // account still exists, so fall back to the login page instead of stranding
+  // the user — never leave them without a way in.
+  const handoff = await createOnboardingSessionHandoff({ userId, secret });
+  try {
+    await signIn(ONBOARDING_SESSION_PROVIDER_ID, {
+      handoff,
+      redirectTo: "/dashboard",
+    });
+  } catch (error) {
+    if (error instanceof AuthError) {
+      redirect("/login?onboarded=1");
+    }
+    throw error; // a successful sign-in throws NEXT_REDIRECT to /dashboard
+  }
+
+  return {}; // not reached: signIn always throws (redirect or AuthError)
 }

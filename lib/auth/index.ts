@@ -10,6 +10,7 @@ import { getRequestMeta } from "@/lib/utils/request";
 import { LoginSchema } from "@/lib/validation/schemas";
 import { isAccountAvailableForAuthentication } from "@/lib/account/status";
 import { googleProvidersIfEnabled } from "@/lib/auth/google-provider";
+import { onboardingSessionProviderIfEnabled } from "@/lib/auth/onboarding-session-provider";
 import { createPrismaGoogleSignInService } from "@/lib/identity/google-signin-prisma";
 import {
   PENDING_ONBOARDING_COOKIE,
@@ -147,6 +148,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         };
       },
     }),
+    // Programmatic-only: establishes the session right after onboarding so a
+    // new Google user is not sent back for a second click. Gated identically,
+    // so it spreads to nothing when the identity flags are off.
+    ...onboardingSessionProviderIfEnabled(),
     // Appended, never inserted: with the identity flags off this spreads to
     // nothing and the provider list is exactly the Credentials entry above.
     ...googleProvidersIfEnabled({
