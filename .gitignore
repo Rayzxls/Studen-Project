@@ -42,6 +42,8 @@ next-dev-*.log
 next-dev-*.err.log
 vite-dev-*.log
 vite-dev-*.err.log
+*-qa.log
+*-qa.err.log
 .local-storage/
 .codex/
 
