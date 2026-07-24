@@ -9,6 +9,8 @@ import {
 } from "@/lib/profile/mutations";
 import { parseThemeMode, updateOwnThemeMode } from "@/lib/theme/mode";
 import { changeOwnPassword } from "@/lib/auth/change-password";
+import { signOut } from "@/lib/auth";
+import { createPrismaAccountDeletionService } from "@/lib/identity/account-deletion-prisma";
 import { createPrismaFallbackPasswordService } from "@/lib/identity/fallback-password-prisma";
 import { getRequestMeta } from "@/lib/utils/request";
 import { Forbidden, HttpError, ValidationError } from "@/lib/errors";
@@ -193,6 +195,53 @@ export async function setFallbackPasswordAction(
 
   revalidatePath("/profile");
   return { ok: true };
+}
+
+/**
+ * Self-service account deletion (D1): moves the caller's own account to
+ * Deletion Pending, then signs the current device out immediately. Sign-in is
+ * blocked afterwards by the standard availability predicate. Nothing is erased —
+ * recovery within the window and post-window anonymization are separate slices.
+ */
+export async function requestAccountDeletionAction(
+  _prev: ProfileFormState,
+  formData: FormData
+): Promise<ProfileFormState> {
+  const session = await requireAuth();
+  const meta = await getRequestMeta();
+
+  if (String(formData.get("confirm") ?? "").trim() !== "DELETE") {
+    return {
+      fieldErrors: { confirm: 'พิมพ์ "DELETE" เพื่อยืนยันการลบบัญชี' },
+    };
+  }
+
+  const reauthenticatedAt = session.user.signInAt
+    ? new Date(session.user.signInAt * 1000)
+    : null;
+
+  try {
+    await createPrismaAccountDeletionService().requestOwnDeletion({
+      actor: { userId: session.user.id, reauthenticatedAt },
+      occurredAt: new Date(),
+      ipAddress: meta.ipAddress ?? undefined,
+      userAgent: meta.userAgent ?? undefined,
+    });
+  } catch (err) {
+    if (err instanceof Forbidden && err.code === "reauthentication_required") {
+      return {
+        error:
+          "เพื่อความปลอดภัย กรุณาเข้าสู่ระบบใหม่ แล้วลองอีกครั้งภายใน 20 นาที",
+      };
+    }
+    if (err instanceof HttpError) return { error: err.message };
+    throw err;
+  }
+
+  // End this device's session now and send the owner to login. Throws a
+  // redirect, so nothing after this runs.
+  await signOut({ redirectTo: "/login?deletion=pending" });
+  return {};
 }
 
 export async function updateThemeModeAction(

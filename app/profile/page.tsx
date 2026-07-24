@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { KeyRound, Palette, UserRound } from "lucide-react";
+import { KeyRound, Palette, TriangleAlert, UserRound } from "lucide-react";
 import { requireAuth } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { resolveDisplayName } from "@/lib/profile/display-name";
@@ -9,6 +9,7 @@ import { DISABLED_COMPATIBILITY_PASSWORD_HASH } from "@/lib/identity/foundation"
 import { TopNav } from "@/components/layout/top-nav";
 import { AvatarEditor } from "@/components/profile/avatar-editor";
 import { ChangePasswordForm } from "@/components/profile/change-password-form";
+import { DeleteAccountForm } from "@/components/profile/delete-account-form";
 import { SetFallbackPasswordForm } from "@/components/profile/set-fallback-password-form";
 import { DisplayNameForm } from "@/components/profile/display-name-form";
 import { ThemeModeControl } from "@/components/theme/theme-mode-control";
@@ -192,6 +193,22 @@ export default async function ProfilePage() {
               </>
             )}
           </section>
+
+          {/* Danger zone — self-service deletion (D1), flag-gated. */}
+          {identityFoundationMutationsEnabled() && (
+            <section className="card border-red-200 p-6">
+              <h2
+                className="flex items-center gap-2 text-base font-semibold text-red-700"
+                style={{ letterSpacing: "-0.01em" }}
+              >
+                <TriangleAlert className="h-4 w-4" aria-hidden="true" />
+                ลบบัญชี
+              </h2>
+              <div className="mt-4">
+                <DeleteAccountForm />
+              </div>
+            </section>
+          )}
         </div>
       </main>
     </div>

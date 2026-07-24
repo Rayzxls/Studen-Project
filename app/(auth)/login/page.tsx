@@ -17,6 +17,7 @@ function LoginForm() {
   const resetSuccess = search.get("reset") === "success";
   const onboarded = search.get("onboarded") === "1";
   const consentRefresh = search.get("error") === "consent_refresh";
+  const deletionPending = search.get("deletion") === "pending";
 
   return (
     <div className="animate-fade-in rounded-2xl bg-white p-8 shadow-card">
@@ -47,6 +48,12 @@ function LoginForm() {
       {consentRefresh && (
         <div className="mb-4 rounded-xl bg-orange-50 px-3 py-2 text-sm text-orange-700">
           มีข้อกำหนดฉบับใหม่ที่ต้องยอมรับก่อน กรุณาติดต่อผู้ดูแลระบบ
+        </div>
+      )}
+
+      {deletionPending && (
+        <div className="mb-4 rounded-xl bg-orange-50 px-3 py-2 text-sm text-orange-700">
+          บัญชีของคุณถูกกำหนดให้ลบและออกจากระบบแล้ว
         </div>
       )}
 
