@@ -171,6 +171,18 @@ and Deletion Pending) and a final production OAuth credential review.
   password, the hash became a real bcrypt value, and the audit recorded the set
   without the password or its hash. The authenticated-Profile Google-linking
   surface reuses the same re-auth rule and is the next Profile slice.
+- Added the first slice of D1 self-service deletion. The owner confirms in the
+  Profile danger zone, a dedicated deletion service moves the account to
+  Deletion Pending with a 30-day recovery date, this device is signed out
+  immediately, and login shows a neutral notice; sign-in is then refused by the
+  standard availability predicate. Nothing is erased — Score, Submission,
+  Attendance, and Audit history stay intact — and the service refuses a
+  non-available account. The admin lifecycle policy already defers Deletion
+  Pending to this flow, so it is unchanged. Verified end to end on isolated QA;
+  the row read `DELETION_PENDING` with the recovery date exactly 30 days out and
+  one `ACCOUNT_DELETION_REQUESTED` audit event. Recovery within the window and
+  post-window anonymization are the next slices and must land before the flag is
+  enabled anywhere real.
 
 Mutations require both flags and configured Terms/Privacy versions. Flags
 default to `0`; consent versions default to empty and therefore fail closed.
