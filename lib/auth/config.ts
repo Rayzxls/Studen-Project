@@ -99,6 +99,9 @@ export const authConfig = {
         session.user.role = token.role as "ADMIN" | "TEACHER" | "STUDENT";
         session.user.identifier = token.identifier as string;
         session.user.mustResetPwd = token.mustResetPwd as boolean;
+        // Surfaced for the pragmatic re-authentication rule: a sensitive Profile
+        // mutation treats a sign-in within the window as a recent re-auth.
+        session.user.signInAt = token.signInAt;
       }
       return session;
     },

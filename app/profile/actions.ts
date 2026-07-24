@@ -9,8 +9,9 @@ import {
 } from "@/lib/profile/mutations";
 import { parseThemeMode, updateOwnThemeMode } from "@/lib/theme/mode";
 import { changeOwnPassword } from "@/lib/auth/change-password";
+import { createPrismaFallbackPasswordService } from "@/lib/identity/fallback-password-prisma";
 import { getRequestMeta } from "@/lib/utils/request";
-import { HttpError, ValidationError } from "@/lib/errors";
+import { Forbidden, HttpError, ValidationError } from "@/lib/errors";
 
 /**
  * Server Actions — /profile (Phase 13).
@@ -131,6 +132,66 @@ export async function changePasswordAction(
     if (err instanceof HttpError) return { error: err.message };
     throw err;
   }
+  return { ok: true };
+}
+
+/**
+ * Sets the optional fallback password for a Google-first account that has none
+ * yet (its hash is the disabled compatibility sentinel). Unlike the legacy
+ * change-password flow, there is no current password to verify, so ownership
+ * comes from the pragmatic re-auth rule: a sign-in within the window counts as a
+ * recent re-authentication. The service still re-checks the window and account
+ * availability before writing.
+ */
+export async function setFallbackPasswordAction(
+  _prev: ProfileFormState,
+  formData: FormData
+): Promise<ProfileFormState> {
+  const session = await requireAuth();
+  const meta = await getRequestMeta();
+
+  const newPassword = String(formData.get("newPassword") ?? "");
+  const confirmPassword = String(formData.get("confirmPassword") ?? "");
+
+  if (newPassword !== confirmPassword) {
+    return { fieldErrors: { confirmPassword: "รหัสผ่านทั้งสองช่องไม่ตรงกัน" } };
+  }
+
+  const reauthenticatedAt = session.user.signInAt
+    ? new Date(session.user.signInAt * 1000)
+    : null;
+
+  try {
+    await createPrismaFallbackPasswordService().setOwnFallbackPassword({
+      actor: { userId: session.user.id, reauthenticatedAt },
+      newPassword,
+      occurredAt: new Date(),
+      ipAddress: meta.ipAddress ?? undefined,
+      userAgent: meta.userAgent ?? undefined,
+    });
+  } catch (err) {
+    if (err instanceof Forbidden && err.code === "reauthentication_required") {
+      return {
+        error:
+          "เพื่อความปลอดภัย กรุณาเข้าสู่ระบบใหม่ แล้วตั้งรหัสผ่านภายใน 20 นาที",
+      };
+    }
+    if (err instanceof ValidationError) {
+      const code = err.errors.password;
+      return {
+        fieldErrors: {
+          newPassword:
+            code === "fallback_password_too_common"
+              ? "รหัสผ่านนี้คาดเดาง่ายเกินไป กรุณาเลือกรหัสอื่น"
+              : "รหัสผ่านสั้นเกินไป (อย่างน้อย 8 ตัวอักษร)",
+        },
+      };
+    }
+    if (err instanceof HttpError) return { error: err.message };
+    throw err;
+  }
+
+  revalidatePath("/profile");
   return { ok: true };
 }
 

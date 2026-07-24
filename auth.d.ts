@@ -34,6 +34,8 @@ declare module "next-auth" {
       role: "ADMIN" | "TEACHER" | "STUDENT";
       identifier: string;
       mustResetPwd: boolean;
+      /** Unix seconds of sign-in; drives the pragmatic re-auth window. */
+      signInAt?: number;
       name?: string | null;
       email?: string | null;
       image?: string | null;

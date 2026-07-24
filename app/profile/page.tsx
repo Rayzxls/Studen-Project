@@ -4,9 +4,12 @@ import { requireAuth } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { resolveDisplayName } from "@/lib/profile/display-name";
 import { DISPLAY_NAME_MAX } from "@/lib/profile/mutations";
+import { identityFoundationMutationsEnabled } from "@/lib/identity/feature-flags";
+import { DISABLED_COMPATIBILITY_PASSWORD_HASH } from "@/lib/identity/foundation";
 import { TopNav } from "@/components/layout/top-nav";
 import { AvatarEditor } from "@/components/profile/avatar-editor";
 import { ChangePasswordForm } from "@/components/profile/change-password-form";
+import { SetFallbackPasswordForm } from "@/components/profile/set-fallback-password-form";
 import { DisplayNameForm } from "@/components/profile/display-name-form";
 import { ThemeModeControl } from "@/components/theme/theme-mode-control";
 
@@ -39,12 +42,21 @@ export default async function ProfilePage() {
       displayName: true,
       profileImageId: true,
       themeMode: true,
+      passwordHash: true,
       admin: { select: { firstName: true, lastName: true } },
       teacher: { select: { firstName: true, lastName: true } },
       student: { select: { firstName: true, lastName: true } },
     },
   });
   if (!user) redirect("/login");
+
+  // A Google-first account carries the disabled compatibility hash until it
+  // sets an optional fallback password. Only then, and only while the identity
+  // feature is enabled, is the "set" form offered instead of "change".
+  const hasFallbackPassword =
+    user.passwordHash !== DISABLED_COMPATIBILITY_PASSWORD_HASH;
+  const offerFallbackSetup =
+    identityFoundationMutationsEnabled() && !hasFallbackPassword;
 
   const person = user.admin ?? user.teacher ?? user.student;
   const realName = person ? `${person.firstName} ${person.lastName}` : null;
@@ -158,13 +170,27 @@ export default async function ProfilePage() {
               <KeyRound className="h-4 w-4 text-black/40" aria-hidden="true" />
               ความปลอดภัย
             </h2>
-            <p className="mt-1 text-xs text-black/50">
-              เปลี่ยนรหัสผ่านของบัญชีนี้ —
-              อุปกรณ์อื่นที่ล็อกอินอยู่จะไม่ถูกตัดออก
-            </p>
-            <div className="mt-5">
-              <ChangePasswordForm />
-            </div>
+            {offerFallbackSetup ? (
+              <>
+                <p className="mt-1 text-xs text-black/50">
+                  คุณเข้าสู่ระบบด้วย Google — ตั้งรหัสผ่านสำรองไว้ (ไม่บังคับ)
+                  เผื่อใช้เข้าระบบเมื่อ Google ใช้ไม่ได้
+                </p>
+                <div className="mt-5">
+                  <SetFallbackPasswordForm />
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="mt-1 text-xs text-black/50">
+                  เปลี่ยนรหัสผ่านของบัญชีนี้ —
+                  อุปกรณ์อื่นที่ล็อกอินอยู่จะไม่ถูกตัดออก
+                </p>
+                <div className="mt-5">
+                  <ChangePasswordForm />
+                </div>
+              </>
+            )}
           </section>
         </div>
       </main>

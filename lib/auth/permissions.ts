@@ -13,6 +13,8 @@ export type SessionUser = {
   role: Role;
   identifier: string;
   mustResetPwd: boolean;
+  /** Unix seconds of sign-in; drives the pragmatic re-auth window. */
+  signInAt?: number;
 };
 
 export type Session = {
