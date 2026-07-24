@@ -107,6 +107,19 @@ the Google ID-token verifier accepted on isolated Neon QA on 2026-07-24
     learn which part of a forged token to change next;
   - `GOOGLE_CLIENT_ID` is the required audience and defaults to empty, so the
     verifier refuses to build and nothing can reach a service.
+- Wired a flag-gated Google provider into NextAuth beside the live Credentials
+  provider:
+  - `googleProvidersIfEnabled` is appended, never inserted, and fails closed on
+    the identity mutation flag or a missing client id/secret, so with the flags
+    off the deployed provider list is exactly the Credentials entry it is today;
+  - NextAuth runs the OIDC checks — pkce, state, and the nonce it generates —
+    and the `profile` step routes the verified identity through the existing
+    Prisma sign-in resolver, so last use and the `LOGIN_SUCCESS` Audit row are
+    written by the same audited path;
+  - the requested scope is `openid email` only;
+  - an account that owes fresh consent is refused at the provider because no
+    consent-refresh surface exists yet; refusing is reversible and keeps the
+    flag off until that surface ships.
 
 Mutations require both flags and configured Terms/Privacy versions. Flags
 default to `0`; consent versions default to empty and therefore fail closed.
@@ -165,8 +178,8 @@ existing-account linking, session issue, recovery, or deletion workflows.
 
 - Prisma format, validate, and client generation passed.
 - Focused Identity/account/release-gate tests passed.
-- Full unit suite passed after the ID-token verifier slice: 703 tests across
-  73 files.
+- Full unit suite passed after the NextAuth Google-provider slice: 711 tests
+  across 74 files. The Next.js Production build passed after the auth wiring.
 - The focused Invite issue, Teacher acceptance, Student onboarding, Google
   sign-in, provider-linking, and fallback-password unit suites passed.
 - The isolated-Neon Teacher Invite issue, Teacher acceptance, Student
@@ -183,8 +196,10 @@ existing-account linking, session issue, recovery, or deletion workflows.
 ## Boundaries
 
 - Production schema, data, secrets, and feature flags were not changed.
-- No route, page, or NextAuth provider is enabled. Wiring the verifier into an
-  OAuth callback is the next slice.
+- The Google provider is registered only when both identity flags and the
+  OAuth client are configured; Production has the flags off, so no Google
+  sign-in button is exposed and the Credentials login path is unchanged. No new
+  page or route is added yet.
 - Google is still not wired into NextAuth. The ID-token verifier exists and is
   tested, but no route, callback, or provider calls it yet, and the live
   Credentials login path is unchanged.

@@ -8,6 +8,8 @@ import { rateLimit } from "@/lib/auth/rate-limit";
 import { getRequestMeta } from "@/lib/utils/request";
 import { LoginSchema } from "@/lib/validation/schemas";
 import { isAccountAvailableForAuthentication } from "@/lib/account/status";
+import { googleProvidersIfEnabled } from "@/lib/auth/google-provider";
+import { createPrismaGoogleSignInService } from "@/lib/identity/google-signin-prisma";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -108,6 +110,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: user.identifier,
           email: null,
           image: null,
+        };
+      },
+    }),
+    // Appended, never inserted: with the identity flags off this spreads to
+    // nothing and the provider list is exactly the Credentials entry above.
+    ...googleProvidersIfEnabled({
+      resolveSignIn: async (assertion) => {
+        const meta = await getRequestMeta();
+        const resolved = await createPrismaGoogleSignInService().resolve({
+          google: {
+            providerAccountId: assertion.providerAccountId,
+            email: assertion.email,
+            emailVerified: assertion.emailVerified,
+          },
+          occurredAt: assertion.occurredAt,
+          ipAddress: meta.ipAddress ?? undefined,
+          userAgent: meta.userAgent ?? undefined,
+        });
+        return {
+          userId: resolved.userId,
+          role: resolved.role,
+          email: resolved.email,
+          requiresConsentRefresh: resolved.requiresConsentRefresh,
         };
       },
     }),
