@@ -4,6 +4,10 @@ import { Suspense, useActionState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { loginAction, type LoginState } from "./actions";
+import {
+  GoogleSignInButton,
+  googleSignInEnabled,
+} from "@/components/auth/google-sign-in-button";
 
 const initial: LoginState = {};
 
@@ -99,6 +103,21 @@ function LoginForm() {
           </Link>
         </div>
       </form>
+
+      {googleSignInEnabled() && (
+        <div className="mt-4">
+          <div className="relative my-4 text-center">
+            <span className="relative z-10 bg-white px-3 text-xs text-black/40">
+              หรือ
+            </span>
+            <span
+              aria-hidden
+              className="absolute inset-x-0 top-1/2 border-t border-black/[0.06]"
+            />
+          </div>
+          <GoogleSignInButton />
+        </div>
+      )}
     </div>
   );
 }
