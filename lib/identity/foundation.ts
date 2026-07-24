@@ -10,11 +10,11 @@ export const SESSION_IDLE_TIMEOUT_MS = 7 * 24 * 60 * 60 * 1000;
 export const ACCOUNT_DELETION_RECOVERY_MS = 30 * 24 * 60 * 60 * 1000;
 /**
  * ADR-0041 requires re-authentication for sensitive identity changes but does
- * not fix the window. Fifteen minutes keeps a stolen idle session from
+ * not fix the window. Twenty minutes keeps a stolen idle session from
  * attaching a new sign-in provider while staying long enough to complete one
  * deliberate Profile action.
  */
-export const REAUTHENTICATION_WINDOW_MS = 15 * 60 * 1000;
+export const REAUTHENTICATION_WINDOW_MS = 20 * 60 * 1000;
 export const NAME_CONTINUITY_MS = 14 * 24 * 60 * 60 * 1000;
 
 const VerifiedEmailSchema = z

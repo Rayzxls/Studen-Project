@@ -71,7 +71,7 @@ accepted on isolated Neon QA on 2026-07-24
   - last-use stamping and the `LOGIN_SUCCESS` Audit row commit together.
 - Added Google linking from an already-authenticated Profile:
   - ADR-0041 forbids linking by email match alone, so ownership comes from the
-    authenticated Profile plus a re-authentication no older than fifteen
+    authenticated Profile plus a re-authentication no older than twenty
     minutes;
   - the verified Google address must equal the account email, keeping one
     authoritative address per account and pushing a different address through
@@ -85,7 +85,7 @@ accepted on isolated Neon QA on 2026-07-24
     fallback-password setup does not exist yet, so there is nothing to verify
     against.
 - Added optional fallback-password setup on the caller's own account:
-  - the same fifteen-minute re-authentication rule applies, and the password is
+  - the same twenty-minute re-authentication rule applies, and the password is
     validated and rejected for length or commonness before any hashing or
     database work;
   - a Google-first account carries the disabled compatibility hash, so the
