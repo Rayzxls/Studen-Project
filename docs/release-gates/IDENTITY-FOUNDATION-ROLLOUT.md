@@ -57,6 +57,18 @@ accepted on isolated Neon QA on 2026-07-24
 - Extracted the shared consent-version check and the disabled compatibility
   password hash into the identity foundation so both onboarding paths use one
   implementation.
+- Added Google sign-in resolution for a returning User:
+  - the Google subject, not the address, is the stable link, so a changed
+    Google email is recorded on the identity but never overwrites the verified
+    account email;
+  - an unknown Google subject is reported rather than silently creating or
+    linking an account, leaving the Role gate to the onboarding paths;
+  - suspended, deletion-pending, terminated, and anonymized accounts fail
+    closed through the existing authentication availability predicate and
+    write no sign-in Audit row;
+  - stale consent authenticates but returns `requiresConsentRefresh` instead of
+    locking a real User out of their own academic record;
+  - last-use stamping and the `LOGIN_SUCCESS` Audit row commit together.
 
 Mutations require both flags and configured Terms/Privacy versions. Flags
 default to `0`; consent versions default to empty and therefore fail closed.
@@ -89,22 +101,27 @@ post-migration verifier reported:
   three Audit events committed atomically. A second Google account claiming the
   same verified email was rejected and left exactly one User; all disposable
   rows were removed.
+- The Google sign-in integration test registered a disposable Student, resolved
+  a later sign-in through the real adapter to the same User, and asserted the
+  stamped last-use time, the recorded provider email, and exactly one
+  `LOGIN_SUCCESS` Audit row. An unknown Google subject created no identity or
+  User, and a suspended account failed closed with no sign-in Audit row.
 
-This proves the migration is additive and that the Teacher acceptance and
-Student self-registration transactions work on isolated QA. It does not prove
-Google token validation, web routes, UI, email delivery, returning-user
-sign-in, existing-account linking, recovery, or deletion workflows.
+This proves the migration is additive and that the Teacher acceptance, Student
+self-registration, and returning-user sign-in transactions work on isolated QA.
+It does not prove Google token validation, web routes, UI, email delivery,
+existing-account linking, session issue, recovery, or deletion workflows.
 
 ## Verification
 
 - Prisma format, validate, and client generation passed.
 - Focused Identity/account/release-gate tests passed.
-- Full unit suite passed after the Student onboarding slice: 672 tests across
-  69 files.
-- The focused Invite issue, Teacher acceptance, and Student onboarding unit
-  suites passed.
-- The isolated-Neon Teacher Invite issue, Teacher acceptance, and Student
-  onboarding integration suites passed.
+- Full unit suite passed after the Google sign-in slice: 679 tests across
+  70 files.
+- The focused Invite issue, Teacher acceptance, Student onboarding, and Google
+  sign-in unit suites passed.
+- The isolated-Neon Teacher Invite issue, Teacher acceptance, Student
+  onboarding, and Google sign-in integration suites passed.
 - TypeScript passed.
 - Targeted ESLint passed with zero errors.
 - The dependency release gate passed with no baseline increase:
@@ -125,16 +142,16 @@ sign-in, existing-account linking, recovery, or deletion workflows.
 
 ## Next Slice: Stage 2B
 
-1. Add Google sign-in resolution for a returning User whose provider identity
-   is already linked, then existing-account provider linking guarded by the
-   fallback password or an authenticated Profile, followed by session
-   revocation, verified-email change, recovery, and Deletion Pending services.
-   Teacher Invite issue/replace/revoke/accept and Student self-registration are
-   complete at the service and Prisma transaction layer.
+1. Add existing-account provider linking guarded by the fallback password or an
+   authenticated Profile, followed by session issue/revocation, verified-email
+   change, recovery, and Deletion Pending services. Teacher Invite
+   issue/replace/revoke/accept, Student self-registration, and returning-user
+   Google sign-in resolution are complete at the service and Prisma
+   transaction layer.
 2. Prove one provider identity maps to one User, one User has one Role, and
    account/session mutations are atomic. Invite email matching, replacement,
-   expiry, revocation, acceptance races, and Student email/identity collisions
-   are already covered.
+   expiry, revocation, acceptance races, Student email/identity collisions, and
+   sign-in availability/consent rules are already covered.
 3. Keep all route and UI entry points disabled until isolated-QA integration
    tests pass.
 4. Do not switch the default login or remove legacy fields in Stage 2B.
