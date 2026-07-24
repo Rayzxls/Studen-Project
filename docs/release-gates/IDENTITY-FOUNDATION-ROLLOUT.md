@@ -160,6 +160,17 @@ and Deletion Pending) and a final production OAuth credential review.
   over-cap session, so it holds in the edge middleware too. Logout stays
   immediate through the normal `signOut` cookie clear. Server-side revocation on
   a credential change (via `sessionVersion`) is a later slice.
+- Gave the fallback-password setup service a Profile surface. A Google-first
+  account with no usable password now sees a set-fallback-password form in the
+  Security section (accounts that already have a password keep the change form,
+  and with the identity flag off Profile is unchanged). Ownership uses the
+  pragmatic re-auth rule: `signInAt` is surfaced on the session and passed as
+  `reauthenticatedAt`, so a sign-in within the 20-minute window authorises the
+  set while the service still re-checks the window and account availability.
+  Verified end to end on isolated QA — a freshly onboarded Student set a
+  password, the hash became a real bcrypt value, and the audit recorded the set
+  without the password or its hash. The authenticated-Profile Google-linking
+  surface reuses the same re-auth rule and is the next Profile slice.
 
 Mutations require both flags and configured Terms/Privacy versions. Flags
 default to `0`; consent versions default to empty and therefore fail closed.
