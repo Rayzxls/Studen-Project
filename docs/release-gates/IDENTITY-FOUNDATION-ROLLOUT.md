@@ -201,6 +201,13 @@ post-migration verifier reported:
   against, that a wrong password still fails, that the Audit row contains no
   trace of the password, and that a stale re-authentication leaves the original
   hash in place.
+- The onboarding-session integration test registered a disposable Student
+  through the real Prisma onboarding service and then exchanged a signed handoff
+  token for a session through the programmatic handoff provider. It asserted the
+  session carries the real database cuid rather than the UUID Auth.js assigns to
+  OAuth users, and that authorize fails closed on a tampered token, a
+  correctly-signed token whose subject is a missing account, an empty token, and
+  a valid token for a since-suspended account. All disposable rows were removed.
 
 This proves the migration is additive and that the Teacher acceptance, Student
 self-registration, and returning-user sign-in transactions work on isolated QA.
