@@ -1,8 +1,8 @@
 # Identity V2 Foundation Rollout
 
-**Status:** Stage 2A accepted; Stage 2B Teacher Invite issue and Google-first
-Teacher acceptance transaction slices accepted on isolated Neon QA on
-2026-07-24  
+**Status:** Stage 2A accepted; Stage 2B Teacher Invite issue, Google-first
+Teacher acceptance, and Google-first Student onboarding transaction slices
+accepted on isolated Neon QA on 2026-07-24  
 **Production:** unchanged  
 **Runtime:** disabled by default
 
@@ -40,6 +40,23 @@ Teacher acceptance transaction slices accepted on isolated Neon QA on
   - the legacy non-null password column receives a precomputed bcrypt sentinel
     whose random plaintext was discarded. It is not a fallback credential and
     avoids per-request bcrypt work before the Invite is validated.
+- Added Google-first Student self-registration as one serializable transaction:
+  - no Invite is required, matching the ADR-0041 Student onboarding path;
+  - Google email must be verified, and the Student states a real first/last
+    name explicitly rather than inheriting the Google display name;
+  - an email that already belongs to any account fails closed, so an email
+    match never auto-links and a different Role is never converted;
+  - an already-linked Google identity fails closed and is left to the future
+    sign-in and provider-linking slices;
+  - User, Student profile, Google `AuthIdentity`, two exact-version consent
+    records, and three Audit events commit or roll back together;
+  - the legacy required unique `Student` identifier column receives an opaque
+    `identity-v2-unassigned:` placeholder. It is never displayed, never typed
+    by a person, and never used for authentication or lookup; the dependency
+    gate records it as a reviewed compatibility bridge.
+- Extracted the shared consent-version check and the disabled compatibility
+  password hash into the identity foundation so both onboarding paths use one
+  implementation.
 
 Mutations require both flags and configured Terms/Privacy versions. Flags
 default to `0`; consent versions default to empty and therefore fail closed.
@@ -66,21 +83,28 @@ post-migration verifier reported:
   adapter, and proved the User, Teacher, Google identity, exact two consent
   records, accepted Invite, and three Audit events committed atomically. A
   second acceptance attempt rolled back, and all disposable rows were removed.
+- The Student onboarding integration test registered a disposable Student
+  through the real Prisma adapter and proved the User, Student profile with a
+  synthetic legacy identifier, Google identity, exact two consent records, and
+  three Audit events committed atomically. A second Google account claiming the
+  same verified email was rejected and left exactly one User; all disposable
+  rows were removed.
 
-This proves the migration is additive and the Teacher acceptance transaction
-works on isolated QA. It does not prove Google token validation, web routes,
-UI, email delivery, Student onboarding, existing-account linking, recovery, or
-deletion workflows.
+This proves the migration is additive and that the Teacher acceptance and
+Student self-registration transactions work on isolated QA. It does not prove
+Google token validation, web routes, UI, email delivery, returning-user
+sign-in, existing-account linking, recovery, or deletion workflows.
 
 ## Verification
 
 - Prisma format, validate, and client generation passed.
 - Focused Identity/account/release-gate tests passed.
-- Full unit suite passed after the Teacher acceptance slice: 665 tests across
-  68 files.
-- The focused Invite issue and Teacher acceptance unit suites passed.
-- The isolated-Neon Teacher Invite issue and acceptance integration suites
-  passed.
+- Full unit suite passed after the Student onboarding slice: 672 tests across
+  69 files.
+- The focused Invite issue, Teacher acceptance, and Student onboarding unit
+  suites passed.
+- The isolated-Neon Teacher Invite issue, Teacher acceptance, and Student
+  onboarding integration suites passed.
 - TypeScript passed.
 - Targeted ESLint passed with zero errors.
 - The dependency release gate passed with no baseline increase:
@@ -90,7 +114,7 @@ deletion workflows.
 
 - Production schema, data, secrets, and feature flags were not changed.
 - Google OAuth is not wired into NextAuth yet.
-- The acceptance service accepts only a trusted Google assertion. A future
+- Both onboarding services accept only a trusted Google assertion. A future
   OAuth adapter must validate issuer, audience, signature, expiry, nonce, and
   verified email before calling it; raw browser claims are never trusted.
 - Teacher Invite routes, OAuth adapter, email delivery, and Admin/onboarding UI
@@ -101,13 +125,25 @@ deletion workflows.
 
 ## Next Slice: Stage 2B
 
-1. Add Google-first Student onboarding and existing-account provider linking,
-   followed by session revocation, verified-email change, recovery, and
-   Deletion Pending services. Teacher Invite issue/replace/revoke/accept is
+1. Add Google sign-in resolution for a returning User whose provider identity
+   is already linked, then existing-account provider linking guarded by the
+   fallback password or an authenticated Profile, followed by session
+   revocation, verified-email change, recovery, and Deletion Pending services.
+   Teacher Invite issue/replace/revoke/accept and Student self-registration are
    complete at the service and Prisma transaction layer.
 2. Prove one provider identity maps to one User, one User has one Role, and
    account/session mutations are atomic. Invite email matching, replacement,
-   expiry, revocation, and acceptance races are already covered.
+   expiry, revocation, acceptance races, and Student email/identity collisions
+   are already covered.
 3. Keep all route and UI entry points disabled until isolated-QA integration
    tests pass.
 4. Do not switch the default login or remove legacy fields in Stage 2B.
+
+## Open Compatibility Debt
+
+The `Student` row still requires a unique legacy identifier column that
+ADR-0039 retires. Identity V2 accounts fill it with a synthetic placeholder.
+Dropping the column belongs to the approved destructive migration, which is
+gated by `qa:release:dependencies:strict` reaching zero blockers and by a
+separate named approval. No Production or shared development reset is
+authorized by this stage.
