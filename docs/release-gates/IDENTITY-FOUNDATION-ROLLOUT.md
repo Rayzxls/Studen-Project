@@ -84,6 +84,16 @@ accepted on isolated Neon QA on 2026-07-24
   - Linking by fallback password is deliberately not implemented: optional
     fallback-password setup does not exist yet, so there is nothing to verify
     against.
+- Added optional fallback-password setup on the caller's own account:
+  - the same fifteen-minute re-authentication rule applies, and the password is
+    validated and rejected for length or commonness before any hashing or
+    database work;
+  - a Google-first account carries the disabled compatibility hash, so the
+    service reports whether a real credential was created or replaced;
+  - the password, its hash, and its length are never written to the Audit row;
+  - existing sessions are intentionally untouched, because session issue and
+    revocation belong to their own slice and splitting that rule across two
+    services would make session behaviour unpredictable.
 
 Mutations require both flags and configured Terms/Privacy versions. Flags
 default to `0`; consent versions default to empty and therefore fail closed.
@@ -126,6 +136,12 @@ post-migration verifier reported:
   and one `AUTH_PROVIDER_LINKED` Audit row, and proved that a stale
   re-authentication and a second Google subject both fail closed while leaving
   the identity count unchanged.
+- The fallback-password integration test proved with real bcrypt that the
+  disabled compatibility hash verifies against no chosen password, that setting
+  a fallback password replaces it with a credential the same password verifies
+  against, that a wrong password still fails, that the Audit row contains no
+  trace of the password, and that a stale re-authentication leaves the original
+  hash in place.
 
 This proves the migration is additive and that the Teacher acceptance, Student
 self-registration, and returning-user sign-in transactions work on isolated QA.
@@ -136,14 +152,16 @@ existing-account linking, session issue, recovery, or deletion workflows.
 
 - Prisma format, validate, and client generation passed.
 - Focused Identity/account/release-gate tests passed.
-- Full unit suite passed after the provider-linking slice: 687 tests across
-  71 files.
+- Full unit suite passed after the fallback-password slice: 694 tests across
+  72 files.
 - The focused Invite issue, Teacher acceptance, Student onboarding, Google
-  sign-in, and provider-linking unit suites passed.
+  sign-in, provider-linking, and fallback-password unit suites passed.
 - The isolated-Neon Teacher Invite issue, Teacher acceptance, Student
-  onboarding, Google sign-in, and provider-linking integration suites passed.
+  onboarding, Google sign-in, provider-linking, and fallback-password
+  integration suites passed.
 - The full isolated-Neon Integration suite passed 181 tests across 23 files
-  after the Student onboarding slice.
+  after the Student onboarding slice, and passed again unchanged on a second
+  run.
 - TypeScript passed.
 - Targeted ESLint passed with zero errors.
 - The dependency release gate passed with no baseline increase:
@@ -164,12 +182,13 @@ existing-account linking, session issue, recovery, or deletion workflows.
 
 ## Next Slice: Stage 2B
 
-1. Add optional fallback-password setup in Profile, which then unblocks the
-   password-guarded linking path, followed by session issue/revocation,
-   verified-email change, recovery, and Deletion Pending services. Teacher
-   Invite issue/replace/revoke/accept, Student self-registration, returning-user
-   Google sign-in resolution, and authenticated-Profile provider linking are
-   complete at the service and Prisma transaction layer.
+1. Add the password-guarded linking path, now unblocked by fallback-password
+   setup, followed by session issue/revocation, verified-email change,
+   recovery, and Deletion Pending services. Teacher Invite
+   issue/replace/revoke/accept, Student self-registration, returning-user
+   Google sign-in resolution, authenticated-Profile provider linking, and
+   optional fallback-password setup are complete at the service and Prisma
+   transaction layer.
 2. Prove one provider identity maps to one User, one User has one Role, and
    account/session mutations are atomic. Invite email matching, replacement,
    expiry, revocation, acceptance races, Student email/identity collisions, and
