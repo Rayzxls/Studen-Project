@@ -47,5 +47,11 @@ declare module "next-auth/jwt" {
     role?: "ADMIN" | "TEACHER" | "STUDENT";
     identifier?: string;
     mustResetPwd?: boolean;
+    /**
+     * Unix seconds when this session was first established. Anchors the absolute
+     * 30-day session cap; a token minted before the policy existed omits it and
+     * relies on the inactivity window alone.
+     */
+    signInAt?: number;
   }
 }

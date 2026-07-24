@@ -1,5 +1,11 @@
 import type { NextAuthConfig } from "next-auth";
 
+import {
+  SESSION_INACTIVITY_MAX_AGE_S,
+  SESSION_UPDATE_AGE_S,
+  isSessionPastAbsoluteCap,
+} from "@/lib/auth/session-policy";
+
 /**
  * Shared NextAuth config (used by proxy.ts)
  * No DB / Node-only imports allowed here
@@ -10,8 +16,10 @@ export const authConfig = {
   },
   session: {
     strategy: "jwt",
-    maxAge: 12 * 60 * 60, // 12 hours absolute
-    updateAge: 4 * 60 * 60, // sliding 4 hours idle
+    // Sliding inactivity window (Release D decision): a session dies after 7
+    // continuous days idle. The 30-day absolute cap is enforced in `jwt`.
+    maxAge: SESSION_INACTIVITY_MAX_AGE_S,
+    updateAge: SESSION_UPDATE_AGE_S,
   },
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
@@ -60,6 +68,7 @@ export const authConfig = {
       return isLoggedIn;
     },
     jwt({ token, user, trigger }) {
+      const nowSec = Math.floor(Date.now() / 1000);
       if (user) {
         // OAuth sign-in arrives with `user.id` replaced by a random UUID; the
         // real database id rides on `dbUserId`. Credentials sign-in sets no
@@ -68,10 +77,19 @@ export const authConfig = {
         token.role = user.role;
         token.identifier = user.identifier;
         token.mustResetPwd = user.mustResetPwd;
+        // Anchor the absolute-session cap at sign-in. Activity extends the
+        // inactivity window but can never push a session past this point.
+        token.signInAt = nowSec;
       }
       // Allow session update to refresh mustResetPwd after password change
       if (trigger === "update") {
         token.mustResetPwd = false;
+      }
+      // Absolute 30-day cap: end the session regardless of recent activity.
+      // Returning null invalidates it; pure and DB-free, so it holds in the
+      // edge middleware as well.
+      if (isSessionPastAbsoluteCap(token.signInAt, nowSec)) {
+        return null;
       }
       return token;
     },
