@@ -5,11 +5,15 @@
 Student onboarding, returning-user sign-in, authenticated-Profile provider
 linking, optional fallback-password setup, the Google ID-token verifier, a
 flag-gated NextAuth Google provider, the login sign-in button, and the
-`/onboarding` page with its signed pending-token handoff and completion action.
-Remaining before the feature can be switched on: the OAuth-side glue that mints
-the pending cookie for a brand-new user and establishes the post-onboarding
-session, both of which need a live Google OAuth credential and a browser
-walkthrough.  
+`/onboarding` page with its signed pending-token handoff and completion action,
+the post-onboarding session handoff that signs a brand-new Student in on a
+single Google click, and the OAuth session-identity fix that carries the real
+database user id into the JWT. The brand-new-user OAuth glue and the
+post-onboarding session are now wired and were verified end to end on the
+isolated QA server with a real Google account and a browser walkthrough.
+Remaining before the feature can be switched on: the broader Stage 2B surfaces
+(password-guarded linking, session revocation, verified-email change, recovery,
+and Deletion Pending) and a final production OAuth credential review.  
 **Production:** unchanged  
 **Runtime:** disabled by default
 
@@ -134,6 +138,21 @@ walkthrough.
     that fails, never a working sign-in past the server gate;
   - the button reuses the existing `btn-secondary` design-system control and
     starts `signIn("google")`, disabling itself once the redirect begins.
+- Closed the OAuth round trip so a verified Google sign-in reaches a session:
+  - a brand-new subject returns an onboarding sentinel and the `signIn` callback
+    mints the single-use pending cookie and redirects to `/onboarding`;
+  - onboarding now signs the new Student in immediately through a
+    programmatic-only, flag-gated credentials provider that exchanges a signed,
+    short-lived, audience-scoped handoff token for a real Auth.js session, so
+    onboarding is a single Google click instead of two; the handoff is a real
+    sign-in, not a forged cookie, and a failure to establish it falls back to
+    `/login?onboarded=1` so the created account is never stranded;
+  - the session carries the real database user id. Auth.js overwrites an OAuth
+    `user.id` with a random UUID (it assumes an adapter persists the provider id
+    on an Account row), so the resolver's id rides on a separate `User` field
+    and is restored into the token by the sign-in callback. Without it the
+    session id matched no row and every `findUnique({ where: { id } })` — the
+    dashboard included — failed and bounced to `/login`.
 
 Mutations require both flags and configured Terms/Privacy versions. Flags
 default to `0`; consent versions default to empty and therefore fail closed.
@@ -207,6 +226,12 @@ existing-account linking, session issue, recovery, or deletion workflows.
 - Targeted ESLint passed with zero errors.
 - The dependency release gate passed with no baseline increase:
   637 blockers, 240 review findings, 877 total findings.
+- After the OAuth session-identity fix and the one-click onboarding slice:
+  TypeScript and targeted ESLint passed with zero errors, and the full unit
+  suite passed 735 tests across 79 files. The onboarding-to-dashboard flow was
+  walked through in a browser on the isolated QA server — a brand-new Google
+  Student reached the dashboard on a single submit, and the session carried the
+  correct database user id rather than the Auth.js-generated UUID.
 
 ## Boundaries
 
@@ -216,15 +241,17 @@ existing-account linking, session issue, recovery, or deletion workflows.
   login path is unchanged. The login button is behind its own default-off
   public flag, so the deployed login page is visually unchanged. No new page or
   route is added yet.
-- New-user onboarding is now wired end to end except the final Google-account
-  round trip. On a verified Google sign-in the provider `profile` no longer
-  fails for an unlinked user: it returns an onboarding sentinel (or a
-  consent-refresh sentinel), and the NextAuth `signIn` callback mints the
-  single-use pending cookie and redirects to `/onboarding`, or sends a
-  stale-consent account back to login. Neither sentinel reaches a JWT or
-  session. After onboarding the account and its Google identity exist, so the
-  person signs in with one more Google click (the login page shows a success
-  banner); no session is forged.
+- New-user onboarding is now wired end to end. On a verified Google sign-in the
+  provider `profile` no longer fails for an unlinked user: it returns an
+  onboarding sentinel (or a consent-refresh sentinel), and the NextAuth `signIn`
+  callback mints the single-use pending cookie and redirects to `/onboarding`,
+  or sends a stale-consent account back to login. Neither sentinel reaches a JWT
+  or session. After onboarding, the completion action establishes the session
+  directly through a programmatic-only credentials handoff and redirects to the
+  dashboard, so a brand-new Student signs in on a single Google click; the
+  handoff is a signed, short-lived, audience-scoped token exchanged for a real
+  Auth.js session rather than a forged cookie, and any failure to establish it
+  falls back to the login page so the account is never stranded.
 - Verified locally on 2026-07-24 with the real OAuth client: the Google button
   renders behind its flag, and the NextAuth-generated authorization URL is
   correct — `accounts.google.com/o/oauth2/v2/auth`, the exact client id, the
@@ -232,9 +259,11 @@ existing-account linking, session issue, recovery, or deletion workflows.
   and nonce/state/PKCE all present. The only unverified step is the Google
   consent screen and the callback it drives, which needs a real Google account
   in a browser.
-- Google is still not wired into NextAuth. The ID-token verifier exists and is
-  tested, but no route, callback, or provider calls it yet, and the live
-  Credentials login path is unchanged.
+- The standalone Google ID-token verifier is not on the NextAuth path: NextAuth
+  runs its own OIDC checks (issuer, audience, signature, expiry, nonce) through
+  `oauth4webapi`, so the verifier remains the supported entry point only for a
+  caller that receives a raw ID token outside this flow. The live Credentials
+  login path is unchanged.
 - Every identity service accepts only a verified Google assertion. The verifier
   is the only supported way to produce one; raw browser claims are never
   trusted.
