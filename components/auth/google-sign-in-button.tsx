@@ -13,9 +13,16 @@ import { signIn } from "next-auth/react";
  * broken one in production.
  */
 export function googleSignInEnabled(
-  env: Readonly<Record<string, string | undefined>> = process.env
+  env?: Readonly<Record<string, string | undefined>>
 ): boolean {
-  return env.NEXT_PUBLIC_GOOGLE_SIGNIN_ENABLED === "1";
+  // In the browser bundle Next only inlines the *literal* reference
+  // `process.env.NEXT_PUBLIC_GOOGLE_SIGNIN_ENABLED`; reading it off a passed-in
+  // object is not replaced and would always be undefined. Tests pass an env
+  // object explicitly, so the literal is used only on the default client path.
+  const value = env
+    ? env.NEXT_PUBLIC_GOOGLE_SIGNIN_ENABLED
+    : process.env.NEXT_PUBLIC_GOOGLE_SIGNIN_ENABLED;
+  return value === "1";
 }
 
 export function GoogleSignInButton({
