@@ -1,8 +1,9 @@
 # Identity V2 Foundation Rollout
 
 **Status:** Stage 2A accepted; Stage 2B Teacher Invite issue, Google-first
-Teacher acceptance, and Google-first Student onboarding transaction slices
-accepted on isolated Neon QA on 2026-07-24  
+Teacher acceptance, Google-first Student onboarding, returning-user sign-in,
+authenticated-Profile provider linking, optional fallback-password setup, and
+the Google ID-token verifier accepted on isolated Neon QA on 2026-07-24  
 **Production:** unchanged  
 **Runtime:** disabled by default
 
@@ -94,6 +95,18 @@ accepted on isolated Neon QA on 2026-07-24
   - existing sessions are intentionally untouched, because session issue and
     revocation belong to their own slice and splitting that rule across two
     services would make session behaviour unpredictable.
+- Added the Google ID-token verifier that produces the trusted assertion every
+  identity service consumes:
+  - signature, issuer, audience, and expiry are checked through `jose` against
+    Google's published key set, with both accepted issuer spellings;
+  - the nonce is required, not optional, so a token captured elsewhere cannot
+    be replayed into this application;
+  - an unverified or missing email is refused before any account is touched,
+    and the address is normalized once at the boundary;
+  - the underlying verification failure is never surfaced, so a caller cannot
+    learn which part of a forged token to change next;
+  - `GOOGLE_CLIENT_ID` is the required audience and defaults to empty, so the
+    verifier refuses to build and nothing can reach a service.
 
 Mutations require both flags and configured Terms/Privacy versions. Flags
 default to `0`; consent versions default to empty and therefore fail closed.
@@ -152,8 +165,8 @@ existing-account linking, session issue, recovery, or deletion workflows.
 
 - Prisma format, validate, and client generation passed.
 - Focused Identity/account/release-gate tests passed.
-- Full unit suite passed after the fallback-password slice: 694 tests across
-  72 files.
+- Full unit suite passed after the ID-token verifier slice: 703 tests across
+  73 files.
 - The focused Invite issue, Teacher acceptance, Student onboarding, Google
   sign-in, provider-linking, and fallback-password unit suites passed.
 - The isolated-Neon Teacher Invite issue, Teacher acceptance, Student
@@ -170,10 +183,14 @@ existing-account linking, session issue, recovery, or deletion workflows.
 ## Boundaries
 
 - Production schema, data, secrets, and feature flags were not changed.
-- Google OAuth is not wired into NextAuth yet.
-- Both onboarding services accept only a trusted Google assertion. A future
-  OAuth adapter must validate issuer, audience, signature, expiry, nonce, and
-  verified email before calling it; raw browser claims are never trusted.
+- No route, page, or NextAuth provider is enabled. Wiring the verifier into an
+  OAuth callback is the next slice.
+- Google is still not wired into NextAuth. The ID-token verifier exists and is
+  tested, but no route, callback, or provider calls it yet, and the live
+  Credentials login path is unchanged.
+- Every identity service accepts only a verified Google assertion. The verifier
+  is the only supported way to produce one; raw browser claims are never
+  trusted.
 - Teacher Invite routes, OAuth adapter, email delivery, and Admin/onboarding UI
   are not enabled yet.
 - No legacy Student Number, Credentials, Academic Year, Term, Class, or
@@ -182,13 +199,14 @@ existing-account linking, session issue, recovery, or deletion workflows.
 
 ## Next Slice: Stage 2B
 
-1. Add the password-guarded linking path, now unblocked by fallback-password
-   setup, followed by session issue/revocation, verified-email change,
-   recovery, and Deletion Pending services. Teacher Invite
-   issue/replace/revoke/accept, Student self-registration, returning-user
-   Google sign-in resolution, authenticated-Profile provider linking, and
-   optional fallback-password setup are complete at the service and Prisma
-   transaction layer.
+1. Wire the ID-token verifier into a real OAuth callback that generates and
+   stores the nonce, then route its verified assertion to sign-in, onboarding,
+   or linking. After that: the password-guarded linking path, session
+   issue/revocation, verified-email change, recovery, and Deletion Pending.
+   Teacher Invite issue/replace/revoke/accept, Student self-registration,
+   returning-user sign-in resolution, authenticated-Profile provider linking,
+   optional fallback-password setup, and ID-token verification are complete at
+   the service layer.
 2. Prove one provider identity maps to one User, one User has one Role, and
    account/session mutations are atomic. Invite email matching, replacement,
    expiry, revocation, acceptance races, Student email/identity collisions, and
