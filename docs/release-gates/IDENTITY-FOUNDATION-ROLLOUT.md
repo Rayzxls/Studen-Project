@@ -153,6 +153,13 @@ and Deletion Pending) and a final production OAuth credential review.
     and is restored into the token by the sign-in callback. Without it the
     session id matched no row and every `findUnique({ where: { id } })` — the
     dashboard included — failed and bounced to `/login`.
+- Set the session lifetime to the locked Release D policy: a 7-day sliding
+  inactivity window plus a 30-day absolute cap from sign-in. NextAuth's `maxAge`
+  gives the inactivity window; the cap is a pure, DB-free predicate over a
+  `signInAt` stamp checked in the jwt callback, which returns null to end an
+  over-cap session, so it holds in the edge middleware too. Logout stays
+  immediate through the normal `signOut` cookie clear. Server-side revocation on
+  a credential change (via `sessionVersion`) is a later slice.
 
 Mutations require both flags and configured Terms/Privacy versions. Flags
 default to `0`; consent versions default to empty and therefore fail closed.
