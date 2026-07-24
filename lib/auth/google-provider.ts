@@ -73,6 +73,10 @@ export function createGoogleProvider(input: {
 
       return {
         id: resolved.userId,
+        // Auth.js overwrites `id` with a random UUID for OAuth users, so the
+        // real database id is carried here and restored into the token by the
+        // sign-in callback. Without it the session id matches no User row.
+        dbUserId: resolved.userId,
         role: resolved.role,
         identifier: resolved.email,
         mustResetPwd: false, // dependency-gate-allow(temporary-password): Google accounts never carry a reset flow

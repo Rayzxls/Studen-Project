@@ -61,7 +61,10 @@ export const authConfig = {
     },
     jwt({ token, user, trigger }) {
       if (user) {
-        token.id = user.id;
+        // OAuth sign-in arrives with `user.id` replaced by a random UUID; the
+        // real database id rides on `dbUserId`. Credentials sign-in sets no
+        // `dbUserId` and keeps its own id, so the fallback is correct there.
+        token.id = user.dbUserId ?? user.id;
         token.role = user.role;
         token.identifier = user.identifier;
         token.mustResetPwd = user.mustResetPwd;
