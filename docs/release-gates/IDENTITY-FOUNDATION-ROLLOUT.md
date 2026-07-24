@@ -180,9 +180,22 @@ and Deletion Pending) and a final production OAuth credential review.
   non-available account. The admin lifecycle policy already defers Deletion
   Pending to this flow, so it is unchanged. Verified end to end on isolated QA;
   the row read `DELETION_PENDING` with the recovery date exactly 30 days out and
-  one `ACCOUNT_DELETION_REQUESTED` audit event. Recovery within the window and
-  post-window anonymization are the next slices and must land before the flag is
-  enabled anywhere real.
+  one `ACCOUNT_DELETION_REQUESTED` audit event. Post-window anonymization is the
+  remaining deletion slice and must land before the flag is enabled anywhere
+  real.
+- Added deletion recovery through Google. While an account is Deletion Pending
+  and inside its window, the Google sign-in resolver stops refusing it and
+  returns a recovery outcome instead: the provider carries a recovery sentinel,
+  the sign-in callback mints a signed single-use recovery handoff and redirects
+  to `/recover`, and no session or `LOGIN_SUCCESS` is created. The page confirms
+  with the owner, a recovery service returns the account to Active and clears the
+  schedule, and the one-click onboarding handoff signs them straight into the
+  dashboard. A lapsed window fails closed in both the resolver and the recovery
+  service. Unit and isolated-QA integration cover the routing and the
+  recover-then-sign-in cycle, and it was verified end to end in a browser
+  (`ACCOUNT_DELETION_REQUESTED`→`ACCOUNT_DELETION_CANCELLED`, row back to ACTIVE).
+  Google is the recovery path here; Credentials/fallback-password recovery is a
+  follow-up.
 
 Mutations require both flags and configured Terms/Privacy versions. Flags
 default to `0`; consent versions default to empty and therefore fail closed.
