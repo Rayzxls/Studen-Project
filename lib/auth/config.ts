@@ -23,6 +23,7 @@ export const authConfig = {
         path === "/" ||
         path === "/login" ||
         path === "/signup" ||
+        path === "/onboarding" ||
         path === "/reset-password" ||
         path === "/privacy" ||
         path.startsWith("/api/auth") ||

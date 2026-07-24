@@ -210,11 +210,14 @@ existing-account linking, session issue, recovery, or deletion workflows.
   login path is unchanged. The login button is behind its own default-off
   public flag, so the deployed login page is visually unchanged. No new page or
   route is added yet.
-- New-user onboarding is not wired: the provider's sign-in resolver only
-  resolves an already-linked User, so a brand-new Google user is refused with
-  `google_identity_not_linked`. Collecting a real name and consent needs a
-  dedicated onboarding surface, which is the next slice and the reason the
-  button flag stays off.
+- New-user onboarding is partially built. The `/onboarding` page, its form, the
+  completion server action, the signed pending-handoff token, and the
+  orchestrator all exist and are tested; the page renders the collected form
+  from a valid pending token and an empty "start again" state otherwise, gated
+  by the identity mutation flag. What is not wired is the OAuth-side glue that
+  mints the pending cookie for a brand-new Google user and the post-onboarding
+  session establishment. Both require a live Google OAuth credential and a
+  browser walkthrough, so the sign-in button flag stays off until that is done.
 - Google is still not wired into NextAuth. The ID-token verifier exists and is
   tested, but no route, callback, or provider calls it yet, and the live
   Credentials login path is unchanged.
