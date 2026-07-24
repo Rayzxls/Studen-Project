@@ -1,6 +1,7 @@
 export type AccountStatus =
   | "ACTIVE"
   | "SUSPENDED"
+  | "DELETION_PENDING"
   | "TERMINATED"
   | "ANONYMIZED";
 

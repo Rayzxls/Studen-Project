@@ -32,6 +32,10 @@ const ACTION_LABEL_TH: Record<AuditEvent, string> = {
   ROLE_CHANGE: "เปลี่ยนบทบาทผู้ใช้",
   CONSENT_GRANTED: "ให้ความยินยอม",
   CONSENT_WITHDRAWN: "ถอนความยินยอม",
+  TEACHER_INVITE_ISSUED: "Teacher invite issued",
+  TEACHER_INVITE_REPLACED: "Teacher invite replaced",
+  TEACHER_INVITE_REVOKED: "Teacher invite revoked",
+  TEACHER_INVITE_ACCEPTED: "Teacher invite accepted",
   // CSV Import
   CSV_IMPORT: "นำเข้า CSV",
   COURSE_OFFERING_CREATED: "ครูสร้างวิชาใหม่",

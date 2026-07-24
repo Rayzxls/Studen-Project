@@ -29,8 +29,29 @@ enum Role {
 enum AccountStatus {
   ACTIVE
   SUSPENDED
+  DELETION_PENDING
   TERMINATED
   ANONYMIZED
+}
+
+enum AuthProvider {
+  GOOGLE
+}
+
+enum TeacherInviteStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+}
+
+enum ConsentDocument {
+  TERMS_OF_USE
+  PRIVACY_NOTICE
+}
+
+enum IdentityTokenPurpose {
+  PASSWORD_RECOVERY
+  EMAIL_CHANGE
 }
 
 enum ThemeMode {
@@ -41,18 +62,27 @@ enum ThemeMode {
 }
 
 model User {
-  id             String        @id @default(cuid())
-  role           Role
-  identifier     String        @unique // email (admin/teacher) | studentId (student)
-  passwordHash   String
-  mustResetPwd   Boolean       @default(false)
-  accountStatus  AccountStatus @default(ACTIVE)
-  isActive       Boolean       @default(true)
-  consentedAt    DateTime?
-  consentVersion String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  deletedAt      DateTime? // soft delete
+  id                   String        @id @default(cuid())
+  role                 Role
+  identifier           String        @unique // email (admin/teacher) | studentId (student)
+  passwordHash         String
+  mustResetPwd         Boolean       @default(false)
+  // Additive Identity V2 foundation. Nullable until the explicit cutover.
+  email                String?       @unique
+  emailVerifiedAt      DateTime?
+  firstName            String?
+  lastName             String?
+  sessionVersion       Int           @default(0)
+  accountStatus        AccountStatus @default(ACTIVE)
+  isActive             Boolean       @default(true)
+  consentedAt          DateTime?
+  consentVersion       String?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  deletedAt            DateTime? // soft delete
+  deletionRequestedAt  DateTime?
+  deletionScheduledFor DateTime?
+  anonymizedAt         DateTime?
 
   // Learning-identity profile (Phase 13) — NOT social media.
   // displayName: optional friendly name for personal UI (dashboard greeting,
@@ -80,10 +110,107 @@ model User {
   moderationCasesOwned    ModerationCase[]        @relation("ModerationOwner")
   moderationCasesReviewed ModerationCase[]        @relation("ModerationReviewer")
   moderationEventsAsActor ModerationCaseEvent[]   @relation("ModerationEventActor")
+  authIdentities          AuthIdentity[]
+  identityTokens          IdentityToken[]
+  consentAcceptances      ConsentAcceptance[]
+  realNameChanges         RealNameHistory[]       @relation("RealNameTarget")
+  realNameChangesAsActor  RealNameHistory[]       @relation("RealNameActor")
+  teacherInvitesCreated   TeacherInvite[]         @relation("TeacherInviteCreator")
+  teacherInvitesAccepted  TeacherInvite[]         @relation("TeacherInviteAcceptedBy")
+  teacherInvitesRevoked   TeacherInvite[]         @relation("TeacherInviteRevokedBy")
 
   @@index([role])
   @@index([accountStatus])
   @@index([deletedAt])
+  @@index([deletionScheduledFor])
+}
+
+model AuthIdentity {
+  id                String       @id @default(cuid())
+  userId            String
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider          AuthProvider
+  providerAccountId String
+  providerEmail     String?
+  linkedAt          DateTime     @default(now())
+  lastUsedAt        DateTime?
+
+  @@unique([provider, providerAccountId])
+  @@unique([userId, provider])
+  @@index([userId])
+}
+
+model TeacherInvite {
+  id               String              @id @default(cuid())
+  email            String
+  tokenHash        String              @unique
+  status           TeacherInviteStatus @default(PENDING)
+  expiresAt        DateTime
+  createdAt        DateTime            @default(now())
+  createdByUserId  String
+  createdByUser    User                @relation("TeacherInviteCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  acceptedAt       DateTime?
+  acceptedByUserId String?             @unique
+  acceptedByUser   User?               @relation("TeacherInviteAcceptedBy", fields: [acceptedByUserId], references: [id], onDelete: Restrict)
+  revokedAt        DateTime?
+  revokedByUserId  String?
+  revokedByUser    User?               @relation("TeacherInviteRevokedBy", fields: [revokedByUserId], references: [id], onDelete: Restrict)
+  revokeReason     String?
+
+  @@index([email, status])
+  @@index([expiresAt, status])
+  @@index([createdByUserId, createdAt])
+  @@index([acceptedByUserId])
+}
+
+model ConsentAcceptance {
+  id         String          @id @default(cuid())
+  userId     String
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document   ConsentDocument
+  version    String
+  acceptedAt DateTime        @default(now())
+  ipAddress  String?
+  userAgent  String?
+
+  @@unique([userId, document, version])
+  @@index([userId, acceptedAt])
+}
+
+model IdentityToken {
+  id         String               @id @default(cuid())
+  userId     String
+  user       User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  purpose    IdentityTokenPurpose
+  tokenHash  String               @unique
+  email      String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime             @default(now())
+
+  @@index([userId, purpose, createdAt])
+  @@index([expiresAt])
+}
+
+model RealNameHistory {
+  id                     String    @id @default(cuid())
+  userId                 String
+  user                   User      @relation("RealNameTarget", fields: [userId], references: [id], onDelete: Restrict)
+  changedByUserId        String
+  changedByUser          User      @relation("RealNameActor", fields: [changedByUserId], references: [id], onDelete: Restrict)
+  previousFirstName      String
+  previousLastName       String
+  nextFirstName          String
+  nextLastName           String
+  teacherContinuityUntil DateTime?
+  studentContinuityUntil DateTime?
+  createdAt              DateTime  @default(now())
+
+  @@index([userId, createdAt])
+  @@index([changedByUserId, createdAt])
+  @@index([teacherContinuityUntil])
+  @@index([studentContinuityUntil])
 }
 
 model AccountLifecycleEvent {
@@ -244,16 +371,18 @@ model Student {
 }
 
 model UserSession {
-  id         String    @id @default(cuid())
-  userId     String
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokenHash  String    @unique
-  ipAddress  String?
-  userAgent  String?
-  createdAt  DateTime  @default(now())
-  lastSeenAt DateTime  @default(now())
-  expiresAt  DateTime
-  revokedAt  DateTime?
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash         String    @unique
+  ipAddress         String?
+  userAgent         String?
+  createdAt         DateTime  @default(now())
+  lastSeenAt        DateTime  @default(now())
+  reauthenticatedAt DateTime?
+  expiresAt         DateTime
+  revokedAt         DateTime?
+  revokedReason     String?
 
   @@index([userId])
   @@index([expiresAt])

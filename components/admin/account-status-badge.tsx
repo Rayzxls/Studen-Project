@@ -6,6 +6,7 @@ const STATUS_PRESENTATION: Record<
 > = {
   ACTIVE: { label: "ใช้งาน", dotClassName: "bg-green-500" },
   SUSPENDED: { label: "ระงับชั่วคราว", dotClassName: "bg-orange-500" },
+  DELETION_PENDING: { label: "รอลบบัญชี", dotClassName: "bg-amber-500" },
   TERMINATED: { label: "ยุติบัญชี", dotClassName: "bg-red-500" },
   ANONYMIZED: { label: "นิรนามแล้ว", dotClassName: "bg-ink-mute" },
 };

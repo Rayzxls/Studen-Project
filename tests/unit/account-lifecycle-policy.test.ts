@@ -1,22 +1,22 @@
 import { describe, expect, it } from "vitest";
 import { decideAccountTransition } from "@/lib/account/lifecycle-policy";
 
+const activeStudentInput = {
+  actor: { userId: "admin-1", role: "ADMIN" },
+  target: {
+    userId: "student-1",
+    role: "STUDENT",
+    status: "ACTIVE",
+    activeOwnedCourseCount: 0,
+  },
+  to: "SUSPENDED",
+  activeAdminCount: 1,
+  temporaryPasswordPrepared: false,
+} as const;
+
 describe("decideAccountTransition", () => {
   it("allows an Admin to suspend an active account and revokes its sessions", () => {
-    expect(
-      decideAccountTransition({
-        actor: { userId: "admin-1", role: "ADMIN" },
-        target: {
-          userId: "student-1",
-          role: "STUDENT",
-          status: "ACTIVE",
-          activeOwnedCourseCount: 0,
-        },
-        to: "SUSPENDED",
-        activeAdminCount: 1,
-        temporaryPasswordPrepared: false,
-      })
-    ).toEqual({
+    expect(decideAccountTransition(activeStudentInput)).toEqual({
       allowed: true,
       from: "ACTIVE",
       to: "SUSPENDED",
@@ -192,6 +192,32 @@ describe("decideAccountTransition", () => {
         temporaryPasswordPrepared: true,
       })
     ).toEqual({ allowed: false, code: "account_anonymized_irreversible" });
+  });
+
+  it("keeps deletion pending out of the legacy Admin lifecycle flow", () => {
+    expect(
+      decideAccountTransition({
+        ...activeStudentInput,
+        target: {
+          ...activeStudentInput.target,
+          status: "DELETION_PENDING",
+        },
+        to: "ACTIVE",
+      })
+    ).toEqual({
+      allowed: false,
+      code: "identity_v2_deletion_flow_required",
+    });
+
+    expect(
+      decideAccountTransition({
+        ...activeStudentInput,
+        to: "DELETION_PENDING",
+      })
+    ).toEqual({
+      allowed: false,
+      code: "identity_v2_deletion_flow_required",
+    });
   });
 
   it("allows anonymization only after termination", () => {
