@@ -17,6 +17,11 @@ import {
   PENDING_ONBOARDING_TTL_MS,
   createPendingGoogleOnboardingToken,
 } from "@/lib/identity/pending-google-onboarding";
+import {
+  PENDING_RECOVERY_COOKIE,
+  PENDING_RECOVERY_TTL_MS,
+  createPendingAccountRecoveryToken,
+} from "@/lib/identity/pending-account-recovery";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -39,6 +44,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           maxAge: Math.floor(PENDING_ONBOARDING_TTL_MS / 1000),
         });
         return "/onboarding";
+      }
+
+      if (user.accountRecovery) {
+        const token = await createPendingAccountRecoveryToken({
+          pending: user.accountRecovery,
+          secret: process.env.AUTH_SECRET ?? "",
+        });
+        (await cookies()).set(PENDING_RECOVERY_COOKIE, token, {
+          httpOnly: true,
+          sameSite: "lax",
+          secure: process.env.NODE_ENV === "production",
+          path: "/",
+          maxAge: Math.floor(PENDING_RECOVERY_TTL_MS / 1000),
+        });
+        return "/recover";
       }
 
       if (user.consentRefresh) {
@@ -172,6 +192,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           role: resolved.role,
           email: resolved.email,
           requiresConsentRefresh: resolved.requiresConsentRefresh,
+          requiresRecovery: resolved.requiresRecovery,
         };
       },
     }),

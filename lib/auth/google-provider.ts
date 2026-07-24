@@ -16,6 +16,7 @@ export type GoogleSignInResolver = (input: {
   role: Role;
   email: string;
   requiresConsentRefresh: boolean;
+  requiresRecovery: boolean;
 }>;
 
 /**
@@ -63,6 +64,13 @@ export function createGoogleProvider(input: {
           return onboardingSentinel(claims.providerAccountId, claims.email);
         }
         throw error;
+      }
+
+      // A Deletion Pending account inside its window is not signed in: carry it
+      // to the recovery page instead. Checked before consent because a pending
+      // account should recover, not be asked to re-accept terms.
+      if (resolved.requiresRecovery) {
+        return recoverySentinel(resolved.userId, resolved.email);
       }
 
       // A stale-consent account authenticates but has no way to re-accept yet,
@@ -116,6 +124,19 @@ function consentRefreshSentinel(email: string): User {
     email,
     image: null,
     consentRefresh: true,
+  };
+}
+
+function recoverySentinel(userId: string, email: string): User {
+  return {
+    id: `google-recovery:${userId}`,
+    role: "STUDENT",
+    identifier: email,
+    mustResetPwd: false, // dependency-gate-allow(temporary-password): sentinel placeholder, never persisted
+    name: email,
+    email,
+    image: null,
+    accountRecovery: { userId, email },
   };
 }
 

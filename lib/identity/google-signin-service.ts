@@ -6,6 +6,7 @@ import {
   type AccountStatus,
 } from "@/lib/account/status";
 import { Forbidden, NotFound } from "@/lib/errors";
+import { isRecoverableDeletionPending } from "./account-deletion-service";
 import {
   hasRequiredConsent,
   normalizeVerifiedEmail,
@@ -29,6 +30,7 @@ export type GoogleSignInAccountRecord = {
   accountStatus: AccountStatus | null;
   isActive: boolean;
   deletedAt: Date | null;
+  deletionScheduledFor: Date | null;
   studentAnonymized: boolean | null;
   consentAcceptances: ReadonlyArray<{
     document: ConsentDocument;
@@ -91,6 +93,12 @@ export type GoogleSignInResult = {
    * because that would lock a real User out of their own academic record.
    */
   requiresConsentRefresh: boolean;
+  /**
+   * The account is in Deletion Pending but still inside its recovery window, so
+   * the caller routes the owner to recovery instead of a session. No sign-in is
+   * recorded and no consent is evaluated for this outcome.
+   */
+  requiresRecovery: boolean;
 };
 
 function assertMutationsEnabled(enabled: boolean): void {
@@ -140,6 +148,32 @@ export function createGoogleSignInService(
         const account = await tx.findAccount(identity.userId);
         if (!account) {
           throw new NotFound("google_identity_not_linked");
+        }
+
+        // A Deletion Pending account inside its window is not signed in: the
+        // verified Google claim proves ownership, so route the owner to
+        // recovery instead of refusing. No last-use or LOGIN_SUCCESS is written
+        // because this is not a sign-in.
+        if (
+          account.accountStatus === "DELETION_PENDING" &&
+          isRecoverableDeletionPending(
+            account.deletionScheduledFor,
+            input.occurredAt
+          )
+        ) {
+          if (!account.email) {
+            throw new Forbidden("account_not_available");
+          }
+          return {
+            userId: account.userId,
+            role: account.role,
+            email: account.email,
+            firstName: account.firstName,
+            lastName: account.lastName,
+            sessionVersion: account.sessionVersion,
+            requiresConsentRefresh: false,
+            requiresRecovery: true,
+          };
         }
 
         if (
@@ -192,6 +226,7 @@ export function createGoogleSignInService(
             account.consentAcceptances,
             options.requiredConsent
           ),
+          requiresRecovery: false,
         };
       });
     },

@@ -10,6 +10,20 @@ import { hasRecentReauthentication } from "./foundation";
 /** D1 (locked 2026-07-24): the owner may recover within 30 days. */
 export const ACCOUNT_DELETION_RECOVERY_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
+/**
+ * A Deletion Pending account is still recoverable until its scheduled date. The
+ * sign-in resolver uses this to route the owner to recovery instead of refusing
+ * outright; a missing schedule (legacy/none) is treated as not recoverable so
+ * the account stays blocked rather than silently reopening.
+ */
+export function isRecoverableDeletionPending(
+  deletionScheduledFor: Date | null,
+  now: Date
+): boolean {
+  if (!deletionScheduledFor) return false;
+  return now.getTime() < deletionScheduledFor.getTime();
+}
+
 export type AccountDeletionAccountRecord = {
   userId: string;
   role: Role;

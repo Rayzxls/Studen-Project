@@ -49,6 +49,7 @@ function createTransactionPort(
           accountStatus: true,
           isActive: true,
           deletedAt: true,
+          deletionScheduledFor: true,
           student: { select: { anonymized: true } },
           consentAcceptances: { select: { document: true, version: true } },
         },
@@ -65,6 +66,7 @@ function createTransactionPort(
         accountStatus: user.accountStatus,
         isActive: user.isActive,
         deletedAt: user.deletedAt,
+        deletionScheduledFor: user.deletionScheduledFor,
         studentAnonymized: user.student?.anonymized ?? null,
         consentAcceptances: user.consentAcceptances,
       };

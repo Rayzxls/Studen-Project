@@ -26,6 +26,12 @@ declare module "next-auth" {
      */
     googleOnboarding?: { providerAccountId: string; email: string };
     consentRefresh?: boolean;
+    /**
+     * A Deletion Pending account that signed in within its recovery window. The
+     * sign-in callback consumes this to mint the recovery handoff and redirect
+     * to `/recover`; it never reaches a JWT or session.
+     */
+    accountRecovery?: { userId: string; email: string };
   }
 
   interface Session {

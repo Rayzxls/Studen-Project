@@ -26,6 +26,7 @@ function activeAccount(
     accountStatus: "ACTIVE",
     isActive: true,
     deletedAt: null,
+    deletionScheduledFor: null,
     studentAnonymized: false,
     consentAcceptances: [
       { document: "TERMS_OF_USE", version: "terms-2026-07" },
@@ -128,6 +129,7 @@ describe("Google sign-in resolution service", () => {
       lastName: "ใจดี",
       sessionVersion: 0,
       requiresConsentRefresh: false,
+      requiresRecovery: false,
     });
     expect(harness.tx.recordIdentityUse).toHaveBeenCalledWith({
       identityId: "identity-1",
@@ -171,6 +173,36 @@ describe("Google sign-in resolution service", () => {
       expect(harness.tx.recordIdentityUse).not.toHaveBeenCalled();
       expect(harness.tx.createAuditLogs).not.toHaveBeenCalled();
     }
+  });
+
+  it("routes a Deletion Pending account inside its window to recovery, not a session", async () => {
+    const harness = createHarness({
+      account: activeAccount({
+        accountStatus: "DELETION_PENDING",
+        deletionScheduledFor: new Date("2026-08-20T00:00:00.000Z"), // future
+      }),
+    });
+
+    const result = await createService(harness).resolve(validInput());
+
+    expect(result.requiresRecovery).toBe(true);
+    expect(result.requiresConsentRefresh).toBe(false);
+    // Not a sign-in: no last-use stamp and no LOGIN_SUCCESS audit.
+    expect(harness.tx.recordIdentityUse).not.toHaveBeenCalled();
+    expect(harness.tx.createAuditLogs).not.toHaveBeenCalled();
+  });
+
+  it("refuses a Deletion Pending account whose recovery window has lapsed", async () => {
+    const harness = createHarness({
+      account: activeAccount({
+        accountStatus: "DELETION_PENDING",
+        deletionScheduledFor: new Date("2026-07-01T00:00:00.000Z"), // past
+      }),
+    });
+
+    await expect(
+      createService(harness).resolve(validInput())
+    ).rejects.toMatchObject({ code: "account_not_available" });
   });
 
   it("signs in but flags stale consent rather than locking the User out", async () => {

@@ -33,6 +33,7 @@ function resolver() {
     role: "STUDENT" as const,
     email: "student@example.com",
     requiresConsentRefresh: false,
+    requiresRecovery: false,
   }));
 }
 
@@ -169,6 +170,7 @@ describe("Google provider registration", () => {
       role: "STUDENT" as const,
       email: "student@example.com",
       requiresConsentRefresh: true,
+      requiresRecovery: false,
     }));
     const [provider] = googleProvidersIfEnabled({
       env: enabledEnv,
@@ -182,6 +184,30 @@ describe("Google provider registration", () => {
     });
 
     expect(result).toMatchObject({ consentRefresh: true });
+  });
+
+  it("marks a Deletion Pending account inside its window for recovery", async () => {
+    const resolveSignIn = vi.fn(async () => ({
+      userId: "user-1",
+      role: "STUDENT" as const,
+      email: "student@example.com",
+      requiresConsentRefresh: false,
+      requiresRecovery: true,
+    }));
+    const [provider] = googleProvidersIfEnabled({
+      env: enabledEnv,
+      resolveSignIn: resolveSignIn as unknown as GoogleSignInResolver,
+    });
+
+    const result = await optionsOf(provider).profile({
+      sub: "google-subject-1",
+      email: "student@example.com",
+      email_verified: true,
+    });
+
+    expect(result).toMatchObject({
+      accountRecovery: { userId: "user-1", email: "student@example.com" },
+    });
   });
 
   it("propagates a hard failure such as a suspended account", async () => {
