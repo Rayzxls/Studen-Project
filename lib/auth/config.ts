@@ -36,6 +36,7 @@ export const authConfig = {
         path.startsWith("/invite") ||
         path === "/recover" ||
         path === "/reset-password" ||
+        path === "/reset-password/confirm" ||
         path === "/privacy" ||
         path.startsWith("/api/auth") ||
         path.startsWith("/api/signup");
