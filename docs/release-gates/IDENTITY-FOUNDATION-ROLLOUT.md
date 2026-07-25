@@ -290,6 +290,25 @@ and Deletion Pending) and a final production OAuth credential review.
   and that a password-less account is never emailed. Browser-verified on QA
   (port 3100): the request form returns the neutral message, an invalid link
   shows the expired state, and a valid link renders the set-password form.
+- Built verified-email change on the same port — the last email-blocked Release D
+  flow. From Profile a re-authenticated owner requests a new email (the pragmatic
+  20-minute window, as the other sensitive Profile mutations); a verification link
+  goes to the NEW address; confirming it at `/verify-email` updates the account's
+  email — and the canonical identifier when it tracked the old email — marks it
+  verified, and revokes every other session. The token embeds a fingerprint of
+  the current email and is accepted only while it still matches, so the first
+  confirmed change makes every outstanding link stale (no database row).
+  Uniqueness is enforced when the change is applied (the link goes to the new
+  address, so only its owner can confirm), and a tampered/expired link, a
+  since-deleted account, a superseded link, and an address already owned by
+  another account are all refused; a legacy account keeps its non-email
+  identifier. Profile shows the form only for an account that has an email, and
+  `/verify-email` is a new public route. Unit tests cover the token and service;
+  an isolated-QA integration test proved with the real adapter that the link
+  updates the email and identifier, stamps verification, bumps the session
+  version, is single-use, and refuses an address owned by another account.
+  Browser-verified on QA (3100): an invalid link shows the expired state and a
+  valid one renders the confirm screen with the target address.
 
 Mutations require both flags and configured Terms/Privacy versions. Flags
 default to `0`; consent versions default to empty and therefore fail closed.
