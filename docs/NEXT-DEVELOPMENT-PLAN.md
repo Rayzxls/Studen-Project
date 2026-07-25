@@ -507,7 +507,7 @@ Removal sequence:
 
 ### D1. Google Login
 
-Architecture decision: [`ADR-0041`](./adr/0041-google-first-identity-uses-gated-role-onboarding.md).
+Architecture decisions: [`ADR-0041`](./adr/0041-google-first-identity-uses-gated-role-onboarding.md) (Google-first identity) and [`ADR-0042`](./adr/0042-transactional-email-uses-a-gated-provider-port.md) (transactional email delivery, unblocking verified-email change and password recovery).
 
 - Decision locked 2026-07-24: use Google-first onboarding. A new Student may authenticate with Google, provide real name once, and then return to the same linked User Account on later Google sign-ins without repeating onboarding or supplying a Student Number.
 - Decision locked 2026-07-24: never treat the Google display name as the authoritative Real Name because it may be a nickname or arbitrary text. Every new User must explicitly enter separate real first-name and last-name fields in Beagle Classroom and confirm them before account creation; Google proves ownership of the verified email only.
