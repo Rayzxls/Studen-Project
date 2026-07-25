@@ -36,6 +36,7 @@ describe("account status compatibility", () => {
   it("allows authentication only for an active account", () => {
     expect(canAuthenticateWithAccountStatus("ACTIVE")).toBe(true);
     expect(canAuthenticateWithAccountStatus("SUSPENDED")).toBe(false);
+    expect(canAuthenticateWithAccountStatus("DELETION_PENDING")).toBe(false);
     expect(canAuthenticateWithAccountStatus("TERMINATED")).toBe(false);
     expect(canAuthenticateWithAccountStatus("ANONYMIZED")).toBe(false);
   });

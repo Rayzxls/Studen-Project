@@ -7,6 +7,33 @@ declare module "next-auth" {
     role: "ADMIN" | "TEACHER" | "STUDENT";
     identifier: string;
     mustResetPwd: boolean;
+    /** Account session version at sign-in; drives server-side revocation. */
+    sessionVersion?: number;
+    /**
+     * The real database user id, carried separately because Auth.js's OAuth
+     * flow deliberately overwrites `user.id` with a random UUID (it assumes the
+     * provider id lives on an Account row an adapter would persist). We run
+     * OAuth with JWT sessions and no adapter, so without this field the session
+     * would carry a UUID that matches no `User.id` and every `findUnique({ where:
+     * { id } })` — the dashboard included — would fail and bounce to /login. The
+     * sign-in callback reads it into `token.id`. Credentials sign-in keeps its
+     * own id and never sets this, so it falls back to `user.id`.
+     */
+    dbUserId?: string;
+    /**
+     * Transient markers a verified Google sign-in attaches before the session
+     * exists. The sign-in callback consumes them to redirect a brand-new user
+     * into onboarding, or a stale-consent user back to login, and returns a
+     * redirect instead of `true`, so neither marker ever reaches a JWT/session.
+     */
+    googleOnboarding?: { providerAccountId: string; email: string };
+    consentRefresh?: boolean;
+    /**
+     * A Deletion Pending account that signed in within its recovery window. The
+     * sign-in callback consumes this to mint the recovery handoff and redirect
+     * to `/recover`; it never reaches a JWT or session.
+     */
+    accountRecovery?: { userId: string; email: string };
   }
 
   interface Session {
@@ -15,6 +42,10 @@ declare module "next-auth" {
       role: "ADMIN" | "TEACHER" | "STUDENT";
       identifier: string;
       mustResetPwd: boolean;
+      /** Unix seconds of sign-in; drives the pragmatic re-auth window. */
+      signInAt?: number;
+      /** Account session version at sign-in; drives server-side revocation. */
+      sessionVersion?: number;
       name?: string | null;
       email?: string | null;
       image?: string | null;
@@ -28,5 +59,13 @@ declare module "next-auth/jwt" {
     role?: "ADMIN" | "TEACHER" | "STUDENT";
     identifier?: string;
     mustResetPwd?: boolean;
+    /** Account session version at sign-in; drives server-side revocation. */
+    sessionVersion?: number;
+    /**
+     * Unix seconds when this session was first established. Anchors the absolute
+     * 30-day session cap; a token minted before the policy existed omits it and
+     * relies on the inactivity window alone.
+     */
+    signInAt?: number;
   }
 }

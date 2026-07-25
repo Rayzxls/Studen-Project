@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db/client";
 import { Forbidden, NotFound, Unauthorized } from "@/lib/errors";
 import { can, type Session } from "@/lib/auth/permissions";
+import { isSessionRevoked } from "@/lib/auth/session-version";
 
 /**
  * Server-side auth guards — wrap NextAuth `auth()` with throw semantics
@@ -13,12 +14,38 @@ import { can, type Session } from "@/lib/auth/permissions";
  *   await assert.viewAuditLog();
  */
 
-export async function requireAuth(): Promise<Session> {
+/**
+ * Returns the session only if it is present AND not server-side revoked, else
+ * null — never throws. Use it on pages that branch on being logged in without
+ * requiring it (the landing redirect, layout chrome). Protected pages should
+ * use `requireAuth`.
+ *
+ * Server-side revocation: a token stays valid only while its `sessionVersion`
+ * still matches the account. Bumping the column (e.g. on deletion) rejects every
+ * device on its next check, including this one.
+ */
+export async function getValidSession(): Promise<Session | null> {
   const session = await auth();
-  if (!session?.user) {
-    throw new Unauthorized("not_authenticated");
+  if (!session?.user) return null;
+  const account = await db.user.findUnique({
+    where: { id: session.user.id },
+    select: { sessionVersion: true },
+  });
+  if (
+    !account ||
+    isSessionRevoked(session.user.sessionVersion, account.sessionVersion)
+  ) {
+    return null;
   }
   return { user: session.user };
+}
+
+export async function requireAuth(): Promise<Session> {
+  const session = await getValidSession();
+  if (!session) {
+    throw new Unauthorized("not_authenticated");
+  }
+  return session;
 }
 
 export async function requireRole(roles: Role[]): Promise<Session> {

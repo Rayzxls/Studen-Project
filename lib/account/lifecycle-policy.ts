@@ -3,6 +3,7 @@ import type { Role } from "@prisma/client";
 export type AccountStatus =
   | "ACTIVE"
   | "SUSPENDED"
+  | "DELETION_PENDING"
   | "TERMINATED"
   | "ANONYMIZED";
 
@@ -46,6 +47,13 @@ export function decideAccountTransition(
 
   if (input.target.status === "ANONYMIZED") {
     return { allowed: false, code: "account_anonymized_irreversible" };
+  }
+
+  if (
+    input.target.status === "DELETION_PENDING" ||
+    input.to === "DELETION_PENDING"
+  ) {
+    return { allowed: false, code: "identity_v2_deletion_flow_required" };
   }
 
   if (input.to === "ANONYMIZED" && input.target.status !== "TERMINATED") {

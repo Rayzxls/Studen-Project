@@ -7,6 +7,12 @@
       "runtimeArgs": ["dev"],
       "port": 3000,
       "autoPort": true
+    },
+    {
+      "name": "studennnn-qa",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["dev:qa"],
+      "port": 3100
     }
   ]
 }

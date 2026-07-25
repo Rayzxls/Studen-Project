@@ -1,0 +1,482 @@
+# Identity V2 Foundation Rollout
+
+**Status:** Stage 2A plus these Stage 2B slices are implemented and tested on
+2026-07-24: Teacher Invite issue, Google-first Teacher acceptance, Google-first
+Student onboarding, returning-user sign-in, authenticated-Profile provider
+linking, optional fallback-password setup, the Google ID-token verifier, a
+flag-gated NextAuth Google provider, the login sign-in button, and the
+`/onboarding` page with its signed pending-token handoff and completion action,
+the post-onboarding session handoff that signs a brand-new Student in on a
+single Google click, and the OAuth session-identity fix that carries the real
+database user id into the JWT. The brand-new-user OAuth glue and the
+post-onboarding session are now wired and were verified end to end on the
+isolated QA server with a real Google account and a browser walkthrough.
+Remaining before the feature can be switched on: the broader Stage 2B surfaces
+(password-guarded linking, session revocation, verified-email change, recovery,
+and Deletion Pending) and a final production OAuth credential review.  
+**Production:** unchanged  
+**Runtime:** disabled by default
+
+## Delivered
+
+- Added compatibility fields to `User` for unique verified email, separate real
+  first/last name, session versioning, deletion scheduling, and anonymization.
+- Added `AuthIdentity`, `TeacherInvite`, `ConsentAcceptance`, `IdentityToken`,
+  and `RealNameHistory` persistence.
+- Extended `UserSession` with re-authentication and revocation metadata.
+- Added `DELETION_PENDING` without removing the legacy account states.
+- Added pure policy helpers for email and real-name validation, Teacher Invite
+  expiry, required consent versions, stable Default Avatar variants, session
+  expiry, deletion recovery, and name-change continuity.
+- Added fail-closed flags:
+  - `IDENTITY_FOUNDATION_ENABLED`
+  - `IDENTITY_FOUNDATION_MUTATIONS_ENABLED`
+- Added the first Stage 2B application-service slice for issuing, replacing,
+  and revoking Teacher Invites:
+  - only an active Admin can mutate Invites;
+  - email matching is normalized and role collisions fail closed;
+  - raw Invite tokens are returned once and only SHA-256 hashes are persisted;
+  - every new Invite atomically revokes all prior pending Invites for that email;
+  - explicit revocation requires an Admin reason;
+  - issue, replacement, and revocation are recorded as Important Audit events.
+- Added Google-first Teacher Invite acceptance as one serializable transaction:
+  - the raw Invite token is hashed before lookup and never persisted or audited;
+  - Google email must be verified and exactly match the normalized Invite email;
+  - existing User/Role and Google-provider collisions fail closed;
+  - User, Teacher profile, Google `AuthIdentity`, two exact-version consent
+    records, Invite acceptance, and three Audit events commit or roll back
+    together;
+  - Invite expiry, prior acceptance, revocation, and concurrent acceptance all
+    fail closed;
+  - the legacy non-null password column receives a precomputed bcrypt sentinel
+    whose random plaintext was discarded. It is not a fallback credential and
+    avoids per-request bcrypt work before the Invite is validated.
+- Added Google-first Student self-registration as one serializable transaction:
+  - no Invite is required, matching the ADR-0041 Student onboarding path;
+  - Google email must be verified, and the Student states a real first/last
+    name explicitly rather than inheriting the Google display name;
+  - an email that already belongs to any account fails closed, so an email
+    match never auto-links and a different Role is never converted;
+  - an already-linked Google identity fails closed and is left to the future
+    sign-in and provider-linking slices;
+  - User, Student profile, Google `AuthIdentity`, two exact-version consent
+    records, and three Audit events commit or roll back together;
+  - the legacy required unique `Student` identifier column receives an opaque
+    `identity-v2-unassigned:` placeholder. It is never displayed, never typed
+    by a person, and never used for authentication or lookup; the dependency
+    gate records it as a reviewed compatibility bridge.
+- Extracted the shared consent-version check and the disabled compatibility
+  password hash into the identity foundation so both onboarding paths use one
+  implementation.
+- Added Google sign-in resolution for a returning User:
+  - the Google subject, not the address, is the stable link, so a changed
+    Google email is recorded on the identity but never overwrites the verified
+    account email;
+  - an unknown Google subject is reported rather than silently creating or
+    linking an account, leaving the Role gate to the onboarding paths;
+  - suspended, deletion-pending, terminated, and anonymized accounts fail
+    closed through the existing authentication availability predicate and
+    write no sign-in Audit row;
+  - stale consent authenticates but returns `requiresConsentRefresh` instead of
+    locking a real User out of their own academic record;
+  - last-use stamping and the `LOGIN_SUCCESS` Audit row commit together.
+- Added Google linking from an already-authenticated Profile:
+  - ADR-0041 forbids linking by email match alone, so ownership comes from the
+    authenticated Profile plus a re-authentication no older than twenty
+    minutes;
+  - the verified Google address must equal the account email, keeping one
+    authoritative address per account and pushing a different address through
+    the separate email-change flow;
+  - a Google subject already linked to this or another account fails closed,
+    and one User keeps at most one Google identity in this release;
+  - unavailable accounts fail closed and nothing is linked;
+  - the link and its new Critical `AUTH_PROVIDER_LINKED` Audit row commit
+    together.
+  - Linking by fallback password is deliberately not implemented: optional
+    fallback-password setup does not exist yet, so there is nothing to verify
+    against.
+- Added optional fallback-password setup on the caller's own account:
+  - the same twenty-minute re-authentication rule applies, and the password is
+    validated and rejected for length or commonness before any hashing or
+    database work;
+  - a Google-first account carries the disabled compatibility hash, so the
+    service reports whether a real credential was created or replaced;
+  - the password, its hash, and its length are never written to the Audit row;
+  - existing sessions are intentionally untouched, because session issue and
+    revocation belong to their own slice and splitting that rule across two
+    services would make session behaviour unpredictable.
+- Added the Google ID-token verifier that produces the trusted assertion every
+  identity service consumes:
+  - signature, issuer, audience, and expiry are checked through `jose` against
+    Google's published key set, with both accepted issuer spellings;
+  - the nonce is required, not optional, so a token captured elsewhere cannot
+    be replayed into this application;
+  - an unverified or missing email is refused before any account is touched,
+    and the address is normalized once at the boundary;
+  - the underlying verification failure is never surfaced, so a caller cannot
+    learn which part of a forged token to change next;
+  - `GOOGLE_CLIENT_ID` is the required audience and defaults to empty, so the
+    verifier refuses to build and nothing can reach a service.
+- Wired a flag-gated Google provider into NextAuth beside the live Credentials
+  provider:
+  - `googleProvidersIfEnabled` is appended, never inserted, and fails closed on
+    the identity mutation flag or a missing client id/secret, so with the flags
+    off the deployed provider list is exactly the Credentials entry it is today;
+  - NextAuth runs the OIDC checks — pkce, state, and the nonce it generates —
+    and the `profile` step routes the verified identity through the existing
+    Prisma sign-in resolver, so last use and the `LOGIN_SUCCESS` Audit row are
+    written by the same audited path;
+  - the requested scope is `openid email` only;
+  - an account that owes fresh consent is refused at the provider because no
+    consent-refresh surface exists yet; refusing is reversible and keeps the
+    flag off until that surface ships.
+- Added a reusable, flag-gated Google sign-in button on the login page:
+  - rendering is gated by `NEXT_PUBLIC_GOOGLE_SIGNIN_ENABLED`, defaulting off,
+    so the deployed login page is visually unchanged;
+  - the flag is presentation only and defence-in-depth: the server provider
+    gate is the real control, so forcing the flag on can only show a button
+    that fails, never a working sign-in past the server gate;
+  - the button reuses the existing `btn-secondary` design-system control and
+    starts `signIn("google")`, disabling itself once the redirect begins.
+- Closed the OAuth round trip so a verified Google sign-in reaches a session:
+  - a brand-new subject returns an onboarding sentinel and the `signIn` callback
+    mints the single-use pending cookie and redirects to `/onboarding`;
+  - onboarding now signs the new Student in immediately through a
+    programmatic-only, flag-gated credentials provider that exchanges a signed,
+    short-lived, audience-scoped handoff token for a real Auth.js session, so
+    onboarding is a single Google click instead of two; the handoff is a real
+    sign-in, not a forged cookie, and a failure to establish it falls back to
+    `/login?onboarded=1` so the created account is never stranded;
+  - the session carries the real database user id. Auth.js overwrites an OAuth
+    `user.id` with a random UUID (it assumes an adapter persists the provider id
+    on an Account row), so the resolver's id rides on a separate `User` field
+    and is restored into the token by the sign-in callback. Without it the
+    session id matched no row and every `findUnique({ where: { id } })` — the
+    dashboard included — failed and bounced to `/login`.
+- Set the session lifetime to the locked Release D policy: a 7-day sliding
+  inactivity window plus a 30-day absolute cap from sign-in. NextAuth's `maxAge`
+  gives the inactivity window; the cap is a pure, DB-free predicate over a
+  `signInAt` stamp checked in the jwt callback, which returns null to end an
+  over-cap session, so it holds in the edge middleware too. Logout stays
+  immediate through the normal `signOut` cookie clear.
+- Added server-side session revocation. Every sign-in path stamps the account's
+  `sessionVersion` into the JWT and onto the session, and `requireAuth` reads the
+  current version from the database and rejects a token whose version no longer
+  matches, so bumping the column invalidates every device on its next protected
+  request. A legacy versionless token counts as 0, so existing sessions survive
+  until an account is actually bumped. Self-service deletion now bumps the
+  version, revoking every session rather than only the current device's cookie.
+  Verified on isolated QA: after a bump, a protected route redirected the
+  still-cookied session to login. A shared `getValidSession` (the same
+  present-and-not-revoked check, returning null instead of throwing) extends
+  enforcement to the pages that read `auth()` directly — the dashboard bounces a
+  revoked session and the landing treats it as logged-out.
+- Gave the fallback-password setup service a Profile surface. A Google-first
+  account with no usable password now sees a set-fallback-password form in the
+  Security section (accounts that already have a password keep the change form,
+  and with the identity flag off Profile is unchanged). Ownership uses the
+  pragmatic re-auth rule: `signInAt` is surfaced on the session and passed as
+  `reauthenticatedAt`, so a sign-in within the 20-minute window authorises the
+  set while the service still re-checks the window and account availability.
+  Verified end to end on isolated QA — a freshly onboarded Student set a
+  password, the hash became a real bcrypt value, and the audit recorded the set
+  without the password or its hash. The authenticated-Profile Google-linking
+  surface reuses the same re-auth rule and is the next Profile slice.
+- Added the first slice of D1 self-service deletion. The owner confirms in the
+  Profile danger zone, a dedicated deletion service moves the account to
+  Deletion Pending with a 30-day recovery date, this device is signed out
+  immediately, and login shows a neutral notice; sign-in is then refused by the
+  standard availability predicate. Nothing is erased — Score, Submission,
+  Attendance, and Audit history stay intact — and the service refuses a
+  non-available account. The admin lifecycle policy already defers Deletion
+  Pending to this flow, so it is unchanged. Verified end to end on isolated QA;
+  the row read `DELETION_PENDING` with the recovery date exactly 30 days out and
+  one `ACCOUNT_DELETION_REQUESTED` audit event.
+- Added deletion recovery through Google. While an account is Deletion Pending
+  and inside its window, the Google sign-in resolver stops refusing it and
+  returns a recovery outcome instead: the provider carries a recovery sentinel,
+  the sign-in callback mints a signed single-use recovery handoff and redirects
+  to `/recover`, and no session or `LOGIN_SUCCESS` is created. The page confirms
+  with the owner, a recovery service returns the account to Active and clears the
+  schedule, and the one-click onboarding handoff signs them straight into the
+  dashboard. A lapsed window fails closed in both the resolver and the recovery
+  service. Unit and isolated-QA integration cover the routing and the
+  recover-then-sign-in cycle, and it was verified end to end in a browser
+  (`ACCOUNT_DELETION_REQUESTED`→`ACCOUNT_DELETION_CANCELLED`, row back to ACTIVE).
+  Google was the first recovery path; the Credentials/fallback-password path now
+  mirrors it (next bullet).
+- Extended deletion recovery to the Credentials/fallback-password path so a
+  Google-first owner who set a fallback password is no longer stranded when only
+  a Google sign-in could recover them. Before the availability check refuses a
+  Deletion Pending account, the password `authorize` now verifies the password
+  first — ownership proof, exactly as a verified Google claim is — and, for an
+  account still inside its window, returns the same recovery sentinel instead of
+  a session; the shared sign-in callback mints the recovery handoff and redirects
+  to `/recover`, and no `LOGIN_SUCCESS` is written because this is not a sign-in.
+  A pending account past its window, with no scheduled date, or with no email to
+  carry into recovery stays unavailable and fails closed, and the `jwt` callback
+  rejects any transient sign-in sentinel as a second guard. A pure gate
+  (`lib/auth/credentials-signin.ts`) carries the rule under unit test, and it was
+  verified end to end on isolated QA (port 3100): the correct password on an
+  in-window account landed on `/recover` showing the owner's email and wrote no
+  sign-in audit, while a wrong password stayed on `/login` with the generic
+  failure and a `LOGIN_FAILED`/`wrong_password` row.
+- Closed the deletion lifecycle with post-window anonymization. A batch service
+  anonymizes every Deletion Pending account whose window has lapsed, each in its
+  own transaction that re-checks eligibility first, so an account recovered in
+  the meantime is skipped rather than erased. It nulls the verified email and
+  real name, resets the credential to the disabled sentinel, gives the required
+  Student name a placeholder and sets its anonymized flag, detaches every
+  provider identity (freeing the Google address for a fresh account), and moves
+  the account to ANONYMIZED with a timestamp; Score, Submission, Attendance, and
+  Audit history stay intact under the internal id, and the audit records no PII.
+  It runs against isolated QA through `db:anonymize:qa:dry-run` (reports only)
+  and `db:anonymize:qa:apply` (irreversible); no scheduler is wired. Unit and
+  isolated-QA integration prove the erasure, the identity detachment, the student
+  flag, and that an in-window account is never touched. The full D1 deletion
+  lifecycle — request, Deletion Pending, recovery, anonymization — is now
+  implemented and QA-verified end to end.
+- Gave the Teacher Invite service its first Admin surface at
+  `/admin/teachers/invites` (flag-gated, additive; the legacy single/CSV create
+  paths are untouched). It issues an invite — showing the raw token once and
+  replacing any prior pending invite for that email — lists recent invites at
+  their effective status, and revokes pending ones, all through the existing
+  audited service with Admin enforced by the admin layout and each action.
+  Verified end to end on isolated QA with a disposable admin: issuing showed the
+  one-time token and a pending row, revoke flipped it to REVOKED, and the audit
+  read `TEACHER_INVITE_ISSUED` then `TEACHER_INVITE_REVOKED`.
+- Wired the invited teacher's side end to end so the issued token is finally
+  redeemable. `/invite/<token>` (a public, flag-gated pre-session route) looks
+  the invite up by hash and previews the invited email for a pending token or an
+  error for an invalid/used/expired one. "Accept with Google" stores the raw
+  token in a single-use httpOnly cookie and hands off to Google; on the verified
+  new-user return the sign-in callback ties the invite to the sign-in, mints a
+  signed teacher-onboarding handoff carrying the Google subject/email plus the
+  token, and routes to `/onboarding/teacher`. Completing the form runs the
+  existing audited acceptance (TEACHER account, invite ACCEPTED, two consent
+  records, `TEACHER_INVITE_ACCEPTED` + `CONSENT_GRANTED` audit, atomically) and
+  signs the teacher straight into the dashboard through the onboarding-session
+  handoff. The Google email is matched against the invited email inside the
+  transaction, so a mismatch is refused; `emailVerified` holds by the same
+  invariant the student path relies on (a new-user sentinel is only produced
+  after an unverified email is already rejected). The Admin panel now hands out
+  the full `/invite/<token>` link with a copy button instead of a bare token.
+  Verified on isolated QA (port 3100): a pending token rendered the invited
+  email and an invalid one an error; completing onboarding created a TEACHER with
+  the invite ACCEPTED, the three expected audit rows, and a dashboard session; a
+  mismatched Google email was refused with no account created. The only
+  unverified step is the real Google consent screen.
+- Added a provider-agnostic transactional email port (ADR-0042): feature code
+  depends only on an `EmailSender` and typed templates, with a fail-closed
+  log-only sender (production logs only that a send was suppressed, never the
+  recipient/link/token) and a captured-outbox sender for tests. Nothing is
+  transmitted until a keyed provider is wired, so Production is unchanged.
+- Built fallback-password recovery on that port, the first email-dependent flow
+  and the one the Release D decision locked. A user who set a fallback password
+  requests a reset at `/reset-password`, receives a single-use link, and sets a
+  new password at `/reset-password/confirm`; the reset revokes every other
+  session. The link needs no database row — its token carries a fingerprint of
+  the current password hash and is accepted only while that still matches, so the
+  first successful reset (bcrypt re-salts) invalidates every outstanding link.
+  The request endpoint is rate-limited and always returns the same neutral state,
+  and a Google-only account with no fallback password, a suspended/deleted
+  account, a weak password, and a tampered/expired link are all refused without
+  revealing which. With the feature on, `/reset-password` is the email form
+  (superseding ADR-0026 for this path) and `/reset-password/confirm` is a new
+  public route; with it off, the legacy admin-temporary-password guidance is
+  unchanged. Unit tests cover the token and service; an isolated-QA integration
+  test proved with real bcrypt that the emailed link resets the password, bumps
+  the session version, audits `PASSWORD_RESET_COMPLETED`, and cannot be reused,
+  and that a password-less account is never emailed. Browser-verified on QA
+  (port 3100): the request form returns the neutral message, an invalid link
+  shows the expired state, and a valid link renders the set-password form.
+- Built verified-email change on the same port — the last email-blocked Release D
+  flow. From Profile a re-authenticated owner requests a new email (the pragmatic
+  20-minute window, as the other sensitive Profile mutations); a verification link
+  goes to the NEW address; confirming it at `/verify-email` updates the account's
+  email — and the canonical identifier when it tracked the old email — marks it
+  verified, and revokes every other session. The token embeds a fingerprint of
+  the current email and is accepted only while it still matches, so the first
+  confirmed change makes every outstanding link stale (no database row).
+  Uniqueness is enforced when the change is applied (the link goes to the new
+  address, so only its owner can confirm), and a tampered/expired link, a
+  since-deleted account, a superseded link, and an address already owned by
+  another account are all refused; a legacy account keeps its non-email
+  identifier. Profile shows the form only for an account that has an email, and
+  `/verify-email` is a new public route. Unit tests cover the token and service;
+  an isolated-QA integration test proved with the real adapter that the link
+  updates the email and identifier, stamps verification, bumps the session
+  version, is single-use, and refuses an address owned by another account.
+  Browser-verified on QA (3100): an invalid link shows the expired state and a
+  valid one renders the confirm screen with the target address.
+- Wired linking Google to an existing account from Profile (E²) over the
+  already-tested provider-linking service. A signed-in account with an email and
+  no Google identity — typically a password-era Teacher or Admin — connects
+  Google; after a recent re-authentication the action stores a signed
+  link-intent cookie and hands off to Google, and the sign-in callback attaches
+  the returned identity and redirects back with a `?linked=` status. The cookie
+  proves which account is being linked and carries the re-auth basis; linking
+  still requires the Google email to match the account and refuses a subject
+  already linked elsewhere. The callback always returns a redirect rather than
+  `true`, so the OAuth sign-in is aborted and the caller keeps their existing
+  session instead of being re-logged-in as the linked identity. Additive and
+  flag-gated. A unit test covers the link-intent token; the service and adapter
+  already have unit and isolated-QA integration coverage. Verified headless on QA
+  (3100): the Profile section, connect button, matching-email hint, and every
+  `?linked=` banner render for a signed-in password-era teacher, and the button
+  initiates the real Google authorization redirect. The Google consent screen and
+  the callback it drives — including that the existing session survives the
+  aborted sign-in — need a real Google account to confirm end to end.
+
+Mutations require both flags and configured Terms/Privacy versions. Flags
+default to `0`; consent versions default to empty and therefore fail closed.
+
+## Database Evidence
+
+Migration:
+
+`20260724010000_add_identity_v2_foundation`
+
+The migration was deployed only to the isolated Neon QA branch. The guarded
+post-migration verifier reported:
+
+- 12 existing Users.
+- 0 Users implicitly migrated into Identity V2.
+- 0 non-default session-version values.
+- 0 rows in every new Identity V2 table.
+- Existing account states remained available and `DELETION_PENDING` was added.
+- The Teacher Invite integration test used a disposable Admin and email on the
+  isolated QA branch, proved replacement/token-hash/revoke/audit behavior in
+  real serializable transactions, and removed all test rows afterward.
+- The Teacher onboarding integration test issued a disposable Invite through
+  the real Invite service, accepted it through the real Prisma onboarding
+  adapter, and proved the User, Teacher, Google identity, exact two consent
+  records, accepted Invite, and three Audit events committed atomically. A
+  second acceptance attempt rolled back, and all disposable rows were removed.
+- The Student onboarding integration test registered a disposable Student
+  through the real Prisma adapter and proved the User, Student profile with a
+  synthetic legacy identifier, Google identity, exact two consent records, and
+  three Audit events committed atomically. A second Google account claiming the
+  same verified email was rejected and left exactly one User; all disposable
+  rows were removed.
+- The Google sign-in integration test registered a disposable Student, resolved
+  a later sign-in through the real adapter to the same User, and asserted the
+  stamped last-use time, the recorded provider email, and exactly one
+  `LOGIN_SUCCESS` Audit row. An unknown Google subject created no identity or
+  User, and a suspended account failed closed with no sign-in Audit row.
+- The provider-linking integration test linked Google to a disposable
+  password-era Teacher through the real adapter, asserted exactly one identity
+  and one `AUTH_PROVIDER_LINKED` Audit row, and proved that a stale
+  re-authentication and a second Google subject both fail closed while leaving
+  the identity count unchanged.
+- The fallback-password integration test proved with real bcrypt that the
+  disabled compatibility hash verifies against no chosen password, that setting
+  a fallback password replaces it with a credential the same password verifies
+  against, that a wrong password still fails, that the Audit row contains no
+  trace of the password, and that a stale re-authentication leaves the original
+  hash in place.
+- The onboarding-session integration test registered a disposable Student
+  through the real Prisma onboarding service and then exchanged a signed handoff
+  token for a session through the programmatic handoff provider. It asserted the
+  session carries the real database cuid rather than the UUID Auth.js assigns to
+  OAuth users, and that authorize fails closed on a tampered token, a
+  correctly-signed token whose subject is a missing account, an empty token, and
+  a valid token for a since-suspended account. All disposable rows were removed.
+
+This proves the migration is additive and that the Teacher acceptance, Student
+self-registration, and returning-user sign-in transactions work on isolated QA.
+It does not prove Google token validation, web routes, UI, email delivery,
+existing-account linking, session issue, recovery, or deletion workflows.
+
+## Verification
+
+- Prisma format, validate, and client generation passed.
+- Focused Identity/account/release-gate tests passed.
+- Full unit suite passed after the login-button slice: 715 tests across 75
+  files. The Next.js Production build passed after the auth wiring and the
+  login-page change.
+- The focused Invite issue, Teacher acceptance, Student onboarding, Google
+  sign-in, provider-linking, and fallback-password unit suites passed.
+- The isolated-Neon Teacher Invite issue, Teacher acceptance, Student
+  onboarding, Google sign-in, provider-linking, and fallback-password
+  integration suites passed.
+- The full isolated-Neon Integration suite passed 181 tests across 23 files
+  after the Student onboarding slice, and passed again unchanged on a second
+  run.
+- TypeScript passed.
+- Targeted ESLint passed with zero errors.
+- The dependency release gate passed with no baseline increase:
+  637 blockers, 240 review findings, 877 total findings.
+- After the OAuth session-identity fix and the one-click onboarding slice:
+  TypeScript and targeted ESLint passed with zero errors, and the full unit
+  suite passed 735 tests across 79 files. The onboarding-to-dashboard flow was
+  walked through in a browser on the isolated QA server — a brand-new Google
+  Student reached the dashboard on a single submit, and the session carried the
+  correct database user id rather than the Auth.js-generated UUID.
+
+## Boundaries
+
+- Production schema, data, secrets, and feature flags were not changed.
+- The Google provider is registered only when both identity flags and the
+  OAuth client are configured; Production has the flags off, so the Credentials
+  login path is unchanged. The login button is behind its own default-off
+  public flag, so the deployed login page is visually unchanged. No new page or
+  route is added yet.
+- New-user onboarding is now wired end to end. On a verified Google sign-in the
+  provider `profile` no longer fails for an unlinked user: it returns an
+  onboarding sentinel (or a consent-refresh sentinel), and the NextAuth `signIn`
+  callback mints the single-use pending cookie and redirects to `/onboarding`,
+  or sends a stale-consent account back to login. Neither sentinel reaches a JWT
+  or session. After onboarding, the completion action establishes the session
+  directly through a programmatic-only credentials handoff and redirects to the
+  dashboard, so a brand-new Student signs in on a single Google click; the
+  handoff is a signed, short-lived, audience-scoped token exchanged for a real
+  Auth.js session rather than a forged cookie, and any failure to establish it
+  falls back to the login page so the account is never stranded.
+- Verified locally on 2026-07-24 with the real OAuth client: the Google button
+  renders behind its flag, and the NextAuth-generated authorization URL is
+  correct — `accounts.google.com/o/oauth2/v2/auth`, the exact client id, the
+  `…/api/auth/callback/google` redirect uri, `openid email` scope, code flow,
+  and nonce/state/PKCE all present. The only unverified step is the Google
+  consent screen and the callback it drives, which needs a real Google account
+  in a browser.
+- The standalone Google ID-token verifier is not on the NextAuth path: NextAuth
+  runs its own OIDC checks (issuer, audience, signature, expiry, nonce) through
+  `oauth4webapi`, so the verifier remains the supported entry point only for a
+  caller that receives a raw ID token outside this flow. The live Credentials
+  login path is unchanged.
+- Every identity service accepts only a verified Google assertion. The verifier
+  is the only supported way to produce one; raw browser claims are never
+  trusted.
+- Teacher Invite routes, OAuth adapter, email delivery, and Admin/onboarding UI
+  are not enabled yet.
+- No legacy Student Number, Credentials, Academic Year, Term, Class, or
+  Homeroom dependency has been removed yet.
+- No Production or shared development data reset is authorized by this stage.
+
+## Next Slice: Stage 2B
+
+1. Wire the ID-token verifier into a real OAuth callback that generates and
+   stores the nonce, then route its verified assertion to sign-in, onboarding,
+   or linking. After that: the password-guarded linking path, session
+   issue/revocation, verified-email change, recovery, and Deletion Pending.
+   Teacher Invite issue/replace/revoke/accept, Student self-registration,
+   returning-user sign-in resolution, authenticated-Profile provider linking,
+   optional fallback-password setup, and ID-token verification are complete at
+   the service layer.
+2. Prove one provider identity maps to one User, one User has one Role, and
+   account/session mutations are atomic. Invite email matching, replacement,
+   expiry, revocation, acceptance races, Student email/identity collisions, and
+   sign-in availability/consent rules are already covered.
+3. Keep all route and UI entry points disabled until isolated-QA integration
+   tests pass.
+4. Do not switch the default login or remove legacy fields in Stage 2B.
+
+## Open Compatibility Debt
+
+The `Student` row still requires a unique legacy identifier column that
+ADR-0039 retires. Identity V2 accounts fill it with a synthetic placeholder.
+Dropping the column belongs to the approved destructive migration, which is
+gated by `qa:release:dependencies:strict` reaching zero blockers and by a
+separate named approval. No Production or shared development reset is
+authorized by this stage.

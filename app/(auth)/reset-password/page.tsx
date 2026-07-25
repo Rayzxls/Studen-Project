@@ -7,16 +7,21 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
+import { identityFoundationMutationsEnabled } from "@/lib/identity/feature-flags";
+import { PasswordRecoveryRequestForm } from "@/components/auth/password-recovery-request-form";
+import { requestPasswordResetAction } from "./actions";
+
 /**
- * /reset-password — account recovery guidance (ADR-0026).
+ * /reset-password — account recovery.
  *
- * The product deliberately has NO email-based self-service reset: recovery
- * runs through an admin who generates a one-time temporary password and
- * relays it out-of-band (LINE / SMS / note), after which the user is forced
- * to set their own password on next login (the /reset-password/force flow).
- * This page is the role-aware "who do I contact" surface for that model —
- * not a form, by design. See ADR-0026 § 2.
+ * With the identity feature on, this is the email-link self-service recovery
+ * for a fallback password (ADR-0042, superseding ADR-0026 for that path): the
+ * owner requests a single-use link and sets a new password. With the feature
+ * off it stays the legacy ADR-0026 guidance — an admin issues a one-time
+ * temporary password out-of-band and the user sets their own on next login
+ * through /reset-password/force. The switch is additive and flag-gated.
  */
+export const dynamic = "force-dynamic";
 
 const CONTACTS = [
   {
@@ -44,6 +49,10 @@ const STEPS = [
 ] as const;
 
 export default function ResetPasswordPage() {
+  if (identityFoundationMutationsEnabled()) {
+    return <PasswordRecoveryRequestForm action={requestPasswordResetAction} />;
+  }
+
   return (
     <div className="animate-fade-in rounded-2xl bg-white p-8 shadow-card">
       {/* Header */}

@@ -4,6 +4,10 @@ import { Suspense, useActionState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { loginAction, type LoginState } from "./actions";
+import {
+  GoogleSignInButton,
+  googleSignInEnabled,
+} from "@/components/auth/google-sign-in-button";
 
 const initial: LoginState = {};
 
@@ -11,6 +15,9 @@ function LoginForm() {
   const [state, action, pending] = useActionState(loginAction, initial);
   const search = useSearchParams();
   const resetSuccess = search.get("reset") === "success";
+  const onboarded = search.get("onboarded") === "1";
+  const consentRefresh = search.get("error") === "consent_refresh";
+  const deletionPending = search.get("deletion") === "pending";
 
   return (
     <div className="animate-fade-in rounded-2xl bg-white p-8 shadow-card">
@@ -29,6 +36,24 @@ function LoginForm() {
       {resetSuccess && (
         <div className="mb-4 rounded-xl bg-green-50 px-3 py-2 text-sm text-green-700">
           เปลี่ยนรหัสผ่านสำเร็จ — กรุณาเข้าสู่ระบบด้วยรหัสใหม่
+        </div>
+      )}
+
+      {onboarded && (
+        <div className="mb-4 rounded-xl bg-green-50 px-3 py-2 text-sm text-green-700">
+          สร้างบัญชีสำเร็จ — เข้าสู่ระบบด้วย Google อีกครั้งเพื่อเริ่มใช้งาน
+        </div>
+      )}
+
+      {consentRefresh && (
+        <div className="mb-4 rounded-xl bg-orange-50 px-3 py-2 text-sm text-orange-700">
+          มีข้อกำหนดฉบับใหม่ที่ต้องยอมรับก่อน กรุณาติดต่อผู้ดูแลระบบ
+        </div>
+      )}
+
+      {deletionPending && (
+        <div className="mb-4 rounded-xl bg-orange-50 px-3 py-2 text-sm text-orange-700">
+          บัญชีของคุณถูกกำหนดให้ลบและออกจากระบบแล้ว
         </div>
       )}
 
@@ -99,6 +124,21 @@ function LoginForm() {
           </Link>
         </div>
       </form>
+
+      {googleSignInEnabled() && (
+        <div className="mt-4">
+          <div className="relative my-4 text-center">
+            <span className="relative z-10 bg-white px-3 text-xs text-black/40">
+              หรือ
+            </span>
+            <span
+              aria-hidden
+              className="absolute inset-x-0 top-1/2 border-t border-black/[0.06]"
+            />
+          </div>
+          <GoogleSignInButton />
+        </div>
+      )}
     </div>
   );
 }
