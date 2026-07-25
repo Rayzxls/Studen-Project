@@ -203,8 +203,24 @@ and Deletion Pending) and a final production OAuth credential review.
   service. Unit and isolated-QA integration cover the routing and the
   recover-then-sign-in cycle, and it was verified end to end in a browser
   (`ACCOUNT_DELETION_REQUESTED`→`ACCOUNT_DELETION_CANCELLED`, row back to ACTIVE).
-  Google is the recovery path here; Credentials/fallback-password recovery is a
-  follow-up.
+  Google was the first recovery path; the Credentials/fallback-password path now
+  mirrors it (next bullet).
+- Extended deletion recovery to the Credentials/fallback-password path so a
+  Google-first owner who set a fallback password is no longer stranded when only
+  a Google sign-in could recover them. Before the availability check refuses a
+  Deletion Pending account, the password `authorize` now verifies the password
+  first — ownership proof, exactly as a verified Google claim is — and, for an
+  account still inside its window, returns the same recovery sentinel instead of
+  a session; the shared sign-in callback mints the recovery handoff and redirects
+  to `/recover`, and no `LOGIN_SUCCESS` is written because this is not a sign-in.
+  A pending account past its window, with no scheduled date, or with no email to
+  carry into recovery stays unavailable and fails closed, and the `jwt` callback
+  rejects any transient sign-in sentinel as a second guard. A pure gate
+  (`lib/auth/credentials-signin.ts`) carries the rule under unit test, and it was
+  verified end to end on isolated QA (port 3100): the correct password on an
+  in-window account landed on `/recover` showing the owner's email and wrote no
+  sign-in audit, while a wrong password stayed on `/login` with the generic
+  failure and a `LOGIN_FAILED`/`wrong_password` row.
 - Closed the deletion lifecycle with post-window anonymization. A batch service
   anonymizes every Deletion Pending account whose window has lapsed, each in its
   own transaction that re-checks eligibility first, so an account recovered in
