@@ -71,6 +71,18 @@ export const authConfig = {
     jwt({ token, user, trigger }) {
       const nowSec = Math.floor(Date.now() / 1000);
       if (user) {
+        // Transient sign-in markers (onboarding, recovery, consent refresh)
+        // must never become a session: the sign-in callback redirects them
+        // instead of returning true, so this should be unreachable for them. If
+        // one ever arrives here, fail closed rather than mint a token from a
+        // sentinel that carries a placeholder id.
+        if (
+          user.googleOnboarding ||
+          user.accountRecovery ||
+          user.consentRefresh
+        ) {
+          return null;
+        }
         // OAuth sign-in arrives with `user.id` replaced by a random UUID; the
         // real database id rides on `dbUserId`. Credentials sign-in sets no
         // `dbUserId` and keeps its own id, so the fallback is correct there.

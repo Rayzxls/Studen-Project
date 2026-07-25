@@ -8,7 +8,7 @@ import { audit } from "@/lib/audit/log";
 import { rateLimit } from "@/lib/auth/rate-limit";
 import { getRequestMeta } from "@/lib/utils/request";
 import { LoginSchema } from "@/lib/validation/schemas";
-import { isAccountAvailableForAuthentication } from "@/lib/account/status";
+import { evaluateCredentialsAccountGate } from "@/lib/auth/credentials-signin";
 import { googleProvidersIfEnabled } from "@/lib/auth/google-provider";
 import { onboardingSessionProviderIfEnabled } from "@/lib/auth/onboarding-session-provider";
 import { createPrismaGoogleSignInService } from "@/lib/identity/google-signin-prisma";
@@ -111,17 +111,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             sessionVersion: true,
             isActive: true,
             deletedAt: true,
+            email: true,
+            accountStatus: true,
+            deletionScheduledFor: true,
           },
         });
 
-        // Generic failure (no enumeration)
-        if (
-          !user ||
-          !isAccountAvailableForAuthentication({
-            isActive: user.isActive,
-            deletedAt: user.deletedAt,
-          })
-        ) {
+        // Generic failure (no enumeration). A recoverable Deletion Pending
+        // account is not rejected here: it is unavailable for a session, but its
+        // owner is routed to recovery once the password proves ownership below.
+        const gate = user
+          ? evaluateCredentialsAccountGate(
+              {
+                isActive: user.isActive,
+                deletedAt: user.deletedAt,
+                accountStatus: user.accountStatus,
+                deletionScheduledFor: user.deletionScheduledFor,
+                email: user.email,
+              },
+              new Date()
+            )
+          : null;
+
+        if (!user || !gate || gate.kind === "unavailable") {
           await audit({
             action: "LOGIN_FAILED",
             targetType: "User",
@@ -146,6 +158,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             userAgent: meta.userAgent ?? undefined,
           });
           return null;
+        }
+
+        // A Deletion Pending account inside its window is not signed in: the
+        // verified password proves ownership, so route the owner to recovery
+        // instead of minting a session. No LOGIN_SUCCESS is written because this
+        // is not a sign-in. The sign-in callback consumes `accountRecovery` to
+        // mint the recovery handoff cookie and redirect to /recover; the
+        // sentinel never reaches a JWT or session (and the jwt callback fails
+        // closed on it as a second guard).
+        if (gate.kind === "recoverable") {
+          return {
+            id: `credentials-recovery:${user.id}`,
+            role: user.role,
+            identifier: user.identifier,
+            mustResetPwd: false, // dependency-gate-allow(temporary-password): sentinel placeholder, never persisted
+            name: user.identifier,
+            email: gate.email,
+            image: null,
+            accountRecovery: { userId: user.id, email: gate.email },
+          };
         }
 
         await audit({
