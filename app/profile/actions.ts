@@ -12,6 +12,7 @@ import { changeOwnPassword } from "@/lib/auth/change-password";
 import { signOut } from "@/lib/auth";
 import { createPrismaAccountDeletionService } from "@/lib/identity/account-deletion-prisma";
 import { createPrismaFallbackPasswordService } from "@/lib/identity/fallback-password-prisma";
+import { createPrismaEmailChangeService } from "@/lib/identity/email-change-prisma";
 import { getRequestMeta } from "@/lib/utils/request";
 import { Forbidden, HttpError, ValidationError } from "@/lib/errors";
 
@@ -242,6 +243,56 @@ export async function requestAccountDeletionAction(
   // redirect, so nothing after this runs.
   await signOut({ redirectTo: "/login?deletion=pending" });
   return {};
+}
+
+/**
+ * Requests a verified-email change (Release D). Ownership comes from the same
+ * pragmatic re-auth rule as the other sensitive Profile mutations; the service
+ * re-checks the window, then emails a single-use link to the NEW address. The
+ * canonical identifier and session revocation happen only when that link is
+ * confirmed at /verify-email, never here.
+ */
+export async function requestEmailChangeAction(
+  _prev: ProfileFormState,
+  formData: FormData
+): Promise<ProfileFormState> {
+  const session = await requireAuth();
+  const meta = await getRequestMeta();
+
+  const newEmail = String(formData.get("newEmail") ?? "");
+  const reauthenticatedAt = session.user.signInAt
+    ? new Date(session.user.signInAt * 1000)
+    : null;
+
+  try {
+    await createPrismaEmailChangeService().request({
+      actor: { userId: session.user.id, reauthenticatedAt },
+      newEmail,
+      ipAddress: meta.ipAddress ?? undefined,
+      userAgent: meta.userAgent ?? undefined,
+    });
+  } catch (err) {
+    if (err instanceof Forbidden && err.code === "reauthentication_required") {
+      return {
+        error:
+          "เพื่อความปลอดภัย กรุณาเข้าสู่ระบบใหม่ แล้วลองอีกครั้งภายใน 20 นาที",
+      };
+    }
+    if (err instanceof ValidationError) {
+      return {
+        fieldErrors: {
+          newEmail:
+            err.errors.email === "email_unchanged"
+              ? "อีเมลนี้เป็นอีเมลปัจจุบันของคุณอยู่แล้ว"
+              : "รูปแบบอีเมลไม่ถูกต้อง",
+        },
+      };
+    }
+    if (err instanceof HttpError) return { error: err.message };
+    throw err;
+  }
+
+  return { ok: true };
 }
 
 export async function updateThemeModeAction(

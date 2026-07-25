@@ -1,5 +1,11 @@
 import { redirect } from "next/navigation";
-import { KeyRound, Palette, TriangleAlert, UserRound } from "lucide-react";
+import {
+  AtSign,
+  KeyRound,
+  Palette,
+  TriangleAlert,
+  UserRound,
+} from "lucide-react";
 import { requireAuth } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { resolveDisplayName } from "@/lib/profile/display-name";
@@ -11,6 +17,7 @@ import { AvatarEditor } from "@/components/profile/avatar-editor";
 import { ChangePasswordForm } from "@/components/profile/change-password-form";
 import { DeleteAccountForm } from "@/components/profile/delete-account-form";
 import { SetFallbackPasswordForm } from "@/components/profile/set-fallback-password-form";
+import { ChangeEmailForm } from "@/components/profile/change-email-form";
 import { DisplayNameForm } from "@/components/profile/display-name-form";
 import { ThemeModeControl } from "@/components/theme/theme-mode-control";
 
@@ -44,6 +51,7 @@ export default async function ProfilePage() {
       profileImageId: true,
       themeMode: true,
       passwordHash: true,
+      email: true,
       admin: { select: { firstName: true, lastName: true } },
       teacher: { select: { firstName: true, lastName: true } },
       student: { select: { firstName: true, lastName: true } },
@@ -58,6 +66,11 @@ export default async function ProfilePage() {
     user.passwordHash !== DISABLED_COMPATIBILITY_PASSWORD_HASH;
   const offerFallbackSetup =
     identityFoundationMutationsEnabled() && !hasFallbackPassword;
+
+  // An email change is offered only to an account that actually has a verified
+  // email to change (a legacy student authenticating by student number has none).
+  const offerEmailChange =
+    identityFoundationMutationsEnabled() && user.email !== null;
 
   const person = user.admin ?? user.teacher ?? user.student;
   const realName = person ? `${person.firstName} ${person.lastName}` : null;
@@ -193,6 +206,26 @@ export default async function ProfilePage() {
               </>
             )}
           </section>
+
+          {/* Verified-email change (Release D), flag-gated. */}
+          {offerEmailChange && user.email && (
+            <section className="card p-6">
+              <h2
+                className="flex items-center gap-2 text-base font-semibold text-black"
+                style={{ letterSpacing: "-0.01em" }}
+              >
+                <AtSign className="h-4 w-4 text-black/40" aria-hidden="true" />
+                อีเมล
+              </h2>
+              <p className="mt-1 text-xs text-black/50">
+                เปลี่ยนอีเมลของบัญชี — ต้องยืนยันผ่านลิงก์ที่ส่งไปอีเมลใหม่
+                และอุปกรณ์อื่นจะถูกออกจากระบบ
+              </p>
+              <div className="mt-5">
+                <ChangeEmailForm currentEmail={user.email} />
+              </div>
+            </section>
+          )}
 
           {/* Danger zone — self-service deletion (D1), flag-gated. */}
           {identityFoundationMutationsEnabled() && (
