@@ -220,6 +220,15 @@ and Deletion Pending) and a final production OAuth credential review.
   flag, and that an in-window account is never touched. The full D1 deletion
   lifecycle — request, Deletion Pending, recovery, anonymization — is now
   implemented and QA-verified end to end.
+- Gave the Teacher Invite service its first Admin surface at
+  `/admin/teachers/invites` (flag-gated, additive; the legacy single/CSV create
+  paths are untouched). It issues an invite — showing the raw token once and
+  replacing any prior pending invite for that email — lists recent invites at
+  their effective status, and revokes pending ones, all through the existing
+  audited service with Admin enforced by the admin layout and each action.
+  Verified end to end on isolated QA with a disposable admin: issuing showed the
+  one-time token and a pending row, revoke flipped it to REVOKED, and the audit
+  read `TEACHER_INVITE_ISSUED` then `TEACHER_INVITE_REVOKED`.
 
 Mutations require both flags and configured Terms/Privacy versions. Flags
 default to `0`; consent versions default to empty and therefore fail closed.
