@@ -158,8 +158,17 @@ and Deletion Pending) and a final production OAuth credential review.
   gives the inactivity window; the cap is a pure, DB-free predicate over a
   `signInAt` stamp checked in the jwt callback, which returns null to end an
   over-cap session, so it holds in the edge middleware too. Logout stays
-  immediate through the normal `signOut` cookie clear. Server-side revocation on
-  a credential change (via `sessionVersion`) is a later slice.
+  immediate through the normal `signOut` cookie clear.
+- Added server-side session revocation. Every sign-in path stamps the account's
+  `sessionVersion` into the JWT and onto the session, and `requireAuth` reads the
+  current version from the database and rejects a token whose version no longer
+  matches, so bumping the column invalidates every device on its next protected
+  request. A legacy versionless token counts as 0, so existing sessions survive
+  until an account is actually bumped. Self-service deletion now bumps the
+  version, revoking every session rather than only the current device's cookie.
+  Verified on isolated QA: after a bump, a `requireAuth` route redirected the
+  still-cookied session to login. Enforcement covers `requireAuth` surfaces;
+  pages that call `auth()` directly (dashboard, landing) are a follow-up.
 - Gave the fallback-password setup service a Profile surface. A Google-first
   account with no usable password now sees a set-fallback-password form in the
   Security section (accounts that already have a password keep the change form,
