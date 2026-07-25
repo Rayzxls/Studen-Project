@@ -166,9 +166,11 @@ and Deletion Pending) and a final production OAuth credential review.
   request. A legacy versionless token counts as 0, so existing sessions survive
   until an account is actually bumped. Self-service deletion now bumps the
   version, revoking every session rather than only the current device's cookie.
-  Verified on isolated QA: after a bump, a `requireAuth` route redirected the
-  still-cookied session to login. Enforcement covers `requireAuth` surfaces;
-  pages that call `auth()` directly (dashboard, landing) are a follow-up.
+  Verified on isolated QA: after a bump, a protected route redirected the
+  still-cookied session to login. A shared `getValidSession` (the same
+  present-and-not-revoked check, returning null instead of throwing) extends
+  enforcement to the pages that read `auth()` directly — the dashboard bounces a
+  revoked session and the landing treats it as logged-out.
 - Gave the fallback-password setup service a Profile surface. A Google-first
   account with no usable password now sees a set-fallback-password form in the
   Security section (accounts that already have a password keep the change form,
