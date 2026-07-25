@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db/client";
 import { Forbidden, NotFound, Unauthorized } from "@/lib/errors";
 import { can, type Session } from "@/lib/auth/permissions";
+import { isSessionRevoked } from "@/lib/auth/session-version";
 
 /**
  * Server-side auth guards — wrap NextAuth `auth()` with throw semantics
@@ -17,6 +18,19 @@ export async function requireAuth(): Promise<Session> {
   const session = await auth();
   if (!session?.user) {
     throw new Unauthorized("not_authenticated");
+  }
+  // Server-side revocation: a token stays valid only while its `sessionVersion`
+  // still matches the account. Bumping the column (e.g. on deletion) rejects
+  // every device on its next protected request, including this one.
+  const account = await db.user.findUnique({
+    where: { id: session.user.id },
+    select: { sessionVersion: true },
+  });
+  if (
+    !account ||
+    isSessionRevoked(session.user.sessionVersion, account.sessionVersion)
+  ) {
+    throw new Unauthorized("session_revoked");
   }
   return { user: session.user };
 }

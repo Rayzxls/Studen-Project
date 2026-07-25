@@ -78,10 +78,13 @@ describe("self-service account deletion", () => {
         accountStatus: true,
         deletionRequestedAt: true,
         deletionScheduledFor: true,
+        sessionVersion: true,
       },
     });
 
     expect(user.accountStatus).toBe("DELETION_PENDING");
+    // Deletion revokes every existing session by bumping the version.
+    expect(user.sessionVersion).toBe(1);
     expect(user.deletionRequestedAt).toEqual(occurredAt);
     expect(user.deletionScheduledFor?.getTime()).toBe(
       occurredAt.getTime() + ACCOUNT_DELETION_RECOVERY_WINDOW_MS

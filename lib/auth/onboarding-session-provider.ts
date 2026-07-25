@@ -52,6 +52,7 @@ export function onboardingSessionProviderIfEnabled(input?: {
             id: true,
             role: true,
             email: true,
+            sessionVersion: true,
             accountStatus: true,
             isActive: true,
             deletedAt: true,
@@ -75,6 +76,7 @@ export function onboardingSessionProviderIfEnabled(input?: {
           role: user.role,
           identifier: user.email,
           mustResetPwd: false, // dependency-gate-allow(temporary-password): Google accounts never carry a reset flow
+          sessionVersion: user.sessionVersion,
           name: user.email,
           email: user.email,
           image: null,

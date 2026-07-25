@@ -78,6 +78,7 @@ export const authConfig = {
         token.role = user.role;
         token.identifier = user.identifier;
         token.mustResetPwd = user.mustResetPwd;
+        token.sessionVersion = user.sessionVersion;
         // Anchor the absolute-session cap at sign-in. Activity extends the
         // inactivity window but can never push a session past this point.
         token.signInAt = nowSec;
@@ -100,6 +101,7 @@ export const authConfig = {
         session.user.role = token.role as "ADMIN" | "TEACHER" | "STUDENT";
         session.user.identifier = token.identifier as string;
         session.user.mustResetPwd = token.mustResetPwd as boolean;
+        session.user.sessionVersion = token.sessionVersion;
         // Surfaced for the pragmatic re-authentication rule: a sensitive Profile
         // mutation treats a sign-in within the window as a recent re-auth.
         session.user.signInAt = token.signInAt;

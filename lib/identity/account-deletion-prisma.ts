@@ -51,6 +51,9 @@ function createTransactionPort(
           accountStatus: "DELETION_PENDING",
           deletionRequestedAt: input.deletionRequestedAt,
           deletionScheduledFor: input.deletionScheduledFor,
+          // Revoke every existing session, not just this device's cookie: the
+          // bump invalidates all tokens on their next protected request.
+          sessionVersion: { increment: 1 },
         },
       });
     },

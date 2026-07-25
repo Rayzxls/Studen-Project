@@ -15,6 +15,7 @@ export type GoogleSignInResolver = (input: {
   userId: string;
   role: Role;
   email: string;
+  sessionVersion: number;
   requiresConsentRefresh: boolean;
   requiresRecovery: boolean;
 }>;
@@ -88,6 +89,7 @@ export function createGoogleProvider(input: {
         role: resolved.role,
         identifier: resolved.email,
         mustResetPwd: false, // dependency-gate-allow(temporary-password): Google accounts never carry a reset flow
+        sessionVersion: resolved.sessionVersion,
         name: resolved.email,
         email: resolved.email,
         image: null,

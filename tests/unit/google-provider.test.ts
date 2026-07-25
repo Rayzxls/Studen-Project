@@ -32,6 +32,7 @@ function resolver() {
     userId: "user-1",
     role: "STUDENT" as const,
     email: "student@example.com",
+    sessionVersion: 0,
     requiresConsentRefresh: false,
     requiresRecovery: false,
   }));
@@ -126,6 +127,7 @@ describe("Google provider registration", () => {
       role: "STUDENT",
       identifier: "student@example.com",
       mustResetPwd: false, // dependency-gate-allow(temporary-password): asserts Google accounts carry no reset flow
+      sessionVersion: 0,
       name: "student@example.com",
       email: "student@example.com",
       image: null,
@@ -169,6 +171,7 @@ describe("Google provider registration", () => {
       userId: "user-1",
       role: "STUDENT" as const,
       email: "student@example.com",
+      sessionVersion: 0,
       requiresConsentRefresh: true,
       requiresRecovery: false,
     }));
@@ -191,6 +194,7 @@ describe("Google provider registration", () => {
       userId: "user-1",
       role: "STUDENT" as const,
       email: "student@example.com",
+      sessionVersion: 0,
       requiresConsentRefresh: false,
       requiresRecovery: true,
     }));

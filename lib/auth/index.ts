@@ -108,6 +108,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             identifier: true,
             passwordHash: true,
             mustResetPwd: true,
+            sessionVersion: true,
             isActive: true,
             deletedAt: true,
           },
@@ -162,6 +163,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           role: user.role,
           identifier: user.identifier,
           mustResetPwd: user.mustResetPwd,
+          sessionVersion: user.sessionVersion,
           name: user.identifier,
           email: null,
           image: null,
@@ -191,6 +193,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           userId: resolved.userId,
           role: resolved.role,
           email: resolved.email,
+          sessionVersion: resolved.sessionVersion,
           requiresConsentRefresh: resolved.requiresConsentRefresh,
           requiresRecovery: resolved.requiresRecovery,
         };

@@ -7,6 +7,8 @@ declare module "next-auth" {
     role: "ADMIN" | "TEACHER" | "STUDENT";
     identifier: string;
     mustResetPwd: boolean;
+    /** Account session version at sign-in; drives server-side revocation. */
+    sessionVersion?: number;
     /**
      * The real database user id, carried separately because Auth.js's OAuth
      * flow deliberately overwrites `user.id` with a random UUID (it assumes the
@@ -42,6 +44,8 @@ declare module "next-auth" {
       mustResetPwd: boolean;
       /** Unix seconds of sign-in; drives the pragmatic re-auth window. */
       signInAt?: number;
+      /** Account session version at sign-in; drives server-side revocation. */
+      sessionVersion?: number;
       name?: string | null;
       email?: string | null;
       image?: string | null;
@@ -55,6 +59,8 @@ declare module "next-auth/jwt" {
     role?: "ADMIN" | "TEACHER" | "STUDENT";
     identifier?: string;
     mustResetPwd?: boolean;
+    /** Account session version at sign-in; drives server-side revocation. */
+    sessionVersion?: number;
     /**
      * Unix seconds when this session was first established. Anchors the absolute
      * 30-day session cap; a token minted before the policy existed omits it and
