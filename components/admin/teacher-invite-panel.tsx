@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import {
   issueInviteAction,
@@ -93,20 +93,12 @@ export function TeacherInvitePanel({ invites }: { invites: InviteRow[] }) {
         )}
 
         {state.issued && (
-          <div className="mt-4 rounded-xl border border-green-200 bg-green-50 p-4">
-            <p className="text-sm font-medium text-green-800">
-              สร้างคำเชิญให้ {state.issued.email} แล้ว
-              {state.issued.replaced > 0 &&
-                ` (แทนที่คำเชิญเดิม ${state.issued.replaced} รายการ)`}
-            </p>
-            <p className="mt-2 text-xs text-black/60">
-              คัดลอกโทเคนนี้และส่งให้ครู — จะแสดงเพียงครั้งเดียวและหมดอายุ{" "}
-              {fmt(state.issued.expiresAt)}
-            </p>
-            <code className="mt-2 block overflow-x-auto rounded-lg bg-white px-3 py-2 font-mono text-xs text-black">
-              {state.issued.rawToken}
-            </code>
-          </div>
+          <IssuedInvite
+            email={state.issued.email}
+            rawToken={state.issued.rawToken}
+            replaced={state.issued.replaced}
+            expiresAt={fmt(state.issued.expiresAt)}
+          />
         )}
       </section>
 
@@ -147,6 +139,62 @@ export function TeacherInvitePanel({ invites }: { invites: InviteRow[] }) {
           </ul>
         )}
       </section>
+    </div>
+  );
+}
+
+function IssuedInvite({
+  email,
+  rawToken,
+  replaced,
+  expiresAt,
+}: {
+  email: string;
+  rawToken: string;
+  replaced: number;
+  expiresAt: string;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  // The origin is only known in the browser; this block renders after the
+  // client action returns, so `window` is always present here.
+  const link =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/invite/${rawToken}`
+      : `/invite/${rawToken}`;
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  return (
+    <div className="mt-4 rounded-xl border border-green-200 bg-green-50 p-4">
+      <p className="text-sm font-medium text-green-800">
+        สร้างคำเชิญให้ {email} แล้ว
+        {replaced > 0 && ` (แทนที่คำเชิญเดิม ${replaced} รายการ)`}
+      </p>
+      <p className="mt-2 text-xs text-black/60">
+        ส่งลิงก์นี้ให้ครู — ครูเปิดลิงก์แล้วเข้าสู่ระบบด้วย Google เพื่อรับบัญชี
+        จะแสดงเพียงครั้งเดียวและหมดอายุ {expiresAt}
+      </p>
+      <div className="mt-2 flex items-stretch gap-2">
+        <code className="min-w-0 flex-1 overflow-x-auto rounded-lg bg-white px-3 py-2 font-mono text-xs text-black">
+          {link}
+        </code>
+        <button
+          type="button"
+          onClick={copy}
+          className="btn-secondary btn-sm shrink-0"
+        >
+          {copied ? "คัดลอกแล้ว" : "คัดลอกลิงก์"}
+        </button>
+      </div>
     </div>
   );
 }
