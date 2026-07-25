@@ -1,8 +1,45 @@
 import { db } from "@/lib/db/client";
 import {
   effectiveTeacherInviteStatus,
+  hashIdentityToken,
   type EffectiveTeacherInviteStatus,
 } from "./foundation";
+
+export type TeacherInvitePreview = {
+  email: string;
+  status: EffectiveTeacherInviteStatus;
+};
+
+/**
+ * Resolves a raw invite token to the invited email and its effective status for
+ * the `/invite/<token>` landing page. The token is looked up by hash — never
+ * stored or compared raw — and only the invited email is returned, which the
+ * link holder already possesses. Returns null when no invite matches, so a
+ * bad or revoked link cannot be told apart from a made-up one. Read-only; the
+ * acceptance itself runs through the audited onboarding service.
+ */
+export async function findTeacherInviteByToken(
+  rawToken: string,
+  now: Date = new Date()
+): Promise<TeacherInvitePreview | null> {
+  const trimmed = rawToken.trim();
+  if (trimmed.length < 32 || trimmed.length > 512) return null;
+
+  const invite = await db.teacherInvite.findUnique({
+    where: { tokenHash: hashIdentityToken(trimmed) },
+    select: { email: true, status: true, expiresAt: true },
+  });
+  if (!invite) return null;
+
+  return {
+    email: invite.email,
+    status: effectiveTeacherInviteStatus({
+      status: invite.status,
+      expiresAt: invite.expiresAt,
+      now,
+    }),
+  };
+}
 
 export type TeacherInviteListItem = {
   inviteId: string;

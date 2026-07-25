@@ -22,6 +22,12 @@ import {
   PENDING_RECOVERY_TTL_MS,
   createPendingAccountRecoveryToken,
 } from "@/lib/identity/pending-account-recovery";
+import {
+  PENDING_TEACHER_INVITE_COOKIE,
+  PENDING_TEACHER_ONBOARDING_COOKIE,
+  PENDING_TEACHER_ONBOARDING_TTL_MS,
+  createPendingTeacherOnboardingToken,
+} from "@/lib/identity/pending-teacher-onboarding";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -32,11 +38,43 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // single-use onboarding handoff and redirect to collect a real name and
       // consent. Returning a string aborts session creation and redirects.
       if (user.googleOnboarding) {
+        const secret = process.env.AUTH_SECRET ?? "";
+        const cookieStore = await cookies();
+
+        // A teacher who opened `/invite/<token>` carries the raw invite token in
+        // a cookie set just before the Google handoff. Tie this verified sign-in
+        // to that invite and route to the teacher onboarding page instead of the
+        // student one; the invite email is matched against the Google email when
+        // the acceptance actually runs.
+        const inviteToken = cookieStore.get(
+          PENDING_TEACHER_INVITE_COOKIE
+        )?.value;
+        if (inviteToken) {
+          const teacherToken = await createPendingTeacherOnboardingToken({
+            pending: {
+              providerAccountId: user.googleOnboarding.providerAccountId,
+              email: user.googleOnboarding.email,
+              rawInviteToken: inviteToken,
+            },
+            secret,
+          });
+          cookieStore.set(PENDING_TEACHER_ONBOARDING_COOKIE, teacherToken, {
+            httpOnly: true,
+            sameSite: "lax",
+            secure: process.env.NODE_ENV === "production",
+            path: "/",
+            maxAge: Math.floor(PENDING_TEACHER_ONBOARDING_TTL_MS / 1000),
+          });
+          // Single-use: the raw token now lives inside the signed pending token.
+          cookieStore.delete(PENDING_TEACHER_INVITE_COOKIE);
+          return "/onboarding/teacher";
+        }
+
         const token = await createPendingGoogleOnboardingToken({
           pending: user.googleOnboarding,
-          secret: process.env.AUTH_SECRET ?? "",
+          secret,
         });
-        (await cookies()).set(PENDING_ONBOARDING_COOKIE, token, {
+        cookieStore.set(PENDING_ONBOARDING_COOKIE, token, {
           httpOnly: true,
           sameSite: "lax",
           secure: process.env.NODE_ENV === "production",
