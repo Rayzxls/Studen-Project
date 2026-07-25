@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import {
   AtSign,
   KeyRound,
+  Link2,
   Palette,
   TriangleAlert,
   UserRound,
@@ -20,6 +21,30 @@ import { SetFallbackPasswordForm } from "@/components/profile/set-fallback-passw
 import { ChangeEmailForm } from "@/components/profile/change-email-form";
 import { DisplayNameForm } from "@/components/profile/display-name-form";
 import { ThemeModeControl } from "@/components/theme/theme-mode-control";
+import { startGoogleLinkAction } from "./actions";
+
+/** Feedback for the Google-link round-trip, keyed by the `?linked=` status. */
+const LINK_STATUS: Record<string, { ok: boolean; text: string }> = {
+  "1": {
+    ok: true,
+    text: "เชื่อมต่อ Google สำเร็จ — ใช้ Google เข้าสู่ระบบได้แล้ว",
+  },
+  already: { ok: true, text: "บัญชีนี้เชื่อมต่อ Google อยู่แล้ว" },
+  has_google: { ok: true, text: "บัญชีนี้มีการเชื่อมต่อ Google อยู่แล้ว" },
+  reauth: {
+    ok: false,
+    text: "เพื่อความปลอดภัย กรุณาเข้าสู่ระบบใหม่ แล้วลองอีกครั้งภายใน 20 นาที",
+  },
+  mismatch: {
+    ok: false,
+    text: "อีเมล Google ไม่ตรงกับอีเมลของบัญชี — เปลี่ยนอีเมลให้ตรงกันก่อน",
+  },
+  taken: {
+    ok: false,
+    text: "บัญชี Google นี้ถูกเชื่อมกับผู้ใช้อื่นแล้ว",
+  },
+  error: { ok: false, text: "เชื่อมต่อ Google ไม่สำเร็จ กรุณาลองใหม่" },
+};
 
 /**
  * /profile — Phase 13 · learning identity, not social media.
@@ -33,7 +58,11 @@ import { ThemeModeControl } from "@/components/theme/theme-mode-control";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProfilePage() {
+export default async function ProfilePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ linked?: string }>;
+}) {
   let session;
   try {
     session = await requireAuth();
@@ -52,12 +81,19 @@ export default async function ProfilePage() {
       themeMode: true,
       passwordHash: true,
       email: true,
+      authIdentities: {
+        where: { provider: "GOOGLE" },
+        take: 1,
+        select: { id: true },
+      },
       admin: { select: { firstName: true, lastName: true } },
       teacher: { select: { firstName: true, lastName: true } },
       student: { select: { firstName: true, lastName: true } },
     },
   });
   if (!user) redirect("/login");
+
+  const linkStatus = LINK_STATUS[(await searchParams).linked ?? ""] ?? null;
 
   // A Google-first account carries the disabled compatibility hash until it
   // sets an optional fallback password. Only then, and only while the identity
@@ -71,6 +107,11 @@ export default async function ProfilePage() {
   // email to change (a legacy student authenticating by student number has none).
   const offerEmailChange =
     identityFoundationMutationsEnabled() && user.email !== null;
+
+  // Linking Google is offered to an account that has an email (required to match
+  // the Google address) and no Google identity yet — typically a password-era
+  // Teacher or Admin adding Google sign-in.
+  const hasGoogleIdentity = user.authIdentities.length > 0;
 
   const person = user.admin ?? user.teacher ?? user.student;
   const realName = person ? `${person.firstName} ${person.lastName}` : null;
@@ -224,6 +265,57 @@ export default async function ProfilePage() {
               <div className="mt-5">
                 <ChangeEmailForm currentEmail={user.email} />
               </div>
+            </section>
+          )}
+
+          {/* Account connection — link Google (E²), flag-gated. */}
+          {identityFoundationMutationsEnabled() && user.email !== null && (
+            <section className="card p-6">
+              <h2
+                className="flex items-center gap-2 text-base font-semibold text-black"
+                style={{ letterSpacing: "-0.01em" }}
+              >
+                <Link2 className="h-4 w-4 text-black/40" aria-hidden="true" />
+                การเข้าสู่ระบบด้วย Google
+              </h2>
+
+              {linkStatus && (
+                <div
+                  className={
+                    "mt-3 rounded-xl px-3 py-2 text-sm " +
+                    (linkStatus.ok
+                      ? "bg-green-50 text-green-700"
+                      : "bg-red-50 text-red-700")
+                  }
+                >
+                  {linkStatus.text}
+                </div>
+              )}
+
+              {hasGoogleIdentity ? (
+                <p className="mt-3 text-sm text-black/60">
+                  บัญชีนี้เชื่อมต่อกับ Google แล้ว — เข้าสู่ระบบได้ทั้ง Google
+                  และรหัสผ่าน
+                </p>
+              ) : (
+                <>
+                  <p className="mt-1 text-xs text-black/50">
+                    เชื่อม Google เข้ากับบัญชีนี้เพื่อเข้าสู่ระบบด้วย Google ได้
+                    — ต้องใช้บัญชี Google ที่มีอีเมลตรงกับ{" "}
+                    <span className="font-medium text-black/70">
+                      {user.email}
+                    </span>
+                  </p>
+                  <form action={startGoogleLinkAction} className="mt-4">
+                    <button
+                      type="submit"
+                      className="btn-secondary btn-sm gap-2"
+                    >
+                      เชื่อมต่อ Google
+                    </button>
+                  </form>
+                </>
+              )}
             </section>
           )}
 

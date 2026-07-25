@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db/client";
 import { verifyPassword } from "@/lib/auth/password";
+import { HttpError } from "@/lib/errors";
 import { authConfig } from "@/lib/auth/config";
 import { audit } from "@/lib/audit/log";
 import { rateLimit } from "@/lib/auth/rate-limit";
@@ -28,12 +29,97 @@ import {
   PENDING_TEACHER_ONBOARDING_TTL_MS,
   createPendingTeacherOnboardingToken,
 } from "@/lib/identity/pending-teacher-onboarding";
+import {
+  PENDING_PROVIDER_LINK_COOKIE,
+  readPendingProviderLinkToken,
+} from "@/lib/identity/pending-provider-link";
+import { createPrismaProviderLinkingService } from "@/lib/identity/provider-linking-prisma";
+
+/**
+ * Resolves a "link Google" attempt to a redirect back to Profile. Never returns
+ * `true`: linking attaches an identity to the existing account rather than
+ * establishing a session, so the OAuth sign-in is always aborted and the
+ * caller's current session is left intact. The signed intent cookie proves which
+ * account is being linked; the re-authentication window is re-checked here.
+ */
+async function resolveProviderLink(
+  linkCookie: string,
+  user: import("next-auth").User
+): Promise<string> {
+  const secret = process.env.AUTH_SECRET ?? "";
+
+  let pending;
+  try {
+    pending = await readPendingProviderLinkToken({ token: linkCookie, secret });
+  } catch {
+    return "/profile?linked=error";
+  }
+  const reauthenticatedAt = pending.signInAt
+    ? new Date(pending.signInAt * 1000)
+    : null;
+
+  // The Google subject already resolved to a linked account: never re-link,
+  // just report whether that is this account or a different one.
+  if (!user.googleOnboarding) {
+    return user.dbUserId === pending.userId
+      ? "/profile?linked=already"
+      : "/profile?linked=taken";
+  }
+
+  const meta = await getRequestMeta();
+  try {
+    await createPrismaProviderLinkingService().linkGoogleFromAuthenticatedProfile(
+      {
+        actor: { userId: pending.userId, reauthenticatedAt },
+        google: {
+          providerAccountId: user.googleOnboarding.providerAccountId,
+          email: user.googleOnboarding.email,
+          // Invariant: a new-user sentinel is only produced for a verified email
+          // (the resolver rejects an unverified one before the not-linked path).
+          emailVerified: true,
+        },
+        occurredAt: new Date(),
+        ipAddress: meta.ipAddress ?? undefined,
+        userAgent: meta.userAgent ?? undefined,
+      }
+    );
+    return "/profile?linked=1";
+  } catch (error) {
+    if (error instanceof HttpError) {
+      switch (error.code) {
+        case "reauthentication_required":
+          return "/profile?linked=reauth";
+        case "google_email_does_not_match_account":
+          return "/profile?linked=mismatch";
+        case "google_identity_already_linked":
+        case "google_identity_already_linked_to_this_account":
+          return "/profile?linked=taken";
+        case "account_already_has_google_identity":
+          return "/profile?linked=has_google";
+      }
+    }
+    return "/profile?linked=error";
+  }
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   callbacks: {
     ...authConfig.callbacks,
     async signIn({ user }) {
+      // A "link Google" attempt started from Profile carries a signed intent
+      // cookie. Handle it before any onboarding/sign-in branch: attach the
+      // returned Google identity to the account the caller is already signed in
+      // as, and ALWAYS redirect (never return true) so no new session is created
+      // and the existing one is preserved.
+      const linkCookie = (await cookies()).get(
+        PENDING_PROVIDER_LINK_COOKIE
+      )?.value;
+      if (linkCookie) {
+        (await cookies()).delete(PENDING_PROVIDER_LINK_COOKIE);
+        return resolveProviderLink(linkCookie, user);
+      }
+
       // A brand-new verified Google user carries no session yet: mint the
       // single-use onboarding handoff and redirect to collect a real name and
       // consent. Returning a string aborts session creation and redirects.

@@ -1,6 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { AuthError } from "next-auth";
 import { requireAuth } from "@/lib/auth/guards";
 import {
   removeProfileImage,
@@ -9,10 +12,17 @@ import {
 } from "@/lib/profile/mutations";
 import { parseThemeMode, updateOwnThemeMode } from "@/lib/theme/mode";
 import { changeOwnPassword } from "@/lib/auth/change-password";
-import { signOut } from "@/lib/auth";
+import { signIn, signOut } from "@/lib/auth";
 import { createPrismaAccountDeletionService } from "@/lib/identity/account-deletion-prisma";
 import { createPrismaFallbackPasswordService } from "@/lib/identity/fallback-password-prisma";
 import { createPrismaEmailChangeService } from "@/lib/identity/email-change-prisma";
+import { identityFoundationMutationsEnabled } from "@/lib/identity/feature-flags";
+import { hasRecentReauthentication } from "@/lib/identity/foundation";
+import {
+  PENDING_PROVIDER_LINK_COOKIE,
+  PENDING_PROVIDER_LINK_TTL_MS,
+  createPendingProviderLinkToken,
+} from "@/lib/identity/pending-provider-link";
 import { getRequestMeta } from "@/lib/utils/request";
 import { Forbidden, HttpError, ValidationError } from "@/lib/errors";
 
@@ -293,6 +303,54 @@ export async function requestEmailChangeAction(
   }
 
   return { ok: true };
+}
+
+/**
+ * Starts linking Google to the account the caller is already signed in as
+ * (ADR-0041 forbids linking by email match alone). Requires a recent
+ * re-authentication, then stores a signed link-intent cookie and hands off to
+ * Google; the sign-in callback attaches the returned identity to this account
+ * and redirects back with a `?linked=` status. Nothing is written here.
+ */
+export async function startGoogleLinkAction(): Promise<void> {
+  const session = await requireAuth();
+  if (!identityFoundationMutationsEnabled()) {
+    redirect("/profile");
+  }
+
+  const reauthenticatedAt = session.user.signInAt
+    ? new Date(session.user.signInAt * 1000)
+    : null;
+  if (!hasRecentReauthentication({ reauthenticatedAt, now: new Date() })) {
+    redirect("/profile?linked=reauth");
+  }
+
+  const secret = process.env.AUTH_SECRET ?? "";
+  const token = await createPendingProviderLinkToken({
+    pending: {
+      userId: session.user.id,
+      signInAt: session.user.signInAt ?? null,
+    },
+    secret,
+  });
+  (await cookies()).set(PENDING_PROVIDER_LINK_COOKIE, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: Math.floor(PENDING_PROVIDER_LINK_TTL_MS / 1000),
+  });
+
+  try {
+    await signIn("google", { redirectTo: "/profile" });
+  } catch (error) {
+    // A configuration failure is safe to surface generically; a successful
+    // start throws NEXT_REDIRECT to Google, which must propagate.
+    if (error instanceof AuthError) {
+      redirect("/profile?linked=error");
+    }
+    throw error;
+  }
 }
 
 export async function updateThemeModeAction(
