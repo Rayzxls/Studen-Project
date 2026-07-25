@@ -309,6 +309,24 @@ and Deletion Pending) and a final production OAuth credential review.
   version, is single-use, and refuses an address owned by another account.
   Browser-verified on QA (3100): an invalid link shows the expired state and a
   valid one renders the confirm screen with the target address.
+- Wired linking Google to an existing account from Profile (E²) over the
+  already-tested provider-linking service. A signed-in account with an email and
+  no Google identity — typically a password-era Teacher or Admin — connects
+  Google; after a recent re-authentication the action stores a signed
+  link-intent cookie and hands off to Google, and the sign-in callback attaches
+  the returned identity and redirects back with a `?linked=` status. The cookie
+  proves which account is being linked and carries the re-auth basis; linking
+  still requires the Google email to match the account and refuses a subject
+  already linked elsewhere. The callback always returns a redirect rather than
+  `true`, so the OAuth sign-in is aborted and the caller keeps their existing
+  session instead of being re-logged-in as the linked identity. Additive and
+  flag-gated. A unit test covers the link-intent token; the service and adapter
+  already have unit and isolated-QA integration coverage. Verified headless on QA
+  (3100): the Profile section, connect button, matching-email hint, and every
+  `?linked=` banner render for a signed-in password-era teacher, and the button
+  initiates the real Google authorization redirect. The Google consent screen and
+  the callback it drives — including that the existing session survives the
+  aborted sign-in — need a real Google account to confirm end to end.
 
 Mutations require both flags and configured Terms/Privacy versions. Flags
 default to `0`; consent versions default to empty and therefore fail closed.
