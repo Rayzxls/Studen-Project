@@ -266,6 +266,30 @@ and Deletion Pending) and a final production OAuth credential review.
   the invite ACCEPTED, the three expected audit rows, and a dashboard session; a
   mismatched Google email was refused with no account created. The only
   unverified step is the real Google consent screen.
+- Added a provider-agnostic transactional email port (ADR-0042): feature code
+  depends only on an `EmailSender` and typed templates, with a fail-closed
+  log-only sender (production logs only that a send was suppressed, never the
+  recipient/link/token) and a captured-outbox sender for tests. Nothing is
+  transmitted until a keyed provider is wired, so Production is unchanged.
+- Built fallback-password recovery on that port, the first email-dependent flow
+  and the one the Release D decision locked. A user who set a fallback password
+  requests a reset at `/reset-password`, receives a single-use link, and sets a
+  new password at `/reset-password/confirm`; the reset revokes every other
+  session. The link needs no database row — its token carries a fingerprint of
+  the current password hash and is accepted only while that still matches, so the
+  first successful reset (bcrypt re-salts) invalidates every outstanding link.
+  The request endpoint is rate-limited and always returns the same neutral state,
+  and a Google-only account with no fallback password, a suspended/deleted
+  account, a weak password, and a tampered/expired link are all refused without
+  revealing which. With the feature on, `/reset-password` is the email form
+  (superseding ADR-0026 for this path) and `/reset-password/confirm` is a new
+  public route; with it off, the legacy admin-temporary-password guidance is
+  unchanged. Unit tests cover the token and service; an isolated-QA integration
+  test proved with real bcrypt that the emailed link resets the password, bumps
+  the session version, audits `PASSWORD_RESET_COMPLETED`, and cannot be reused,
+  and that a password-less account is never emailed. Browser-verified on QA
+  (port 3100): the request form returns the neutral message, an invalid link
+  shows the expired state, and a valid link renders the set-password form.
 
 Mutations require both flags and configured Terms/Privacy versions. Flags
 default to `0`; consent versions default to empty and therefore fail closed.
