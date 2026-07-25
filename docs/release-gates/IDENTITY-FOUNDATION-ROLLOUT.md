@@ -271,6 +271,15 @@ and Deletion Pending) and a final production OAuth credential review.
   log-only sender (production logs only that a send was suppressed, never the
   recipient/link/token) and a captured-outbox sender for tests. Nothing is
   transmitted until a keyed provider is wired, so Production is unchanged.
+- Implemented the Resend production adapter behind that port: it posts the
+  rendered message through Resend's HTTP API with `fetch` (no SDK dependency),
+  and throws a status-only error on failure so no link or address reaches a log.
+  `resolveEmailSender` returns it only when BOTH `RESEND_API_KEY` and a verified
+  `RESEND_FROM` sender are set; otherwise it stays on the log-only sender, so
+  email delivery is off until deliberately keyed. Enabling the email-dependent
+  flows (password recovery, verified-email change) in an environment therefore
+  requires setting those two vars plus a sender domain with SPF/DKIM/DMARC. Unit
+  tests cover the request shape, the status-only failure, and the selection.
 - Built fallback-password recovery on that port, the first email-dependent flow
   and the one the Release D decision locked. A user who set a fallback password
   requests a reset at `/reset-password`, receives a single-use link, and sets a
