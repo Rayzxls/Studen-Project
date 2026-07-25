@@ -1,7 +1,15 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
-import { CheckCircle2, KeyRound, Search, Upload, UserPlus } from "lucide-react";
+import {
+  CheckCircle2,
+  KeyRound,
+  Mail,
+  Search,
+  Upload,
+  UserPlus,
+} from "lucide-react";
 import { listTeachers } from "@/lib/admin/teachers-list";
+import { identityFoundationMutationsEnabled } from "@/lib/identity/feature-flags";
 import {
   TEACHER_CREATED_FLASH_COOKIE,
   type TeacherCreatedFlash,
@@ -57,6 +65,15 @@ export default async function AdminTeachersPage({ searchParams }: PageProps) {
             <Upload className="h-4 w-4" />
             นำเข้าครูหลายคน
           </Link>
+          {identityFoundationMutationsEnabled() && (
+            <Link
+              href="/admin/teachers/invites"
+              className="btn-secondary btn-sm"
+            >
+              <Mail className="h-4 w-4" />
+              คำเชิญครู
+            </Link>
+          )}
         </div>
       </div>
 
