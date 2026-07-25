@@ -29,7 +29,7 @@ export function anonymizedUserFields(userId: string) {
     passwordHash: DISABLED_COMPATIBILITY_PASSWORD_HASH,
     firstName: null as string | null,
     lastName: null as string | null,
-    displayName: null as string | null,
+    displayName: null as string | null, // dependency-gate-allow(legacy-display-name): anonymization must null the legacy column; the reference is unavoidable until the column is dropped
     profileImageId: null as string | null,
     isActive: false,
   };
