@@ -245,6 +245,27 @@ and Deletion Pending) and a final production OAuth credential review.
   Verified end to end on isolated QA with a disposable admin: issuing showed the
   one-time token and a pending row, revoke flipped it to REVOKED, and the audit
   read `TEACHER_INVITE_ISSUED` then `TEACHER_INVITE_REVOKED`.
+- Wired the invited teacher's side end to end so the issued token is finally
+  redeemable. `/invite/<token>` (a public, flag-gated pre-session route) looks
+  the invite up by hash and previews the invited email for a pending token or an
+  error for an invalid/used/expired one. "Accept with Google" stores the raw
+  token in a single-use httpOnly cookie and hands off to Google; on the verified
+  new-user return the sign-in callback ties the invite to the sign-in, mints a
+  signed teacher-onboarding handoff carrying the Google subject/email plus the
+  token, and routes to `/onboarding/teacher`. Completing the form runs the
+  existing audited acceptance (TEACHER account, invite ACCEPTED, two consent
+  records, `TEACHER_INVITE_ACCEPTED` + `CONSENT_GRANTED` audit, atomically) and
+  signs the teacher straight into the dashboard through the onboarding-session
+  handoff. The Google email is matched against the invited email inside the
+  transaction, so a mismatch is refused; `emailVerified` holds by the same
+  invariant the student path relies on (a new-user sentinel is only produced
+  after an unverified email is already rejected). The Admin panel now hands out
+  the full `/invite/<token>` link with a copy button instead of a bare token.
+  Verified on isolated QA (port 3100): a pending token rendered the invited
+  email and an invalid one an error; completing onboarding created a TEACHER with
+  the invite ACCEPTED, the three expected audit rows, and a dashboard session; a
+  mismatched Google email was refused with no account created. The only
+  unverified step is the real Google consent screen.
 
 Mutations require both flags and configured Terms/Privacy versions. Flags
 default to `0`; consent versions default to empty and therefore fail closed.
