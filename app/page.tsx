@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight, Sparkles } from "lucide-react";
-import { auth } from "@/lib/auth";
+import { getValidSession } from "@/lib/auth/guards";
 import { BeagleLogo, BeagleWordmark } from "@/components/landing/beagle-logo";
 import { CourseAnatomyShowcase } from "@/components/landing/course-anatomy-showcase";
 import { FloatingCards } from "@/components/landing/floating-cards";
@@ -32,8 +32,8 @@ import { AuroraShowcase } from "@/components/landing/aurora-showcase";
  */
 
 export default async function HomePage() {
-  const session = await auth();
-  if (session?.user) redirect("/dashboard");
+  const session = await getValidSession();
+  if (session) redirect("/dashboard");
 
   return (
     <main

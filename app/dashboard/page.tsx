@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CalendarDays, GraduationCap, Plus } from "lucide-react";
 import type { Session } from "@/lib/auth/permissions";
-import { auth } from "@/lib/auth";
+import { getValidSession } from "@/lib/auth/guards";
 import { resolveDisplayName } from "@/lib/profile/display-name";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { db } from "@/lib/db/client";
@@ -58,8 +58,8 @@ export const dynamic = "force-dynamic";
  *             surface with sidebar + system overview.
  */
 export default async function DashboardPage() {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
+  const session = await getValidSession();
+  if (!session) redirect("/login");
   if (session.user.role === "ADMIN") redirect("/admin/dashboard");
 
   const user = await db.user.findUnique({
