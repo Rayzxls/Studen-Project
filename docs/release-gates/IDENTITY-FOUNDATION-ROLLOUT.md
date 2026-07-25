@@ -180,9 +180,7 @@ and Deletion Pending) and a final production OAuth credential review.
   non-available account. The admin lifecycle policy already defers Deletion
   Pending to this flow, so it is unchanged. Verified end to end on isolated QA;
   the row read `DELETION_PENDING` with the recovery date exactly 30 days out and
-  one `ACCOUNT_DELETION_REQUESTED` audit event. Post-window anonymization is the
-  remaining deletion slice and must land before the flag is enabled anywhere
-  real.
+  one `ACCOUNT_DELETION_REQUESTED` audit event.
 - Added deletion recovery through Google. While an account is Deletion Pending
   and inside its window, the Google sign-in resolver stops refusing it and
   returns a recovery outcome instead: the provider carries a recovery sentinel,
@@ -196,6 +194,21 @@ and Deletion Pending) and a final production OAuth credential review.
   (`ACCOUNT_DELETION_REQUESTED`→`ACCOUNT_DELETION_CANCELLED`, row back to ACTIVE).
   Google is the recovery path here; Credentials/fallback-password recovery is a
   follow-up.
+- Closed the deletion lifecycle with post-window anonymization. A batch service
+  anonymizes every Deletion Pending account whose window has lapsed, each in its
+  own transaction that re-checks eligibility first, so an account recovered in
+  the meantime is skipped rather than erased. It nulls the verified email and
+  real name, resets the credential to the disabled sentinel, gives the required
+  Student name a placeholder and sets its anonymized flag, detaches every
+  provider identity (freeing the Google address for a fresh account), and moves
+  the account to ANONYMIZED with a timestamp; Score, Submission, Attendance, and
+  Audit history stay intact under the internal id, and the audit records no PII.
+  It runs against isolated QA through `db:anonymize:qa:dry-run` (reports only)
+  and `db:anonymize:qa:apply` (irreversible); no scheduler is wired. Unit and
+  isolated-QA integration prove the erasure, the identity detachment, the student
+  flag, and that an in-window account is never touched. The full D1 deletion
+  lifecycle — request, Deletion Pending, recovery, anonymization — is now
+  implemented and QA-verified end to end.
 
 Mutations require both flags and configured Terms/Privacy versions. Flags
 default to `0`; consent versions default to empty and therefore fail closed.
