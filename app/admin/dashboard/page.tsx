@@ -5,7 +5,6 @@ import {
   BookOpen,
   ScrollText,
   Upload,
-  Settings2,
   Activity,
   AlertTriangle,
   KeyRound,
@@ -31,14 +30,6 @@ export default async function AdminDashboardPage() {
       text: `มีเหตุการณ์ระดับ Critical ${stats.criticalAuditsLast7d} รายการใน 7 วันล่าสุด`,
       href: "/admin/audit?tier=CRITICAL",
       label: "เปิด Audit Log",
-    });
-  }
-  if (!term) {
-    alerts.push({
-      key: "no-term",
-      text: "ยังไม่ได้ตั้งภาคเรียนปัจจุบัน — ครูจะยังสร้างวิชาไม่ได้",
-      href: "/admin/setup",
-      label: "ตั้งค่าโครงสร้าง",
     });
   }
   if (stats.teacherCount === 0) {
@@ -143,12 +134,6 @@ export default async function AdminDashboardPage() {
             งานผู้ดูแล
           </h2>
           <div className="-mx-3 mt-2">
-            <ActionRow
-              href="/admin/setup"
-              title="ตั้งค่าโครงสร้าง"
-              meta="ปีการศึกษา · ภาคเรียน · ห้องเรียน · เพิ่มครูรายคน"
-              leading={<IconChip icon={<Settings2 className="h-4 w-4" />} />}
-            />
             <ActionRow
               href="/admin/import/teachers"
               title="นำเข้าครูจาก CSV"
