@@ -8,6 +8,7 @@ import {
   unsuppressNotificationsOnRestore,
 } from "@/lib/notification";
 import { isValidClassCodeFormat, normalizeClassCode } from "./class-code";
+import { courseLearnerGroup } from "./display";
 
 const REASON_MIN = 5;
 const REASON_MAX = 500;
@@ -63,6 +64,8 @@ export async function enrollByClassCode(params: {
       codeActive: true,
       codeExpiresAt: true,
       archivedAt: true,
+      learnerGroupLabel: true,
+      gradeLevel: true,
       class: { select: { name: true } },
       teacher: { select: { firstName: true, lastName: true } },
     },
@@ -185,7 +188,7 @@ export async function enrollByClassCode(params: {
   return {
     courseOfferingId: course.id,
     courseName: course.name,
-    className: course.class.name,
+    className: courseLearnerGroup(course) ?? "",
     teacherName: `${course.teacher.firstName} ${course.teacher.lastName}`,
     restored,
   };
@@ -526,6 +529,8 @@ export async function listStudentCourses(studentUserId: string) {
           id: true,
           name: true,
           subjectCode: true,
+          learnerGroupLabel: true,
+          academicPeriodLabel: true,
           gradeLevel: true,
           creditHours: true,
           classCode: true,
@@ -554,6 +559,8 @@ export async function listTeacherCourses(teacherUserId: string) {
       id: true,
       name: true,
       subjectCode: true,
+      learnerGroupLabel: true,
+      academicPeriodLabel: true,
       gradeLevel: true,
       creditHours: true,
       classCode: true,
@@ -569,7 +576,12 @@ export async function listTeacherCourses(teacherUserId: string) {
           user: { select: { profileImageId: true } },
         },
       },
-      _count: { select: { enrollments: { where: { removedAt: null } } } },
+      _count: {
+        select: {
+          enrollments: { where: { removedAt: null } },
+          assignments: true,
+        },
+      },
     },
   });
 }

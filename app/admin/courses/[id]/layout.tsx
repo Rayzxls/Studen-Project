@@ -6,6 +6,7 @@ import { db } from "@/lib/db/client";
 import { TabNav } from "@/components/course/tab-nav";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { adminCourseTabs } from "./_tabs";
+import { courseMetadataParts } from "@/lib/course/display";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,8 @@ export default async function AdminCourseObserverLayout({
       id: true,
       name: true,
       subjectCode: true,
+      learnerGroupLabel: true,
+      academicPeriodLabel: true,
       gradeLevel: true,
       creditHours: true,
       class: { select: { id: true, name: true } },
@@ -101,11 +104,13 @@ export default async function AdminCourseObserverLayout({
                 {course.name}
               </h1>
               <p className="mt-1 truncate text-sm text-ink-mute">
-                ห้อง {course.class.name} · {course.gradeLevel} ·{" "}
-                {course.creditHours} หน่วยกิต
-                {course.subjectCode ? ` · รหัส ${course.subjectCode}` : ""} ·
-                สอนโดย {course.teacher.firstName} {course.teacher.lastName} ·{" "}
-                {course.term.name}
+                {[
+                  ...courseMetadataParts(course),
+                  course.subjectCode ? `รหัส ${course.subjectCode}` : null,
+                  `สอนโดย ${course.teacher.firstName} ${course.teacher.lastName}`,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
               </p>
             </div>
           </div>

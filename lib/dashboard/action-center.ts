@@ -16,6 +16,7 @@
 import { db } from "@/lib/db/client";
 import { SubmissionStatus } from "@prisma/client";
 import { currentTerm } from "./queries";
+import { courseLearnerGroup, courseVisualKey } from "@/lib/course/display";
 
 // ─────────────────────────────────────────────────────────────
 // Student — Action Center
@@ -64,13 +65,15 @@ export async function getStudentActionCenter(
   now: Date = new Date()
 ): Promise<StudentActionCenter> {
   const term = await currentTerm();
-  if (!term) return { returned: [], due: [], recentScores: [] };
+  const termScope = term
+    ? { OR: [{ termId: term.id }, { termId: null }] }
+    : { termId: null };
 
   const enrollments = await db.enrollment.findMany({
     where: {
       studentId: studentUserId,
       removedAt: null,
-      course: { termId: term.id, archivedAt: null },
+      course: { ...termScope, archivedAt: null },
     },
     select: { id: true, courseOfferingId: true },
   });
@@ -219,7 +222,9 @@ export async function getTeacherReviewQueue(
   teacherUserId: string
 ): Promise<ReviewQueueItem[]> {
   const term = await currentTerm();
-  if (!term) return [];
+  const termScope = term
+    ? { OR: [{ termId: term.id }, { termId: null }] }
+    : { termId: null };
 
   const grouped = await db.submission.groupBy({
     by: ["assignmentId"],
@@ -228,7 +233,7 @@ export async function getTeacherReviewQueue(
         in: [SubmissionStatus.SUBMITTED, SubmissionStatus.LATE_SUBMITTED],
       },
       assignment: {
-        course: { teacherId: teacherUserId, termId: term.id, archivedAt: null },
+        course: { teacherId: teacherUserId, ...termScope, archivedAt: null },
       },
     },
     _count: { _all: true },
@@ -248,6 +253,8 @@ export async function getTeacherReviewQueue(
         select: {
           id: true,
           name: true,
+          learnerGroupLabel: true,
+          gradeLevel: true,
           class: { select: { id: true, name: true } },
         },
       },
@@ -262,9 +269,9 @@ export async function getTeacherReviewQueue(
       {
         assignmentId: a.id,
         courseId: a.course.id,
-        classId: a.course.class.id,
+        classId: courseVisualKey(a.course),
         courseName: a.course.name,
-        className: a.course.class.name,
+        className: courseLearnerGroup(a.course) ?? "",
         title: a.title,
         pendingCount: g._count._all,
       },
@@ -303,13 +310,15 @@ export async function getTeacherAttendanceToday(
   now: Date = new Date()
 ): Promise<AttendanceTodayRow[]> {
   const term = await currentTerm();
-  if (!term) return [];
+  const termScope = term
+    ? { OR: [{ termId: term.id }, { termId: null }] }
+    : { termId: null };
   const dayOfWeek = now.getDay();
 
   const slots = await db.timetableSlot.findMany({
     where: {
       dayOfWeek,
-      course: { teacherId: teacherUserId, termId: term.id, archivedAt: null },
+      course: { teacherId: teacherUserId, ...termScope, archivedAt: null },
     },
     orderBy: { startTime: "asc" },
     select: {
@@ -320,6 +329,8 @@ export async function getTeacherAttendanceToday(
         select: {
           id: true,
           name: true,
+          learnerGroupLabel: true,
+          gradeLevel: true,
           class: { select: { id: true, name: true } },
           _count: { select: { enrollments: { where: { removedAt: null } } } },
         },
@@ -361,9 +372,9 @@ export async function getTeacherAttendanceToday(
     const markedCount = sessionByCourse.get(s.course.id) ?? 0;
     return {
       courseId: s.course.id,
-      classId: s.course.class.id,
+      classId: courseVisualKey(s.course),
       courseName: s.course.name,
-      className: s.course.class.name,
+      className: courseLearnerGroup(s.course) ?? "",
       startTime: s.startTime,
       endTime: s.endTime,
       location: s.location,
@@ -401,14 +412,18 @@ export async function getTeacherClassHealth(
   teacherUserId: string
 ): Promise<ClassHealthRow[]> {
   const term = await currentTerm();
-  if (!term) return [];
+  const termScope = term
+    ? { OR: [{ termId: term.id }, { termId: null }] }
+    : { termId: null };
 
   const courses = await db.courseOffering.findMany({
-    where: { teacherId: teacherUserId, termId: term.id, archivedAt: null },
+    where: { teacherId: teacherUserId, ...termScope, archivedAt: null },
     orderBy: { name: "asc" },
     select: {
       id: true,
       name: true,
+      learnerGroupLabel: true,
+      gradeLevel: true,
       class: { select: { id: true, name: true } },
       _count: {
         select: {
@@ -491,9 +506,9 @@ export async function getTeacherClassHealth(
     const submitted = submittedByCourse.get(c.id) ?? 0;
     return {
       courseId: c.id,
-      classId: c.class.id,
+      classId: courseVisualKey(c),
       courseName: c.name,
-      className: c.class.name,
+      className: courseLearnerGroup(c) ?? "",
       activeStudents: c._count.enrollments,
       pendingReview: pendingByCourse.get(c.id) ?? 0,
       draftScoreItems: c._count.scoreItems,

@@ -5,6 +5,11 @@ import { db } from "@/lib/db/client";
 import { currentTerm } from "@/lib/dashboard/queries";
 import { PaginationLinks } from "@/components/pagination";
 import { UserAvatar } from "@/components/profile/user-avatar";
+import {
+  courseAcademicPeriod,
+  courseLearnerGroup,
+  courseMetadataParts,
+} from "@/lib/course/display";
 
 export const dynamic = "force-dynamic";
 
@@ -31,8 +36,8 @@ export default async function AdminClassesPage({ searchParams }: PageProps) {
 
   const term = await currentTerm();
   const baseWhere: Prisma.CourseOfferingWhereInput = term
-    ? { termId: term.id }
-    : {};
+    ? { OR: [{ termId: term.id }, { termId: null }] }
+    : { termId: null };
 
   const where: Prisma.CourseOfferingWhereInput = {
     ...baseWhere,
@@ -73,6 +78,8 @@ export default async function AdminClassesPage({ searchParams }: PageProps) {
         id: true,
         name: true,
         subjectCode: true,
+        learnerGroupLabel: true,
+        academicPeriodLabel: true,
         gradeLevel: true,
         creditHours: true,
         classCode: true,
@@ -256,10 +263,21 @@ export default async function AdminClassesPage({ searchParams }: PageProps) {
                   <td>
                     <div className="min-w-[210px]">
                       <p className="font-medium text-black">{course.name}</p>
-                      <p className="mt-0.5 text-xs text-ink-soft">
-                        {course.subjectCode || "ไม่มีรหัสวิชา"} ·{" "}
-                        {course.creditHours} หน่วยกิต · {course.term.name}
-                      </p>
+                      {[
+                        course.subjectCode || null,
+                        ...courseMetadataParts(course),
+                      ]
+                        .filter(Boolean)
+                        .join(" · ") && (
+                        <p className="mt-0.5 text-xs text-ink-soft">
+                          {[
+                            course.subjectCode || null,
+                            ...courseMetadataParts(course),
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </p>
+                      )}
                     </div>
                   </td>
                   <td>
@@ -278,16 +296,33 @@ export default async function AdminClassesPage({ searchParams }: PageProps) {
                     </Link>
                   </td>
                   <td className="text-sm">
-                    <Link
-                      href={`/admin/classes/${course.class.id}`}
-                      className="font-medium text-black hover:underline"
-                    >
-                      {course.class.name}
-                    </Link>
-                    <p className="mt-0.5 text-xs text-ink-soft">
-                      {course.class.gradeLevel} · ปี{" "}
-                      {course.class.academicYear.name}
-                    </p>
+                    {course.class ? (
+                      <>
+                        <Link
+                          href={`/admin/classes/${course.class.id}`}
+                          className="font-medium text-black hover:underline"
+                        >
+                          {courseLearnerGroup(course)}
+                        </Link>
+                        <p className="mt-0.5 text-xs text-ink-soft">
+                          {course.class.gradeLevel} · ปี{" "}
+                          {course.class.academicYear.name}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        {courseLearnerGroup(course) && (
+                          <span className="font-medium text-black">
+                            {courseLearnerGroup(course)}
+                          </span>
+                        )}
+                        {courseAcademicPeriod(course) && (
+                          <p className="mt-0.5 text-xs text-ink-soft">
+                            {courseAcademicPeriod(course)}
+                          </p>
+                        )}
+                      </>
+                    )}
                   </td>
                   <td className="text-sm">
                     {course._count.enrollments.toLocaleString("th-TH")}

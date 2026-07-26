@@ -17,12 +17,22 @@ export const CreateCourseSchema = z.object({
     .max(20, "รหัสยาวเกินไป")
     .optional()
     .or(z.literal("")),
-  gradeLevel: z.string().trim().min(1, "ระบุระดับชั้น").max(20),
-  roomName: z.string().trim().min(1, "ระบุห้อง").max(40),
+  learnerGroupLabel: z
+    .string()
+    .trim()
+    .max(80, "ชื่อกลุ่มผู้เรียนยาวเกินไป")
+    .optional()
+    .or(z.literal("")),
+  academicPeriodLabel: z
+    .string()
+    .trim()
+    .max(80, "ช่วงการศึกษายาวเกินไป")
+    .optional()
+    .or(z.literal("")),
   creditHours: z
-    .number({ message: "ระบุหน่วยกิต" })
+    .number({ message: "หน่วยกิตต้องเป็นตัวเลข" })
     .min(0, "หน่วยกิตต้องไม่ติดลบ")
-    .max(10, "หน่วยกิตเยอะเกินไป"),
-  termId: z.string().min(1, "เลือกเทอม"),
+    .max(10, "หน่วยกิตเยอะเกินไป")
+    .optional(),
 });
 export type CreateCourseInput = z.infer<typeof CreateCourseSchema>;

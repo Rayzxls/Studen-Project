@@ -54,6 +54,7 @@ export async function getTeacherRecentClassIds(
   const seen = new Set<string>();
   const result: string[] = [];
   for (const c of courses) {
+    if (!c.classId) continue;
     if (seen.has(c.classId)) continue;
     seen.add(c.classId);
     result.push(c.classId);
@@ -82,6 +83,8 @@ export async function getCourseOfferingForTeacher(
       id: true,
       name: true,
       subjectCode: true,
+      learnerGroupLabel: true,
+      academicPeriodLabel: true,
       gradeLevel: true,
       creditHours: true,
       classCode: true,
@@ -143,6 +146,8 @@ export async function getCourseOfferingForStudent(
       id: true,
       name: true,
       subjectCode: true,
+      learnerGroupLabel: true,
+      academicPeriodLabel: true,
       gradeLevel: true,
       creditHours: true,
       createdAt: true,

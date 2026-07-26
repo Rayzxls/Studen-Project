@@ -1,11 +1,38 @@
 # HANDOFF — Beagle Classroom
 
+## D0.1 TEACHER-OWNED COURSE METADATA — 2026-07-26 (READ FIRST)
+
+- The first additive D0.1 compatibility slice is complete on `phase-11`.
+  `CourseOffering` owns optional `learnerGroupLabel` and
+  `academicPeriodLabel`; legacy `classId`, `termId`, `gradeLevel`, and
+  `creditHours` are nullable during the transition.
+- Teacher course creation now requires only a course name. It no longer loads,
+  validates, creates, or upserts Admin-managed Class, Academic Year, or Term
+  records. Learner group, academic period, education level, and credit hours
+  are optional display/report metadata.
+- Existing courses remain readable through one shared compatibility projection:
+  new metadata first, legacy Class/Term fallback second, and no placeholder or
+  zero for omitted optional values. Course cards, shells, dashboards,
+  timetables, enrollment, settings, scoring reads, and Admin observer surfaces
+  use that projection.
+- Migration `20260726010000_add_teacher_owned_course_metadata` is additive and
+  backfills the new labels. It is applied and current only on the isolated Neon
+  QA branch. Production schema/data, Admin setup removal, Homeroom removal, and
+  destructive legacy-table cleanup were not touched.
+- Verification: focused unit `7/7`, full unit `815/815`, targeted integration
+  `34/34`, TypeScript, ESLint with zero errors (two pre-existing warnings),
+  Prisma validation/status, dependency release gate, Production build, and
+  `git diff --check` pass. The initial integration attempt exposed intermittent
+  Neon connectivity and Vite cache contention through the junction; rerunning
+  serially from physical path `D:\Studennnn` passed.
+- Next approved D0.1 slice: retire Admin Academic Year/Term/Class/Homeroom
+  management and remaining runtime dependencies incrementally. Do not drop
+  legacy relations or reset Production as part of this commit.
+
 ## IDENTITY V2 SYNC — 2026-07-26 (READ FIRST)
 
 - Canonical working tree: `D:\Studen Project\repo`, which is the same physical
   repository as Claude Desktop's `D:\Studennnn`.
-- `phase-11` is at `a0c072b`; the same committed content is already on `main`
-  through merge commit `0c750b7`.
 - Identity V2 committed delivery now includes Google-first Student onboarding,
   email-bound Teacher Invite onboarding, returning Google sign-in, optional
   fallback password, session lifetime/revocation, Deletion Pending and recovery,
@@ -18,10 +45,10 @@
 - E2 Link is not a separate email/password self-registration path. The current
   product decision remains Google-first self-onboarding; legacy credential
   accounts remain sign-in compatible during cutover.
-- The current uncommitted worktree is an in-progress D0 cleanup that removes
-  Student Number from signup, login copy, normal UI, reports, CSV exports, smoke
-  fixtures, and tests while retaining compatibility storage until the approved
-  destructive migration. Do not restore `/api/signup` or Student Number fields.
+- The committed D0 cleanup removes Student Number from signup, login copy,
+  normal UI, reports, CSV exports, smoke fixtures, and tests while retaining
+  compatibility storage until the approved destructive migration. Do not
+  restore `/api/signup` or Student Number fields.
 - Codex's synchronized additions are limited to recovery/fallback-password
   guidance and its unit coverage. The copy now states that recovery is available
   after a fallback password is configured; Google-only sign-in remains valid.
@@ -29,7 +56,7 @@
   `D:\Studennnn`: Unit `808/808`, TypeScript, ESLint with zero errors (two
   warnings), the Next.js Production build, and the dependency release gate.
   The dependency inventory resolved 87 findings with zero new retired-concept
-  dependencies (`597` blocker, `193` review remaining).
+  dependencies (`590` blocker, `193` review remaining after D0.1).
 - The focused Google identity integration passes `3/3` against the isolated
   Neon QA database. The repository-wide integration command currently does not
   terminate within ten minutes and must be diagnosed as a separate runner/open
@@ -38,10 +65,10 @@
   resolves the physical path while its cache may retain the junction path,
   causing false `tests/setup.ts` and `EPERM` failures even though both tools
   share the same files and Git worktree.
-- Still open: commit the reviewed D0 cleanup as one intentional slice, run
-  authenticated role acceptance, then continue D0.1 teacher-owned optional
-  course labels. Do not begin a second signup architecture without revising
-  ADR-0041.
+- Still open after D0.1: authenticated role acceptance for the optional course
+  creation UI, incremental retirement of Admin academic structure, and the
+  separately approved destructive QA reset. Do not begin a second signup
+  architecture without revising ADR-0041.
 
 ## QUIZ PILOT EXPANSION REVIEW — 2026-07-22
 

@@ -7,6 +7,7 @@ import { renderAuditLog } from "@/lib/audit/render";
 import { ResetPasswordCard } from "@/components/admin/reset-password-card";
 import { ResetProfileImageCard } from "@/components/admin/reset-profile-image-card";
 import { UserAvatar } from "@/components/profile/user-avatar";
+import { courseLearnerGroup } from "@/lib/course/display";
 import { currentTerm, getStudentStats } from "@/lib/dashboard/queries";
 import { getStudentTermSnapshot } from "@/lib/scoring/queries";
 import { gradeForCourseOffering } from "@/lib/scoring/calc";
@@ -61,10 +62,14 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
             },
           },
           courses: {
-            where: { term: { isActive: true } },
+            where: {
+              OR: [{ term: { isActive: true } }, { termId: null }],
+            },
             select: {
               id: true,
               name: true,
+              learnerGroupLabel: true,
+              gradeLevel: true,
               class: { select: { name: true } },
               _count: {
                 select: { enrollments: { where: { removedAt: null } } },
@@ -355,7 +360,8 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
                 <li key={c.id} className="py-2 text-xs">
                   <p className="font-medium text-black">{c.name}</p>
                   <p className="mt-0.5 text-black/50">
-                    ห้อง {c.class.name} · {c._count.enrollments} นักเรียน
+                    {courseLearnerGroup(c) ? `${courseLearnerGroup(c)} · ` : ""}
+                    {c._count.enrollments} นักเรียน
                   </p>
                 </li>
               ))}

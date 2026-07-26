@@ -61,7 +61,7 @@ export async function registerEmailPasswordStudent(
           createdAt: input.occurredAt,
           student: {
             create: {
-              studentId: unassignedLegacyIdentifier(),
+              studentId: unassignedLegacyIdentifier(), // dependency-gate-allow(student-id-symbol-review): compatibility storage until the destructive identity migration
               firstName: input.firstName,
               lastName: input.lastName,
             },

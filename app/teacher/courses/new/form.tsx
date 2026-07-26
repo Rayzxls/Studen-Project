@@ -3,15 +3,10 @@
 import { useActionState, useState } from "react";
 import { createCourseAction, type CreateCourseState } from "./actions";
 
-interface FormProps {
-  terms: { id: string; name: string; number: number; isActive: boolean }[];
-}
-
 const initial: CreateCourseState = {};
 
-export function CreateCourseForm({ terms }: FormProps) {
+export function CreateCourseForm() {
   const [state, action, pending] = useActionState(createCourseAction, initial);
-  const defaultTerm = terms.find((t) => t.isActive)?.id ?? terms[0]?.id ?? "";
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   return (
@@ -39,84 +34,51 @@ export function CreateCourseForm({ terms }: FormProps) {
         )}
       </div>
 
-      {/* Class identity + Term */}
+      {/* Teacher-owned display metadata */}
       <div className="grid gap-4 md:grid-cols-2">
         <div className="card p-5">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <label
-                htmlFor="gradeLevel"
-                className="mb-1.5 block text-sm font-medium"
-              >
-                ระดับชั้น
-              </label>
-              <input
-                id="gradeLevel"
-                name="gradeLevel"
-                type="text"
-                required
-                maxLength={20}
-                className="input"
-                placeholder="เช่น ม.4"
-              />
-              {state.fieldErrors?.gradeLevel && (
-                <p className="mt-1 text-xs text-red-700">
-                  {state.fieldErrors.gradeLevel}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label
-                htmlFor="roomName"
-                className="mb-1.5 block text-sm font-medium"
-              >
-                ห้อง
-              </label>
-              <input
-                id="roomName"
-                name="roomName"
-                type="text"
-                required
-                maxLength={40}
-                className="input"
-                placeholder="เช่น 3"
-              />
-              {state.fieldErrors?.roomName && (
-                <p className="mt-1 text-xs text-red-700">
-                  {state.fieldErrors.roomName}
-                </p>
-              )}
-            </div>
-          </div>
+          <label
+            htmlFor="learnerGroupLabel"
+            className="mb-1.5 block text-sm font-medium"
+          >
+            กลุ่มผู้เรียน (ไม่บังคับ)
+          </label>
+          <input
+            id="learnerGroupLabel"
+            name="learnerGroupLabel"
+            type="text"
+            maxLength={80}
+            className="input"
+            placeholder="เช่น ม.4/3 หรือ นักศึกษาปี 1"
+          />
+          {state.fieldErrors?.learnerGroupLabel && (
+            <p className="mt-1 text-xs text-red-700">
+              {state.fieldErrors.learnerGroupLabel}
+            </p>
+          )}
           <p className="mt-2 text-xs text-ink-soft">
-            ระบบจะสร้างหรือใช้ห้องเดิมให้อัตโนมัติ เช่น ม.4 + ห้อง 3 = ม.4/3
+            ใช้เพื่อแสดงผลเท่านั้น วิชาที่เขียนเหมือนกันจะไม่ถูกรวมเข้าด้วยกัน
           </p>
         </div>
 
         <div className="card p-5">
-          <label htmlFor="termId" className="mb-1.5 block text-sm font-medium">
-            ภาคเรียน
-          </label>
-          <select
-            id="termId"
-            name="termId"
-            required
-            defaultValue={defaultTerm}
-            className="input"
+          <label
+            htmlFor="academicPeriodLabel"
+            className="mb-1.5 block text-sm font-medium"
           >
-            <option value="" disabled>
-              -- เลือกเทอม --
-            </option>
-            {terms.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name} {t.isActive ? "(ปัจจุบัน)" : ""}
-              </option>
-            ))}
-          </select>
-          {state.fieldErrors?.termId && (
+            ช่วงการศึกษา (ไม่บังคับ)
+          </label>
+          <input
+            id="academicPeriodLabel"
+            name="academicPeriodLabel"
+            type="text"
+            maxLength={80}
+            className="input"
+            placeholder="เช่น ภาคเรียน 1 ปี 2569"
+          />
+          {state.fieldErrors?.academicPeriodLabel && (
             <p className="mt-1 text-xs text-red-700">
-              {state.fieldErrors.termId}
+              {state.fieldErrors.academicPeriodLabel}
             </p>
           )}
         </div>
@@ -137,12 +99,10 @@ export function CreateCourseForm({ terms }: FormProps) {
           step="0.5"
           min="0"
           max="10"
-          required
-          defaultValue="1.5"
           className="input"
         />
         <p className="mt-1.5 text-xs text-ink-soft">
-          หน่วยกิตตามโครงสร้างหลักสูตรของโรงเรียน
+          ไม่บังคับ ใช้เป็นข้อมูลประกอบในหน้าวิชาและรายงาน
         </p>
         {state.fieldErrors?.creditHours && (
           <p className="mt-1 text-xs text-red-700">

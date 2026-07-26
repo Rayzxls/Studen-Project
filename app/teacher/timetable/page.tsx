@@ -7,6 +7,7 @@ import { TopNav } from "@/components/layout/top-nav";
 import { StudentBottomNav } from "@/components/layout/student-bottom-nav";
 import { TimetableManager } from "@/components/timetable/timetable-manager";
 import type { TimetableDisplaySlot } from "@/lib/timetable/view-model";
+import { courseLearnerGroup, courseVisualKey } from "@/lib/course/display";
 
 export const dynamic = "force-dynamic";
 
@@ -25,8 +26,10 @@ export default async function TeacherTimetablePage() {
       id: true,
       name: true,
       subjectCode: true,
+      learnerGroupLabel: true,
+      gradeLevel: true,
       classId: true,
-      class: { select: { name: true } },
+      class: { select: { id: true, name: true } },
       timetableSlots: {
         select: {
           id: true,
@@ -45,8 +48,8 @@ export default async function TeacherTimetablePage() {
       courseId: course.id,
       courseName: course.name,
       subjectCode: course.subjectCode,
-      className: course.class.name,
-      classId: course.classId,
+      className: courseLearnerGroup(course) ?? "",
+      classId: courseVisualKey(course),
       href: `/teacher/courses/${course.id}/settings`,
     }))
   );
@@ -110,7 +113,7 @@ export default async function TeacherTimetablePage() {
                 id: course.id,
                 name: course.name,
                 subjectCode: course.subjectCode,
-                className: course.class.name,
+                className: courseLearnerGroup(course) ?? "",
               }))}
               nowIso={new Date().toISOString()}
             />

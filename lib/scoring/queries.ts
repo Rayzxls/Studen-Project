@@ -315,14 +315,14 @@ export async function getStudentTermSnapshot(
       courseOfferingId: c.id,
       name: c.name,
       subjectCode: c.subjectCode,
-      creditHours: c.creditHours,
+      creditHours: c.creditHours ?? 0,
       teacherFirstName: c.teacher.firstName,
       teacherLastName: c.teacher.lastName,
       gradeRulesJson: c.gradeRulesJson,
     });
     bundles.push({
       courseOfferingId: c.id,
-      creditHours: c.creditHours,
+      creditHours: c.creditHours ?? 0,
       items: c.scoreItems.map((it) => ({
         id: it.id,
         fullScore: it.fullScore,

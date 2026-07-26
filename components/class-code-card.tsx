@@ -115,7 +115,9 @@ export function ClassCodeCard({
           <div className="flex flex-col gap-3 rounded-2xl bg-blue-50 p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
               <div className="font-semibold text-black">{courseName}</div>
-              <div className="mt-0.5 text-black/60">ห้อง {className}</div>
+              {className && (
+                <div className="mt-0.5 text-black/60">กลุ่ม {className}</div>
+              )}
             </div>
             <div className="flex shrink-0 items-center gap-2 text-xs text-black/60">
               <Clock3 className="h-4 w-4" />

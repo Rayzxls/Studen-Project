@@ -17,6 +17,7 @@
  */
 
 import { db } from "@/lib/db/client";
+import { courseLearnerGroup, courseVisualKey } from "@/lib/course/display";
 import { SubmissionStatus } from "@prisma/client";
 
 // ─────────────────────────────────────────────────────────────
@@ -80,16 +81,11 @@ export async function getTeacherStats(
   teacherUserId: string
 ): Promise<TeacherStats> {
   const term = await currentTerm();
-  if (!term) {
-    return {
-      courseCount: 0,
-      studentCount: 0,
-      ungradedSubmissions: 0,
-      weeklyTeachingMinutes: 0,
-    };
-  }
+  const termScope = term
+    ? { OR: [{ termId: term.id }, { termId: null }] }
+    : { termId: null };
   const courses = await db.courseOffering.findMany({
-    where: { teacherId: teacherUserId, termId: term.id, archivedAt: null },
+    where: { teacherId: teacherUserId, ...termScope, archivedAt: null },
     select: {
       id: true,
       _count: { select: { enrollments: { where: { removedAt: null } } } },
@@ -148,14 +144,14 @@ export async function getStudentStats(
   studentUserId: string
 ): Promise<StudentStats> {
   const term = await currentTerm();
-  if (!term) {
-    return { courseCount: 0, attendanceRate: null, pendingAssignments: 0 };
-  }
+  const termScope = term
+    ? { OR: [{ termId: term.id }, { termId: null }] }
+    : { termId: null };
   const enrollments = await db.enrollment.findMany({
     where: {
       studentId: studentUserId,
       removedAt: null,
-      course: { termId: term.id, archivedAt: null },
+      course: { ...termScope, archivedAt: null },
     },
     select: { id: true, courseOfferingId: true },
   });
@@ -245,13 +241,15 @@ export async function getTeacherTodaySchedule(
   now: Date = new Date()
 ): Promise<TodayClass[]> {
   const term = await currentTerm();
-  if (!term) return [];
+  const termScope = term
+    ? { OR: [{ termId: term.id }, { termId: null }] }
+    : { termId: null };
   const dayOfWeek = now.getDay();
 
   const slots = await db.timetableSlot.findMany({
     where: {
       dayOfWeek,
-      course: { teacherId: teacherUserId, termId: term.id, archivedAt: null },
+      course: { teacherId: teacherUserId, ...termScope, archivedAt: null },
     },
     orderBy: { startTime: "asc" },
     select: {
@@ -262,6 +260,8 @@ export async function getTeacherTodaySchedule(
         select: {
           id: true,
           name: true,
+          learnerGroupLabel: true,
+          gradeLevel: true,
           class: { select: { id: true, name: true } },
         },
       },
@@ -270,9 +270,9 @@ export async function getTeacherTodaySchedule(
 
   return slots.map((s) => ({
     courseId: s.course.id,
-    classId: s.course.class.id,
+    classId: courseVisualKey(s.course),
     courseName: s.course.name,
-    className: s.course.class.name,
+    className: courseLearnerGroup(s.course) ?? "",
     startTime: s.startTime,
     endTime: s.endTime,
     location: s.location,
@@ -289,14 +289,16 @@ export async function getStudentTodaySchedule(
   now: Date = new Date()
 ): Promise<TodayClass[]> {
   const term = await currentTerm();
-  if (!term) return [];
+  const termScope = term
+    ? { OR: [{ termId: term.id }, { termId: null }] }
+    : { termId: null };
   const dayOfWeek = now.getDay();
 
   const slots = await db.timetableSlot.findMany({
     where: {
       dayOfWeek,
       course: {
-        termId: term.id,
+        ...termScope,
         archivedAt: null,
         enrollments: { some: { studentId: studentUserId, removedAt: null } },
       },
@@ -310,6 +312,8 @@ export async function getStudentTodaySchedule(
         select: {
           id: true,
           name: true,
+          learnerGroupLabel: true,
+          gradeLevel: true,
           class: { select: { id: true, name: true } },
         },
       },
@@ -318,9 +322,9 @@ export async function getStudentTodaySchedule(
 
   return slots.map((s) => ({
     courseId: s.course.id,
-    classId: s.course.class.id,
+    classId: courseVisualKey(s.course),
     courseName: s.course.name,
-    className: s.course.class.name,
+    className: courseLearnerGroup(s.course) ?? "",
     startTime: s.startTime,
     endTime: s.endTime,
     location: s.location,

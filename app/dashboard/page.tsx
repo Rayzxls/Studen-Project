@@ -42,6 +42,11 @@ import {
   DashboardSectionHeading,
 } from "@/components/dashboard/operating-shell";
 import { moderationCenterEnabled } from "@/lib/moderation/feature-flags";
+import {
+  courseAcademicPeriod,
+  courseLearnerGroup,
+  courseVisualKey,
+} from "@/lib/course/display";
 
 // Auth-gated DB-fetching page — skip static prerender.
 export const dynamic = "force-dynamic";
@@ -300,9 +305,11 @@ async function StudentDashboard({
                         key={e.id}
                         href={`/student/courses/${courseId}`}
                         title={e.course.name}
-                        subtitle={e.course.class.name}
-                        badge={yearLabelFromTerm(e.course.term.name)}
-                        classId={e.course.class.id}
+                        subtitle={courseLearnerGroup(e.course) ?? ""}
+                        badge={yearLabelFromTerm(
+                          courseAcademicPeriod(e.course)
+                        )}
+                        classId={courseVisualKey(e.course)}
                         avatarUserId={e.course.teacher.userId}
                         hasAvatar={Boolean(
                           e.course.teacher.user.profileImageId

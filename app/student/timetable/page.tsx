@@ -7,6 +7,7 @@ import { TopNav } from "@/components/layout/top-nav";
 import { StudentBottomNav } from "@/components/layout/student-bottom-nav";
 import { WeeklyTimetable } from "@/components/timetable/weekly-timetable";
 import type { TimetableDisplaySlot } from "@/lib/timetable/view-model";
+import { courseLearnerGroup, courseVisualKey } from "@/lib/course/display";
 
 /** Student-owned weekly projection. No peer data is selected or rendered. */
 export const dynamic = "force-dynamic";
@@ -31,8 +32,10 @@ export default async function StudentTimetablePage() {
           id: true,
           name: true,
           subjectCode: true,
+          learnerGroupLabel: true,
+          gradeLevel: true,
           classId: true,
-          class: { select: { name: true } },
+          class: { select: { id: true, name: true } },
           timetableSlots: {
             select: {
               id: true,
@@ -53,8 +56,8 @@ export default async function StudentTimetablePage() {
       courseId: course.id,
       courseName: course.name,
       subjectCode: course.subjectCode,
-      className: course.class.name,
-      classId: course.classId,
+      className: courseLearnerGroup(course) ?? "",
+      classId: courseVisualKey(course),
       href: `/student/courses/${course.id}`,
     }))
   );

@@ -505,6 +505,27 @@ Removal sequence:
 5. Remove Admin setup actions, routes, navigation, validation, audit labels, and tests for Academic Year, Term, Class, and Homeroom Teacher.
 6. Verify no runtime or report query reads the retired relations, then drop their foreign keys, models, and seed data in the destructive reset migration.
 
+**D0.1 implementation record (2026-07-26):** the first additive compatibility
+slice is complete in code and on the isolated Neon QA branch. `CourseOffering`
+now owns optional `learnerGroupLabel` and `academicPeriodLabel` values;
+`classId`, `termId`, `gradeLevel`, and `creditHours` are nullable during the
+transition. Existing labels are backfilled from legacy Class and Term data.
+Teacher course creation now requires only the course name and never creates or
+looks up hidden Class/Term records. Shared display helpers prefer the new
+metadata and fall back to legacy relations only for existing courses; empty
+optional values render nothing.
+
+The same compatibility projection is used by Teacher/Student course cards,
+course shells, dashboards, timetables, enrollment, settings, scoring reads, and
+Admin observer surfaces. Unscoped active courses remain visible when no legacy
+active Term applies. Focused unit `7/7`, full unit `815/815`, targeted
+integration `34/34`, TypeScript, ESLint (zero errors), dependency gate, Prisma
+validation/status, and Production build pass. Migration
+`20260726010000_add_teacher_owned_course_metadata` is applied only to the
+isolated Neon QA branch. Production migration, removal of Admin setup surfaces,
+removal of Homeroom behavior, destructive table/foreign-key cleanup, and the
+data reset remain separate unapproved steps.
+
 ### D1. Google Login
 
 Architecture decisions: [`ADR-0041`](./adr/0041-google-first-identity-uses-gated-role-onboarding.md) (Google-first identity), [`ADR-0042`](./adr/0042-transactional-email-uses-a-gated-provider-port.md) (transactional email delivery, unblocking verified-email change and password recovery), and [`ADR-0043`](./adr/0043-students-may-self-register-with-email-and-password.md) (email/password student self-registration alongside Google, revising the Google-only student stance of ADR-0041).
