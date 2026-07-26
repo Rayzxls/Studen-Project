@@ -17,14 +17,12 @@ type Props = {
   courseId: string;
   enrollmentId: string;
   studentName: string;
-  studentIdNumber: string;
 };
 
 export function RemoveMemberDialog({
   courseId,
   enrollmentId,
   studentName,
-  studentIdNumber,
 }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [reason, setReason] = useState("");
@@ -92,10 +90,7 @@ export function RemoveMemberDialog({
               >
                 นำนักเรียนออกจากห้อง
               </h2>
-              <p className="mt-1 text-sm text-black/60">
-                {studentName}{" "}
-                <span className="font-mono text-xs">({studentIdNumber})</span>
-              </p>
+              <p className="mt-1 text-sm text-black/60">{studentName}</p>
             </div>
             <button
               type="button"

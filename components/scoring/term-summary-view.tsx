@@ -29,7 +29,6 @@ import { PrintButton } from "./print-button";
  */
 type Props = {
   studentName: string;
-  studentIdNumber: string;
   /** Term being displayed. May be the active term or a historical one. */
   selectedTerm: StudentTermOption;
   /** Other terms the student has enrolled in — drives the picker. */
@@ -44,7 +43,6 @@ type CourseRowStatus = "NO_SCORES" | "UPDATING" | "FINAL";
 
 export function TermSummaryView({
   studentName,
-  studentIdNumber,
   selectedTerm,
   allTerms,
   rows,
@@ -103,7 +101,7 @@ export function TermSummaryView({
               ผลการเรียนของฉัน
             </h1>
             <p className="mt-1 text-sm text-black/60 print:text-black">
-              {studentName} · เลขประจำตัว {studentIdNumber}
+              {studentName}
             </p>
           </div>
 
@@ -214,8 +212,7 @@ export function TermSummaryView({
           minute: "2-digit",
           hourCycle: "h23",
         }).format(new Date())}{" "}
-        น. · เอกสารอ้างอิง:{" "}
-        {`${studentIdNumber}/${selectedTerm.id.slice(-6).toUpperCase()}`}
+        น. · เอกสารอ้างอิง: {selectedTerm.id.slice(-6).toUpperCase()}
       </p>
     </div>
   );

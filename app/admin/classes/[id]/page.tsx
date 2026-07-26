@@ -423,9 +423,6 @@ export default async function AdminClassDetailPage({
                       >
                         {s.firstName} {s.lastName}
                       </Link>
-                      <p className="text-[10px] font-mono text-black/40">
-                        {s.studentId}
-                      </p>
                     </div>
                   </li>
                 ))}
@@ -450,7 +447,6 @@ export default async function AdminClassDetailPage({
               <table className="table w-full text-left">
                 <thead>
                   <tr className="bg-slate-50/60 text-xs text-black/55">
-                    <th className="px-4 py-2.5">เลขประจำตัว</th>
                     <th className="px-4 py-2.5">ชื่อ-นามสกุล</th>
                     <th className="px-4 py-2.5 text-center">มา (คาบ)</th>
                     <th className="px-4 py-2.5 text-center">สาย (คาบ)</th>
@@ -483,9 +479,6 @@ export default async function AdminClassDetailPage({
 
                     return (
                       <tr key={s.userId} className="hover:bg-slate-50/40">
-                        <td className="px-4 py-3 font-mono text-black/70">
-                          {s.studentId}
-                        </td>
                         <td className="px-4 py-3">
                           <Link
                             href={`/admin/users/${s.userId}`}
@@ -546,7 +539,6 @@ export default async function AdminClassDetailPage({
               <table className="table w-full text-left">
                 <thead>
                   <tr className="bg-slate-50/60 text-xs text-black/55">
-                    <th className="px-4 py-2.5">เลขประจำตัว</th>
                     <th className="px-4 py-2.5">ชื่อ-นามสกุล</th>
                     {courses.map((c) => (
                       <th
@@ -565,9 +557,6 @@ export default async function AdminClassDetailPage({
                     );
                     return (
                       <tr key={s.userId} className="hover:bg-slate-50/40">
-                        <td className="px-4 py-3 font-mono text-black/70">
-                          {s.studentId}
-                        </td>
                         <td className="px-4 py-3">
                           <Link
                             href={`/admin/users/${s.userId}`}

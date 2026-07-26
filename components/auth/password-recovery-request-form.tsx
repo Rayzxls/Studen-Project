@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
+import { Info, LogIn } from "lucide-react";
 
 export type RecoveryRequestState = { sent?: boolean; error?: string };
 
@@ -33,10 +34,48 @@ export function PasswordRecoveryRequestForm({
         </p>
       </div>
 
+      <div
+        className="mb-5 flex gap-3 rounded-xl px-4 py-3"
+        style={{
+          background:
+            "color-mix(in srgb, var(--color-blue-500) 9%, var(--color-surface))",
+          boxShadow:
+            "inset 0 0 0 1px color-mix(in srgb, var(--color-blue-500) 38%, var(--color-hairline))",
+          color: "var(--color-ink)",
+        }}
+      >
+        <Info
+          className="mt-0.5 h-5 w-5 shrink-0"
+          style={{ color: "var(--color-blue-500)" }}
+          aria-hidden="true"
+        />
+        <div>
+          <p className="text-sm font-semibold">
+            ใช้ได้เฉพาะบัญชีที่ตั้งรหัสผ่านสำรองแล้ว
+          </p>
+          <p
+            className="mt-1 text-xs leading-relaxed"
+            style={{ color: "var(--color-ink-soft)" }}
+          >
+            หากสมัครด้วย Google และยังไม่เคยตั้งรหัสผ่านสำรอง ให้เข้าสู่ระบบด้วย
+            Google แล้วไปที่ โปรไฟล์ → ความปลอดภัย เพื่อตั้งค่าก่อน
+          </p>
+        </div>
+      </div>
+
       {state.sent ? (
-        <div className="rounded-xl bg-green-50 px-3 py-3 text-sm text-green-700">
-          ถ้าอีเมลนี้มีบัญชีที่ตั้งรหัสผ่านสำรองไว้ เราได้ส่งลิงก์ไปแล้ว —
-          กรุณาตรวจกล่องจดหมายของคุณ
+        <div className="space-y-3">
+          <div className="rounded-xl bg-green-50 px-3 py-3 text-sm text-green-700">
+            ถ้าอีเมลนี้มีบัญชีที่ตั้งรหัสผ่านสำรองไว้ เราได้ส่งลิงก์ไปแล้ว —
+            กรุณาตรวจกล่องจดหมายของคุณ
+          </div>
+          <div className="rounded-xl border border-black/[0.08] px-3 py-3 text-xs leading-relaxed text-black/60">
+            <p className="font-semibold text-black/70">ยังไม่ได้รับอีเมล?</p>
+            <p className="mt-1">
+              รอสักครู่และตรวจโฟลเดอร์สแปม หากเป็นบัญชี Google-only
+              ให้เข้าสู่ระบบด้วย Google แล้วตั้งรหัสผ่านสำรองในหน้าโปรไฟล์ก่อน
+            </p>
+          </div>
         </div>
       ) : (
         <form action={formAction} className="space-y-4">
@@ -71,17 +110,12 @@ export function PasswordRecoveryRequestForm({
         </form>
       )}
 
-      <p className="mt-6 border-t border-black/[0.06] pt-4 text-center text-xs text-black/50">
-        เข้าสู่ระบบด้วย Google อยู่แล้ว หรือยังไม่ได้ตั้งรหัสผ่านสำรอง?
-        เข้าสู่ระบบด้วย Google ได้เลย หรือติดต่อผู้ดูแลระบบ
-      </p>
-
-      <Link
-        href="/login"
-        className="btn-ghost mt-3 w-full justify-center gap-2"
-      >
-        กลับหน้าเข้าสู่ระบบ
-      </Link>
+      <div className="mt-5 border-t border-black/[0.06] pt-4">
+        <Link href="/login" className="btn-ghost w-full justify-center gap-2">
+          <LogIn className="h-4 w-4" aria-hidden="true" />
+          กลับหน้าเข้าสู่ระบบ
+        </Link>
+      </div>
     </div>
   );
 }

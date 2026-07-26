@@ -17,7 +17,6 @@ export type ScoreGridRow = {
   enrollmentId: string;
   removed: boolean;
   studentName: string;
-  studentIdNumber: string;
   initialValue: number | null;
   initialNote: string | null;
   editCount: number;
@@ -377,9 +376,6 @@ function StudentCard({
               </span>
             )}
           </p>
-          <p className="text-xs text-black/40 font-mono">
-            {row.studentIdNumber}
-          </p>
         </div>
         <ValueInput
           value={value}
@@ -436,7 +432,6 @@ function StudentRow({
             </span>
           )}
         </p>
-        <p className="text-xs text-black/40 font-mono">{row.studentIdNumber}</p>
       </td>
       <td className="py-2 px-2">
         <ValueInput

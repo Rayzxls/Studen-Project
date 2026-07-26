@@ -195,10 +195,11 @@ export default async function ScoresListPage({ params }: PageProps) {
                             {enrollment.student.firstName}{" "}
                             {enrollment.student.lastName}
                           </p>
-                          <p className="mt-0.5 font-mono text-[10px] text-ink-soft">
-                            {enrollment.student.studentId}
-                            {enrollment.removedAt && " · ออกจากรายวิชาแล้ว"}
-                          </p>
+                          {enrollment.removedAt && (
+                            <p className="mt-0.5 text-[10px] text-ink-soft">
+                              ออกจากรายวิชาแล้ว
+                            </p>
+                          )}
                         </td>
                         {items.map((item) => {
                           const value = entryByItem.get(item.id);

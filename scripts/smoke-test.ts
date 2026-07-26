@@ -9,6 +9,7 @@
  */
 
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 import { assertIsolatedTestDatabase } from "@/tests/helpers/database-safety";
 
 assertIsolatedTestDatabase();
@@ -232,112 +233,6 @@ async function testRateLimitLockout() {
     .catch(() => {});
 }
 
-async function testStudentSignup() {
-  console.log("\n🎓 Student self-register");
-
-  const newId = `8${Math.floor(Math.random() * 100000)
-    .toString()
-    .padStart(5, "0")}`;
-
-  const r1 = await fetch(`${BASE}/api/signup`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      studentId: newId,
-      firstName: "Smoke",
-      lastName: "Test",
-      password: "smokepass1234",
-      confirmPassword: "smokepass1234",
-      consent: true,
-      turnstileToken: "dummy-dev-token",
-    }),
-  });
-  await expect(
-    `POST /api/signup new student ${newId} → 201`,
-    r1.status === 201,
-    `got ${r1.status}: ${await r1.text()}`
-  );
-
-  // Verify user in DB
-  const user = await db.user.findUnique({
-    where: { identifier: newId },
-    include: { student: true },
-  });
-  await expect(
-    "User created in DB with STUDENT role",
-    user?.role === "STUDENT" && user.student?.studentId === newId,
-    JSON.stringify(user, null, 2)
-  );
-
-  // Duplicate signup → 409
-  const r2 = await fetch(`${BASE}/api/signup`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      studentId: newId,
-      firstName: "Smoke",
-      lastName: "Test",
-      password: "smokepass1234",
-      confirmPassword: "smokepass1234",
-      consent: true,
-      turnstileToken: "dummy-dev-token",
-    }),
-  });
-  await expect(
-    "Duplicate studentId → 409",
-    r2.status === 409,
-    `got ${r2.status}`
-  );
-
-  // Now login with the new student
-  const cookie = await signin(newId, "smokepass1234");
-  await expect(
-    `Login as newly-registered student ${newId}`,
-    !!cookie,
-    "could not login after signup"
-  );
-
-  // Cleanup
-  if (user) {
-    await db.auditLog.deleteMany({ where: { actorId: user.id } });
-    await db.student.delete({ where: { userId: user.id } });
-    await db.user.delete({ where: { id: user.id } });
-  }
-}
-
-async function testSignupValidation() {
-  console.log("\n✏️  Signup validation");
-
-  const bad = await fetch(`${BASE}/api/signup`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      studentId: "abc",
-      firstName: "",
-      lastName: "X",
-      password: "short",
-      confirmPassword: "different",
-      consent: false,
-      turnstileToken: "",
-    }),
-  });
-  await expect("Invalid signup → 400", bad.status === 400, `got ${bad.status}`);
-
-  const body = (await bad.json()) as {
-    error: { code: string; details: Record<string, string> };
-  };
-  await expect(
-    "Returns validation_error code",
-    body.error.code === "validation_error",
-    body.error.code
-  );
-  await expect(
-    "Reports per-field errors",
-    Object.keys(body.error.details).length > 0,
-    JSON.stringify(body.error.details)
-  );
-}
-
 async function testForceResetRedirect() {
   console.log("\n🔄 Force reset password flow");
 
@@ -404,30 +299,34 @@ async function testPhase2Join() {
     return;
   }
 
-  // Use a unique signup student so we don't conflict
-  const newId = `7${Math.floor(Math.random() * 100000)
-    .toString()
-    .padStart(5, "0")}`;
-  const signupRes = await fetch(`${BASE}/api/signup`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      studentId: newId,
+  // Create an isolated verified-email fixture directly in the QA database.
+  // Google OAuth itself is covered separately; this smoke path exercises join.
+  const nonce = `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+  const email = `smoke.join.${nonce}@example.test`;
+  const user = await db.user.create({
+    data: {
+      role: "STUDENT",
+      identifier: email,
+      email,
+      emailVerifiedAt: new Date(),
+      passwordHash: await bcrypt.hash("joinpass1234", 12),
       firstName: "Join",
       lastName: "Test",
-      password: "joinpass1234",
-      confirmPassword: "joinpass1234",
-      consent: true,
-      turnstileToken: "dummy-dev-token",
-    }),
+      consentedAt: new Date(),
+      consentVersion: "2026-07",
+      student: {
+        create: {
+          studentId: `identity-v2-unassigned:${nonce}`, // dependency-gate-allow(student-id-symbol-review): required compatibility placeholder in isolated QA
+          firstName: "Join",
+          lastName: "Test",
+        },
+      },
+    },
+    select: { id: true },
   });
-  await expect(
-    `Create test student ${newId}`,
-    signupRes.status === 201,
-    `signup got ${signupRes.status}`
-  );
+  pass(`Create verified-email test student ${email}`);
 
-  const cookie = await signin(newId, "joinpass1234");
+  const cookie = await signin(email, "joinpass1234");
   await expect("Login as test student", !!cookie, "no cookie");
   if (!cookie) return;
 
@@ -454,10 +353,6 @@ async function testPhase2Join() {
   );
 
   // Verify enrollment row exists
-  const user = await db.user.findUnique({
-    where: { identifier: newId },
-    select: { id: true },
-  });
   if (user) {
     const enrolled = await db.enrollment.findFirst({
       where: { studentId: user.id, courseOfferingId: course.id },
@@ -1819,8 +1714,6 @@ async function main() {
   await testProtectedRedirect();
   await testLoginEachRole();
   await testWrongPasswordRejected();
-  await testStudentSignup();
-  await testSignupValidation();
   await testRateLimitLockout();
   await testForceResetRedirect();
   await testPhase2Join();

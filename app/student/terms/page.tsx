@@ -32,7 +32,7 @@ export default async function StudentTermsDefaultPage() {
   const [student, terms] = await Promise.all([
     db.student.findUnique({
       where: { userId: studentUserId },
-      select: { firstName: true, lastName: true, studentId: true },
+      select: { firstName: true, lastName: true },
     }),
     listTermsForStudent(studentUserId),
   ]);
@@ -64,7 +64,6 @@ export default async function StudentTermsDefaultPage() {
     <StudentTermsShell session={session}>
       <TermSummaryView
         studentName={`${student.firstName} ${student.lastName}`}
-        studentIdNumber={student.studentId}
         selectedTerm={selectedTerm}
         allTerms={terms}
         rows={snapshot.rows}

@@ -168,7 +168,7 @@ export function createEmailChangeService(
       }
 
       // Identity-v2 accounts authenticate by email, so the identifier tracks it;
-      // a legacy account keeps its own identifier (e.g. a student number).
+      // a compatibility-era account keeps its existing identifier.
       const updateIdentifier =
         user.identifier.trim().toLowerCase() ===
         (user.email ?? "").trim().toLowerCase();

@@ -10,7 +10,8 @@ describe("Teacher Quiz CSV", () => {
     expect(csv.startsWith("\uFEFF")).toBe(true);
     expect(csv).toContain("ผลรายคน");
     expect(csv).toContain("วิเคราะห์รายข้อ");
-    expect(csv).toContain('"65001","Ada Lovelace","ส่งแล้ว","2","8"');
+    expect(csv).toContain('"Ada Lovelace","ส่งแล้ว","2","8"');
+    expect(csv).not.toContain('"65001"');
     expect(csv).toContain("'=HYPERLINK");
     expect(csv).toContain('"1","\'=HYPERLINK(""https://bad.example"")","10"');
   });

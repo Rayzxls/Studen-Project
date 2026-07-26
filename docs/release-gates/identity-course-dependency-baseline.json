@@ -1,6 +1,6 @@
 {
   "rulesVersion": "2026-07-24.3",
-  "generatedAt": "2026-07-23T21:07:16.101Z",
+  "generatedAt": "2026-07-26T03:23:18.727Z",
   "findings": [
     {
       "fingerprint": "a1d7d89ec94f6af31101",
@@ -518,7 +518,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "prisma/schema.prisma",
-      "line": 291,
+      "line": 420,
       "excerpt": "model AcademicYear {",
       "occurrence": 1
     },
@@ -528,7 +528,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "prisma/schema.prisma",
-      "line": 301,
+      "line": 430,
       "excerpt": "academicYearId String",
       "occurrence": 1
     },
@@ -538,7 +538,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "prisma/schema.prisma",
-      "line": 302,
+      "line": 431,
       "excerpt": "academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)",
       "occurrence": 1
     },
@@ -548,7 +548,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "prisma/schema.prisma",
-      "line": 311,
+      "line": 440,
       "excerpt": "@@unique([academicYearId, number])",
       "occurrence": 1
     },
@@ -558,7 +558,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "prisma/schema.prisma",
-      "line": 316,
+      "line": 445,
       "excerpt": "academicYearId String",
       "occurrence": 2
     },
@@ -568,7 +568,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "prisma/schema.prisma",
-      "line": 317,
+      "line": 446,
       "excerpt": "academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)",
       "occurrence": 2
     },
@@ -578,7 +578,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "prisma/schema.prisma",
-      "line": 325,
+      "line": 454,
       "excerpt": "@@unique([academicYearId, name])",
       "occurrence": 1
     },
@@ -818,7 +818,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "app/admin/students/page.tsx",
-      "line": 170,
+      "line": 168,
       "excerpt": "searchParams={{ search, classId }}",
       "occurrence": 1
     },
@@ -1278,7 +1278,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "lib/audit/log.ts",
-      "line": 92,
+      "line": 97,
       "excerpt": "| \"HOMEROOM_ASSIGNED\" // Important · before/after `{teacherId, classId}`",
       "occurrence": 1
     },
@@ -1568,7 +1568,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "prisma/schema.prisma",
-      "line": 240,
+      "line": 367,
       "excerpt": "classId String?",
       "occurrence": 1
     },
@@ -1578,7 +1578,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "prisma/schema.prisma",
-      "line": 241,
+      "line": 368,
       "excerpt": "class Class? @relation(fields: [classId], references: [id], onDelete: SetNull)",
       "occurrence": 1
     },
@@ -1588,7 +1588,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "prisma/schema.prisma",
-      "line": 333,
+      "line": 462,
       "excerpt": "classId String",
       "occurrence": 1
     },
@@ -1598,7 +1598,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "prisma/schema.prisma",
-      "line": 334,
+      "line": 463,
       "excerpt": "class Class @relation(fields: [classId], references: [id], onDelete: Restrict)",
       "occurrence": 1
     },
@@ -1608,7 +1608,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "prisma/schema.prisma",
-      "line": 365,
+      "line": 494,
       "excerpt": "@@index([classId, termId])",
       "occurrence": 1
     },
@@ -2008,7 +2008,7 @@
       "severity": "blocker",
       "description": "Term GPA, GPAX, or cross-course status remains.",
       "path": "prisma/schema.prisma",
-      "line": 507,
+      "line": 636,
       "excerpt": "@@index([courseOfferingId, publishedAt]) // term-GPA completion check",
       "occurrence": 1
     },
@@ -2018,7 +2018,7 @@
       "severity": "blocker",
       "description": "Term GPA, GPAX, or cross-course status remains.",
       "path": "scripts/smoke-test.ts",
-      "line": 876,
+      "line": 771,
       "excerpt": "console.log(\"\\n📊 Phase 5: scoring + Term GPA + transcript\");",
       "occurrence": 1
     },
@@ -2028,7 +2028,7 @@
       "severity": "blocker",
       "description": "Term GPA, GPAX, or cross-course status remains.",
       "path": "scripts/smoke-test.ts",
-      "line": 1000,
+      "line": 895,
       "excerpt": "\"Student /terms shows 'GPA ภาคเรียน' headline\",",
       "occurrence": 1
     },
@@ -2038,7 +2038,7 @@
       "severity": "blocker",
       "description": "Term GPA, GPAX, or cross-course status remains.",
       "path": "scripts/smoke-test.ts",
-      "line": 1001,
+      "line": 896,
       "excerpt": "sTermsBody.includes(\"GPA ภาคเรียน\"),",
       "occurrence": 1
     },
@@ -2048,7 +2048,7 @@
       "severity": "blocker",
       "description": "Term GPA, GPAX, or cross-course status remains.",
       "path": "scripts/smoke-test.ts",
-      "line": 1002,
+      "line": 897,
       "excerpt": "\"GPA headline missing\"",
       "occurrence": 1
     },
@@ -3328,7 +3328,7 @@
       "severity": "blocker",
       "description": "Structured gradeLevel remains.",
       "path": "prisma/schema.prisma",
-      "line": 319,
+      "line": 448,
       "excerpt": "gradeLevel String // \"ม.4\"",
       "occurrence": 1
     },
@@ -3338,7 +3338,7 @@
       "severity": "blocker",
       "description": "Structured gradeLevel remains.",
       "path": "prisma/schema.prisma",
-      "line": 326,
+      "line": 455,
       "excerpt": "@@index([gradeLevel])",
       "occurrence": 1
     },
@@ -3348,7 +3348,7 @@
       "severity": "blocker",
       "description": "Structured gradeLevel remains.",
       "path": "prisma/schema.prisma",
-      "line": 341,
+      "line": 470,
       "excerpt": "gradeLevel String // \"ม.4\" (defaults to class.gradeLevel on create)",
       "occurrence": 1
     },
@@ -3848,7 +3848,7 @@
       "severity": "blocker",
       "description": "Legacy displayName remains in the target identity model.",
       "path": "app/admin/teachers/page.tsx",
-      "line": 212,
+      "line": 229,
       "excerpt": "typeof parsed.displayName !== \"string\" ||",
       "occurrence": 1
     },
@@ -3858,7 +3858,7 @@
       "severity": "blocker",
       "description": "Legacy displayName remains in the target identity model.",
       "path": "app/admin/teachers/page.tsx",
-      "line": 220,
+      "line": 237,
       "excerpt": "displayName: parsed.displayName,",
       "occurrence": 1
     },
@@ -3868,7 +3868,7 @@
       "severity": "blocker",
       "description": "Legacy displayName remains in the target identity model.",
       "path": "app/admin/teachers/page.tsx",
-      "line": 237,
+      "line": 254,
       "excerpt": "เพิ่มครูสำเร็จ: {flash.displayName}",
       "occurrence": 1
     },
@@ -3948,7 +3948,7 @@
       "severity": "blocker",
       "description": "Legacy displayName remains in the target identity model.",
       "path": "app/profile/actions.ts",
-      "line": 38,
+      "line": 52,
       "excerpt": "{ displayName: String(formData.get(\"displayName\") ?? \"\") },",
       "occurrence": 1
     },
@@ -3958,7 +3958,7 @@
       "severity": "blocker",
       "description": "Legacy displayName remains in the target identity model.",
       "path": "app/profile/page.tsx",
-      "line": 39,
+      "line": 79,
       "excerpt": "displayName: true,",
       "occurrence": 1
     },
@@ -3968,7 +3968,7 @@
       "severity": "blocker",
       "description": "Legacy displayName remains in the target identity model.",
       "path": "app/profile/page.tsx",
-      "line": 52,
+      "line": 119,
       "excerpt": "displayName: user.displayName,",
       "occurrence": 1
     },
@@ -3978,7 +3978,7 @@
       "severity": "blocker",
       "description": "Legacy displayName remains in the target identity model.",
       "path": "app/profile/page.tsx",
-      "line": 96,
+      "line": 163,
       "excerpt": "initialDisplayName={user.displayName}",
       "occurrence": 1
     },
@@ -4148,7 +4148,7 @@
       "severity": "blocker",
       "description": "Legacy displayName remains in the target identity model.",
       "path": "lib/audit/log.ts",
-      "line": 63,
+      "line": 68,
       "excerpt": "| \"DISPLAY_NAME_CHANGED\" // Important · self-service set/clear of User.displayName",
       "occurrence": 1
     },
@@ -4288,7 +4288,7 @@
       "severity": "blocker",
       "description": "Legacy displayName remains in the target identity model.",
       "path": "prisma/schema.prisma",
-      "line": 58,
+      "line": 88,
       "excerpt": "// displayName: optional friendly name for personal UI (dashboard greeting,",
       "occurrence": 1
     },
@@ -4298,7 +4298,7 @@
       "severity": "blocker",
       "description": "Legacy displayName remains in the target identity model.",
       "path": "prisma/schema.prisma",
-      "line": 61,
+      "line": 91,
       "excerpt": "displayName String?",
       "occurrence": 1
     },
@@ -4330,96 +4330,6 @@
       "path": "tests/unit/profile-theme.test.ts",
       "line": 29,
       "excerpt": "displayName: null,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "8397d003e424a2cc70e7",
-      "ruleId": "student-number-auth-and-admin-flow",
-      "severity": "blocker",
-      "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
-      "path": "app/(auth)/signup/page.tsx",
-      "line": 13,
-      "excerpt": "const [studentId, setStudentId] = useState(\"\");",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "9815d0738fe71324a0fb",
-      "ruleId": "student-number-auth-and-admin-flow",
-      "severity": "blocker",
-      "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
-      "path": "app/(auth)/signup/page.tsx",
-      "line": 33,
-      "excerpt": "studentId,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "caa626cd8eb4881781e2",
-      "ruleId": "student-number-auth-and-admin-flow",
-      "severity": "blocker",
-      "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
-      "path": "app/(auth)/signup/page.tsx",
-      "line": 49,
-      "excerpt": "setErrors({ studentId: \"เลขประจำตัวนี้สมัครไปแล้ว\" });",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "d765ff940f4d517627c9",
-      "ruleId": "student-number-auth-and-admin-flow",
-      "severity": "blocker",
-      "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
-      "path": "app/(auth)/signup/page.tsx",
-      "line": 63,
-      "excerpt": "identifier: studentId,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "aa2e4b16ccaedd641cc0",
-      "ruleId": "student-number-auth-and-admin-flow",
-      "severity": "blocker",
-      "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
-      "path": "app/(auth)/signup/page.tsx",
-      "line": 87,
-      "excerpt": "htmlFor=\"studentId\"",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "b976851a9ed08762bcc9",
-      "ruleId": "student-number-auth-and-admin-flow",
-      "severity": "blocker",
-      "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
-      "path": "app/(auth)/signup/page.tsx",
-      "line": 93,
-      "excerpt": "id=\"studentId\"",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "5931e1bed6473c2e839f",
-      "ruleId": "student-number-auth-and-admin-flow",
-      "severity": "blocker",
-      "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
-      "path": "app/(auth)/signup/page.tsx",
-      "line": 100,
-      "excerpt": "value={studentId}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "c339fcf63a17559f1f33",
-      "ruleId": "student-number-auth-and-admin-flow",
-      "severity": "blocker",
-      "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
-      "path": "app/(auth)/signup/page.tsx",
-      "line": 103,
-      "excerpt": "{errors.studentId && (",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "da39c1050b84df8733df",
-      "ruleId": "student-number-auth-and-admin-flow",
-      "severity": "blocker",
-      "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
-      "path": "app/(auth)/signup/page.tsx",
-      "line": 104,
-      "excerpt": "<p className=\"mt-1 text-xs text-red-700\">{errors.studentId}</p>",
       "occurrence": 1
     },
     {
@@ -4463,36 +4373,6 @@
       "occurrence": 1
     },
     {
-      "fingerprint": "b5ed0092b53ca47f5676",
-      "ruleId": "student-number-auth-and-admin-flow",
-      "severity": "blocker",
-      "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
-      "path": "app/admin/classes/[id]/page.tsx",
-      "line": 427,
-      "excerpt": "{s.studentId}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "ca18a6ad3b5234d08b1d",
-      "ruleId": "student-number-auth-and-admin-flow",
-      "severity": "blocker",
-      "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
-      "path": "app/admin/classes/[id]/page.tsx",
-      "line": 487,
-      "excerpt": "{s.studentId}",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "7192917be0381f3858a1",
-      "ruleId": "student-number-auth-and-admin-flow",
-      "severity": "blocker",
-      "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
-      "path": "app/admin/classes/[id]/page.tsx",
-      "line": 569,
-      "excerpt": "{s.studentId}",
-      "occurrence": 3
-    },
-    {
       "fingerprint": "644a54425acfb9c03a40",
       "ruleId": "student-number-auth-and-admin-flow",
       "severity": "blocker",
@@ -4500,26 +4380,6 @@
       "path": "app/admin/courses/[id]/attendance/page.tsx",
       "line": 38,
       "excerpt": "studentId: true,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "121d52fd26c0dae55ee6",
-      "ruleId": "student-number-auth-and-admin-flow",
-      "severity": "blocker",
-      "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
-      "path": "app/admin/courses/[id]/attendance/page.tsx",
-      "line": 136,
-      "excerpt": "{enrollment.student.studentId}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "e4798c94adec5fa0b9e4",
-      "ruleId": "student-number-auth-and-admin-flow",
-      "severity": "blocker",
-      "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
-      "path": "app/admin/courses/[id]/members/page.tsx",
-      "line": 47,
-      "excerpt": "<td className=\"font-mono text-sm\">{member.student.studentId}</td>",
       "occurrence": 1
     },
     {
@@ -4533,26 +4393,6 @@
       "occurrence": 1
     },
     {
-      "fingerprint": "64c4582d194dfede1a24",
-      "ruleId": "student-number-auth-and-admin-flow",
-      "severity": "blocker",
-      "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
-      "path": "app/admin/courses/[id]/scores/page.tsx",
-      "line": 145,
-      "excerpt": "{enrollment.student.studentId}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "e5f143a635a49d485261",
-      "ruleId": "student-number-auth-and-admin-flow",
-      "severity": "blocker",
-      "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
-      "path": "app/admin/students/page.tsx",
-      "line": 114,
-      "excerpt": "<td className=\"font-mono text-sm\">{s.studentId}</td>",
-      "occurrence": 1
-    },
-    {
       "fingerprint": "bf778ac44acbb828f1f7",
       "ruleId": "student-number-auth-and-admin-flow",
       "severity": "blocker",
@@ -4560,66 +4400,6 @@
       "path": "app/admin/users/[id]/page.tsx",
       "line": 81,
       "excerpt": "studentId: true,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "64bbde8314f1d0002c3a",
-      "ruleId": "student-number-auth-and-admin-flow",
-      "severity": "blocker",
-      "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
-      "path": "app/admin/users/[id]/page.tsx",
-      "line": 374,
-      "excerpt": "<Row label=\"รหัสนักเรียน\" value={user.student.studentId} mono />",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "605396753402ad136332",
-      "ruleId": "student-number-auth-and-admin-flow",
-      "severity": "blocker",
-      "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
-      "path": "app/api/signup/route.ts",
-      "line": 26,
-      "excerpt": "* 5. Check studentId uniqueness",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "86fb7dcfbb00fa324282",
-      "ruleId": "student-number-auth-and-admin-flow",
-      "severity": "blocker",
-      "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
-      "path": "app/api/signup/route.ts",
-      "line": 88,
-      "excerpt": "identifier: body.studentId,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "05a075282607be4f1d61",
-      "ruleId": "student-number-auth-and-admin-flow",
-      "severity": "blocker",
-      "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
-      "path": "app/api/signup/route.ts",
-      "line": 95,
-      "excerpt": "studentId: body.studentId,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "1dbcfd20c83cb40b2103",
-      "ruleId": "student-number-auth-and-admin-flow",
-      "severity": "blocker",
-      "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
-      "path": "app/api/signup/route.ts",
-      "line": 114,
-      "excerpt": "studentId: body.studentId,",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "35b53659e5fe8d7965a1",
-      "ruleId": "student-number-auth-and-admin-flow",
-      "severity": "blocker",
-      "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
-      "path": "app/api/signup/route.ts",
-      "line": 143,
-      "excerpt": "// Handle unique constraint (studentId already exists)",
       "occurrence": 1
     },
     {
@@ -4703,16 +4483,6 @@
       "occurrence": 1
     },
     {
-      "fingerprint": "319cf9b7079ab5cd4806",
-      "ruleId": "student-number-auth-and-admin-flow",
-      "severity": "blocker",
-      "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
-      "path": "lib/validation/schemas.ts",
-      "line": 28,
-      "excerpt": "studentId: StudentIdSchema,",
-      "occurrence": 1
-    },
-    {
       "fingerprint": "208b56709afd09e28315",
       "ruleId": "student-number-auth-and-admin-flow",
       "severity": "blocker",
@@ -4773,166 +4543,6 @@
       "occurrence": 1
     },
     {
-      "fingerprint": "c5e3fc141b3d1584ae8b",
-      "ruleId": "student-number-copy",
-      "severity": "blocker",
-      "description": "User-facing Student Number or Student ID copy remains.",
-      "path": "app/(auth)/login/page.tsx",
-      "line": 41,
-      "excerpt": "อีเมล หรือ เลขประจำตัวนักเรียน",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "77caee199048f73aad35",
-      "ruleId": "student-number-copy",
-      "severity": "blocker",
-      "description": "User-facing Student Number or Student ID copy remains.",
-      "path": "app/(auth)/signup/page.tsx",
-      "line": 49,
-      "excerpt": "setErrors({ studentId: \"เลขประจำตัวนี้สมัครไปแล้ว\" });",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "1d9bc95c9df06169cf66",
-      "ruleId": "student-number-copy",
-      "severity": "blocker",
-      "description": "User-facing Student Number or Student ID copy remains.",
-      "path": "app/(auth)/signup/page.tsx",
-      "line": 90,
-      "excerpt": "เลขประจำตัวนักเรียน",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "fa04fb558f77709763c0",
-      "ruleId": "student-number-copy",
-      "severity": "blocker",
-      "description": "User-facing Student Number or Student ID copy remains.",
-      "path": "app/admin/classes/[id]/page.tsx",
-      "line": 453,
-      "excerpt": "<th className=\"px-4 py-2.5\">เลขประจำตัว</th>",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "bf5d050ea169c96b7868",
-      "ruleId": "student-number-copy",
-      "severity": "blocker",
-      "description": "User-facing Student Number or Student ID copy remains.",
-      "path": "app/admin/classes/[id]/page.tsx",
-      "line": 549,
-      "excerpt": "<th className=\"px-4 py-2.5\">เลขประจำตัว</th>",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "c69816964a107beaa06c",
-      "ruleId": "student-number-copy",
-      "severity": "blocker",
-      "description": "User-facing Student Number or Student ID copy remains.",
-      "path": "app/admin/courses/[id]/members/page.tsx",
-      "line": 38,
-      "excerpt": "<th>เลขประจำตัว</th>",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "9829ee224573c419bddd",
-      "ruleId": "student-number-copy",
-      "severity": "blocker",
-      "description": "User-facing Student Number or Student ID copy remains.",
-      "path": "app/admin/students/page.tsx",
-      "line": 59,
-      "excerpt": "placeholder=\"ชื่อ หรือ เลขประจำตัว...\"",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "d66f75b4bd62cd362a07",
-      "ruleId": "student-number-copy",
-      "severity": "blocker",
-      "description": "User-facing Student Number or Student ID copy remains.",
-      "path": "app/admin/students/page.tsx",
-      "line": 102,
-      "excerpt": "<th>เลขประจำตัว</th>",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "31b2a408d4a6a5ff231c",
-      "ruleId": "student-number-copy",
-      "severity": "blocker",
-      "description": "User-facing Student Number or Student ID copy remains.",
-      "path": "app/privacy/page.tsx",
-      "line": 47,
-      "excerpt": "เลขประจำตัวนักเรียน (สำหรับนักเรียน) หรือ อีเมล (ครู / Admin)",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "5afe5c6fc63e005a35a7",
-      "ruleId": "student-number-copy",
-      "severity": "blocker",
-      "description": "User-facing Student Number or Student ID copy remains.",
-      "path": "app/profile/page.tsx",
-      "line": 57,
-      "excerpt": "user.role === \"STUDENT\" ? \"เลขประจำตัวนักเรียน\" : \"อีเมล\";",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "f971f2ed255f373fe87a",
-      "ruleId": "student-number-copy",
-      "severity": "blocker",
-      "description": "User-facing Student Number or Student ID copy remains.",
-      "path": "app/teacher/courses/[id]/assignments/[assignmentId]/page.tsx",
-      "line": 521,
-      "excerpt": "เลขประจำตัว {activeRow.studentId}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "f9a33124b881c51f2ff7",
-      "ruleId": "student-number-copy",
-      "severity": "blocker",
-      "description": "User-facing Student Number or Student ID copy remains.",
-      "path": "app/teacher/courses/[id]/assignments/[assignmentId]/submissions/[submissionId]/page.tsx",
-      "line": 140,
-      "excerpt": "เลขประจำตัว {submission.enrollment.student.studentId} ·{\" \"}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "5694617cc244d348911d",
-      "ruleId": "student-number-copy",
-      "severity": "blocker",
-      "description": "User-facing Student Number or Student ID copy remains.",
-      "path": "components/course/members-table.tsx",
-      "line": 52,
-      "excerpt": "<th>เลขประจำตัว</th>",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "282bb9c97120675c8bff",
-      "ruleId": "student-number-copy",
-      "severity": "blocker",
-      "description": "User-facing Student Number or Student ID copy remains.",
-      "path": "components/scoring/term-summary-view.tsx",
-      "line": 106,
-      "excerpt": "{studentName} · เลขประจำตัว {studentIdNumber}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "5fa941053846142c798b",
-      "ruleId": "student-number-copy",
-      "severity": "blocker",
-      "description": "User-facing Student Number or Student ID copy remains.",
-      "path": "lib/scoring/queries.ts",
-      "line": 35,
-      "excerpt": "studentId: string; // login identifier (เลขประจำตัวนักเรียน)",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "661acffa4d1c6fe494cd",
-      "ruleId": "student-number-copy",
-      "severity": "blocker",
-      "description": "User-facing Student Number or Student ID copy remains.",
-      "path": "lib/validation/schemas.ts",
-      "line": 18,
-      "excerpt": ".regex(/^\\d{4,10}$/, \"เลขประจำตัวต้องเป็นตัวเลข 4-10 หลัก\");",
-      "occurrence": 1
-    },
-    {
       "fingerprint": "c37d25a689f76e110cbe",
       "ruleId": "student-number-copy",
       "severity": "blocker",
@@ -4948,7 +4558,7 @@
       "severity": "blocker",
       "description": "Student Number remains a persisted unique identity field.",
       "path": "prisma/schema.prisma",
-      "line": 236,
+      "line": 363,
       "excerpt": "studentId String @unique",
       "occurrence": 1
     },
@@ -5048,7 +4658,7 @@
       "severity": "blocker",
       "description": "Temporary-password onboarding remains.",
       "path": "app/admin/teachers/page.tsx",
-      "line": 214,
+      "line": 231,
       "excerpt": "typeof parsed.tempPassword !== \"string\"",
       "occurrence": 1
     },
@@ -5058,7 +4668,7 @@
       "severity": "blocker",
       "description": "Temporary-password onboarding remains.",
       "path": "app/admin/teachers/page.tsx",
-      "line": 222,
+      "line": 239,
       "excerpt": "tempPassword: parsed.tempPassword,",
       "occurrence": 1
     },
@@ -5068,7 +4678,7 @@
       "severity": "blocker",
       "description": "Temporary-password onboarding remains.",
       "path": "app/admin/teachers/page.tsx",
-      "line": 254,
+      "line": 271,
       "excerpt": "{flash.tempPassword}",
       "occurrence": 1
     },
@@ -5110,16 +4720,6 @@
       "path": "app/admin/users/[id]/page.tsx",
       "line": 273,
       "excerpt": "{user.mustResetPwd && (",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "7e5b2be5a0a6abae1ed5",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "app/api/signup/route.ts",
-      "line": 90,
-      "excerpt": "mustResetPwd: false,",
       "occurrence": 1
     },
     {
@@ -5488,7 +5088,7 @@
       "severity": "blocker",
       "description": "Temporary-password onboarding remains.",
       "path": "lib/auth/config.ts",
-      "line": 42,
+      "line": 55,
       "excerpt": "// If logged in AND mustResetPwd, redirect everywhere except force-reset itself",
       "occurrence": 1
     },
@@ -5498,7 +5098,7 @@
       "severity": "blocker",
       "description": "Temporary-password onboarding remains.",
       "path": "lib/auth/config.ts",
-      "line": 46,
+      "line": 59,
       "excerpt": "auth.user.mustResetPwd &&",
       "occurrence": 1
     },
@@ -5508,7 +5108,7 @@
       "severity": "blocker",
       "description": "Temporary-password onboarding remains.",
       "path": "lib/auth/config.ts",
-      "line": 66,
+      "line": 95,
       "excerpt": "token.mustResetPwd = user.mustResetPwd;",
       "occurrence": 1
     },
@@ -5518,7 +5118,7 @@
       "severity": "blocker",
       "description": "Temporary-password onboarding remains.",
       "path": "lib/auth/config.ts",
-      "line": 68,
+      "line": 101,
       "excerpt": "// Allow session update to refresh mustResetPwd after password change",
       "occurrence": 1
     },
@@ -5528,7 +5128,7 @@
       "severity": "blocker",
       "description": "Temporary-password onboarding remains.",
       "path": "lib/auth/config.ts",
-      "line": 70,
+      "line": 103,
       "excerpt": "token.mustResetPwd = false;",
       "occurrence": 1
     },
@@ -5538,7 +5138,7 @@
       "severity": "blocker",
       "description": "Temporary-password onboarding remains.",
       "path": "lib/auth/config.ts",
-      "line": 79,
+      "line": 118,
       "excerpt": "session.user.mustResetPwd = token.mustResetPwd as boolean;",
       "occurrence": 1
     },
@@ -5548,7 +5148,7 @@
       "severity": "blocker",
       "description": "Temporary-password onboarding remains.",
       "path": "lib/auth/index.ts",
-      "line": 53,
+      "line": 234,
       "excerpt": "mustResetPwd: true,",
       "occurrence": 1
     },
@@ -5558,7 +5158,7 @@
       "severity": "blocker",
       "description": "Temporary-password onboarding remains.",
       "path": "lib/auth/index.ts",
-      "line": 107,
+      "line": 321,
       "excerpt": "mustResetPwd: user.mustResetPwd,",
       "occurrence": 1
     },
@@ -5688,7 +5288,7 @@
       "severity": "blocker",
       "description": "Temporary-password onboarding remains.",
       "path": "prisma/schema.prisma",
-      "line": 48,
+      "line": 69,
       "excerpt": "mustResetPwd Boolean @default(false)",
       "occurrence": 1
     },
@@ -5728,7 +5328,7 @@
       "severity": "blocker",
       "description": "Temporary-password onboarding remains.",
       "path": "scripts/smoke-test.ts",
-      "line": 344,
+      "line": 239,
       "excerpt": "// Set student 60001 to mustResetPwd=true",
       "occurrence": 1
     },
@@ -5738,7 +5338,7 @@
       "severity": "blocker",
       "description": "Temporary-password onboarding remains.",
       "path": "scripts/smoke-test.ts",
-      "line": 347,
+      "line": 242,
       "excerpt": "data: { mustResetPwd: true },",
       "occurrence": 1
     },
@@ -5748,7 +5348,7 @@
       "severity": "blocker",
       "description": "Temporary-password onboarding remains.",
       "path": "scripts/smoke-test.ts",
-      "line": 351,
+      "line": 246,
       "excerpt": "await expect(\"Login with mustResetPwd=true succeeds\", !!cookie, \"no cookie\");",
       "occurrence": 1
     },
@@ -5758,7 +5358,7 @@
       "severity": "blocker",
       "description": "Temporary-password onboarding remains.",
       "path": "scripts/smoke-test.ts",
-      "line": 356,
+      "line": 251,
       "excerpt": "data: { mustResetPwd: false },",
       "occurrence": 1
     },
@@ -5768,7 +5368,7 @@
       "severity": "blocker",
       "description": "Temporary-password onboarding remains.",
       "path": "scripts/smoke-test.ts",
-      "line": 386,
+      "line": 281,
       "excerpt": "data: { mustResetPwd: false },",
       "occurrence": 2
     },
@@ -6208,7 +5808,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "prisma/schema.prisma",
-      "line": 335,
+      "line": 464,
       "excerpt": "termId String",
       "occurrence": 1
     },
@@ -6218,7 +5818,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "prisma/schema.prisma",
-      "line": 336,
+      "line": 465,
       "excerpt": "term Term @relation(fields: [termId], references: [id], onDelete: Restrict)",
       "occurrence": 1
     },
@@ -6228,7 +5828,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "prisma/schema.prisma",
-      "line": 365,
+      "line": 494,
       "excerpt": "@@index([classId, termId])",
       "occurrence": 1
     },
@@ -6248,7 +5848,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "scripts/smoke-test.ts",
-      "line": 881,
+      "line": 776,
       "excerpt": "select: { id: true, teacherId: true, termId: true },",
       "occurrence": 1
     },
@@ -6373,96 +5973,6 @@
       "occurrence": 1
     },
     {
-      "fingerprint": "d941105d1ad83dd39086",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/(auth)/signup/page.tsx",
-      "line": 13,
-      "excerpt": "const [studentId, setStudentId] = useState(\"\");",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "9b971e89ee4388b05b3a",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/(auth)/signup/page.tsx",
-      "line": 33,
-      "excerpt": "studentId,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "e649f264e35eeb5bb53f",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/(auth)/signup/page.tsx",
-      "line": 49,
-      "excerpt": "setErrors({ studentId: \"เลขประจำตัวนี้สมัครไปแล้ว\" });",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "de38dbc27ad1e68375bf",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/(auth)/signup/page.tsx",
-      "line": 63,
-      "excerpt": "identifier: studentId,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "57ef2ca565f015a4f2e7",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/(auth)/signup/page.tsx",
-      "line": 87,
-      "excerpt": "htmlFor=\"studentId\"",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "dd0ebd617fe8ba2ad66e",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/(auth)/signup/page.tsx",
-      "line": 93,
-      "excerpt": "id=\"studentId\"",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "e75df6bf58969dcd5c7c",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/(auth)/signup/page.tsx",
-      "line": 100,
-      "excerpt": "value={studentId}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "f0c3b9ba6705a3b9d79c",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/(auth)/signup/page.tsx",
-      "line": 103,
-      "excerpt": "{errors.studentId && (",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "9335ac362d642d244e46",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/(auth)/signup/page.tsx",
-      "line": 104,
-      "excerpt": "<p className=\"mt-1 text-xs text-red-700\">{errors.studentId}</p>",
-      "occurrence": 1
-    },
-    {
       "fingerprint": "2c372988d8244b0d53e0",
       "ruleId": "student-id-symbol-review",
       "severity": "review",
@@ -6503,36 +6013,6 @@
       "occurrence": 1
     },
     {
-      "fingerprint": "b2768d4ad710e839561b",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/admin/classes/[id]/page.tsx",
-      "line": 427,
-      "excerpt": "{s.studentId}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "288e011075301da45ce3",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/admin/classes/[id]/page.tsx",
-      "line": 487,
-      "excerpt": "{s.studentId}",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "ed57b014d8f9efe64312",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/admin/classes/[id]/page.tsx",
-      "line": 569,
-      "excerpt": "{s.studentId}",
-      "occurrence": 3
-    },
-    {
       "fingerprint": "df5b982a8e0e278847a7",
       "ruleId": "student-id-symbol-review",
       "severity": "review",
@@ -6540,26 +6020,6 @@
       "path": "app/admin/courses/[id]/attendance/page.tsx",
       "line": 38,
       "excerpt": "studentId: true,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "f84e7ad8e29fb08b92d6",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/admin/courses/[id]/attendance/page.tsx",
-      "line": 136,
-      "excerpt": "{enrollment.student.studentId}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "20ad71f2ef6c8fa30148",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/admin/courses/[id]/members/page.tsx",
-      "line": 47,
-      "excerpt": "<td className=\"font-mono text-sm\">{member.student.studentId}</td>",
       "occurrence": 1
     },
     {
@@ -6573,26 +6033,6 @@
       "occurrence": 1
     },
     {
-      "fingerprint": "be28567190ae6fe49d73",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/admin/courses/[id]/scores/page.tsx",
-      "line": 145,
-      "excerpt": "{enrollment.student.studentId}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "e7cab1b996a92b756601",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/admin/students/page.tsx",
-      "line": 114,
-      "excerpt": "<td className=\"font-mono text-sm\">{s.studentId}</td>",
-      "occurrence": 1
-    },
-    {
       "fingerprint": "811898bbe42e86e45add",
       "ruleId": "student-id-symbol-review",
       "severity": "review",
@@ -6600,66 +6040,6 @@
       "path": "app/admin/users/[id]/page.tsx",
       "line": 81,
       "excerpt": "studentId: true,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "15c7c19e13bac7c0b1c5",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/admin/users/[id]/page.tsx",
-      "line": 374,
-      "excerpt": "<Row label=\"รหัสนักเรียน\" value={user.student.studentId} mono />",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "422550e06bcf976a48e5",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/api/signup/route.ts",
-      "line": 26,
-      "excerpt": "* 5. Check studentId uniqueness",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "e11f2286f910509a0520",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/api/signup/route.ts",
-      "line": 88,
-      "excerpt": "identifier: body.studentId,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "e4cdc3adf9349955ffaa",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/api/signup/route.ts",
-      "line": 95,
-      "excerpt": "studentId: body.studentId,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "c71c6262b68b6feffc5f",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/api/signup/route.ts",
-      "line": 114,
-      "excerpt": "studentId: body.studentId,",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "bba7dd813be24b2ca501",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/api/signup/route.ts",
-      "line": 143,
-      "excerpt": "// Handle unique constraint (studentId already exists)",
       "occurrence": 1
     },
     {
@@ -6763,46 +6143,6 @@
       "occurrence": 1
     },
     {
-      "fingerprint": "db3d3977116226603d6e",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/student/terms/[termId]/page.tsx",
-      "line": 37,
-      "excerpt": "select: { firstName: true, lastName: true, studentId: true },",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "a1f0eefdae68d100d51a",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/student/terms/[termId]/page.tsx",
-      "line": 52,
-      "excerpt": "studentIdNumber={student.studentId}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "04b1648a8b4971b912f4",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/student/terms/page.tsx",
-      "line": 35,
-      "excerpt": "select: { firstName: true, lastName: true, studentId: true },",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "c7d3e943eaadbd96b170",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/student/terms/page.tsx",
-      "line": 67,
-      "excerpt": "studentIdNumber={student.studentId}",
-      "occurrence": 1
-    },
-    {
       "fingerprint": "10b83f4c32f1934800bf",
       "ruleId": "student-id-symbol-review",
       "severity": "review",
@@ -6853,26 +6193,6 @@
       "occurrence": 1
     },
     {
-      "fingerprint": "922b60f397abcd113165",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/teacher/courses/[id]/assignments/[assignmentId]/page.tsx",
-      "line": 452,
-      "excerpt": "{r.studentId}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "703ba7fd3bf93da0e101",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/teacher/courses/[id]/assignments/[assignmentId]/page.tsx",
-      "line": 521,
-      "excerpt": "เลขประจำตัว {activeRow.studentId}",
-      "occurrence": 1
-    },
-    {
       "fingerprint": "025f013e6d9ea3ae3375",
       "ruleId": "student-id-symbol-review",
       "severity": "review",
@@ -6883,46 +6203,6 @@
       "occurrence": 1
     },
     {
-      "fingerprint": "2a6fd7ab7fe8197b6fbe",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/teacher/courses/[id]/assignments/[assignmentId]/submissions/[submissionId]/page.tsx",
-      "line": 140,
-      "excerpt": "เลขประจำตัว {submission.enrollment.student.studentId} ·{\" \"}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "409c3a599b261a1326f2",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/teacher/courses/[id]/attendance/[sessionId]/page.tsx",
-      "line": 56,
-      "excerpt": "studentIdNumber: r.student.studentId,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "eb99264c4a7d730ad933",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/teacher/courses/[id]/attendance/page.tsx",
-      "line": 128,
-      "excerpt": "{enrollment.student.studentId}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "a6d87f4e5dfa9c47bc7b",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/teacher/courses/[id]/scores/[scoreItemId]/page.tsx",
-      "line": 48,
-      "excerpt": "studentIdNumber: r.studentId,",
-      "occurrence": 1
-    },
-    {
       "fingerprint": "83f126f31cfbe481aabf",
       "ruleId": "student-id-symbol-review",
       "severity": "review",
@@ -6930,46 +6210,6 @@
       "path": "app/teacher/courses/[id]/scores/page.tsx",
       "line": 67,
       "excerpt": "studentId: true,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "10075e66ab8bc397586a",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "app/teacher/courses/[id]/scores/page.tsx",
-      "line": 199,
-      "excerpt": "{enrollment.student.studentId}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "2c1b78fd31e4a94a2fba",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "components/course/members-table.tsx",
-      "line": 16,
-      "excerpt": "studentId: string;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "8a29cdab3ce6a363a076",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "components/course/members-table.tsx",
-      "line": 63,
-      "excerpt": "<td className=\"font-mono text-sm\">{m.student.studentId}</td>",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "530a42cbc32ab2bfeed0",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "components/course/members-table.tsx",
-      "line": 83,
-      "excerpt": "studentIdNumber={m.student.studentId}",
       "occurrence": 1
     },
     {
@@ -7288,7 +6528,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/guards.ts",
-      "line": 113,
+      "line": 140,
       "excerpt": "studentId: string;",
       "occurrence": 1
     },
@@ -7298,7 +6538,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/guards.ts",
-      "line": 124,
+      "line": 151,
       "excerpt": "studentId: session.user.id,",
       "occurrence": 1
     },
@@ -7308,7 +6548,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/guards.ts",
-      "line": 130,
+      "line": 157,
       "excerpt": "studentId: true,",
       "occurrence": 1
     },
@@ -7318,7 +6558,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/guards.ts",
-      "line": 150,
+      "line": 177,
       "excerpt": "studentId: enrollment.studentId,",
       "occurrence": 1
     },
@@ -7328,7 +6568,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/guards.ts",
-      "line": 337,
+      "line": 364,
       "excerpt": "enrollment: { id: string; studentId: string };",
       "occurrence": 1
     },
@@ -7338,7 +6578,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/guards.ts",
-      "line": 358,
+      "line": 385,
       "excerpt": "studentId: session.user.id,",
       "occurrence": 2
     },
@@ -7348,7 +6588,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/guards.ts",
-      "line": 362,
+      "line": 389,
       "excerpt": "select: { id: true, studentId: true, removedAt: true },",
       "occurrence": 1
     },
@@ -7358,7 +6598,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/guards.ts",
-      "line": 368,
+      "line": 395,
       "excerpt": "enrollment: { id: enrollment!.id, studentId: enrollment!.studentId },",
       "occurrence": 1
     },
@@ -7368,7 +6608,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/guards.ts",
-      "line": 393,
+      "line": 420,
       "excerpt": "enrollment: { studentId: string };",
       "occurrence": 1
     },
@@ -7378,7 +6618,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/guards.ts",
-      "line": 411,
+      "line": 438,
       "excerpt": "enrollment: { select: { studentId: true } },",
       "occurrence": 1
     },
@@ -7388,7 +6628,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/guards.ts",
-      "line": 550,
+      "line": 577,
       "excerpt": "enrollment: { select: { studentId: true, removedAt: true } },",
       "occurrence": 1
     },
@@ -7398,7 +6638,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 91,
+      "line": 95,
       "excerpt": "enrollment: { studentId: string; removedAt: Date | null } | null;",
       "occurrence": 1
     },
@@ -7408,7 +6648,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 103,
+      "line": 107,
       "excerpt": "session.user.id === scope.enrollment.studentId",
       "occurrence": 1
     },
@@ -7418,7 +6658,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 121,
+      "line": 125,
       "excerpt": "* Pure predicate — caller fetches `enrollment.studentId` and",
       "occurrence": 1
     },
@@ -7428,7 +6668,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 128,
+      "line": 132,
       "excerpt": "enrollment: { studentId: string; removedAt: Date | null }",
       "occurrence": 1
     },
@@ -7438,7 +6678,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 132,
+      "line": 136,
       "excerpt": "return session.user.id === enrollment.studentId;",
       "occurrence": 1
     },
@@ -7448,7 +6688,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 218,
+      "line": 222,
       "excerpt": "enrollment: { studentId: string; removedAt: Date | null } | null",
       "occurrence": 1
     },
@@ -7458,7 +6698,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 223,
+      "line": 227,
       "excerpt": "return session.user.id === enrollment.studentId;",
       "occurrence": 2
     },
@@ -7468,7 +6708,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 244,
+      "line": 248,
       "excerpt": "enrollment: { studentId: string };",
       "occurrence": 1
     },
@@ -7478,7 +6718,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 252,
+      "line": 256,
       "excerpt": "return session.user.id === submission.enrollment.studentId;",
       "occurrence": 1
     },
@@ -7488,7 +6728,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 321,
+      "line": 325,
       "excerpt": "* Pure — caller resolves the owning enrollment's studentId + removedAt and",
       "occurrence": 1
     },
@@ -7498,7 +6738,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 327,
+      "line": 331,
       "excerpt": "enrollment: { studentId: string; removedAt: Date | null };",
       "occurrence": 1
     },
@@ -7508,7 +6748,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 332,
+      "line": 336,
       "excerpt": "return session.user.id === submission.enrollment.studentId;",
       "occurrence": 2
     },
@@ -7973,36 +7213,6 @@
       "occurrence": 1
     },
     {
-      "fingerprint": "e29e35bee38398885e44",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "lib/report/teacher-course.ts",
-      "line": 46,
-      "excerpt": "row.studentId,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "16096f28e6c314f3c527",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "lib/report/teacher-course.ts",
-      "line": 91,
-      "excerpt": "row.student.studentId,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "46aa885a757737019d6e",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "lib/scoring/queries.ts",
-      "line": 35,
-      "excerpt": "studentId: string; // login identifier (เลขประจำตัวนักเรียน)",
-      "occurrence": 1
-    },
-    {
       "fingerprint": "6e77ee5d6764569aca83",
       "ruleId": "student-id-symbol-review",
       "severity": "review",
@@ -8123,16 +7333,6 @@
       "occurrence": 1
     },
     {
-      "fingerprint": "8cf5b57da8d3ba1ede94",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "lib/validation/schemas.ts",
-      "line": 28,
-      "excerpt": "studentId: StudentIdSchema,",
-      "occurrence": 1
-    },
-    {
       "fingerprint": "3679ee474a47b7959854",
       "ruleId": "student-id-symbol-review",
       "severity": "review",
@@ -8188,7 +7388,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "prisma/schema.prisma",
-      "line": 46,
+      "line": 67,
       "excerpt": "identifier String @unique // email (admin/teacher) | studentId (student)",
       "occurrence": 1
     },
@@ -8198,7 +7398,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "prisma/schema.prisma",
-      "line": 236,
+      "line": 363,
       "excerpt": "studentId String @unique",
       "occurrence": 1
     },
@@ -8208,7 +7408,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "prisma/schema.prisma",
-      "line": 371,
+      "line": 500,
       "excerpt": "studentId String",
       "occurrence": 1
     },
@@ -8218,7 +7418,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "prisma/schema.prisma",
-      "line": 372,
+      "line": 501,
       "excerpt": "student Student @relation(fields: [studentId], references: [userId], onDelete: Cascade)",
       "occurrence": 1
     },
@@ -8228,7 +7428,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "prisma/schema.prisma",
-      "line": 388,
+      "line": 517,
       "excerpt": "@@unique([studentId, courseOfferingId])",
       "occurrence": 1
     },
@@ -8243,72 +7443,12 @@
       "occurrence": 1
     },
     {
-      "fingerprint": "241f3d08573cf9c15386",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "scripts/smoke-test.ts",
-      "line": 246,
-      "excerpt": "studentId: newId,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "b1c7fcef9eebe6c2f021",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "scripts/smoke-test.ts",
-      "line": 268,
-      "excerpt": "user?.role === \"STUDENT\" && user.student?.studentId === newId,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "183064d49064448158cc",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "scripts/smoke-test.ts",
-      "line": 277,
-      "excerpt": "studentId: newId,",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "51bf309b0bcac7e94f65",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "scripts/smoke-test.ts",
-      "line": 287,
-      "excerpt": "\"Duplicate studentId → 409\",",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "a067e919f91d7c26746f",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "scripts/smoke-test.ts",
-      "line": 315,
-      "excerpt": "studentId: \"abc\",",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "e55889f3f1e36362e8f4",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "scripts/smoke-test.ts",
-      "line": 415,
-      "excerpt": "studentId: newId,",
-      "occurrence": 3
-    },
-    {
       "fingerprint": "e4dc9017e95d0fd66ca1",
       "ruleId": "student-id-symbol-review",
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "scripts/smoke-test.ts",
-      "line": 463,
+      "line": 358,
       "excerpt": "where: { studentId: user.id, courseOfferingId: course.id },",
       "occurrence": 1
     },
@@ -8318,7 +7458,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "scripts/smoke-test.ts",
-      "line": 531,
+      "line": 426,
       "excerpt": "await db.enrollment.deleteMany({ where: { studentId: user.id } });",
       "occurrence": 1
     },
@@ -8328,7 +7468,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "scripts/smoke-test.ts",
-      "line": 594,
+      "line": 489,
       "excerpt": "\"studentId 60001 not rendered for teacher\"",
       "occurrence": 1
     },
@@ -8338,7 +7478,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "scripts/smoke-test.ts",
-      "line": 657,
+      "line": 552,
       "excerpt": "\"studentId 60001 found in student Members body (PII leak)\"",
       "occurrence": 1
     },
@@ -8568,7 +7708,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "tests/unit/course-report-csv.test.ts",
-      "line": 77,
+      "line": 78,
       "excerpt": "studentId: \"36901234\",",
       "occurrence": 2
     },
@@ -8760,16 +7900,6 @@
       "path": "tests/unit/teacher-report-routes.test.ts",
       "line": 73,
       "excerpt": "studentId: \"36901234\",",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "f42239cf7ec6ba4948d1",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "tests/unit/validation.test.ts",
-      "line": 48,
-      "excerpt": "studentId: \"60001\",",
       "occurrence": 1
     }
   ]

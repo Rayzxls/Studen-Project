@@ -56,7 +56,7 @@ export default async function AdminStudentsPage({ searchParams }: PageProps) {
                 type="text"
                 name="search"
                 defaultValue={search}
-                placeholder="ชื่อ หรือ เลขประจำตัว..."
+                placeholder="ค้นหาจากชื่อ..."
                 className="input pl-9"
               />
             </div>
@@ -99,7 +99,6 @@ export default async function AdminStudentsPage({ searchParams }: PageProps) {
           <table className="table">
             <thead>
               <tr>
-                <th>เลขประจำตัว</th>
                 <th>ชื่อ-นามสกุล</th>
                 <th>ห้องประจำ</th>
                 <th>วิชาที่ลงทะเบียน</th>
@@ -111,7 +110,6 @@ export default async function AdminStudentsPage({ searchParams }: PageProps) {
             <tbody>
               {result.items.map((s) => (
                 <tr key={s.userId}>
-                  <td className="font-mono text-sm">{s.studentId}</td>
                   <td>
                     <Link
                       href={`/admin/users/${s.userId}`}

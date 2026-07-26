@@ -39,8 +39,7 @@ export const authConfig = {
         path === "/reset-password/confirm" ||
         path === "/verify-email" ||
         path === "/privacy" ||
-        path.startsWith("/api/auth") ||
-        path.startsWith("/api/signup");
+        path.startsWith("/api/auth");
 
       // /join requires auth — redirect to login with returnTo
       if (path === "/join" && !isLoggedIn) {

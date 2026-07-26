@@ -449,9 +449,9 @@ export default async function AssignmentReviewWorkspacePage({
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm text-black">{r.name}</p>
                         <p className="truncate text-[10px] text-black/40">
-                          {r.studentId}
-                          {r.submittedAt &&
-                            ` · ${dateFmt.format(r.submittedAt)}`}
+                          {r.submittedAt
+                            ? dateFmt.format(r.submittedAt)
+                            : "ยังไม่ส่งงาน"}
                         </p>
                       </div>
                       <span
@@ -517,9 +517,6 @@ export default async function AssignmentReviewWorkspacePage({
                         <h2 className="truncate text-base font-semibold text-black">
                           {activeRow.name}
                         </h2>
-                        <p className="text-xs text-black/45">
-                          เลขประจำตัว {activeRow.studentId}
-                        </p>
                       </div>
                     </div>
                     <span

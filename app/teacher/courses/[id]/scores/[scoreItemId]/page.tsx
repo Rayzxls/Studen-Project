@@ -45,7 +45,6 @@ export default async function ScoreItemGridPage({ params }: PageProps) {
     enrollmentId: r.enrollmentId,
     removed: r.removedAt !== null,
     studentName: `${r.firstName} ${r.lastName}`,
-    studentIdNumber: r.studentId,
     initialValue: r.value,
     initialNote: r.note,
     editCount: r.editCount,

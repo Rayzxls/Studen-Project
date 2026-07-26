@@ -63,7 +63,7 @@ function LoginForm() {
             htmlFor="identifier"
             className="mb-1.5 block text-sm font-medium"
           >
-            อีเมล หรือ เลขประจำตัวนักเรียน
+            อีเมล
           </label>
           <input
             id="identifier"
@@ -72,7 +72,7 @@ function LoginForm() {
             autoComplete="username"
             required
             className="input"
-            placeholder="teacher@studennnn.local หรือ 60001"
+            placeholder="name@example.com"
           />
         </div>
 
@@ -115,7 +115,7 @@ function LoginForm() {
         </button>
 
         <div className="border-t border-black/[0.06] pt-4 text-center text-sm text-black/60">
-          ยังไม่มีบัญชี (นักเรียน)?{" "}
+          ยังไม่มีบัญชี?{" "}
           <Link
             href="/signup"
             className="font-medium text-black underline-offset-2 hover:underline"

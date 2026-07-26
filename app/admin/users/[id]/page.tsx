@@ -371,7 +371,6 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
             นักเรียน
           </h2>
           <dl className="grid grid-cols-2 gap-3 text-xs">
-            <Row label="รหัสนักเรียน" value={user.student.studentId} mono />
             <Row label="ชื่อ" value={user.student.firstName} />
             <Row label="นามสกุล" value={user.student.lastName} />
             <Row

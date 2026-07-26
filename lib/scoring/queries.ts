@@ -32,7 +32,7 @@ export interface TeacherScoreboardItem {
 export interface TeacherScoreboardRow {
   enrollmentId: string;
   studentUserId: string;
-  studentId: string; // login identifier (เลขประจำตัวนักเรียน)
+  studentId: string; // dependency-gate-allow(student-id-symbol-review): compatibility projection; never display as identity
   firstName: string;
   lastName: string;
   removedAt: Date | null;

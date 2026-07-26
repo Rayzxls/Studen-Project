@@ -1,5 +1,48 @@
 # HANDOFF — Beagle Classroom
 
+## IDENTITY V2 SYNC — 2026-07-26 (READ FIRST)
+
+- Canonical working tree: `D:\Studen Project\repo`, which is the same physical
+  repository as Claude Desktop's `D:\Studennnn`.
+- `phase-11` is at `a0c072b`; the same committed content is already on `main`
+  through merge commit `0c750b7`.
+- Identity V2 committed delivery now includes Google-first Student onboarding,
+  email-bound Teacher Invite onboarding, returning Google sign-in, optional
+  fallback password, session lifetime/revocation, Deletion Pending and recovery,
+  post-window anonymization, transactional email, password recovery, verified
+  email change, and the Resend adapter.
+- E2 Link means Existing-account Google linking. Commit `88f6f7b` lets an
+  authenticated password-era account connect a matching verified Google
+  identity from Profile after recent re-authentication. It preserves the current
+  session and never creates a second User.
+- E2 Link is not a separate email/password self-registration path. The current
+  product decision remains Google-first self-onboarding; legacy credential
+  accounts remain sign-in compatible during cutover.
+- The current uncommitted worktree is an in-progress D0 cleanup that removes
+  Student Number from signup, login copy, normal UI, reports, CSV exports, smoke
+  fixtures, and tests while retaining compatibility storage until the approved
+  destructive migration. Do not restore `/api/signup` or Student Number fields.
+- Codex's synchronized additions are limited to recovery/fallback-password
+  guidance and its unit coverage. The copy now states that recovery is available
+  after a fallback password is configured; Google-only sign-in remains valid.
+- Synchronization verification is green from the physical canonical path
+  `D:\Studennnn`: Unit `808/808`, TypeScript, ESLint with zero errors (two
+  warnings), the Next.js Production build, and the dependency release gate.
+  The dependency inventory resolved 87 findings with zero new retired-concept
+  dependencies (`597` blocker, `193` review remaining).
+- The focused Google identity integration passes `3/3` against the isolated
+  Neon QA database. The repository-wide integration command currently does not
+  terminate within ten minutes and must be diagnosed as a separate runner/open
+  handle issue; it is not an Identity assertion failure.
+- Run Vite/Vitest commands from `D:\Studennnn`, not through the junction. Vite
+  resolves the physical path while its cache may retain the junction path,
+  causing false `tests/setup.ts` and `EPERM` failures even though both tools
+  share the same files and Git worktree.
+- Still open: commit the reviewed D0 cleanup as one intentional slice, run
+  authenticated role acceptance, then continue D0.1 teacher-owned optional
+  course labels. Do not begin a second signup architecture without revising
+  ADR-0041.
+
 ## QUIZ PILOT EXPANSION REVIEW — 2026-07-22
 
 - A read-only authenticated Production Teacher check reached the exact pilot CourseOffering Quiz center successfully with no Server error or document-level horizontal overflow.

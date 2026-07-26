@@ -13,7 +13,6 @@ type Member = {
   enrolledAt: Date;
   student: {
     userId: string;
-    studentId: string;
     firstName: string;
     lastName: string;
     user: { profileImageId: string | null };
@@ -49,7 +48,6 @@ export function MembersTable({
       <table className="table">
         <thead>
           <tr>
-            <th>เลขประจำตัว</th>
             <th>ชื่อ-นามสกุล</th>
             <th>เข้าร่วมเมื่อ</th>
             <th className="w-px text-right">การกระทำ</th>
@@ -60,7 +58,6 @@ export function MembersTable({
             const fullName = `${m.student.firstName} ${m.student.lastName}`;
             return (
               <tr key={m.id}>
-                <td className="font-mono text-sm">{m.student.studentId}</td>
                 <td>
                   <div className="flex items-center gap-2.5">
                     <UserAvatar
@@ -80,7 +77,6 @@ export function MembersTable({
                     courseId={courseId}
                     enrollmentId={m.id}
                     studentName={fullName}
-                    studentIdNumber={m.student.studentId}
                   />
                 </td>
               </tr>

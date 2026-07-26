@@ -62,7 +62,10 @@ describe("Teacher score CSV", () => {
 
     expect(csv).toContain("แบบฝึกหัด (เผยแพร่แล้ว / 10)");
     expect(csv).toContain("สอบย่อย (ร่าง / 5)");
-    expect(csv).toContain('"8","4","8","10","80.00",');
+    expect(csv).toContain(
+      '"ธนภัทร","พิลาดี","กำลังเรียน","8","4","8","10","80.00",'
+    );
+    expect(csv).not.toContain('"36901234"');
   });
 });
 
@@ -83,6 +86,9 @@ describe("Teacher attendance CSV", () => {
       ],
     });
 
-    expect(csv).toContain('"2","1","1","0","1","4","5","75.00"');
+    expect(csv).toContain(
+      '"ธนภัทร","พิลาดี","2","1","1","0","1","4","5","75.00"'
+    );
+    expect(csv).not.toContain('"36901234"');
   });
 });

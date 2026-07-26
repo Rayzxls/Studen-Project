@@ -13,7 +13,6 @@ export function buildTeacherScoreCsv(scoreboard: TeacherScoreboard): string {
   );
 
   const headers = [
-    "รหัสนักเรียน",
     "ชื่อ",
     "นามสกุล",
     "สถานะสมาชิก",
@@ -43,7 +42,6 @@ export function buildTeacherScoreCsv(scoreboard: TeacherScoreboard): string {
     const grade = gradeForCourseOffering(scoreboard.items, entries);
 
     return [
-      row.studentId,
       row.firstName,
       row.lastName,
       row.removedAt ? "ออกจากรายวิชาแล้ว" : "กำลังเรียน",
@@ -62,7 +60,6 @@ export function buildTeacherAttendanceCsv(
   summary: TeacherAttendanceSummary
 ): string {
   const headers = [
-    "รหัสนักเรียน",
     "ชื่อ",
     "นามสกุล",
     "มาเรียน",
@@ -88,7 +85,6 @@ export function buildTeacherAttendanceCsv(
         : null;
 
     return [
-      row.student.studentId,
       row.student.firstName,
       row.student.lastName,
       row.counts.PRESENT,

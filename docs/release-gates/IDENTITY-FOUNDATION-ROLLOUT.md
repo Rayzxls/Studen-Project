@@ -1,21 +1,17 @@
 # Identity V2 Foundation Rollout
 
-**Status:** Stage 2A plus these Stage 2B slices are implemented and tested on
-2026-07-24: Teacher Invite issue, Google-first Teacher acceptance, Google-first
-Student onboarding, returning-user sign-in, authenticated-Profile provider
-linking, optional fallback-password setup, the Google ID-token verifier, a
-flag-gated NextAuth Google provider, the login sign-in button, and the
-`/onboarding` page with its signed pending-token handoff and completion action,
-the post-onboarding session handoff that signs a brand-new Student in on a
-single Google click, and the OAuth session-identity fix that carries the real
-database user id into the JWT. The brand-new-user OAuth glue and the
-post-onboarding session are now wired and were verified end to end on the
-isolated QA server with a real Google account and a browser walkthrough.
-Remaining before the feature can be switched on: the broader Stage 2B surfaces
-(password-guarded linking, session revocation, verified-email change, recovery,
-and Deletion Pending) and a final production OAuth credential review.  
-**Production:** unchanged  
-**Runtime:** disabled by default
+**Status:** Identity V2 Stage 2A and Stage 2B are implemented as of 2026-07-26.
+The delivered slices include Google-first Student and Teacher onboarding,
+returning Google sign-in, authenticated-Profile E2 provider linking, optional
+fallback password, session lifetime and revocation, Deletion Pending and both
+Google/credentials recovery, post-window anonymization, Teacher Invite UI,
+transactional email, password recovery, verified-email change, and the Resend
+adapter. Google onboarding and the E2 authorization handoff were browser-checked
+on isolated QA; Production configuration and final authenticated acceptance are
+tracked separately from code completion.
+**Production:** additive schema and runtime configuration must be verified per
+the release checklist; destructive Student Number removal is not approved here.
+**Runtime:** fail-closed behind the Identity foundation flags.
 
 ## Delivered
 
