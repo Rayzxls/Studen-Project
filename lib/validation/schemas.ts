@@ -19,6 +19,16 @@ export const NameSchema = z
   .min(1, "กรุณากรอกข้อมูล")
   .max(100, "ยาวเกินไป");
 
+// Student self-registration with a verified-later email (ADR-0043). Password
+// strength is enforced separately with validatePassword, and the email is
+// normalized to lowercase so uniqueness matches the identity model.
+export const SignupEmailSchema = z.object({
+  email: z.string().trim().toLowerCase().email().max(254),
+  firstName: NameSchema,
+  lastName: NameSchema,
+});
+export type SignupEmailInput = z.infer<typeof SignupEmailSchema>;
+
 // ───── Password reset ─────
 
 export const ChangePasswordSchema = z

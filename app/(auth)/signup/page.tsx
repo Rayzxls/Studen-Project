@@ -1,85 +1,60 @@
-"use client";
-
 import Link from "next/link";
-import { MailCheck, ShieldCheck, UserRound } from "lucide-react";
 
-import {
-  GoogleSignInButton,
-  googleSignInEnabled,
-} from "@/components/auth/google-sign-in-button";
+import { identityFoundationMutationsEnabled } from "@/lib/identity/feature-flags";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
+import { EmailSignupForm } from "@/components/auth/email-signup-form";
 
-const steps = [
-  {
-    icon: MailCheck,
-    title: "ยืนยันอีเมลด้วย Google",
-    detail: "ใช้อีเมลที่ยืนยันแล้วเป็นบัญชีของคุณ",
-  },
-  {
-    icon: UserRound,
-    title: "กรอกชื่อจริงและนามสกุล",
-    detail: "ชื่อที่ใช้ในห้องเรียนไม่จำเป็นต้องตรงกับชื่อ Google",
-  },
-  {
-    icon: ShieldCheck,
-    title: "เลือกเข้าห้องเรียนภายหลัง",
-    detail: "สมัครบัญชีก่อน แล้วค่อยเข้าวิชาด้วยรหัสห้อง",
-  },
-] as const;
+export const dynamic = "force-dynamic";
 
 export default function SignupPage() {
-  const googleEnabled = googleSignInEnabled();
+  const signupEnabled = identityFoundationMutationsEnabled();
+  // Read the public flag directly here: googleSignInEnabled() lives in a
+  // "use client" module and cannot be invoked from this server component.
+  const googleEnabled = process.env.NEXT_PUBLIC_GOOGLE_SIGNIN_ENABLED === "1";
 
   return (
     <div className="animate-fade-in rounded-2xl bg-white p-8 shadow-card">
       <div>
         <p className="text-sm font-medium text-blue-600">บัญชีผู้เรียน</p>
-        <h1 className="mt-1 text-2xl font-semibold text-black">
-          สร้างบัญชีด้วย Google
-        </h1>
+        <h1 className="mt-1 text-2xl font-semibold text-black">สมัครสมาชิก</h1>
         <p className="mt-2 text-sm leading-6 text-black/60">
-          Beagle Classroom ใช้อีเมลที่ยืนยันแล้วเป็นบัญชีของคุณ
-          โดยไม่ผูกบัญชีกับห้องหรือภาคเรียนใดโดยอัตโนมัติ
+          สมัครด้วยอีเมลและรหัสผ่าน แล้วเข้าใช้งานได้ทันที
+          {googleEnabled ? " หรือจะใช้ Google ก็ได้" : ""}
         </p>
       </div>
 
-      <div className="mt-6 space-y-2">
-        {steps.map(({ icon: Icon, title, detail }) => (
-          <div
-            key={title}
-            className="flex items-start gap-3 rounded-xl bg-black/[0.025] px-3 py-3"
-          >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-              <Icon className="h-4 w-4" aria-hidden="true" />
-            </span>
-            <span className="min-w-0">
-              <span className="block text-sm font-medium text-black">
-                {title}
-              </span>
-              <span className="mt-0.5 block text-xs leading-5 text-black/50">
-                {detail}
-              </span>
-            </span>
+      {signupEnabled ? (
+        <>
+          <div className="mt-6">
+            <EmailSignupForm />
           </div>
-        ))}
-      </div>
 
-      <div className="mt-6">
-        {googleEnabled ? (
-          <GoogleSignInButton
-            callbackUrl="/dashboard"
-            label="สมัครและดำเนินการต่อด้วย Google"
-          />
-        ) : (
-          <div className="rounded-xl bg-orange-50 px-3 py-3 text-sm text-orange-800">
-            ระบบสมัครด้วย Google ยังไม่เปิดใช้งาน กรุณาติดต่อผู้ดูแลระบบ
-          </div>
-        )}
-      </div>
-
-      <p className="mt-4 text-center text-xs leading-5 text-black/45">
-        หลังยืนยันกับ Google ระบบจะให้คุณกรอกชื่อจริง นามสกุล
-        และยอมรับนโยบายก่อนสร้างบัญชี
-      </p>
+          {googleEnabled && (
+            <div className="mt-4">
+              <div className="relative my-4 text-center">
+                <span className="relative z-10 bg-white px-3 text-xs text-black/40">
+                  หรือ
+                </span>
+                <span
+                  aria-hidden
+                  className="absolute inset-x-0 top-1/2 border-t border-black/[0.06]"
+                />
+              </div>
+              <GoogleSignInButton
+                callbackUrl="/dashboard"
+                label="สมัครด้วย Google"
+              />
+              <p className="mt-3 text-center text-xs leading-5 text-black/45">
+                ถ้าใช้ Google ระบบจะให้กรอกชื่อจริงและยอมรับนโยบายก่อนสร้างบัญชี
+              </p>
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="mt-6 rounded-xl bg-orange-50 px-3 py-3 text-sm text-orange-800">
+          การสมัครสมาชิกยังไม่เปิดใช้งาน กรุณาติดต่อผู้ดูแลระบบ
+        </div>
+      )}
 
       <div className="mt-5 border-t border-black/[0.06] pt-4 text-center text-sm text-black/60">
         มีบัญชีแล้ว?{" "}
