@@ -10,6 +10,7 @@ import { ArchiveCourseDialog } from "@/components/course/archive-course-dialog";
 import { TimetableEditor } from "@/components/attendance/timetable-editor";
 import { GradeThresholdsCard } from "@/components/scoring/grade-thresholds-card";
 import { teacherCourseTabs } from "../_tabs";
+import { courseLearnerGroup, courseVisualKey } from "@/lib/course/display";
 
 // Auth-gated DB-fetching page — skip static prerender.
 export const dynamic = "force-dynamic";
@@ -68,7 +69,7 @@ export default async function CourseSettingsPage({ params }: PageProps) {
         <ClassCodeCard
           classCode={course.classCode}
           courseName={course.name}
-          className={course.class.name}
+          className={courseLearnerGroup(course) ?? ""}
           appUrl={appUrl}
           canJoin={inviteStatus === "READY"}
           inviteStatus={inviteStatus}
@@ -84,8 +85,8 @@ export default async function CourseSettingsPage({ params }: PageProps) {
           courseId={id}
           courseName={course.name}
           subjectCode={course.subjectCode}
-          classId={course.class.id}
-          className={course.class.name}
+          courseVisualKey={courseVisualKey(course)}
+          className={courseLearnerGroup(course) ?? ""}
           slots={slots}
         />
         <GradeThresholdsCard />

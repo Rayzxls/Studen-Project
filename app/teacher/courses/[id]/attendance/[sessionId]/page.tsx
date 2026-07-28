@@ -53,7 +53,6 @@ export default async function AttendanceGridPage({ params }: PageProps) {
     enrollmentId: r.enrollmentId,
     removed: r.removed,
     studentName: `${r.student.firstName} ${r.student.lastName}`,
-    studentIdNumber: r.student.studentId,
     initialStatus: r.record?.status ?? null,
     initialNote: r.record?.note ?? null,
     editCount: r.record?.editCount ?? 0,

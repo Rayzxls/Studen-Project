@@ -146,10 +146,8 @@ describe("bulkMarkAttendance (ADR-0016)", () => {
     const other = await db.courseOffering.create({
       data: {
         teacherId: ctx.teacherUserId,
-        classId: ctx.classId,
-        termId: ctx.termId,
         name: "Other Course",
-        gradeLevel: "ม.4",
+        learnerGroupLabel: "Other Group",
         creditHours: 1,
         classCode: `TST-OTHER-${Date.now().toString(36)}`,
       },

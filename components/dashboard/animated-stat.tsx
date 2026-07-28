@@ -12,7 +12,7 @@ import { useCountUp, formatCountUp } from "@/lib/hooks/use-count-up";
  * leaf is just the text.
  *
  * Default = integer rendering with th-TH locale grouping. Pass `decimals`
- * to render a fixed-precision decimal (e.g. GPA at decimals=2).
+ * to render a fixed-precision decimal (for example, a course grade).
  */
 export interface AnimatedStatProps {
   /** Final value to count up to. */

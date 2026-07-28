@@ -70,7 +70,6 @@ describe("Teacher report routes", () => {
         {
           enrollmentId: "e1",
           studentUserId: "u1",
-          studentId: "36901234",
           firstName: "Student",
           lastName: "One",
           removedAt: null,

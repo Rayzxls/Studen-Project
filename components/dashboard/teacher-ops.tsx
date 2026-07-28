@@ -44,7 +44,9 @@ export function ReviewQueueBlock({ items }: { items: ReviewQueueItem[] }) {
               href={`/teacher/courses/${it.courseId}/assignments/${it.assignmentId}?filter=pending`}
               title={it.title}
               meta={`${it.courseName} · ห้อง ${it.className}`}
-              leading={<CourseColorChip classId={it.classId} variant="dot" />}
+              leading={
+                <CourseColorChip visualKey={it.courseVisualKey} variant="dot" />
+              }
               trailing={
                 <span className="inline-flex rounded-full bg-orange-50 px-2.5 py-0.5 text-xs font-semibold text-orange-700">
                   {it.pendingCount} ชิ้น
@@ -83,7 +85,9 @@ export function AttendanceTodayBlock({ rows }: { rows: AttendanceTodayRow[] }) {
                   {r.location ? ` · ${r.location}` : ""}
                 </>
               }
-              leading={<CourseColorChip classId={r.classId} variant="dot" />}
+              leading={
+                <CourseColorChip visualKey={r.courseVisualKey} variant="dot" />
+              }
               trailing={<AttendanceStatusBadge row={r} />}
             />
           ))}
@@ -140,7 +144,12 @@ export function ClassHealthBlock({ rows }: { rows: ClassHealthRow[] }) {
                       ` · คะแนนยังไม่ประกาศ ${c.draftScoreItems} รายการ`}
                   </>
                 }
-                leading={<CourseColorChip classId={c.classId} variant="dot" />}
+                leading={
+                  <CourseColorChip
+                    visualKey={c.courseVisualKey}
+                    variant="dot"
+                  />
+                }
                 trailing={
                   <span className="flex items-center gap-2">
                     {c.submitRate !== null && (

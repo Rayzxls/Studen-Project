@@ -22,7 +22,6 @@ export interface AttendanceGridRow {
   removed: boolean;
   student: {
     userId: string;
-    studentId: string;
     firstName: string;
     lastName: string;
   };
@@ -56,7 +55,6 @@ export type AttendanceCounts = Record<AttendanceStatus, number>;
 export interface TeacherAttendanceSummaryRow {
   enrollmentId: string;
   student: {
-    studentId: string;
     firstName: string;
     lastName: string;
   };
@@ -96,7 +94,6 @@ export async function getAttendanceSummaryForTeacher(
         id: true,
         student: {
           select: {
-            studentId: true,
             firstName: true,
             lastName: true,
           },
@@ -174,7 +171,6 @@ export async function getAttendanceGridForTeacher(
       student: {
         select: {
           userId: true,
-          studentId: true,
           firstName: true,
           lastName: true,
         },

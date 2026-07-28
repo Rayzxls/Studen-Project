@@ -7,8 +7,9 @@ import { renderAuditLog } from "@/lib/audit/render";
 import { ResetPasswordCard } from "@/components/admin/reset-password-card";
 import { ResetProfileImageCard } from "@/components/admin/reset-profile-image-card";
 import { UserAvatar } from "@/components/profile/user-avatar";
-import { currentTerm, getStudentStats } from "@/lib/dashboard/queries";
-import { getStudentTermSnapshot } from "@/lib/scoring/queries";
+import { courseLearnerGroup } from "@/lib/course/display";
+import { getStudentStats } from "@/lib/dashboard/queries";
+import { listStudentLearningResults } from "@/lib/scoring/queries";
 import { gradeForCourseOffering } from "@/lib/scoring/calc";
 import { DEFAULT_GRADE_THRESHOLDS } from "@/lib/scoring/constants";
 import { getAttendanceStatsForStudent } from "@/lib/attendance/queries";
@@ -53,19 +54,12 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
           firstName: true,
           lastName: true,
           email: true,
-          homeroomOf: {
-            select: {
-              id: true,
-              name: true,
-              academicYear: { select: { name: true } },
-            },
-          },
           courses: {
-            where: { term: { isActive: true } },
+            where: { archivedAt: null },
             select: {
               id: true,
               name: true,
-              class: { select: { name: true } },
+              learnerGroupLabel: true,
               _count: {
                 select: { enrollments: { where: { removedAt: null } } },
               },
@@ -78,17 +72,9 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
         select: {
           firstName: true,
           lastName: true,
-          studentId: true,
           anonymized: true,
-          class: {
-            select: {
-              id: true,
-              name: true,
-              academicYear: { select: { name: true } },
-            },
-          },
           enrollments: {
-            where: { removedAt: null, course: { term: { isActive: true } } },
+            where: { removedAt: null, course: { archivedAt: null } },
             select: {
               id: true,
               course: {
@@ -106,8 +92,6 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
   });
   if (!user) notFound();
 
-  const term = await currentTerm();
-
   let studentStats = null;
   let courseDetailsList: {
     courseId: string;
@@ -118,59 +102,67 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
     percent: number | null;
   }[] = [];
 
-  if (user.student && term) {
-    const [stats, snapshot] = await Promise.all([
+  if (user.student) {
+    const [stats, learningResults] = await Promise.all([
       getStudentStats(user.id),
-      getStudentTermSnapshot(user.id, term.id),
+      listStudentLearningResults(user.id),
     ]);
     studentStats = stats;
 
-    const detailsPromises = snapshot.rows.map(async (r, i) => {
-      const b = snapshot.bundles[i]!;
-      let thresholds = DEFAULT_GRADE_THRESHOLDS;
-      if (r.gradeRulesJson && Array.isArray(r.gradeRulesJson)) {
-        try {
-          const parsed = [];
-          for (const item of r.gradeRulesJson) {
-            if (
-              item &&
-              typeof item === "object" &&
-              "minPercent" in item &&
-              "grade" in item
-            ) {
-              parsed.push({
-                minPercent: Number(item.minPercent),
-                grade: Number(item.grade),
-              });
+    const detailsPromises = learningResults
+      .filter(
+        (result) =>
+          result.archivedAt === null && result.enrollmentRemovedAt === null
+      )
+      .map(async (result) => {
+        let thresholds = DEFAULT_GRADE_THRESHOLDS;
+        if (result.gradeRulesJson && Array.isArray(result.gradeRulesJson)) {
+          try {
+            const parsed = [];
+            for (const item of result.gradeRulesJson) {
+              if (
+                item &&
+                typeof item === "object" &&
+                "minPercent" in item &&
+                "grade" in item
+              ) {
+                parsed.push({
+                  minPercent: Number(item.minPercent),
+                  grade: Number(item.grade),
+                });
+              }
             }
-          }
-          if (parsed.length > 0) {
-            thresholds = parsed.sort((a, b) => b.minPercent - a.minPercent);
-          }
-        } catch (_) {}
-      }
+            if (parsed.length > 0) {
+              thresholds = parsed.sort((a, b) => b.minPercent - a.minPercent);
+            }
+          } catch (_) {}
+        }
 
-      const res = gradeForCourseOffering(b.items, b.entries, thresholds);
+        const res = gradeForCourseOffering(
+          result.items,
+          result.entries,
+          thresholds
+        );
 
-      const attStats = await getAttendanceStatsForStudent({
-        courseOfferingId: r.courseOfferingId,
-        studentUserId: user.id,
+        const attStats = await getAttendanceStatsForStudent({
+          courseOfferingId: result.courseOfferingId,
+          studentUserId: user.id,
+        });
+
+        const attRate =
+          attStats && attStats.marked > 0
+            ? Math.round((attStats.counts.PRESENT / attStats.marked) * 100)
+            : null;
+
+        return {
+          courseId: result.courseOfferingId,
+          attendanceRate: attRate,
+          marked: attStats?.marked ?? 0,
+          totalSessions: attStats?.totalSessions ?? 0,
+          grade: res.grade,
+          percent: res.percent,
+        };
       });
-
-      const attRate =
-        attStats && attStats.marked > 0
-          ? Math.round((attStats.counts.PRESENT / attStats.marked) * 100)
-          : null;
-
-      return {
-        courseId: r.courseOfferingId,
-        attendanceRate: attRate,
-        marked: attStats?.marked ?? 0,
-        totalSessions: attStats?.totalSessions ?? 0,
-        grade: res.grade,
-        percent: res.percent,
-      };
-    });
 
     courseDetailsList = await Promise.all(detailsPromises);
   }
@@ -337,14 +329,6 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
             <Row label="ชื่อ" value={user.teacher.firstName} />
             <Row label="นามสกุล" value={user.teacher.lastName} />
             <Row
-              label="ครูประจำชั้น"
-              value={
-                user.teacher.homeroomOf
-                  ? `${user.teacher.homeroomOf.name} (ปี ${user.teacher.homeroomOf.academicYear.name})`
-                  : "—"
-              }
-            />
-            <Row
               label="วิชาที่สอน (เทอมปัจจุบัน)"
               value={`${user.teacher.courses.length} วิชา`}
             />
@@ -355,7 +339,8 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
                 <li key={c.id} className="py-2 text-xs">
                   <p className="font-medium text-black">{c.name}</p>
                   <p className="mt-0.5 text-black/50">
-                    ห้อง {c.class.name} · {c._count.enrollments} นักเรียน
+                    {courseLearnerGroup(c) ? `${courseLearnerGroup(c)} · ` : ""}
+                    {c._count.enrollments} นักเรียน
                   </p>
                 </li>
               ))}
@@ -371,17 +356,8 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
             นักเรียน
           </h2>
           <dl className="grid grid-cols-2 gap-3 text-xs">
-            <Row label="รหัสนักเรียน" value={user.student.studentId} mono />
             <Row label="ชื่อ" value={user.student.firstName} />
             <Row label="นามสกุล" value={user.student.lastName} />
-            <Row
-              label="ห้องประจำ"
-              value={
-                user.student.class
-                  ? `${user.student.class.name} (ปี ${user.student.class.academicYear.name})`
-                  : "—"
-              }
-            />
             <Row
               label="วิชาที่ลงทะเบียน (เทอมปัจจุบัน)"
               value={`${user.student.enrollments.length} วิชา`}

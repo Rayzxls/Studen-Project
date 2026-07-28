@@ -101,7 +101,7 @@ const SLOT_TABLE: Record<CourseSlot, CourseSlotColors> = {
 
 /**
  * djb2 hash — small, fast, deterministic. Stable across deploys; sufficient
- * for distributing N classes across 8 slots without runtime cost.
+ * for distributing N courses across 8 slots without runtime cost.
  */
 function hashStringToSlot(input: string): CourseSlot {
   let h = 5381;
@@ -112,14 +112,14 @@ function hashStringToSlot(input: string): CourseSlot {
   return (positive % COURSE_SLOT_COUNT) as CourseSlot;
 }
 
-/** Resolve a class id to its colour slot. */
-export function getCourseSlot(classId: string): CourseSlot {
-  return hashStringToSlot(classId);
+/** Resolve a stable course visual key to its colour slot. */
+export function getCourseSlot(visualKey: string): CourseSlot {
+  return hashStringToSlot(visualKey);
 }
 
-/** Resolve a class id directly to its full colour surfaces. */
-export function getCourseSlotColors(classId: string): CourseSlotColors {
-  return SLOT_TABLE[getCourseSlot(classId)];
+/** Resolve a stable course visual key directly to its colour surfaces. */
+export function getCourseSlotColors(visualKey: string): CourseSlotColors {
+  return SLOT_TABLE[getCourseSlot(visualKey)];
 }
 
 /** Look up colour surfaces by an already-resolved slot. */
@@ -144,7 +144,7 @@ export function getCourseSlotGradient(slot: CourseSlot): string {
   ].join(", ");
 }
 
-/** Resolve gradient mesh directly from a class id. */
-export function getCourseGradientForClass(classId: string): string {
-  return getCourseSlotGradient(getCourseSlot(classId));
+/** Resolve a gradient mesh directly from a stable course visual key. */
+export function getCourseGradientForCourse(visualKey: string): string {
+  return getCourseSlotGradient(getCourseSlot(visualKey));
 }

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BookOpen,
-  ClipboardList,
   LayoutDashboard,
   GraduationCap,
   ScrollText,
@@ -18,10 +17,9 @@ const baseItems = [
   { href: "/admin/dashboard", label: "ภาพรวม", icon: LayoutDashboard },
   { href: "/admin/teachers", label: "ครู", icon: Users },
   { href: "/admin/students", label: "นักเรียน", icon: GraduationCap },
-  { href: "/admin/classes", label: "ห้องเรียนทั้งหมด", icon: BookOpen },
+  { href: "/admin/courses", label: "รายวิชาทั้งหมด", icon: BookOpen },
   { href: "/admin/activity", label: "Activity Review", icon: Activity },
   { href: "/admin/audit", label: "Audit Log", icon: ScrollText },
-  { href: "/admin/setup", label: "ตั้งค่าระบบ", icon: ClipboardList },
   { href: "/profile", label: "โปรไฟล์", icon: UserRound },
 ];
 

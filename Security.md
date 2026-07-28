@@ -8,34 +8,37 @@ Security baseline + PDPA compliance สำหรับ Beagle Classroom
 
 ## 1. Authentication
 
-### Identifiers
+### Identity and sign-in
 
-| Role | Identifier | Source |
-|------|-----------|--------|
-| Admin | email | manual create (seed/db) |
-| Teacher | email | CSV import by Admin |
-| Student | **Student ID** | **Self-register** via `/signup` |
+| Concern | Canonical rule |
+|---|---|
+| Primary sign-in | Google OAuth with a verified email |
+| Product identity | Immutable internal `User.id` |
+| Classroom name | Real first name and last name entered in Beagle onboarding |
+| Student number | Compatibility-only column; never auth input, required profile, relation key, normal UI, or report column |
+| Course context | Joining a course is a separate action using a class code |
 
-### Student Self-Register Flow
+### Learner self-onboarding
 
 ```
-1. Student → /signup
-2. กรอก: Student ID, ชื่อ, นามสกุล, password, confirm
-3. CAPTCHA (Cloudflare Turnstile)
-4. Validate: Student ID format (regex), uniqueness, password policy
-5. Consent: PDPA Privacy Policy checkbox (mandatory)
-6. POST /api/signup
-   - Rate limit: 5 / hour / IP
-   - Create User + Student row
-   - Send notification to Admin (Important audit event)
-   - Auto-login
-7. Redirect → /join (must enter Class Code to access any course)
+1. Learner -> /signup
+2. Continue with Google
+3. Google verifies the email address
+4. Learner enters their real first name and last name in Beagle
+5. Learner accepts the active Terms and Privacy versions
+6. System creates User + Student compatibility profile
+7. Redirect -> /dashboard
+8. Learner joins a course later using its class code
 ```
 
-**Why this is safe (ไม่ใช่ free-for-all):**
-- ใครสมัครก็ได้ **แต่ไม่มี access ห้องเรียนใดๆ** จนกว่าจะมี Class Code
-- Class Code อยู่ในมือครู — เป็น gating mechanism
-- Admin เห็นรายชื่อ student ที่สมัครแต่ไม่ enroll → flag spam ได้
+The account is not bound to a class, homeroom, academic year, or term during
+sign-up. Teacher access uses an invite flow. Admin remains an observer and does
+not create learner identities or academic structure as a prerequisite.
+
+Legacy credential accounts remain sign-in compatible during the migration.
+They must not cause Student Number fields to return to public forms or normal
+product surfaces. Database-column removal requires a separately approved,
+reversible migration after QA confirms no remaining runtime dependencies.
 
 ### Password Policy
 

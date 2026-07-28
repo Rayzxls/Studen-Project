@@ -8,7 +8,6 @@ import { resolveDisplayName } from "@/lib/profile/display-name";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { db } from "@/lib/db/client";
 import { listStudentCourses } from "@/lib/course/enrollment";
-import { currentTerm } from "@/lib/dashboard/queries";
 import {
   getStudentActionCenter,
   getTeacherClassHealth,
@@ -42,6 +41,11 @@ import {
   DashboardSectionHeading,
 } from "@/components/dashboard/operating-shell";
 import { moderationCenterEnabled } from "@/lib/moderation/feature-flags";
+import {
+  courseAcademicPeriod,
+  courseLearnerGroup,
+  courseVisualKey,
+} from "@/lib/course/display";
 
 // Auth-gated DB-fetching page — skip static prerender.
 export const dynamic = "force-dynamic";
@@ -73,14 +77,12 @@ export default async function DashboardPage() {
         select: {
           firstName: true,
           lastName: true,
-          homeroomOf: { select: { name: true } },
         },
       },
       student: {
         select: {
           firstName: true,
           lastName: true,
-          class: { select: { name: true } },
         },
       },
     },
@@ -116,7 +118,6 @@ export default async function DashboardPage() {
             name={name}
             hasAvatar={hasAvatar}
             avatarVersion={user.profileImageId}
-            className={user.student?.class?.name ?? null}
           />
         )}
 
@@ -126,7 +127,6 @@ export default async function DashboardPage() {
             name={name}
             hasAvatar={hasAvatar}
             avatarVersion={user.profileImageId}
-            homeroomName={user.teacher?.homeroomOf?.name ?? null}
           />
         )}
 
@@ -171,13 +171,11 @@ async function StudentDashboard({
   name,
   hasAvatar,
   avatarVersion,
-  className,
 }: {
   session: Session;
   name: string;
   hasAvatar: boolean;
   avatarVersion: string | null;
-  className: string | null;
 }) {
   const [actionCenter, courses] = await Promise.all([
     getStudentActionCenter(session.user.id),
@@ -216,11 +214,6 @@ async function StudentDashboard({
               <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium text-white">
                 นักเรียน
               </span>
-              {className && (
-                <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium text-white">
-                  {className}
-                </span>
-              )}
             </div>
             <div className="flex items-center gap-3">
               <UserAvatar
@@ -300,9 +293,11 @@ async function StudentDashboard({
                         key={e.id}
                         href={`/student/courses/${courseId}`}
                         title={e.course.name}
-                        subtitle={e.course.class.name}
-                        badge={yearLabelFromTerm(e.course.term.name)}
-                        classId={e.course.class.id}
+                        subtitle={courseLearnerGroup(e.course) ?? ""}
+                        badge={yearLabelFromTerm(
+                          courseAcademicPeriod(e.course)
+                        )}
+                        visualKey={courseVisualKey(e.course)}
                         avatarUserId={e.course.teacher.userId}
                         hasAvatar={Boolean(
                           e.course.teacher.user.profileImageId
@@ -374,28 +369,19 @@ async function TeacherDashboard({
   name,
   hasAvatar,
   avatarVersion,
-  homeroomName,
 }: {
   teacherUserId: string;
   name: string;
   hasAvatar: boolean;
   avatarVersion: string | null;
-  homeroomName: string | null;
 }) {
-  const [reviewQueue, classHealth, term] = await Promise.all([
+  const [reviewQueue, classHealth] = await Promise.all([
     getTeacherReviewQueue(teacherUserId),
     getTeacherClassHealth(teacherUserId),
-    currentTerm(),
   ]);
 
   return (
     <>
-      {homeroomName && (
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <span className="badge">ครูประจำชั้น {homeroomName}</span>
-        </div>
-      )}
-
       <TeacherHero
         teacherUserId={teacherUserId}
         name={name}
@@ -438,10 +424,8 @@ async function TeacherDashboard({
                       href={`/teacher/courses/${c.courseId}`}
                       title={c.courseName}
                       subtitle={c.className}
-                      badge={yearLabelFromTerm(
-                        term?.academicYearName ?? term?.name
-                      )}
-                      classId={c.classId}
+                      badge={yearLabelFromTerm(c.academicPeriodLabel)}
+                      visualKey={c.courseVisualKey}
                       avatarUserId={teacherUserId}
                       hasAvatar={hasAvatar}
                       avatarAlt={`ครู ${name}`}

@@ -35,7 +35,6 @@ export default async function AdminCourseMembersPage({ params }: PageProps) {
       <table className="table">
         <thead>
           <tr>
-            <th>เลขประจำตัว</th>
             <th>ชื่อ-นามสกุล</th>
             <th>เข้าร่วมเมื่อ</th>
             <th>จัดการ</th>
@@ -44,7 +43,6 @@ export default async function AdminCourseMembersPage({ params }: PageProps) {
         <tbody>
           {members.map((member) => (
             <tr key={member.id}>
-              <td className="font-mono text-sm">{member.student.studentId}</td>
               <td>
                 <Link
                   href={`/admin/users/${member.student.userId}`}

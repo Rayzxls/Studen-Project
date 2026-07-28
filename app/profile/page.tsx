@@ -104,7 +104,7 @@ export default async function ProfilePage({
     identityFoundationMutationsEnabled() && !hasFallbackPassword;
 
   // An email change is offered only to an account that actually has a verified
-  // email to change (a legacy student authenticating by student number has none).
+  // email to change (some compatibility-era accounts do not have one).
   const offerEmailChange =
     identityFoundationMutationsEnabled() && user.email !== null;
 
@@ -120,8 +120,8 @@ export default async function ProfilePage({
     realName,
     identifier: user.identifier,
   });
-  const identifierLabel =
-    user.role === "STUDENT" ? "เลขประจำตัวนักเรียน" : "อีเมล";
+  const visibleEmail =
+    user.email ?? (user.role === "STUDENT" ? null : user.identifier);
 
   return (
     <div className="min-h-screen bg-bg">
@@ -165,21 +165,25 @@ export default async function ProfilePage({
               />
             </div>
 
-            <dl className="mt-6 grid gap-4 border-t border-black/[0.06] pt-5 sm:grid-cols-2">
+            <dl
+              className={`mt-6 grid gap-4 border-t border-black/[0.06] pt-5 ${
+                visibleEmail ? "sm:grid-cols-2" : ""
+              }`}
+            >
               <div>
                 <dt className="text-xs font-medium text-black/50">
                   ชื่อจริง (แก้ไขไม่ได้)
                 </dt>
                 <dd className="mt-1 text-sm text-black">{realName ?? "—"}</dd>
               </div>
-              <div>
-                <dt className="text-xs font-medium text-black/50">
-                  {identifierLabel} (แก้ไขไม่ได้)
-                </dt>
-                <dd className="mt-1 font-mono text-sm text-black">
-                  {user.identifier}
-                </dd>
-              </div>
+              {visibleEmail && (
+                <div>
+                  <dt className="text-xs font-medium text-black/50">
+                    อีเมลที่ใช้กับบัญชี
+                  </dt>
+                  <dd className="mt-1 text-sm text-black">{visibleEmail}</dd>
+                </div>
+              )}
             </dl>
           </section>
 
@@ -227,10 +231,23 @@ export default async function ProfilePage({
             </h2>
             {offerFallbackSetup ? (
               <>
-                <p className="mt-1 text-xs text-black/50">
-                  คุณเข้าสู่ระบบด้วย Google — ตั้งรหัสผ่านสำรองไว้ (ไม่บังคับ)
-                  เผื่อใช้เข้าระบบเมื่อ Google ใช้ไม่ได้
-                </p>
+                <div className="mt-4 flex gap-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-orange-900">
+                  <TriangleAlert
+                    className="mt-0.5 h-5 w-5 shrink-0 text-orange-600"
+                    aria-hidden="true"
+                  />
+                  <div>
+                    <p className="text-sm font-semibold">
+                      เพิ่มช่องทางสำรองสำหรับบัญชี
+                    </p>
+                    <p className="mt-1 text-xs leading-relaxed text-orange-800">
+                      บัญชีนี้เข้าสู่ระบบด้วย Google และยังไม่มีรหัสผ่านสำรอง
+                      ระบบกู้บัญชีพร้อมใช้งานแล้ว
+                      แต่จะส่งลิงก์กู้รหัสผ่านให้บัญชีที่ตั้งรหัสผ่านสำรองไว้เท่านั้น
+                      คุณยังใช้ Google เข้าสู่ระบบได้ตามปกติ
+                    </p>
+                  </div>
+                </div>
                 <div className="mt-5">
                   <SetFallbackPasswordForm />
                 </div>

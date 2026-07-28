@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   COURSE_SLOT_COUNT,
   colorsForSlot,
-  getCourseGradientForClass,
+  getCourseGradientForCourse,
   getCourseSlot,
   getCourseSlotColors,
   getCourseSlotGradient,
@@ -49,7 +49,7 @@ describe("course-color — colour surfaces", () => {
     }
   });
 
-  it("getCourseSlotColors(classId) matches colorsForSlot(getCourseSlot(classId))", () => {
+  it("getCourseSlotColors(visualKey) matches colorsForSlot(getCourseSlot(visualKey))", () => {
     const id = "math-4A-A8K2";
     expect(getCourseSlotColors(id)).toEqual(colorsForSlot(getCourseSlot(id)));
   });
@@ -70,9 +70,9 @@ describe("course-color — gradient mesh", () => {
     expect(css.split("radial-gradient").length - 1).toBeGreaterThanOrEqual(3);
   });
 
-  it("getCourseGradientForClass uses the same slot resolution", () => {
+  it("getCourseGradientForCourse uses the same slot resolution", () => {
     const id = "abc";
-    expect(getCourseGradientForClass(id)).toBe(
+    expect(getCourseGradientForCourse(id)).toBe(
       getCourseSlotGradient(getCourseSlot(id))
     );
   });

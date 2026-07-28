@@ -19,7 +19,7 @@ function slot(
     courseName: `Course ${id}`,
     subjectCode: null,
     className: "ม.4/1",
-    classId: `class-${id}`,
+    courseVisualKey: `course-${id}`,
     dayOfWeek,
     startTime,
     endTime,

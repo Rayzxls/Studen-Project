@@ -128,7 +128,6 @@ describe("Quiz teacher queries", () => {
             id: "enrollment-1",
             studentId: "student-user-1",
             student: {
-              studentId: "65001",
               firstName: "Ada",
               lastName: "Lovelace",
             },
@@ -137,7 +136,6 @@ describe("Quiz teacher queries", () => {
             id: "enrollment-2",
             studentId: "student-user-2",
             student: {
-              studentId: "65002",
               firstName: "Grace",
               lastName: "Hopper",
             },

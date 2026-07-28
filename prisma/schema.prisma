@@ -459,16 +459,20 @@ model CourseOffering {
   id        String  @id @default(cuid())
   teacherId String
   teacher   Teacher @relation(fields: [teacherId], references: [userId], onDelete: Restrict)
-  classId   String
-  class     Class   @relation(fields: [classId], references: [id], onDelete: Restrict)
-  termId    String
-  term      Term    @relation(fields: [termId], references: [id], onDelete: Restrict)
+  // Legacy school-structure links. New teacher-owned courses do not require
+  // either relation; existing rows keep them during the D0.1 transition.
+  classId   String?
+  class     Class?  @relation(fields: [classId], references: [id], onDelete: Restrict)
+  termId    String?
+  term      Term?   @relation(fields: [termId], references: [id], onDelete: Restrict)
 
   // Workspace fields (teacher-defined) — replaces former Subject FK
-  name        String // "คณิตศาสตร์ ม.4 ครูสมชาย"
-  subjectCode String? // optional teacher-set code for transcript ("MATH-M4")
-  gradeLevel  String // "ม.4" (defaults to class.gradeLevel on create)
-  creditHours Float // หน่วยกิต e.g. 1.5
+  name                String // "คณิตศาสตร์ ม.4 ครูสมชาย"
+  subjectCode         String? // optional teacher-set code for transcript ("MATH-M4")
+  learnerGroupLabel   String? // free text, e.g. "ม.4/3"
+  academicPeriodLabel String? // free text, e.g. "ภาคเรียน 1 ปี 2569"
+  gradeLevel          String? // legacy compatibility only
+  creditHours         Float? // optional display/report metadata
 
   classCode      String    @unique
   codeActive     Boolean   @default(true)
@@ -633,7 +637,7 @@ model ScoreItem {
   quiz       Quiz? // 1:1 reverse — set when source=QUIZ_LINKED (ADR-0036)
 
   @@index([courseOfferingId, position]) // ordered list rendering
-  @@index([courseOfferingId, publishedAt]) // term-GPA completion check
+  @@index([courseOfferingId, publishedAt]) // course result publication lookup
 }
 
 // One row per (Enrollment × ScoreItem). Value stored as Int (whole points).

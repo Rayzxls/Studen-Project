@@ -124,9 +124,6 @@ export default async function AttendanceListPage({ params }: PageProps) {
                             {enrollment.student.firstName}{" "}
                             {enrollment.student.lastName}
                           </p>
-                          <p className="mt-0.5 font-mono text-[10px] text-ink-soft">
-                            {enrollment.student.studentId}
-                          </p>
                         </td>
                         <td className="text-right text-sm font-medium text-green-700">
                           {counts.PRESENT}

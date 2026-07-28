@@ -216,7 +216,7 @@ export function TeacherQuizResults({
                     {student.name}
                   </p>
                   <p className="mt-0.5 text-xs text-ink-mute">
-                    {student.studentCode} · ทำ {student.attemptCount} ครั้ง
+                    ทำ {student.attemptCount} ครั้ง
                   </p>
                 </div>
                 <StudentStatus status={student.status} />

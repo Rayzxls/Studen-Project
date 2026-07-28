@@ -6,9 +6,8 @@ import { createScoreItem, publishScoreItem } from "@/lib/scoring/score-item";
 import { bulkUpsertScoreEntries } from "@/lib/scoring/score-entry";
 import {
   getOwnScoresForStudent,
-  getStudentTermSnapshot,
+  listStudentLearningResults,
 } from "@/lib/scoring/queries";
-import { termGpa } from "@/lib/scoring/term-gpa";
 import { Forbidden, NotFound } from "@/lib/errors";
 import {
   enrollStudent,
@@ -17,8 +16,8 @@ import {
 } from "./_fixtures";
 
 /**
- * Integration tests for the Phase 5 read paths — Pattern 4 (L1 DB-layer
- * projection) and the end-to-end termGpa() pipeline against real Neon.
+ * Integration tests for the Phase 5 read paths: Pattern 4 (L1 DB-layer
+ * projection) and the course-oriented Learning Results projection.
  */
 
 describe("getOwnScoresForStudent — L1 projection (Pattern 4)", () => {
@@ -139,7 +138,7 @@ describe("getOwnScoresForStudent — L1 projection (Pattern 4)", () => {
   });
 });
 
-describe("getStudentTermSnapshot + termGpa — end-to-end pipeline", () => {
+describe("listStudentLearningResults — course-oriented projection", () => {
   let ctx: TestCourseContext;
 
   beforeEach(async () => {
@@ -149,71 +148,62 @@ describe("getStudentTermSnapshot + termGpa — end-to-end pipeline", () => {
     await ctx.cleanup();
   });
 
-  it("produces null GPA when no enrollments in term", async () => {
-    const snapshot = await getStudentTermSnapshot(
-      ctx.studentUserId,
-      ctx.termId
-    );
-    expect(snapshot.rows).toHaveLength(0);
-    const gpa = termGpa(snapshot.bundles);
-    expect(gpa.value).toBeNull();
-    expect(gpa.gradeBearingCourses).toBe(0);
+  it("returns no rows when the student has no course enrollment", async () => {
+    const rows = await listStudentLearningResults(ctx.studentUserId);
+    expect(rows).toHaveLength(0);
   });
 
-  it("produces null GPA when some published-incomplete, computed when complete", async () => {
+  it("returns course metadata and only the requesting student's scores", async () => {
     const enrollment = await enrollStudent(
       ctx.courseOfferingId,
       ctx.studentUserId
     );
-
-    const a = await createScoreItem(
+    const peerEnrollment = await enrollStudent(
+      ctx.courseOfferingId,
+      ctx.otherStudentUserId
+    );
+    await db.courseOffering.update({
+      where: { id: ctx.courseOfferingId },
+      data: {
+        subjectCode: "SCI101",
+        learnerGroupLabel: "ม.4/3",
+        academicPeriodLabel: "ภาคเรียน 1/2569",
+        creditHours: 2,
+      },
+    });
+    const item = await createScoreItem(
       {
         courseOfferingId: ctx.courseOfferingId,
-        name: "Midterm",
-        fullScore: 50,
+        name: "Project",
+        fullScore: 100,
       },
       { actorUserId: ctx.teacherUserId }
     );
-    const b = await createScoreItem(
-      {
-        courseOfferingId: ctx.courseOfferingId,
-        name: "Final",
-        fullScore: 50,
-      },
-      { actorUserId: ctx.teacherUserId }
-    );
-    // Publish only A and enter a value for it. GPA must stay null because B
-    // is still draft.
-    await publishScoreItem(a.id, { actorUserId: ctx.teacherUserId });
+    await publishScoreItem(item.id, { actorUserId: ctx.teacherUserId });
     await bulkUpsertScoreEntries({
-      scoreItemId: a.id,
-      items: [{ enrollmentId: enrollment.id, value: 40 }],
+      scoreItemId: item.id,
+      items: [
+        { enrollmentId: enrollment.id, value: 80 },
+        { enrollmentId: peerEnrollment.id, value: 95 },
+      ],
       actorUserId: ctx.teacherUserId,
       reason: "first marks after publish",
     });
 
-    let snapshot = await getStudentTermSnapshot(ctx.studentUserId, ctx.termId);
-    let gpa = termGpa(snapshot.bundles);
-    expect(gpa.value).toBeNull();
-
-    // Now publish B + enter score, GPA should compute.
-    // ADR-0024 sum-based: Σscore/ΣfullScore × 100 = (40+35)/(50+50) × 100 = 75%
-    // → grade 3.5 (same outcome as old weighted formula for these equal-fullScore items)
-    await publishScoreItem(b.id, { actorUserId: ctx.teacherUserId });
-    await bulkUpsertScoreEntries({
-      scoreItemId: b.id,
-      items: [{ enrollmentId: enrollment.id, value: 35 }],
-      actorUserId: ctx.teacherUserId,
-      reason: "first marks after publish",
+    const rows = await listStudentLearningResults(ctx.studentUserId);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      courseOfferingId: ctx.courseOfferingId,
+      subjectCode: "SCI101",
+      learnerGroupLabel: "ม.4/3",
+      academicPeriodLabel: "ภาคเรียน 1/2569",
+      creditHours: 2,
+      enrollmentRemovedAt: null,
     });
-
-    snapshot = await getStudentTermSnapshot(ctx.studentUserId, ctx.termId);
-    gpa = termGpa(snapshot.bundles);
-    // Single course, 1 credit hour, grade 3.5 → GPA 3.5
-    expect(gpa.value).toBe(3.5);
+    expect(rows[0]!.entries).toEqual([{ scoreItemId: item.id, value: 80 }]);
   });
 
-  it("excludes a removed enrollment from GPA + completion (Q4 lock)", async () => {
+  it("keeps a removed enrollment in history when it has a score", async () => {
     const enrollment = await enrollStudent(
       ctx.courseOfferingId,
       ctx.studentUserId
@@ -240,47 +230,23 @@ describe("getStudentTermSnapshot + termGpa — end-to-end pipeline", () => {
       data: { removedAt: new Date(), removedById: ctx.teacherUserId },
     });
 
-    const snapshot = await getStudentTermSnapshot(
-      ctx.studentUserId,
-      ctx.termId
-    );
-    expect(snapshot.rows).toHaveLength(0);
-    const gpa = termGpa(snapshot.bundles);
-    expect(gpa.value).toBeNull();
-    expect(gpa.gradeBearingCourses).toBe(0);
+    const rows = await listStudentLearningResults(ctx.studentUserId);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.enrollmentRemovedAt).toBeInstanceOf(Date);
+    expect(rows[0]!.entries).toEqual([{ scoreItemId: item.id, value: 9 }]);
   });
 
-  it("excludes creditHours=0 course from GPA + completion (Q4 lock)", async () => {
-    // Set the test course to creditHours=0 (e.g. ลูกเสือ).
-    await db.courseOffering.update({
-      where: { id: ctx.courseOfferingId },
-      data: { creditHours: 0 },
-    });
+  it("omits a removed enrollment that has no score history", async () => {
     const enrollment = await enrollStudent(
       ctx.courseOfferingId,
       ctx.studentUserId
     );
-    // Even with an unpublished item, this course shouldn't block completion.
-    await createScoreItem(
-      {
-        courseOfferingId: ctx.courseOfferingId,
-        name: "Conduct",
-        fullScore: 10,
-      },
-      { actorUserId: ctx.teacherUserId }
-    );
+    await db.enrollment.update({
+      where: { id: enrollment.id },
+      data: { removedAt: new Date(), removedById: ctx.teacherUserId },
+    });
 
-    const snapshot = await getStudentTermSnapshot(
-      ctx.studentUserId,
-      ctx.termId
-    );
-    const gpa = termGpa(snapshot.bundles);
-    expect(gpa.value).toBeNull();
-    expect(gpa.gradeBearingCourses).toBe(0); // creditHours=0 excluded
-    expect(gpa.totalCourses).toBe(1);
-
-    // Suppress unused-var lint (enrollment is set up for shape parity even
-    // though we never read it back).
-    void enrollment;
+    const rows = await listStudentLearningResults(ctx.studentUserId);
+    expect(rows).toHaveLength(0);
   });
 });

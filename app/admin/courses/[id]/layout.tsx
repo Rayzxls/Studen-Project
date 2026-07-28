@@ -6,6 +6,7 @@ import { db } from "@/lib/db/client";
 import { TabNav } from "@/components/course/tab-nav";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { adminCourseTabs } from "./_tabs";
+import { courseMetadataParts } from "@/lib/course/display";
 
 export const dynamic = "force-dynamic";
 
@@ -25,10 +26,9 @@ export default async function AdminCourseObserverLayout({
       id: true,
       name: true,
       subjectCode: true,
-      gradeLevel: true,
+      learnerGroupLabel: true,
+      academicPeriodLabel: true,
       creditHours: true,
-      class: { select: { id: true, name: true } },
-      term: { select: { name: true } },
       teacher: {
         select: {
           userId: true,
@@ -45,9 +45,9 @@ export default async function AdminCourseObserverLayout({
   return (
     <div className="mx-auto max-w-6xl animate-fade-in space-y-6 px-6 py-8 md:px-10">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link href="/admin/classes" className="btn-ghost btn-sm">
+        <Link href="/admin/courses" className="btn-ghost btn-sm">
           <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-          กลับไปห้องเรียนทั้งหมด
+          กลับไปรายวิชาทั้งหมด
         </Link>
         <span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-blue-500/10">
           <Eye className="h-3.5 w-3.5" aria-hidden="true" />
@@ -101,11 +101,13 @@ export default async function AdminCourseObserverLayout({
                 {course.name}
               </h1>
               <p className="mt-1 truncate text-sm text-ink-mute">
-                ห้อง {course.class.name} · {course.gradeLevel} ·{" "}
-                {course.creditHours} หน่วยกิต
-                {course.subjectCode ? ` · รหัส ${course.subjectCode}` : ""} ·
-                สอนโดย {course.teacher.firstName} {course.teacher.lastName} ·{" "}
-                {course.term.name}
+                {[
+                  ...courseMetadataParts(course),
+                  course.subjectCode ? `รหัส ${course.subjectCode}` : null,
+                  `สอนโดย ${course.teacher.firstName} ${course.teacher.lastName}`,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
               </p>
             </div>
           </div>

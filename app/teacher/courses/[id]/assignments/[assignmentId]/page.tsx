@@ -119,7 +119,6 @@ export default async function AssignmentReviewWorkspacePage({
               userId: true,
               firstName: true,
               lastName: true,
-              studentId: true,
               user: { select: { profileImageId: true } },
             },
           },
@@ -138,7 +137,6 @@ export default async function AssignmentReviewWorkspacePage({
               userId: true,
               firstName: true,
               lastName: true,
-              studentId: true,
               user: { select: { profileImageId: true } },
             },
           },
@@ -204,7 +202,6 @@ export default async function AssignmentReviewWorkspacePage({
     enrollmentId: string;
     submissionId: string | null;
     name: string;
-    studentId: string;
     studentUserId: string;
     hasAvatar: boolean;
     status: SubmissionStatus;
@@ -224,7 +221,6 @@ export default async function AssignmentReviewWorkspacePage({
       enrollmentId: enr.id,
       submissionId: hasSubmitted && submission ? submission.id : null,
       name: `${enr.student.firstName} ${enr.student.lastName}`,
-      studentId: enr.student.studentId,
       studentUserId: enr.student.userId,
       hasAvatar: enr.student.user.profileImageId !== null,
       status,
@@ -449,9 +445,9 @@ export default async function AssignmentReviewWorkspacePage({
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm text-black">{r.name}</p>
                         <p className="truncate text-[10px] text-black/40">
-                          {r.studentId}
-                          {r.submittedAt &&
-                            ` · ${dateFmt.format(r.submittedAt)}`}
+                          {r.submittedAt
+                            ? dateFmt.format(r.submittedAt)
+                            : "ยังไม่ส่งงาน"}
                         </p>
                       </div>
                       <span
@@ -517,9 +513,6 @@ export default async function AssignmentReviewWorkspacePage({
                         <h2 className="truncate text-base font-semibold text-black">
                           {activeRow.name}
                         </h2>
-                        <p className="text-xs text-black/45">
-                          เลขประจำตัว {activeRow.studentId}
-                        </p>
                       </div>
                     </div>
                     <span

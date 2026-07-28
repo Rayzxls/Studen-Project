@@ -83,6 +83,7 @@ describe("Prisma Google sign-in resolution", () => {
       lastName: "ใจดี",
       sessionVersion: 0,
       requiresConsentRefresh: false,
+      requiresRecovery: false,
     });
 
     const identity = await db.authIdentity.findFirstOrThrow({

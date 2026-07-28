@@ -23,17 +23,8 @@ export function formatPercent(value: number | null): string {
   return `${trimmed}%`;
 }
 
-/**
- * Format a Term GPA value with exactly 2 decimals, or "—" when null.
- *
- *   3.752 → "3.75"
- *   4     → "4.00"
- *   null  → "—"
- *
- * Always 2 decimals (no trim) — Thai school transcripts show "4.00",
- * not "4". This is the contract `/student/terms` renders.
- */
-export function formatGpa(value: number | null): string {
+/** Format a single-course grade with exactly 2 decimals. */
+export function formatGradeValue(value: number | null): string {
   if (value === null || !Number.isFinite(value)) return "—";
   return value.toFixed(2);
 }

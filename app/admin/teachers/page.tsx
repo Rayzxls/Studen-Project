@@ -142,7 +142,6 @@ export default async function AdminTeachersPage({ searchParams }: PageProps) {
               <tr>
                 <th>ชื่อ-นามสกุล</th>
                 <th>อีเมล</th>
-                <th>ครูประจำชั้น</th>
                 <th>วิชาที่สอน</th>
                 <th>สมาชิกตั้งแต่</th>
                 <th>สถานะ</th>
@@ -166,13 +165,6 @@ export default async function AdminTeachersPage({ searchParams }: PageProps) {
                     </Link>
                   </td>
                   <td className="text-sm">{t.email}</td>
-                  <td className="text-sm">
-                    {t.homeroomOf ? (
-                      <span className="badge">{t.homeroomOf}</span>
-                    ) : (
-                      <span className="text-ink-soft">—</span>
-                    )}
-                  </td>
                   <td className="text-sm">{t.courseCount}</td>
                   <td className="text-xs text-ink-soft whitespace-nowrap">
                     {dateFmt.format(t.createdAt)}

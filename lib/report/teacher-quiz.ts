@@ -3,7 +3,6 @@ import { buildCsv } from "@/lib/report/csv";
 
 export function buildTeacherQuizCsv(result: TeacherQuizResultsView): string {
   const studentHeaders = [
-    "รหัสนักเรียน",
     "ชื่อ-นามสกุล",
     "สถานะ",
     "จำนวนครั้ง",
@@ -28,7 +27,6 @@ export function buildTeacherQuizCsv(result: TeacherQuizResultsView): string {
           : "ไม่ผ่าน";
 
     return [
-      student.studentCode,
       student.name,
       studentStatusLabel(student.status),
       student.attemptCount,

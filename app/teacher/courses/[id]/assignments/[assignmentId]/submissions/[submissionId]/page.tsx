@@ -59,7 +59,6 @@ export default async function TeacherSubmissionDetailPage({
               userId: true,
               firstName: true,
               lastName: true,
-              studentId: true,
               user: { select: { profileImageId: true } },
             },
           },
@@ -137,8 +136,7 @@ export default async function TeacherSubmissionDetailPage({
               {fullName}
             </h1>
             <p className="mt-1 text-xs text-black/50">
-              เลขประจำตัว {submission.enrollment.student.studentId} ·{" "}
-              <code className="text-[11px]">{submission.status}</code>
+              สถานะ <code className="text-[11px]">{submission.status}</code>
             </p>
           </div>
         </div>

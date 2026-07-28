@@ -6,17 +6,14 @@ import {
 
 export interface StudentListParams {
   search?: string;
-  classId?: string;
   page?: number;
   pageSize?: number;
 }
 
 export interface StudentListItem {
   userId: string;
-  studentId: string;
   firstName: string;
   lastName: string;
-  className: string | null;
   accountStatus: AccountStatus;
   createdAt: Date;
   hasAvatar: boolean;
@@ -47,13 +44,11 @@ export async function listStudents(
   const where = {
     user: { deletedAt: null },
     anonymized: false,
-    ...(params.classId ? { classId: params.classId } : {}),
     ...(search
       ? {
           OR: [
             { firstName: { contains: search, mode: "insensitive" as const } },
             { lastName: { contains: search, mode: "insensitive" as const } },
-            { studentId: { contains: search } },
           ],
         }
       : {}),
@@ -63,19 +58,17 @@ export async function listStudents(
     db.student.count({ where }),
     db.student.findMany({
       where,
-      orderBy: [{ studentId: "asc" }],
+      orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
       skip,
       take: pageSize,
       select: {
         userId: true,
-        studentId: true,
         firstName: true,
         lastName: true,
         anonymized: true,
         user: {
           select: { isActive: true, createdAt: true, profileImageId: true },
         },
-        class: { select: { name: true } },
         _count: { select: { enrollments: true } },
       },
     }),
@@ -84,10 +77,8 @@ export async function listStudents(
   return {
     items: students.map((s) => ({
       userId: s.userId,
-      studentId: s.studentId,
       firstName: s.firstName,
       lastName: s.lastName,
-      className: s.class?.name ?? null,
       accountStatus: deriveLegacyAccountStatus({
         isActive: s.user.isActive,
         deletedAt: null,

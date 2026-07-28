@@ -94,7 +94,6 @@ export type AuditEvent =
   | "CLASS_CREATED"
   | "CLASS_UPDATED"
   | "CLASS_DELETED"
-  | "HOMEROOM_ASSIGNED" // Important · before/after `{teacherId, classId}`
   | "TEACHER_CREATED_SINGLE" // Important · single-add path distinct from CSV_IMPORT (which is bulk)
   | "PASSWORD_RESET_BY_ADMIN" // Important · generated temp password is NOT logged (CLAUDE.md hard rule)
   | "ACCOUNT_SUSPENDED" // Critical · access closes; lifecycle event stores the user-facing message

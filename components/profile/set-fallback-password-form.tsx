@@ -40,8 +40,8 @@ export function SetFallbackPasswordForm() {
       )}
       {state.ok && (
         <p className="rounded-lg bg-green-50 px-3 py-2 text-xs text-green-700">
-          ตั้งรหัสผ่านสำรองเรียบร้อยแล้ว — ใช้เข้าสู่ระบบได้เมื่อ Google
-          ใช้ไม่ได้
+          ตั้งรหัสผ่านสำรองเรียบร้อยแล้ว — ตอนนี้เข้าสู่ระบบด้วยอีเมลและใช้ระบบ
+          กู้รหัสผ่านได้แล้ว
         </p>
       )}
 

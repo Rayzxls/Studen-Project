@@ -125,10 +125,8 @@ describe("bulkUpsertScoreEntries — pre-publish", () => {
     const otherCourse = await db.courseOffering.create({
       data: {
         teacherId: ctx.teacherUserId,
-        classId: ctx.classId,
-        termId: ctx.termId,
         name: `Other ${ctx.prefix}`,
-        gradeLevel: "ม.4",
+        learnerGroupLabel: "Other Group",
         creditHours: 1,
         classCode: `TST${ctx.prefix.slice(-4).toUpperCase()}-OTHER`,
       },

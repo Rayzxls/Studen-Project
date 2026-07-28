@@ -11,6 +11,11 @@ import {
   CourseShowcaseEmpty,
 } from "@/components/dashboard/primitives";
 import { TeacherCourseCardMenu } from "@/components/course/course-card-menu";
+import {
+  courseAcademicPeriod,
+  courseLearnerGroup,
+  courseVisualKey,
+} from "@/lib/course/display";
 
 export const dynamic = "force-dynamic";
 
@@ -85,9 +90,9 @@ export default async function TeacherCoursesPage() {
                   key={c.id}
                   href={`/teacher/courses/${c.id}`}
                   title={c.name}
-                  subtitle={c.class.name}
-                  badge={yearLabelFromTerm(c.term.name)}
-                  classId={c.class.id}
+                  subtitle={courseLearnerGroup(c) ?? ""}
+                  badge={courseAcademicPeriod(c) ?? undefined}
+                  visualKey={courseVisualKey(c)}
                   avatarUserId={session.user.id}
                   hasAvatar={hasAvatar}
                   avatarAlt={`ครู ${c.teacher.firstName} ${c.teacher.lastName}`}
@@ -97,7 +102,7 @@ export default async function TeacherCoursesPage() {
                   noticeTone={c.codeActive ? "success" : "muted"}
                   stats={[
                     { value: c._count.enrollments, label: "นักเรียน" },
-                    { value: c.creditHours, label: "หน่วยกิต" },
+                    { value: c._count.assignments, label: "งาน" },
                     { value: c.codeActive ? "เปิด" : "ปิด", label: "รับเข้า" },
                   ]}
                   actionLabel="ดูข้อมูล"
@@ -118,9 +123,4 @@ export default async function TeacherCoursesPage() {
       <StudentBottomNav role="teacher" />
     </div>
   );
-}
-
-function yearLabelFromTerm(termName: string): string {
-  const year = termName.match(/\d{4}/)?.[0];
-  return year ? `ปี ${year}` : termName;
 }

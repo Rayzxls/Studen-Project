@@ -5,73 +5,6 @@ import { db } from "@/lib/db/client";
  * Workspace model (ADR-0012): no Subject template — courses are teacher-owned.
  */
 
-export async function getActiveAcademicYear() {
-  return db.academicYear.findFirst({
-    where: { isActive: true },
-    select: { id: true, name: true },
-  });
-}
-
-export async function getClassesByYear(academicYearId: string) {
-  return db.class.findMany({
-    where: { academicYearId },
-    orderBy: { name: "asc" },
-    select: {
-      id: true,
-      name: true,
-      gradeLevel: true,
-    },
-  });
-}
-
-export async function getTermsByYear(academicYearId: string) {
-  return db.term.findMany({
-    where: { academicYearId },
-    orderBy: { number: "asc" },
-    select: {
-      id: true,
-      name: true,
-      number: true,
-      isActive: true,
-    },
-  });
-}
-
-/**
- * Teacher's most-used class IDs (top 5, by recency of CourseOffering creation).
- * Used to suggest "frequently used" classes in ClassPicker.
- */
-export async function getTeacherRecentClassIds(
-  teacherUserId: string,
-  limit = 5
-): Promise<string[]> {
-  const courses = await db.courseOffering.findMany({
-    where: { teacherId: teacherUserId, archivedAt: null },
-    orderBy: { createdAt: "desc" },
-    select: { classId: true },
-    take: 30,
-  });
-  const seen = new Set<string>();
-  const result: string[] = [];
-  for (const c of courses) {
-    if (seen.has(c.classId)) continue;
-    seen.add(c.classId);
-    result.push(c.classId);
-    if (result.length >= limit) break;
-  }
-  return result;
-}
-
-export async function getTeacherHomeroomClassId(
-  teacherUserId: string
-): Promise<string | null> {
-  const t = await db.teacher.findUnique({
-    where: { userId: teacherUserId },
-    select: { homeroomOfId: true },
-  });
-  return t?.homeroomOfId ?? null;
-}
-
 export async function getCourseOfferingForTeacher(
   courseOfferingId: string,
   teacherUserId: string
@@ -82,14 +15,13 @@ export async function getCourseOfferingForTeacher(
       id: true,
       name: true,
       subjectCode: true,
-      gradeLevel: true,
+      learnerGroupLabel: true,
+      academicPeriodLabel: true,
       creditHours: true,
       classCode: true,
       codeActive: true,
       codeExpiresAt: true,
       createdAt: true,
-      class: { select: { id: true, name: true } },
-      term: { select: { name: true } },
       teacher: {
         select: {
           userId: true,
@@ -105,7 +37,6 @@ export async function getCourseOfferingForTeacher(
           enrolledAt: true,
           student: {
             select: {
-              studentId: true,
               firstName: true,
               lastName: true,
             },
@@ -143,11 +74,10 @@ export async function getCourseOfferingForStudent(
       id: true,
       name: true,
       subjectCode: true,
-      gradeLevel: true,
+      learnerGroupLabel: true,
+      academicPeriodLabel: true,
       creditHours: true,
       createdAt: true,
-      class: { select: { id: true, name: true } },
-      term: { select: { name: true } },
       teacher: {
         select: {
           userId: true,

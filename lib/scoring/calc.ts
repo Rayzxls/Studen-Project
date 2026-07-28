@@ -99,8 +99,8 @@ export function gradeFor(
  *   - the CourseOffering has 0 ScoreItems (teacher hasn't set up scoring), OR
  *   - publish is incomplete (`publishedItems < totalItems`)
  *
- * The null contract feeds `termGpa()`: any null collapses Term GPA to
- * null per CONTEXT § Term GPA / Decision 2.4.
+ * The null contract keeps an incomplete CourseOffering grade distinct
+ * from a completed course result. Results are never aggregated across courses.
  *
  * When complete, `percent` and `grade` are both finite.
  */

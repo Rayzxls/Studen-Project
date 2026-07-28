@@ -8,13 +8,12 @@
  * audit-trailing every per-surface findMany.
  *
  * Behavior by role:
- *   STUDENT  → active enrollments in active-term courses
- *   TEACHER  → owned courses in active term
+ *   STUDENT  → active enrollments in active courses
+ *   TEACHER  → owned active courses
  *   ADMIN    → throws Forbidden (no User Feed surface in Phase 7)
  *
- * Cross-term scope is intentional active-term-only per Q11.2 = a:
- * historical terms surface through the existing Phase 5 transcript
- * route, not via the User Feed.
+ * Archived courses remain available through their explicit course routes,
+ * but do not enter the current user feed.
  */
 
 import { db } from "@/lib/db/client";
@@ -34,7 +33,7 @@ export async function getCourseScopeForUser(
       where: {
         studentId: session.user.id,
         removedAt: null,
-        course: { archivedAt: null, term: { isActive: true } },
+        course: { archivedAt: null },
       },
       select: { courseOfferingId: true },
     });
@@ -48,7 +47,6 @@ export async function getCourseScopeForUser(
       where: {
         teacherId: session.user.id,
         archivedAt: null,
-        term: { isActive: true },
       },
       select: { id: true },
     });

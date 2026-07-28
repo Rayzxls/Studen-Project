@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
-import { currentTerm } from "@/lib/dashboard/queries";
+import { courseLearnerGroup } from "@/lib/course/display";
 
 /**
  * Admin Activity Review — `/admin/activity`.
@@ -33,7 +33,7 @@ import { currentTerm } from "@/lib/dashboard/queries";
 export const dynamic = "force-dynamic";
 
 type ActivityType = "assignment" | "material" | "announcement" | "course";
-type RangeKey = "7d" | "30d" | "term" | "all";
+type RangeKey = "7d" | "30d" | "all";
 
 const TYPE_META: Record<
   ActivityType,
@@ -64,7 +64,6 @@ const TYPE_META: Record<
 const RANGE_LABEL: Record<RangeKey, string> = {
   "7d": "7 วันล่าสุด",
   "30d": "30 วันล่าสุด",
-  term: "เทอมนี้",
   all: "ทั้งหมด",
 };
 
@@ -104,24 +103,14 @@ export default async function AdminActivityPage({ searchParams }: PageProps) {
   ).includes(sp.type as ActivityType)
     ? (sp.type as ActivityType)
     : "all";
-  const range: RangeKey = (["7d", "30d", "term", "all"] as const).includes(
+  const range: RangeKey = (["7d", "30d", "all"] as const).includes(
     sp.range as RangeKey
   )
     ? (sp.range as RangeKey)
     : "30d";
   const courseId = sp.courseId?.trim() || null;
 
-  const term = await currentTerm();
-
-  // Resolve the time floor for the selected range.
-  let since: Date | null = rangeFloor(range);
-  if (range === "term" && term) {
-    const t = await db.term.findUnique({
-      where: { id: term.id },
-      select: { startDate: true },
-    });
-    since = t?.startDate ?? null;
-  }
+  const since = rangeFloor(range);
 
   const PER_TYPE_CAP = 40;
   const courseWhere = courseId ? { courseOfferingId: courseId } : {};
@@ -146,7 +135,7 @@ export default async function AdminActivityPage({ searchParams }: PageProps) {
                 select: {
                   id: true,
                   name: true,
-                  class: { select: { name: true } },
+                  learnerGroupLabel: true,
                   teacher: { select: { firstName: true, lastName: true } },
                 },
               },
@@ -170,7 +159,7 @@ export default async function AdminActivityPage({ searchParams }: PageProps) {
                 select: {
                   id: true,
                   name: true,
-                  class: { select: { name: true } },
+                  learnerGroupLabel: true,
                   teacher: { select: { firstName: true, lastName: true } },
                 },
               },
@@ -195,7 +184,7 @@ export default async function AdminActivityPage({ searchParams }: PageProps) {
                 select: {
                   id: true,
                   name: true,
-                  class: { select: { name: true } },
+                  learnerGroupLabel: true,
                   teacher: { select: { firstName: true, lastName: true } },
                 },
               },
@@ -214,19 +203,19 @@ export default async function AdminActivityPage({ searchParams }: PageProps) {
               id: true,
               name: true,
               createdAt: true,
-              class: { select: { name: true } },
+              learnerGroupLabel: true,
               teacher: { select: { firstName: true, lastName: true } },
             },
           })
         : Promise.resolve([]),
-      // Course filter options — active term first, then everything else.
+      // Course filter options are independent of academic terms.
       db.courseOffering.findMany({
         orderBy: [{ createdAt: "desc" }],
         take: 200,
         select: {
           id: true,
           name: true,
-          class: { select: { name: true } },
+          learnerGroupLabel: true,
         },
       }),
     ]);
@@ -237,7 +226,7 @@ export default async function AdminActivityPage({ searchParams }: PageProps) {
       type: "assignment" as const,
       title: a.title,
       courseName: a.course.name,
-      className: a.course.class.name,
+      className: courseLearnerGroup(a.course),
       actorName: `${a.course.teacher.firstName} ${a.course.teacher.lastName}`,
       at: a.createdAt,
       href: null,
@@ -247,7 +236,7 @@ export default async function AdminActivityPage({ searchParams }: PageProps) {
       type: "material" as const,
       title: m.title,
       courseName: m.course.name,
-      className: m.course.class.name,
+      className: courseLearnerGroup(m.course),
       actorName: `${m.course.teacher.firstName} ${m.course.teacher.lastName}`,
       at: m.postedAt,
       href: null,
@@ -257,7 +246,7 @@ export default async function AdminActivityPage({ searchParams }: PageProps) {
       type: "announcement" as const,
       title: an.title?.trim() || an.body.slice(0, 80),
       courseName: an.course.name,
-      className: an.course.class.name,
+      className: courseLearnerGroup(an.course),
       actorName: `${an.course.teacher.firstName} ${an.course.teacher.lastName}`,
       at: an.postedAt,
       href: null,
@@ -267,7 +256,7 @@ export default async function AdminActivityPage({ searchParams }: PageProps) {
       type: "course" as const,
       title: c.name,
       courseName: null,
-      className: c.class.name,
+      className: courseLearnerGroup(c),
       actorName: `${c.teacher.firstName} ${c.teacher.lastName}`,
       at: c.createdAt,
       href: null,
@@ -334,7 +323,8 @@ export default async function AdminActivityPage({ searchParams }: PageProps) {
             <option value="">ทุกวิชา</option>
             {courseOptions.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.name} · {c.class.name}
+                {c.name}
+                {courseLearnerGroup(c) ? ` · ${courseLearnerGroup(c)}` : ""}
               </option>
             ))}
           </select>

@@ -5,19 +5,17 @@ import {
   BookOpen,
   ScrollText,
   Upload,
-  Settings2,
   Activity,
   AlertTriangle,
   KeyRound,
 } from "lucide-react";
-import { getAdminStats, currentTerm } from "@/lib/dashboard/queries";
+import { getAdminStats } from "@/lib/dashboard/queries";
 import { ActionRow, MetricTile } from "@/components/dashboard/primitives";
 
 // Auth-gated DB-fetching page — skip static prerender.
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
-  const term = await currentTerm();
   const stats = await getAdminStats();
 
   // Operational alerts — short, actionable, never a feed (CONTEXT decision:
@@ -31,14 +29,6 @@ export default async function AdminDashboardPage() {
       text: `มีเหตุการณ์ระดับ Critical ${stats.criticalAuditsLast7d} รายการใน 7 วันล่าสุด`,
       href: "/admin/audit?tier=CRITICAL",
       label: "เปิด Audit Log",
-    });
-  }
-  if (!term) {
-    alerts.push({
-      key: "no-term",
-      text: "ยังไม่ได้ตั้งภาคเรียนปัจจุบัน — ครูจะยังสร้างวิชาไม่ได้",
-      href: "/admin/setup",
-      label: "ตั้งค่าโครงสร้าง",
     });
   }
   if (stats.teacherCount === 0) {
@@ -60,10 +50,7 @@ export default async function AdminDashboardPage() {
           ภาพรวมระบบ
         </h1>
         <p className="mt-1 text-sm text-ink-soft">
-          {term
-            ? `ปีการศึกษา ${term.academicYearName} · ${term.name}`
-            : "ยังไม่ได้ตั้งภาคเรียนปัจจุบัน"}{" "}
-          · {stats.classCount} ห้องเรียน · {stats.teacherCount} ครู ·{" "}
+          {stats.courseCount} วิชาที่ใช้งานอยู่ · {stats.teacherCount} ครู ·{" "}
           {stats.studentCount} นักเรียน
         </p>
       </div>
@@ -119,9 +106,10 @@ export default async function AdminDashboardPage() {
         />
         <MetricTile
           icon={BookOpen}
-          label="ห้องเรียน (ปีปัจจุบัน)"
-          value={stats.classCount}
-          suffix="ห้อง"
+          label="วิชาที่ใช้งานอยู่"
+          value={stats.courseCount}
+          suffix="วิชา"
+          href="/admin/courses"
         />
         <MetricTile
           icon={ScrollText}
@@ -143,12 +131,6 @@ export default async function AdminDashboardPage() {
             งานผู้ดูแล
           </h2>
           <div className="-mx-3 mt-2">
-            <ActionRow
-              href="/admin/setup"
-              title="ตั้งค่าโครงสร้าง"
-              meta="ปีการศึกษา · ภาคเรียน · ห้องเรียน · เพิ่มครูรายคน"
-              leading={<IconChip icon={<Settings2 className="h-4 w-4" />} />}
-            />
             <ActionRow
               href="/admin/import/teachers"
               title="นำเข้าครูจาก CSV"

@@ -58,3 +58,23 @@ The largest blocker groups are structured `Class`/`classId` dependencies (105),
 aggregation (87), and Admin-managed `AcademicYear` (69). The 240 review
 findings are intentionally separate because many `studentId` symbols represent
 an internal relation to `User.id`, not the retired human Student Number.
+
+## Current Reviewed Baseline
+
+The completed D0 and D0.1 runtime slices reviewed on 2026-07-29 reduce the
+inventory to:
+
+| Class | Findings |
+| --- | ---: |
+| Blocker | 140 |
+| Review | 142 |
+| Total | 282 |
+
+This is still a compatibility baseline, not the strict exit gate. Remaining
+academic-structure blockers are limited to the nullable Prisma compatibility
+schema (`AcademicYear`, `Class`, `gradeLevel`, and `Term`). The remaining
+identity blockers cover legacy temporary-password/display-name compatibility
+and the retained Student Number storage field. Most `studentId` review findings
+are internal relations to `User.id`, not the retired human Student Number.
+Baseline updates require a reviewed reduction or an explicit compatibility
+bridge; they must never hide a new product dependency.

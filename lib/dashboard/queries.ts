@@ -17,6 +17,7 @@
  */
 
 import { db } from "@/lib/db/client";
+import { courseLearnerGroup } from "@/lib/course/display";
 import { SubmissionStatus } from "@prisma/client";
 
 // ─────────────────────────────────────────────────────────────
@@ -24,41 +25,14 @@ import { SubmissionStatus } from "@prisma/client";
 // ─────────────────────────────────────────────────────────────
 
 /**
- * The currently-active Term for the school. Returns `null` if the
- * school hasn't set up any active term yet (pre-seed state) — callers
- * render an empty-state in that case rather than crashing.
+ * Dashboard metrics are scoped to active standalone courses.
  */
-export async function currentTerm(): Promise<{
-  id: string;
-  name: string;
-  number: number;
-  academicYearName: string;
-} | null> {
-  const t = await db.term.findFirst({
-    where: { isActive: true },
-    select: {
-      id: true,
-      name: true,
-      number: true,
-      academicYear: { select: { name: true } },
-    },
-    orderBy: [{ academicYear: { name: "desc" } }, { number: "desc" }],
-  });
-  if (!t) return null;
-  return {
-    id: t.id,
-    name: t.name,
-    number: t.number,
-    academicYearName: t.academicYear.name,
-  };
-}
-
 // ─────────────────────────────────────────────────────────────
 // Teacher dashboard KPIs
 // ─────────────────────────────────────────────────────────────
 
 export interface TeacherStats {
-  /** CourseOfferings the teacher is teaching THIS term. */
+  /** Active CourseOfferings taught by the teacher. */
   courseCount: number;
   /** Distinct active enrollments across all of those courses. */
   studentCount: number;
@@ -70,26 +44,16 @@ export interface TeacherStats {
 
 /**
  * Teacher dashboard KPI bundle — Pattern-matched to Father's StatCard
- * grid. Single batched read against active term so the page can render
+ * grid. Single batched read against active courses so the page can render
  * in one Server Component pass.
  *
- * Returns zeros when there is no current term (pre-seed state) so the
- * caller can render empty hero cards without branching.
+ * Returns zeros when the teacher has no active courses.
  */
 export async function getTeacherStats(
   teacherUserId: string
 ): Promise<TeacherStats> {
-  const term = await currentTerm();
-  if (!term) {
-    return {
-      courseCount: 0,
-      studentCount: 0,
-      ungradedSubmissions: 0,
-      weeklyTeachingMinutes: 0,
-    };
-  }
   const courses = await db.courseOffering.findMany({
-    where: { teacherId: teacherUserId, termId: term.id, archivedAt: null },
+    where: { teacherId: teacherUserId, archivedAt: null },
     select: {
       id: true,
       _count: { select: { enrollments: { where: { removedAt: null } } } },
@@ -134,9 +98,9 @@ export async function getTeacherStats(
 // ─────────────────────────────────────────────────────────────
 
 export interface StudentStats {
-  /** Active enrollments in the current term. */
+  /** Active enrollments in active courses. */
   courseCount: number;
-  /** Aggregate attendance % across all current-term enrollments
+  /** Aggregate attendance % across all active enrollments
    *  (= attended / marked × 100), null when no marked sessions. */
   attendanceRate: number | null;
   /** Assignments with `dueAt` in the future whose own Submission is
@@ -147,15 +111,11 @@ export interface StudentStats {
 export async function getStudentStats(
   studentUserId: string
 ): Promise<StudentStats> {
-  const term = await currentTerm();
-  if (!term) {
-    return { courseCount: 0, attendanceRate: null, pendingAssignments: 0 };
-  }
   const enrollments = await db.enrollment.findMany({
     where: {
       studentId: studentUserId,
       removedAt: null,
-      course: { termId: term.id, archivedAt: null },
+      course: { archivedAt: null },
     },
     select: { id: true, courseOfferingId: true },
   });
@@ -218,11 +178,11 @@ export async function getStudentStats(
 export interface TodayClass {
   /** CourseOffering id — link target for the row. */
   courseId: string;
-  /** Class id — drives course identity colour via getCourseSlot(). */
-  classId: string;
+  /** Stable key that drives the course identity colour. */
+  courseVisualKey: string;
   /** Display name of the CourseOffering ("คณิตศาสตร์"). */
   courseName: string;
-  /** Display name of the homeroom ("ม.4/2"). */
+  /** Teacher-provided learner group label ("ม.4/2"). */
   className: string;
   /** "HH:mm" start. */
   startTime: string;
@@ -233,25 +193,23 @@ export interface TodayClass {
 }
 
 /**
- * Today's timetable rows for a teacher's CourseOfferings in the active
- * Term. Reads TimetableSlot only (no Session materialization required) —
+ * Today's timetable rows for a teacher's active CourseOfferings.
+ * Reads TimetableSlot only (no Session materialization required) —
  * the dashboard hero just shows the planned timetable for today regardless
  * of whether the teacher has opened a Session yet.
  *
- * Returns [] when there's no current Term or no slots today.
+ * Returns [] when there are no slots today.
  */
 export async function getTeacherTodaySchedule(
   teacherUserId: string,
   now: Date = new Date()
 ): Promise<TodayClass[]> {
-  const term = await currentTerm();
-  if (!term) return [];
   const dayOfWeek = now.getDay();
 
   const slots = await db.timetableSlot.findMany({
     where: {
       dayOfWeek,
-      course: { teacherId: teacherUserId, termId: term.id, archivedAt: null },
+      course: { teacherId: teacherUserId, archivedAt: null },
     },
     orderBy: { startTime: "asc" },
     select: {
@@ -262,7 +220,7 @@ export async function getTeacherTodaySchedule(
         select: {
           id: true,
           name: true,
-          class: { select: { id: true, name: true } },
+          learnerGroupLabel: true,
         },
       },
     },
@@ -270,9 +228,9 @@ export async function getTeacherTodaySchedule(
 
   return slots.map((s) => ({
     courseId: s.course.id,
-    classId: s.course.class.id,
+    courseVisualKey: s.course.id,
     courseName: s.course.name,
-    className: s.course.class.name,
+    className: courseLearnerGroup(s.course) ?? "",
     startTime: s.startTime,
     endTime: s.endTime,
     location: s.location,
@@ -288,15 +246,12 @@ export async function getStudentTodaySchedule(
   studentUserId: string,
   now: Date = new Date()
 ): Promise<TodayClass[]> {
-  const term = await currentTerm();
-  if (!term) return [];
   const dayOfWeek = now.getDay();
 
   const slots = await db.timetableSlot.findMany({
     where: {
       dayOfWeek,
       course: {
-        termId: term.id,
         archivedAt: null,
         enrollments: { some: { studentId: studentUserId, removedAt: null } },
       },
@@ -310,7 +265,7 @@ export async function getStudentTodaySchedule(
         select: {
           id: true,
           name: true,
-          class: { select: { id: true, name: true } },
+          learnerGroupLabel: true,
         },
       },
     },
@@ -318,9 +273,9 @@ export async function getStudentTodaySchedule(
 
   return slots.map((s) => ({
     courseId: s.course.id,
-    classId: s.course.class.id,
+    courseVisualKey: s.course.id,
     courseName: s.course.name,
-    className: s.course.class.name,
+    className: courseLearnerGroup(s.course) ?? "",
     startTime: s.startTime,
     endTime: s.endTime,
     location: s.location,
@@ -332,8 +287,8 @@ export async function getStudentTodaySchedule(
 // ─────────────────────────────────────────────────────────────
 
 export interface AdminStats {
-  /** Distinct Classes (homerooms) of the active AcademicYear. */
-  classCount: number;
+  /** Active Teacher-owned CourseOfferings visible to Admin Observer. */
+  courseCount: number;
   /** Total Teacher rows whose User account has not been soft-deleted. */
   teacherCount: number;
   /** Total Student rows whose identity is active and not anonymized. */
@@ -344,22 +299,10 @@ export interface AdminStats {
 }
 
 export async function getAdminStats(): Promise<AdminStats> {
-  const term = await currentTerm();
-  const academicYearId = term
-    ? (
-        await db.term.findUnique({
-          where: { id: term.id },
-          select: { academicYearId: true },
-        })
-      )?.academicYearId
-    : null;
-
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const [classCount, teacherCount, studentCount, criticalAuditsLast7d] =
+  const [courseCount, teacherCount, studentCount, criticalAuditsLast7d] =
     await Promise.all([
-      academicYearId
-        ? db.class.count({ where: { academicYearId } })
-        : Promise.resolve(0),
+      db.courseOffering.count({ where: { archivedAt: null } }),
       db.teacher.count({ where: { user: { deletedAt: null } } }),
       db.student.count({
         where: { anonymized: false, user: { deletedAt: null } },
@@ -383,7 +326,7 @@ export async function getAdminStats(): Promise<AdminStats> {
     ]);
 
   return {
-    classCount,
+    courseCount,
     teacherCount,
     studentCount,
     criticalAuditsLast7d,

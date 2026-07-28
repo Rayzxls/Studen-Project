@@ -4,6 +4,10 @@ import { ChevronLeft } from "lucide-react";
 import type { Role } from "@prisma/client";
 import { TopNav } from "@/components/layout/top-nav";
 import { UserAvatar } from "@/components/profile/user-avatar";
+import {
+  courseAcademicPeriod,
+  courseMetadataParts,
+} from "@/lib/course/display";
 import { TabNav, type CourseTab } from "./tab-nav";
 
 /**
@@ -13,7 +17,7 @@ import { TabNav, type CourseTab } from "./tab-nav";
  * and moved the tab bar out of the hero so the hero stays "just a hero".
  *
  *   - <TopNav> (shared, sticky frosted)
- *   - course context bar (back link + term name)
+ *   - course context bar (back link + optional academic-period label)
  *   - .card-hero (banner + content zone with course title)
  *   - <TabNav> underline bar below the hero
  *   - children
@@ -24,12 +28,12 @@ import { TabNav, type CourseTab } from "./tab-nav";
  */
 export type CourseShellProps = {
   course: {
+    id: string;
     name: string;
     subjectCode: string | null;
-    gradeLevel: string;
-    creditHours: number;
-    class: { id: string; name: string };
-    term: { name: string };
+    learnerGroupLabel?: string | null;
+    academicPeriodLabel?: string | null;
+    creditHours: number | null;
     teacher: {
       userId: string;
       firstName: string;
@@ -55,6 +59,9 @@ export function CourseShell({
   session,
   children,
 }: CourseShellProps) {
+  const period = courseAcademicPeriod(course);
+  const metadata = courseMetadataParts(course);
+
   return (
     <div className="min-h-screen bg-bg">
       <TopNav session={session} maxWidth="max-w-[1480px]" />
@@ -65,7 +72,7 @@ export function CourseShell({
             <ChevronLeft className="h-4 w-4" />
             กลับ
           </Link>
-          <span className="text-xs text-black/60">{course.term.name}</span>
+          {period && <span className="text-xs text-ink-mute">{period}</span>}
         </div>
       </div>
 
@@ -122,17 +129,17 @@ export function CourseShell({
                 />
               </span>
               <div className="min-w-0 flex-1 pb-1 pt-4">
-                <h1
-                  className="truncate text-2xl font-semibold text-ink md:text-3xl"
-                  style={{ letterSpacing: "-0.03em" }}
-                >
+                <h1 className="truncate text-2xl font-semibold text-ink md:text-3xl">
                   {course.name}
                 </h1>
                 <p className="mt-1 truncate text-sm text-ink-mute">
-                  ห้อง {course.class.name} · {course.gradeLevel} ·{" "}
-                  {course.creditHours} หน่วยกิต
-                  {course.subjectCode ? ` · รหัส ${course.subjectCode}` : ""} ·
-                  สอนโดย {course.teacher.firstName} {course.teacher.lastName}
+                  {[
+                    ...metadata,
+                    course.subjectCode ? `รหัส ${course.subjectCode}` : null,
+                    `สอนโดย ${course.teacher.firstName} ${course.teacher.lastName}`,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
                 </p>
               </div>
             </div>

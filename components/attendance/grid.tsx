@@ -34,7 +34,6 @@ export type GridStudentRow = {
   enrollmentId: string;
   removed: boolean;
   studentName: string;
-  studentIdNumber: string;
   initialStatus: AttendanceStatus | null;
   initialNote: string | null;
   editCount: number;
@@ -383,9 +382,6 @@ function StudentCard({
               </span>
             )}
           </p>
-          <p className="text-xs text-black/40 font-mono">
-            {row.studentIdNumber}
-          </p>
         </div>
       </div>
       <StatusButtons status={status} disabled={disabled} onStatus={onStatus} />
@@ -434,7 +430,6 @@ function StudentRow({
             </span>
           )}
         </p>
-        <p className="text-xs text-black/40 font-mono">{row.studentIdNumber}</p>
       </td>
       <td className="py-2 px-2">
         <StatusButtons

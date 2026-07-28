@@ -9,6 +9,7 @@
  */
 
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 import { assertIsolatedTestDatabase } from "@/tests/helpers/database-safety";
 
 assertIsolatedTestDatabase();
@@ -160,7 +161,12 @@ async function testLoginEachRole() {
       role: "TEACHER",
       label: "ครู",
     },
-    { id: "60001", pw: "Student1234", role: "STUDENT", label: "นักเรียน" },
+    {
+      id: "student@studennnn.local",
+      pw: "Student1234",
+      role: "STUDENT",
+      label: "นักเรียน",
+    },
   ];
 
   for (const c of cases) {
@@ -232,127 +238,21 @@ async function testRateLimitLockout() {
     .catch(() => {});
 }
 
-async function testStudentSignup() {
-  console.log("\n🎓 Student self-register");
-
-  const newId = `8${Math.floor(Math.random() * 100000)
-    .toString()
-    .padStart(5, "0")}`;
-
-  const r1 = await fetch(`${BASE}/api/signup`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      studentId: newId,
-      firstName: "Smoke",
-      lastName: "Test",
-      password: "smokepass1234",
-      confirmPassword: "smokepass1234",
-      consent: true,
-      turnstileToken: "dummy-dev-token",
-    }),
-  });
-  await expect(
-    `POST /api/signup new student ${newId} → 201`,
-    r1.status === 201,
-    `got ${r1.status}: ${await r1.text()}`
-  );
-
-  // Verify user in DB
-  const user = await db.user.findUnique({
-    where: { identifier: newId },
-    include: { student: true },
-  });
-  await expect(
-    "User created in DB with STUDENT role",
-    user?.role === "STUDENT" && user.student?.studentId === newId,
-    JSON.stringify(user, null, 2)
-  );
-
-  // Duplicate signup → 409
-  const r2 = await fetch(`${BASE}/api/signup`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      studentId: newId,
-      firstName: "Smoke",
-      lastName: "Test",
-      password: "smokepass1234",
-      confirmPassword: "smokepass1234",
-      consent: true,
-      turnstileToken: "dummy-dev-token",
-    }),
-  });
-  await expect(
-    "Duplicate studentId → 409",
-    r2.status === 409,
-    `got ${r2.status}`
-  );
-
-  // Now login with the new student
-  const cookie = await signin(newId, "smokepass1234");
-  await expect(
-    `Login as newly-registered student ${newId}`,
-    !!cookie,
-    "could not login after signup"
-  );
-
-  // Cleanup
-  if (user) {
-    await db.auditLog.deleteMany({ where: { actorId: user.id } });
-    await db.student.delete({ where: { userId: user.id } });
-    await db.user.delete({ where: { id: user.id } });
-  }
-}
-
-async function testSignupValidation() {
-  console.log("\n✏️  Signup validation");
-
-  const bad = await fetch(`${BASE}/api/signup`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      studentId: "abc",
-      firstName: "",
-      lastName: "X",
-      password: "short",
-      confirmPassword: "different",
-      consent: false,
-      turnstileToken: "",
-    }),
-  });
-  await expect("Invalid signup → 400", bad.status === 400, `got ${bad.status}`);
-
-  const body = (await bad.json()) as {
-    error: { code: string; details: Record<string, string> };
-  };
-  await expect(
-    "Returns validation_error code",
-    body.error.code === "validation_error",
-    body.error.code
-  );
-  await expect(
-    "Reports per-field errors",
-    Object.keys(body.error.details).length > 0,
-    JSON.stringify(body.error.details)
-  );
-}
-
 async function testForceResetRedirect() {
   console.log("\n🔄 Force reset password flow");
 
-  // Set student 60001 to mustResetPwd=true
+  // Exercise the forced-reset compatibility flow.
   await db.user.update({
-    where: { identifier: "60001" },
-    data: { mustResetPwd: true },
+    where: { identifier: "student@studennnn.local" },
+    data: { mustResetPwd: true }, // dependency-gate-allow(temporary-password): explicitly exercises the remaining compatibility redirect
   });
 
-  const cookie = await signin("60001", "Student1234");
+  const cookie = await signin("student@studennnn.local", "Student1234");
   await expect("Login with mustResetPwd=true succeeds", !!cookie, "no cookie");
   if (!cookie) {
     // Reset and abort
     await db.user.update({
-      where: { identifier: "60001" },
+      where: { identifier: "student@studennnn.local" },
       data: { mustResetPwd: false },
     });
     return;
@@ -382,7 +282,7 @@ async function testForceResetRedirect() {
 
   // Cleanup
   await db.user.update({
-    where: { identifier: "60001" },
+    where: { identifier: "student@studennnn.local" },
     data: { mustResetPwd: false },
   });
 }
@@ -404,30 +304,34 @@ async function testPhase2Join() {
     return;
   }
 
-  // Use a unique signup student so we don't conflict
-  const newId = `7${Math.floor(Math.random() * 100000)
-    .toString()
-    .padStart(5, "0")}`;
-  const signupRes = await fetch(`${BASE}/api/signup`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      studentId: newId,
+  // Create an isolated verified-email fixture directly in the QA database.
+  // Google OAuth itself is covered separately; this smoke path exercises join.
+  const nonce = `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+  const email = `smoke.join.${nonce}@example.test`;
+  const user = await db.user.create({
+    data: {
+      role: "STUDENT",
+      identifier: email,
+      email,
+      emailVerifiedAt: new Date(),
+      passwordHash: await bcrypt.hash("joinpass1234", 12),
       firstName: "Join",
       lastName: "Test",
-      password: "joinpass1234",
-      confirmPassword: "joinpass1234",
-      consent: true,
-      turnstileToken: "dummy-dev-token",
-    }),
+      consentedAt: new Date(),
+      consentVersion: "2026-07",
+      student: {
+        create: {
+          studentId: `identity-v2-unassigned:${nonce}`, // dependency-gate-allow(student-id-symbol-review): required compatibility placeholder in isolated QA
+          firstName: "Join",
+          lastName: "Test",
+        },
+      },
+    },
+    select: { id: true },
   });
-  await expect(
-    `Create test student ${newId}`,
-    signupRes.status === 201,
-    `signup got ${signupRes.status}`
-  );
+  pass(`Create verified-email test student ${email}`);
 
-  const cookie = await signin(newId, "joinpass1234");
+  const cookie = await signin(email, "joinpass1234");
   await expect("Login as test student", !!cookie, "no cookie");
   if (!cookie) return;
 
@@ -454,10 +358,6 @@ async function testPhase2Join() {
   );
 
   // Verify enrollment row exists
-  const user = await db.user.findUnique({
-    where: { identifier: newId },
-    select: { id: true },
-  });
   if (user) {
     const enrolled = await db.enrollment.findFirst({
       where: { studentId: user.id, courseOfferingId: course.id },
@@ -589,9 +489,9 @@ async function testPhase3CourseTabs() {
   );
   const tMembersBody = await tMembers.text();
   await expect(
-    "Teacher Members shows seed student (60001)",
-    tMembersBody.includes("60001"),
-    "studentId 60001 not rendered for teacher"
+    "Teacher Members shows seeded student name",
+    tMembersBody.includes("ชนากานต์"),
+    "seeded student name is missing"
   );
   await expect(
     "Teacher Members shows remove affordance",
@@ -617,8 +517,8 @@ async function testPhase3CourseTabs() {
     "regen or toggle button missing"
   );
 
-  // ── Student 2 tabs (60001 seeded in MATH4A-DEMO1) ───────────────
-  const studentCookie = await signin("60001", "Student1234");
+  // ── Student tabs (seeded in MATH4A-DEMO1) ───────────────────────
+  const studentCookie = await signin("student@studennnn.local", "Student1234");
   if (!studentCookie) {
     fail("Student login (Phase 3)", "no cookie");
     return;
@@ -651,10 +551,9 @@ async function testPhase3CourseTabs() {
   );
   const sMembersBody = await sMembers.text();
   await expect(
-    "L1: student Members does NOT contain peer studentIds",
-    !sMembersBody.includes("60001") ||
-      sMembersBody.match(/60001/g)!.length === 0,
-    "studentId 60001 found in student Members body (PII leak)"
+    "L1: student Members does NOT expose the account email",
+    !sMembersBody.includes("student@studennnn.local"),
+    "student account email found in student Members body (PII leak)"
   );
 
   // ── Role boundaries ─────────────────────────────────────────────
@@ -679,7 +578,7 @@ async function testPhase3CourseTabs() {
   );
 
   // ── L1 gate: student tries to view another course ───────────────
-  // Create a second course owned by teacher but never joined by 60001.
+  // Create a second course owned by teacher but never joined by the seed student.
   // For smoke purposes we lazily look for any OTHER course in the DB.
   const otherCourse = await db.courseOffering.findFirst({
     where: { id: { not: course.id } },
@@ -797,7 +696,7 @@ async function testPhase4Attendance() {
   );
 
   // ── Student: attendance L1 view ─────────────────────────────────
-  const studentCookie = await signin("60001", "Student1234");
+  const studentCookie = await signin("student@studennnn.local", "Student1234");
   if (!studentCookie) {
     fail("Student login (Phase 4)", "no cookie");
     return;
@@ -873,12 +772,12 @@ async function testPhase4Attendance() {
 }
 
 async function testPhase5Scoring() {
-  console.log("\n📊 Phase 5: scoring + Term GPA + transcript");
+  console.log("\n📊 Phase 5: scoring + per-course learning results");
 
   const demoCode = "MATH4A-DEMO1";
   const course = await db.courseOffering.findUnique({
     where: { classCode: demoCode },
-    select: { id: true, teacherId: true, termId: true },
+    select: { id: true, teacherId: true },
   });
   if (!course) {
     fail(
@@ -911,9 +810,9 @@ async function testPhase5Scoring() {
     "create CTA missing"
   );
   await expect(
-    "Teacher Scores shows Σ weight pill",
-    tScoresBody.includes("Σ น้ำหนัก"),
-    "weight sum pill missing"
+    "Teacher Scores shows total full score",
+    tScoresBody.includes("คะแนนเต็มรวม"),
+    "total full score is missing"
   );
   await expect(
     "Teacher Scores tab is reachable from course shell",
@@ -966,8 +865,8 @@ async function testPhase5Scoring() {
     "GradeThresholdsCard missing from Settings"
   );
 
-  // ── Student: Scores tab + /student/terms ────────────────────────
-  const studentCookie = await signin("60001", "Student1234");
+  // ── Student: Scores tab + course-oriented learning results ─────
+  const studentCookie = await signin("student@studennnn.local", "Student1234");
   if (!studentCookie) {
     fail("Student login (Phase 5)", "no cookie");
     return;
@@ -997,9 +896,9 @@ async function testPhase5Scoring() {
   );
   const sTermsBody = await sTerms.text();
   await expect(
-    "Student /terms shows 'GPA ภาคเรียน' headline",
-    sTermsBody.includes("GPA ภาคเรียน"),
-    "GPA headline missing"
+    "Student /terms shows the learning-results headline",
+    sTermsBody.includes("ผลการเรียนของฉัน"),
+    "learning-results headline missing"
   );
   await expect(
     "Student /terms shows 'Print PDF' button",
@@ -1103,7 +1002,7 @@ async function testPhase6Assignments() {
   );
 
   // ── Student: Assignments tab ────────────────────────────────────
-  const studentCookie = await signin("60001", "Student1234");
+  const studentCookie = await signin("student@studennnn.local", "Student1234");
   if (!studentCookie) {
     fail("Student login (Phase 6)", "no cookie");
     return;
@@ -1209,7 +1108,7 @@ async function testPhase7StorageRoutes() {
 
   // ── Authenticated student → presign for ASSIGNMENT → 403 (cannot
   //    upload to teacher-owned brief) ─────────────────────────────
-  const studentCookie = await signin("60001", "Student1234");
+  const studentCookie = await signin("student@studennnn.local", "Student1234");
   if (!studentCookie) {
     fail("Student login (Phase 7 storage)", "no cookie");
     return;
@@ -1315,7 +1214,7 @@ async function testPhase7Bell() {
   });
 
   // Student dashboard → bell present
-  const studentCookie = await signin("60001", "Student1234");
+  const studentCookie = await signin("student@studennnn.local", "Student1234");
   if (!studentCookie) {
     fail("Student login (Phase 7 bell)", "no cookie");
     return;
@@ -1406,7 +1305,7 @@ async function testPhase7DashboardFeed() {
   const DUE_SOON_HEADER = "ใกล้ส่ง — ภายใน 24 ชั่วโมง";
 
   // Student dashboard → User Feed section present
-  const studentCookie = await signin("60001", "Student1234");
+  const studentCookie = await signin("student@studennnn.local", "Student1234");
   if (!studentCookie) {
     fail("Student login (Phase 7 dashboard feed)", "no cookie");
     return;
@@ -1533,7 +1432,7 @@ async function testPhase7TeacherPostUI() {
   );
 
   // L1 boundary — student must be redirected from teacher routes
-  const studentCookie = await signin("60001", "Student1234");
+  const studentCookie = await signin("student@studennnn.local", "Student1234");
   if (studentCookie) {
     const sMat = await fetch(`${BASE}/teacher/courses/${course.id}/materials`, {
       headers: { cookie: studentCookie },
@@ -1556,7 +1455,7 @@ async function testPhase7StudentPostUI() {
     where: { id: { startsWith: "login:" } },
   });
 
-  const studentCookie = await signin("60001", "Student1234");
+  const studentCookie = await signin("student@studennnn.local", "Student1234");
   if (!studentCookie) {
     fail("Student login (Phase 7 student post UI)", "no cookie");
     return;
@@ -1819,8 +1718,6 @@ async function main() {
   await testProtectedRedirect();
   await testLoginEachRole();
   await testWrongPasswordRejected();
-  await testStudentSignup();
-  await testSignupValidation();
   await testRateLimitLockout();
   await testForceResetRedirect();
   await testPhase2Join();

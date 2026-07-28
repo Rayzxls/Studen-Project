@@ -46,7 +46,7 @@ export async function StudentTodayPanel({
 function Row({ slot }: { slot: TodayClass }) {
   return (
     <li className="flex items-center gap-3 rounded-xl bg-black/[0.02] px-3 py-2.5 transition-colors hover:bg-black/[0.04]">
-      <CourseColorChip classId={slot.classId} variant="marker" />
+      <CourseColorChip visualKey={slot.courseVisualKey} variant="marker" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-black">
           {slot.courseName}

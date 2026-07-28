@@ -94,7 +94,6 @@ export type TeacherQuizResultsView = {
   students: Array<{
     enrollmentId: string;
     studentUserId: string;
-    studentCode: string;
     name: string;
     status: "NOT_STARTED" | "IN_PROGRESS" | "SUBMITTED";
     attemptCount: number;
@@ -444,7 +443,6 @@ export async function getTeacherQuizResults(input: {
               studentId: true,
               student: {
                 select: {
-                  studentId: true,
                   firstName: true,
                   lastName: true,
                 },
@@ -504,7 +502,6 @@ export async function getTeacherQuizResults(input: {
     return {
       enrollmentId: enrollment.id,
       studentUserId: enrollment.studentId,
-      studentCode: enrollment.student.studentId,
       name: `${enrollment.student.firstName} ${enrollment.student.lastName}`.trim(),
       status: active
         ? ("IN_PROGRESS" as const)

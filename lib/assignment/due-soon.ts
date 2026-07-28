@@ -4,7 +4,7 @@
  * CONTEXT § Due Soon Widget:
  *   - Assignment WHERE `dueAt BETWEEN now AND now+24h`
  *     AND own Submission.status ∈ {NOT_SUBMITTED, DRAFT}
- *   - Active enrollment in an active-term course
+ *   - Active enrollment in an active course
  *   - Sort by `dueAt ASC`, max 5 items
  *   - State-derived (not a Notification kind; not a Feed entry — Q9.2
  *     in P7 grill).
@@ -40,12 +40,11 @@ export async function getDueSoonForStudent(
 
   const rows = await db.assignment.findMany({
     where: {
-      // Active enrollment in active-term course (single SQL hop, no
+      // Active enrollment in an active course (single SQL hop, no
       // duplicate scope query — the join filters down to "courses this
       // student belongs to right now").
       course: {
         archivedAt: null,
-        term: { isActive: true },
         enrollments: {
           some: { studentId: studentUserId, removedAt: null },
         },

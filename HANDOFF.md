@@ -1,5 +1,138 @@
 # HANDOFF — Beagle Classroom
 
+## D0.1 COURSE RUNTIME MIGRATION COMPLETE — 2026-07-29 (READ FIRST)
+
+- This entry supersedes the older D0.1 "next slice" notes below. Claude commit
+  `b91a9c1` retired the Admin Academic Year/Term/Class/Homeroom setup surface;
+  the follow-up Codex work completes the runtime migration for dashboards,
+  reports, Learning Results, exports, scoring, timetable, Admin observer
+  aggregates, bootstrap/seed, smoke fixtures, and integration fixtures.
+- Admin observes Teacher-owned CourseOfferings at `/admin/courses`. The
+  obsolete `/admin/classes` observer/detail, term-summary UI, Term GPA/Status
+  modules, and Homeroom behavior are removed.
+- Learning Results is per CourseOffering only: own score total, percentage, and
+  grade for active or archived courses. There is no Term GPA, GPAX, term picker,
+  completion progress, or cross-course aggregate.
+- Course display, color, timetable, and report identity use CourseOffering
+  metadata/identity. Runtime and report queries no longer traverse legacy
+  Class, Term, AcademicYear, or gradeLevel relations.
+- Full unit verification passes `94 files / 792 tests`. Targeted isolated-Neon
+  integration for scoring/results, attendance, session lifecycle, and timetable
+  passes. TypeScript, ESLint, Prisma validation, Production build, and
+  `git diff --check` pass. The repository-wide integration command still has
+  the previously documented runner/open-handle timeout; no assertion failure
+  was reported before timeout.
+- The reviewed dependency baseline is now
+  `140 blocker / 142 review / 282 total`, with zero new retired-concept
+  dependencies and 372 findings resolved in this slice.
+- The remaining 18 academic-structure blockers exist only in nullable Prisma
+  compatibility schema. The rest belong to the separate D1 legacy identity
+  compatibility cleanup; most `studentId` review findings are internal User
+  foreign keys and must not be bulk-renamed.
+- No Production migration, destructive table/foreign-key removal, data reset,
+  or deployment was performed. Schema cleanup requires a separately approved
+  isolated-QA migration plan.
+
+## D0.1 ADMIN SETUP + HOMEROOM RUNTIME RETIREMENT — 2026-07-29 (READ FIRST)
+
+- Claude commit `b91a9c1` removed the retired Admin Academic Year, Term, Class,
+  and Homeroom setup route, actions, navigation, validation, and setup tests.
+  `/admin/classes` remains a temporary read-only compatibility observer until
+  its projection is replaced by a CourseOffering-owned observer.
+- The follow-up Codex slice removes Homeroom and shared Student Class identity
+  from Student/Teacher Dashboard projections, Admin people lists, Admin user
+  details, and the legacy Admin Class detail. Admin Students now searches
+  people directly and no longer filters or displays a school-wide Class.
+- Bootstrap and demo seed no longer assign Teacher Homeroom or Student Class
+  membership. The unused ClassPicker, grade-category helper/tests/styles, old
+  Class lookup helpers, and `cmdk` dependency are removed.
+- Compatibility boundary: Prisma `Class`, `Term`, `AcademicYear`, nullable
+  relations, and historical Audit labels remain readable. Existing
+  CourseOfferings may still fall back to legacy Class/Term labels until every
+  report/query/export is migrated. Do not drop relations or reset Production
+  in this slice.
+- Regression coverage prevents role dashboards, Admin people lists, bootstrap,
+  and seed from reintroducing the retired relations. TypeScript and ESLint pass
+  (zero errors; two unrelated warnings). The dependency release gate resolves
+  129 findings with zero new dependencies; the reviewed baseline is now
+  `462 blocker / 192 review / 654 total`.
+- Next D0.1 slice: replace the remaining Term/Class traversal in dashboards,
+  reports, Learning Results, exports, Admin observer queries, and legacy seed
+  fixtures. Only after the gate proves no runtime/report dependency remains may
+  an approved isolated-QA destructive reset be designed. Production remains
+  untouched.
+
+## D0.1 TEACHER-OWNED COURSE METADATA — 2026-07-26 (READ FIRST)
+
+- The first additive D0.1 compatibility slice is complete on `phase-11`.
+  `CourseOffering` owns optional `learnerGroupLabel` and
+  `academicPeriodLabel`; legacy `classId`, `termId`, `gradeLevel`, and
+  `creditHours` are nullable during the transition.
+- Teacher course creation now requires only a course name. It no longer loads,
+  validates, creates, or upserts Admin-managed Class, Academic Year, or Term
+  records. Learner group, academic period, education level, and credit hours
+  are optional display/report metadata.
+- Existing courses remain readable through one shared compatibility projection:
+  new metadata first, legacy Class/Term fallback second, and no placeholder or
+  zero for omitted optional values. Course cards, shells, dashboards,
+  timetables, enrollment, settings, scoring reads, and Admin observer surfaces
+  use that projection.
+- Migration `20260726010000_add_teacher_owned_course_metadata` is additive and
+  backfills the new labels. It is applied and current only on the isolated Neon
+  QA branch. Production schema/data and destructive legacy-table cleanup were
+  not touched. Admin setup and Homeroom runtime removal were completed in the
+  later 2026-07-29 slices recorded above.
+- Verification: focused unit `7/7`, full unit `815/815`, targeted integration
+  `34/34`, TypeScript, ESLint with zero errors (two pre-existing warnings),
+  Prisma validation/status, dependency release gate, Production build, and
+  `git diff --check` pass. The initial integration attempt exposed intermittent
+  Neon connectivity and Vite cache contention through the junction; rerunning
+  serially from physical path `D:\Studennnn` passed.
+- The next D0.1 slice is the remaining Term/Class runtime/report dependency
+  migration described in the 2026-07-29 entry above. Do not drop legacy
+  relations or reset Production as part of an additive cleanup commit.
+
+## IDENTITY V2 SYNC — 2026-07-26 (READ FIRST)
+
+- Canonical working tree: `D:\Studen Project\repo`, which is the same physical
+  repository as Claude Desktop's `D:\Studennnn`.
+- Identity V2 committed delivery now includes Google-first Student onboarding,
+  email-bound Teacher Invite onboarding, returning Google sign-in, optional
+  fallback password, session lifetime/revocation, Deletion Pending and recovery,
+  post-window anonymization, transactional email, password recovery, verified
+  email change, and the Resend adapter.
+- E2 Link means Existing-account Google linking. Commit `88f6f7b` lets an
+  authenticated password-era account connect a matching verified Google
+  identity from Profile after recent re-authentication. It preserves the current
+  session and never creates a second User.
+- E2 Link is not a separate email/password self-registration path. The current
+  product decision remains Google-first self-onboarding; legacy credential
+  accounts remain sign-in compatible during cutover.
+- The committed D0 cleanup removes Student Number from signup, login copy,
+  normal UI, reports, CSV exports, smoke fixtures, and tests while retaining
+  compatibility storage until the approved destructive migration. Do not
+  restore `/api/signup` or Student Number fields.
+- Codex's synchronized additions are limited to recovery/fallback-password
+  guidance and its unit coverage. The copy now states that recovery is available
+  after a fallback password is configured; Google-only sign-in remains valid.
+- Synchronization verification is green from the physical canonical path
+  `D:\Studennnn`: Unit `808/808`, TypeScript, ESLint with zero errors (two
+  warnings), the Next.js Production build, and the dependency release gate.
+  The dependency inventory resolved 87 findings with zero new retired-concept
+  dependencies (`590` blocker, `193` review remaining after D0.1).
+- The focused Google identity integration passes `3/3` against the isolated
+  Neon QA database. The repository-wide integration command currently does not
+  terminate within ten minutes and must be diagnosed as a separate runner/open
+  handle issue; it is not an Identity assertion failure.
+- Run Vite/Vitest commands from `D:\Studennnn`, not through the junction. Vite
+  resolves the physical path while its cache may retain the junction path,
+  causing false `tests/setup.ts` and `EPERM` failures even though both tools
+  share the same files and Git worktree.
+- Still open after D0.1: authenticated role acceptance for the optional course
+  creation UI, incremental retirement of Admin academic structure, and the
+  separately approved destructive QA reset. Do not begin a second signup
+  architecture without revising ADR-0041.
+
 ## QUIZ PILOT EXPANSION REVIEW — 2026-07-22
 
 - A read-only authenticated Production Teacher check reached the exact pilot CourseOffering Quiz center successfully with no Server error or document-level horizontal overflow.

@@ -97,7 +97,6 @@ const ACTION_LABEL_TH: Record<AuditEvent, string> = {
   CLASS_CREATED: "เพิ่มห้องเรียน",
   CLASS_UPDATED: "แก้ห้องเรียน",
   CLASS_DELETED: "ลบห้องเรียน",
-  HOMEROOM_ASSIGNED: "กำหนดครูประจำชั้น",
   TEACHER_CREATED_SINGLE: "เพิ่มครู (รายคน)",
   PASSWORD_RESET_BY_ADMIN: "Admin รีเซ็ตรหัสผ่าน",
   ACCOUNT_SUSPENDED: "ระงับบัญชีผู้ใช้",

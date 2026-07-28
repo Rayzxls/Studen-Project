@@ -21,10 +21,12 @@ export async function createCourseAction(
   const raw = {
     name: String(formData.get("name") ?? ""),
     subjectCode: String(formData.get("subjectCode") ?? ""),
-    gradeLevel: String(formData.get("gradeLevel") ?? ""),
-    roomName: String(formData.get("roomName") ?? ""),
-    creditHours: Number(formData.get("creditHours") ?? 0),
-    termId: String(formData.get("termId") ?? ""),
+    learnerGroupLabel: String(formData.get("learnerGroupLabel") ?? ""),
+    academicPeriodLabel: String(formData.get("academicPeriodLabel") ?? ""),
+    creditHours:
+      String(formData.get("creditHours") ?? "").trim() === ""
+        ? undefined
+        : Number(formData.get("creditHours")),
   };
 
   const parsed = CreateCourseSchema.safeParse(raw);
@@ -45,10 +47,9 @@ export async function createCourseAction(
       teacherUserId: session.user.id,
       name: parsed.data.name,
       subjectCode: parsed.data.subjectCode || undefined,
-      gradeLevel: parsed.data.gradeLevel,
-      roomName: parsed.data.roomName,
+      learnerGroupLabel: parsed.data.learnerGroupLabel || undefined,
+      academicPeriodLabel: parsed.data.academicPeriodLabel || undefined,
       creditHours: parsed.data.creditHours,
-      termId: parsed.data.termId,
       ipAddress: meta.ipAddress ?? undefined,
       userAgent: meta.userAgent ?? undefined,
     });

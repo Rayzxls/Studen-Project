@@ -62,7 +62,7 @@ This matrix prevents an implemented screen or database field from being mistaken
 - `README.md` now describes the deployed core, sum-based scoring, Calm Ledger v2, current roles, private files, and the active roadmap.
 - `CLAUDE.md` now reflects one-way score publication, `fullScore` scoring, current theme/motion rules, and private R2 delivery.
 - `CONTEXT.md` active domain language now uses Score Total rather than Weighted Total; historical/superseded references remain explicitly labeled.
-- `docs/PROPOSAL.md` now treats course score/grade as primary, Term GPA as a secondary report value, and distinguishes implemented foundations from completeness claims.
+- `docs/PROPOSAL.md` now treats score/percentage/grade per CourseOffering as the complete result contract and explicitly excludes GPA/GPAX or any aggregate across courses.
 - `docs/DEPLOY.md` now records the shared Neon risk, four real R2 variables, private file delivery, and the local-storage/R2 mismatch.
 - `Task.md` is explicitly a historical ledger; `HANDOFF.md` and this roadmap carry current status.
 
@@ -502,12 +502,58 @@ Removal sequence:
 2. Replace Class-derived timetable labels and color keys with CourseOffering identity plus optional learner-group display.
 3. Replace Term/Class traversal in dashboards, reports, Learning Results, course cards, queries, exports, and Admin Observer projections.
 4. Remove Homeroom Teacher behavior and every permission/query path that depends on a shared Class.
-5. Remove Admin setup actions, routes, navigation, validation, audit labels, and tests for Academic Year, Term, Class, and Homeroom Teacher.
+5. Remove Admin setup actions, routes, navigation, validation, and tests for Academic Year, Term, Class, and Homeroom Teacher. Preserve historical Audit rendering labels until retention policy permits old events to disappear.
 6. Verify no runtime or report query reads the retired relations, then drop their foreign keys, models, and seed data in the destructive reset migration.
+
+**D0.1 implementation record (2026-07-26):** the first additive compatibility
+slice is complete in code and on the isolated Neon QA branch. `CourseOffering`
+now owns optional `learnerGroupLabel` and `academicPeriodLabel` values;
+Teacher course creation requires only the course name and never creates or
+looks up hidden Class/Term records. Shared display helpers read optional
+`learnerGroupLabel`, `academicPeriodLabel`, and `creditHours` directly from the
+CourseOffering; empty values render nothing. Teacher/Student course cards,
+course shells, dashboards, timetables, enrollment, settings, scoring reads, and
+Admin observer surfaces no longer traverse legacy Class or Term relations.
+Focused unit `7/7`, full unit `815/815`, targeted integration `34/34`,
+TypeScript, ESLint (zero errors), dependency gate, Prisma validation/status,
+and Production build pass. Migration
+`20260726010000_add_teacher_owned_course_metadata` is applied only to the
+isolated Neon QA branch.
+
+**D0.1 runtime completion update (2026-07-29):** Claude commit `b91a9c1`
+completed the retired Admin setup-surface removal. The following Codex slices
+removed Homeroom and shared Student Class identity from role Dashboards, Admin
+people lists/details, bootstrap, seed behavior, reports, Learning Results,
+exports, timetable projections, scoring queries, Dashboard/Admin aggregate
+queries, and integration fixtures. The Admin observer now uses
+`/admin/courses`; the obsolete Admin Class detail, term-summary UI, Term
+GPA/Status calculation modules, ClassPicker/category stack, and its `cmdk`
+dependency are removed.
+
+Learning Results is now a per-CourseOffering view over active and archived
+courses. It shows only the learner's own score total, percentage, and grade;
+there is no Term GPA, GPAX, term picker, term-completion progress, or
+cross-course aggregate. Runtime display/color identity uses CourseOffering
+metadata and CourseOffering identity rather than Class or Term relations.
+
+Full unit verification passes `94 files / 792 tests`. The dependency release
+gate reports zero new retired-concept dependencies and reduces the reviewed
+baseline from `462 blocker / 192 review / 654 total` to
+`140 blocker / 142 review / 282 total`. The remaining 18 academic-structure
+blockers are nullable Prisma compatibility schema only: `AcademicYear` (7),
+`Class` (5), `gradeLevel` (3), and `Term` (3). The remaining identity blockers
+belong to the separate D1 compatibility cleanup; `studentId` review findings
+are predominantly internal User foreign-key names and must not be bulk-renamed.
+
+Production migration, destructive table/foreign-key cleanup, and data reset
+remain separate unapproved steps. D0.1 runtime migration is complete; schema
+removal may begin only through an explicitly approved isolated-QA migration
+plan. Until then, proceed with the D1 legacy identity compatibility cleanup
+without restoring Student Number or Admin-managed academic structure.
 
 ### D1. Google Login
 
-Architecture decisions: [`ADR-0041`](./adr/0041-google-first-identity-uses-gated-role-onboarding.md) (Google-first identity) and [`ADR-0042`](./adr/0042-transactional-email-uses-a-gated-provider-port.md) (transactional email delivery, unblocking verified-email change and password recovery).
+Architecture decisions: [`ADR-0041`](./adr/0041-google-first-identity-uses-gated-role-onboarding.md) (Google-first identity), [`ADR-0042`](./adr/0042-transactional-email-uses-a-gated-provider-port.md) (transactional email delivery, unblocking verified-email change and password recovery), and [`ADR-0043`](./adr/0043-students-may-self-register-with-email-and-password.md) (email/password student self-registration alongside Google, revising the Google-only student stance of ADR-0041).
 
 - Decision locked 2026-07-24: use Google-first onboarding. A new Student may authenticate with Google, provide real name once, and then return to the same linked User Account on later Google sign-ins without repeating onboarding or supplying a Student Number.
 - Decision locked 2026-07-24: never treat the Google display name as the authoritative Real Name because it may be a nickname or arbitrary text. Every new User must explicitly enter separate real first-name and last-name fields in Beagle Classroom and confirm them before account creation; Google proves ownership of the verified email only.
@@ -543,8 +589,8 @@ Architecture decisions: [`ADR-0041`](./adr/0041-google-first-identity-uses-gated
 **Staged implementation and cutover order:**
 
 1. **Complete 2026-07-24:** Build an executable dependency inventory and release gate before schema edits. The committed baseline now separates retired Student Number blockers from ambiguous internal `studentId` User relations and inventories Class/Term/AcademicYear, identity, report, seed, and test dependencies. See `docs/release-gates/IDENTITY-COURSE-DEPENDENCY-GATE.md`; the initial baseline is 637 blockers and 240 review findings, with zero new dependencies permitted.
-2. **Stage 2A complete 2026-07-24; Stage 2B in progress:** the additive Identity V2 schema/domain foundation is implemented behind fail-closed read/mutation flags. It adds verified-email fields, Google provider-link persistence, Teacher Invite persistence, separate versioned consent records, session-revocation metadata, Real Name history, deterministic Default Avatar policy, and Deletion Pending metadata while retaining legacy login. The migration was applied and verified on isolated Neon QA only; it created no identity rows and changed no existing User status. Stage 2B now supports fail-closed Admin issue/replace/revoke of Teacher Invites plus atomic Google-first Teacher Invite acceptance: User, Teacher, Google identity, exact-version consent, Invite state, and Audit events commit together. Both transaction slices passed isolated-Neon tests and clean up their disposable rows. Google/OIDC assertion verification, routes/UI/email delivery, Student onboarding, existing-account provider linking, session, verified-email change, recovery, and deletion services remain disabled and unfinished. See `docs/release-gates/IDENTITY-FOUNDATION-ROLLOUT.md`.
-3. Add Google-first Student/Teacher onboarding and provisioned-Admin linking. Add optional Fallback Password and email-link recovery. Prove collision, Role, Invite expiry/revoke/resend, session revocation, and minimum-scope behavior before changing the default login.
+2. **Stage 2A and Stage 2B complete in code 2026-07-26:** the additive Identity V2 foundation and application surfaces are implemented behind fail-closed flags. This includes Google-first Student/Teacher onboarding, returning sign-in, Teacher Invite management, E2 existing-account Google linking, optional Fallback Password, transactional email through the Resend adapter, password recovery, verified-email change, session revocation, Deletion Pending/recovery, and anonymization. Isolated-QA evidence is recorded in `docs/release-gates/IDENTITY-FOUNDATION-ROLLOUT.md`; Production configuration and authenticated acceptance remain deployment gates.
+3. Complete D0 product cleanup: remove Student Number from all normal surfaces and reports while preserving only reviewed compatibility storage until the destructive reset migration. Re-run the dependency gate, unit, integration, type, lint, build, and role acceptance before changing the database.
 4. Add optional teacher-owned `learnerGroupLabel`, `academicPeriodLabel`, and optional Credit Hours to CourseOffering. Move Teacher course creation and all reads to CourseOffering-owned metadata while legacy Class/Term relations remain compatibility-only.
 5. Migrate Profile, members, attendance, scores, submissions, reports, exports, notifications, moderation, dashboards, timetable, Admin Observer, Lesson, Quiz, and file permission projections to the new identity and CourseOffering contracts. Remove Student Number and retired academic-setup controls from every visible surface.
 6. Run static and runtime dependency gates proving no authorization, calculation, route, report, seed, or UI requires Student Number, Class, Term, AcademicYear, gradeLevel, Term GPA/GPAX, Display Name, Temporary Password, or Admin-created Teacher Account.
