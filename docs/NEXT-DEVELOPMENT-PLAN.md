@@ -502,7 +502,7 @@ Removal sequence:
 2. Replace Class-derived timetable labels and color keys with CourseOffering identity plus optional learner-group display.
 3. Replace Term/Class traversal in dashboards, reports, Learning Results, course cards, queries, exports, and Admin Observer projections.
 4. Remove Homeroom Teacher behavior and every permission/query path that depends on a shared Class.
-5. Remove Admin setup actions, routes, navigation, validation, audit labels, and tests for Academic Year, Term, Class, and Homeroom Teacher.
+5. Remove Admin setup actions, routes, navigation, validation, and tests for Academic Year, Term, Class, and Homeroom Teacher. Preserve historical Audit rendering labels until retention policy permits old events to disappear.
 6. Verify no runtime or report query reads the retired relations, then drop their foreign keys, models, and seed data in the destructive reset migration.
 
 **D0.1 implementation record (2026-07-26):** the first additive compatibility
@@ -522,9 +522,23 @@ active Term applies. Focused unit `7/7`, full unit `815/815`, targeted
 integration `34/34`, TypeScript, ESLint (zero errors), dependency gate, Prisma
 validation/status, and Production build pass. Migration
 `20260726010000_add_teacher_owned_course_metadata` is applied only to the
-isolated Neon QA branch. Production migration, removal of Admin setup surfaces,
-removal of Homeroom behavior, destructive table/foreign-key cleanup, and the
-data reset remain separate unapproved steps.
+isolated Neon QA branch.
+
+**D0.1 implementation update (2026-07-29):** Claude commit `b91a9c1` completed
+the retired Admin setup-surface removal. The following Codex slice removes
+Homeroom and shared Student Class identity from role Dashboards, Admin people
+lists/details, Admin Class detail, bootstrap, and seed behavior. The unused
+ClassPicker/category stack and its `cmdk` dependency are also removed.
+Historical Audit labels and nullable Prisma compatibility relations remain.
+TypeScript, ESLint, focused regression tests, and the dependency release gate
+pass. The gate resolves 129 findings with zero new dependencies and records a
+reviewed baseline of `462 blocker / 192 review / 654 total`.
+
+Production migration, destructive table/foreign-key cleanup, and the data
+reset remain separate unapproved steps. The next additive slice must replace
+remaining Term/Class traversal in reports, Learning Results, exports,
+Dashboard/Admin aggregate queries, and legacy fixtures before any destructive
+reset design begins.
 
 ### D1. Google Login
 

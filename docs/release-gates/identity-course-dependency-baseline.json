@@ -1,404 +1,14 @@
 {
   "rulesVersion": "2026-07-24.3",
-  "generatedAt": "2026-07-26T04:00:21.491Z",
+  "generatedAt": "2026-07-28T20:12:42.619Z",
   "findings": [
-    {
-      "fingerprint": "a1d7d89ec94f6af31101",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "app/admin/setup/actions.ts",
-      "line": 39,
-      "excerpt": "// AcademicYear",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "d19bba0f6e387a163dd7",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "app/admin/setup/actions.ts",
-      "line": 135,
-      "excerpt": "const academicYearId = String(formData.get(\"academicYearId\") ?? \"\");",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "7bbcd7717efbb4a9ea71",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "app/admin/setup/actions.ts",
-      "line": 140,
-      "excerpt": "if (!academicYearId) return { fieldErrors: { academicYearId: \"เลือกปี\" } };",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "b9813bc2fd0df0ac81e4",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "app/admin/setup/actions.ts",
-      "line": 149,
-      "excerpt": "academicYearId,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "d3fd80acf33c16962679",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "app/admin/setup/actions.ts",
-      "line": 248,
-      "excerpt": "const academicYearId = String(formData.get(\"academicYearId\") ?? \"\");",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "e0540f7a991cd7b1564a",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "app/admin/setup/actions.ts",
-      "line": 254,
-      "excerpt": "if (!academicYearId) return { fieldErrors: { academicYearId: \"เลือกปี\" } };",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "9e8cb50f6b7b35a4de3e",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "app/admin/setup/actions.ts",
-      "line": 257,
-      "excerpt": "{ academicYearId, name, gradeLevel, homeroomTeacherId },",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "05764367c1d88d5324ff",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "components/admin/setup-tabs.tsx",
-      "line": 302,
-      "excerpt": "name=\"academicYearId\"",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "40f828a10baf75698bc8",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "components/admin/setup-tabs.tsx",
-      "line": 453,
-      "excerpt": "name=\"academicYearId\"",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "c69863129d1d0b9bbac7",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 2,
-      "excerpt": "* Admin setup CRUD — AcademicYear / Term / Class management.",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "33758afde2a53744b394",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 15,
-      "excerpt": "* - AcademicYear with any Term → block (`academic_year_has_terms`)",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "1fd36aae6677cac7cdc7",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 16,
-      "excerpt": "* - AcademicYear with any Class → block (`academic_year_has_classes`)",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "a8b229fb448f5f0a1f1b",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 36,
-      "excerpt": "// AcademicYear",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "95f7e85be7cee35785a3",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 76,
-      "excerpt": "targetType: \"AcademicYear\",",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "1f78a716dd8a1c28290c",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 140,
-      "excerpt": "targetType: \"AcademicYear\",",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "42b57fb9ed02c9534df9",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 178,
-      "excerpt": "targetType: \"AcademicYear\",",
-      "occurrence": 3
-    },
-    {
-      "fingerprint": "1c5ef1bac8b8aea2e0b0",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 195,
-      "excerpt": "academicYearId: string;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "dd6a1a7f42d371bf9123",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 219,
-      "excerpt": "where: { id: input.academicYearId },",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "02b4c5ae05f250c21180",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 226,
-      "excerpt": "academicYearId: input.academicYearId,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "a9508f115b21e0c473ae",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 243,
-      "excerpt": "academicYearId: input.academicYearId,",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "5e3ac28e925bf6366c68",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 261,
-      "excerpt": "academicYearId: input.academicYearId,",
-      "occurrence": 3
-    },
-    {
-      "fingerprint": "9ef85990b8fb32ebb706",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 306,
-      "excerpt": "academicYearId: true,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "677674b09248be2ee0c2",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 320,
-      "excerpt": "academicYearId: before.academicYearId,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "db6d3700bd0d2fdcd071",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 348,
-      "excerpt": "academicYearId: true,",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "23716e0acfcbbd8c56e6",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 365,
-      "excerpt": "academicYearId: before.academicYearId,",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "e087cf9124b5d5d59351",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 418,
-      "excerpt": "academicYearId: string;",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "832af1c8545f1adcfa46",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 437,
-      "excerpt": "where: { id: input.academicYearId },",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "c9f5e8fed9fedcd8a0be",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 443,
-      "excerpt": "academicYearId_name: { academicYearId: input.academicYearId, name },",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "781c13b9df12a05f8da6",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 461,
-      "excerpt": "academicYearId: input.academicYearId,",
-      "occurrence": 4
-    },
-    {
-      "fingerprint": "81fbf92cfb34bbd80717",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 495,
-      "excerpt": "after: { name, gradeLevel, academicYearId: input.academicYearId },",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "6a3cb3dea8afb5982f73",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 531,
-      "excerpt": "academicYearId: true,",
-      "occurrence": 3
-    },
-    {
-      "fingerprint": "0da0cb6c5c343ea9b010",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 542,
-      "excerpt": "academicYearId_name: { academicYearId: before.academicYearId, name },",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "4a683888470da39ae605",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 594,
-      "excerpt": "academicYearId: true,",
-      "occurrence": 4
-    },
-    {
-      "fingerprint": "c094194af4bf2584f8ba",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 608,
-      "excerpt": "academicYearId: before.academicYearId,",
-      "occurrence": 3
-    },
-    {
-      "fingerprint": "d9b65aabb4c52a18033e",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/course/queries.ts",
-      "line": 15,
-      "excerpt": "export async function getClassesByYear(academicYearId: string) {",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "73bae45d13316c2ace73",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/course/queries.ts",
-      "line": 17,
-      "excerpt": "where: { academicYearId },",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "38e08233824b536163a4",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/course/queries.ts",
-      "line": 27,
-      "excerpt": "export async function getTermsByYear(academicYearId: string) {",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "fde54094fec887d1997c",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/course/queries.ts",
-      "line": 29,
-      "excerpt": "where: { academicYearId },",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "44288449c556df51b873",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "lib/dashboard/queries.ts",
-      "line": 342,
-      "excerpt": "/** Distinct Classes (homerooms) of the active AcademicYear. */",
-      "occurrence": 1
-    },
     {
       "fingerprint": "c291f101d6ef9e02466d",
       "ruleId": "academic-year-model",
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "lib/dashboard/queries.ts",
-      "line": 355,
+      "line": 352,
       "excerpt": "const academicYearId = term",
       "occurrence": 1
     },
@@ -408,7 +18,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "lib/dashboard/queries.ts",
-      "line": 359,
+      "line": 356,
       "excerpt": "select: { academicYearId: true },",
       "occurrence": 1
     },
@@ -418,7 +28,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "lib/dashboard/queries.ts",
-      "line": 361,
+      "line": 358,
       "excerpt": ")?.academicYearId",
       "occurrence": 1
     },
@@ -428,7 +38,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "lib/dashboard/queries.ts",
-      "line": 367,
+      "line": 364,
       "excerpt": "academicYearId",
       "occurrence": 1
     },
@@ -438,7 +48,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "lib/dashboard/queries.ts",
-      "line": 368,
+      "line": 365,
       "excerpt": "? db.class.count({ where: { academicYearId } })",
       "occurrence": 1
     },
@@ -448,7 +58,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "prisma/bootstrap.ts",
-      "line": 158,
+      "line": 156,
       "excerpt": "academicYearId_number: { academicYearId: year.id, number: t.number },",
       "occurrence": 1
     },
@@ -458,7 +68,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "prisma/bootstrap.ts",
-      "line": 162,
+      "line": 160,
       "excerpt": "academicYearId: year.id,",
       "occurrence": 1
     },
@@ -468,7 +78,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "prisma/bootstrap.ts",
-      "line": 178,
+      "line": 176,
       "excerpt": "where: { academicYearId_name: { academicYearId: year.id, name: c.name } },",
       "occurrence": 1
     },
@@ -478,7 +88,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "prisma/bootstrap.ts",
-      "line": 181,
+      "line": 179,
       "excerpt": "academicYearId: year.id,",
       "occurrence": 2
     },
@@ -723,82 +333,12 @@
       "occurrence": 1
     },
     {
-      "fingerprint": "27f274bae8afc6b57ce5",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "app/admin/students/page.tsx",
-      "line": 12,
-      "excerpt": "classId?: string;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "ea5f2e1de788958c7c96",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "app/admin/students/page.tsx",
-      "line": 20,
-      "excerpt": "const classId = sp.classId ?? \"\";",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "8af25d0af2945124d908",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "app/admin/students/page.tsx",
-      "line": 27,
-      "excerpt": "classId: classId || undefined,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "3456a21e81d8d3e62e19",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "app/admin/students/page.tsx",
-      "line": 68,
-      "excerpt": "<select name=\"classId\" defaultValue={classId} className=\"input\">",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "342f615b16b78c5bf072",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "app/admin/students/page.tsx",
-      "line": 80,
-      "excerpt": "{(search || classId) && (",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "c4b120a653e21e121931",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "app/admin/students/page.tsx",
-      "line": 92,
-      "excerpt": "{search || classId",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "c746bfbb88c5dcb9ecf0",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "app/admin/students/page.tsx",
-      "line": 168,
-      "excerpt": "searchParams={{ search, classId }}",
-      "occurrence": 1
-    },
-    {
       "fingerprint": "f4d2d35e798bcb447c13",
       "ruleId": "class-model",
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "app/dashboard/page.tsx",
-      "line": 312,
+      "line": 301,
       "excerpt": "classId={courseVisualKey(e.course)}",
       "occurrence": 1
     },
@@ -808,7 +348,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "app/dashboard/page.tsx",
-      "line": 451,
+      "line": 432,
       "excerpt": "classId={c.classId}",
       "occurrence": 1
     },
@@ -828,7 +368,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "app/student/timetable/page.tsx",
-      "line": 40,
+      "line": 37,
       "excerpt": "classId: true,",
       "occurrence": 1
     },
@@ -838,7 +378,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "app/student/timetable/page.tsx",
-      "line": 63,
+      "line": 60,
       "excerpt": "classId: courseVisualKey(course),",
       "occurrence": 1
     },
@@ -848,7 +388,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "app/teacher/courses/[id]/settings/page.tsx",
-      "line": 91,
+      "line": 88,
       "excerpt": "classId={courseVisualKey(course)}",
       "occurrence": 1
     },
@@ -868,7 +408,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "app/teacher/timetable/page.tsx",
-      "line": 34,
+      "line": 31,
       "excerpt": "classId: true,",
       "occurrence": 1
     },
@@ -878,7 +418,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "app/teacher/timetable/page.tsx",
-      "line": 55,
+      "line": 52,
       "excerpt": "classId: courseVisualKey(course),",
       "occurrence": 1
     },
@@ -1133,116 +673,6 @@
       "occurrence": 2
     },
     {
-      "fingerprint": "af48815eccea56f1d6b0",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 623,
-      "excerpt": "classId: string,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "2a5f2390b12369a227d1",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 629,
-      "excerpt": "where: { id: classId },",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "8ba3af92469a1e587ad6",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 640,
-      "excerpt": "await tx.class.delete({ where: { id: classId } });",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "939da505010290548995",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 647,
-      "excerpt": "targetId: classId,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "0ec5aec1165008f1df03",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 659,
-      "excerpt": "classId: string,",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "d0f28ce3b2d7add47f97",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 666,
-      "excerpt": "where: { id: classId },",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "b7619b394d81c36ce0bb",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 691,
-      "excerpt": "if (t.homeroomOfId !== null && t.homeroomOfId !== classId) {",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "41136542ee0e6a9daae0",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 696,
-      "excerpt": "data: { homeroomOfId: classId },",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "2cb98b3b588a99177f6f",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 705,
-      "excerpt": "targetId: classId,",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "92bce331e1b87c19cbbb",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "lib/admin/students-list.ts",
-      "line": 9,
-      "excerpt": "classId?: string;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "aecfd4415ff11fbdd0b5",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "lib/admin/students-list.ts",
-      "line": 50,
-      "excerpt": "...(params.classId ? { classId: params.classId } : {}),",
-      "occurrence": 1
-    },
-    {
       "fingerprint": "1c1aaadc707ef72b4d3a",
       "ruleId": "class-model",
       "severity": "blocker",
@@ -1253,62 +683,12 @@
       "occurrence": 1
     },
     {
-      "fingerprint": "03f7c7c86173b03991ae",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "lib/course/queries.ts",
-      "line": 51,
-      "excerpt": "select: { classId: true },",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "6c0e2cdb550fbf9b8e10",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "lib/course/queries.ts",
-      "line": 57,
-      "excerpt": "if (!c.classId) continue;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "5fdc4337b592601dcef9",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "lib/course/queries.ts",
-      "line": 58,
-      "excerpt": "if (seen.has(c.classId)) continue;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "a7214ba77fea0a8f7c01",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "lib/course/queries.ts",
-      "line": 59,
-      "excerpt": "seen.add(c.classId);",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "ca591f70b3e2d806c483",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "lib/course/queries.ts",
-      "line": 60,
-      "excerpt": "result.push(c.classId);",
-      "occurrence": 1
-    },
-    {
       "fingerprint": "852b25ac7fc1466f4d1b",
       "ruleId": "class-model",
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "lib/dashboard/action-center.ts",
-      "line": 212,
+      "line": 209,
       "excerpt": "classId: string;",
       "occurrence": 1
     },
@@ -1318,7 +698,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "lib/dashboard/action-center.ts",
-      "line": 275,
+      "line": 272,
       "excerpt": "classId: courseVisualKey(a.course),",
       "occurrence": 1
     },
@@ -1328,7 +708,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "lib/dashboard/action-center.ts",
-      "line": 293,
+      "line": 290,
       "excerpt": "classId: string;",
       "occurrence": 2
     },
@@ -1338,7 +718,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "lib/dashboard/action-center.ts",
-      "line": 378,
+      "line": 375,
       "excerpt": "classId: courseVisualKey(s.course),",
       "occurrence": 1
     },
@@ -1348,7 +728,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "lib/dashboard/action-center.ts",
-      "line": 401,
+      "line": 398,
       "excerpt": "classId: string;",
       "occurrence": 3
     },
@@ -1358,7 +738,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "lib/dashboard/action-center.ts",
-      "line": 512,
+      "line": 509,
       "excerpt": "classId: courseVisualKey(c),",
       "occurrence": 1
     },
@@ -1368,7 +748,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "lib/dashboard/queries.ts",
-      "line": 221,
+      "line": 218,
       "excerpt": "classId: string;",
       "occurrence": 1
     },
@@ -1378,7 +758,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "lib/dashboard/queries.ts",
-      "line": 276,
+      "line": 273,
       "excerpt": "classId: courseVisualKey(s.course),",
       "occurrence": 1
     },
@@ -1388,7 +768,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "lib/dashboard/queries.ts",
-      "line": 328,
+      "line": 325,
       "excerpt": "classId: courseVisualKey(s.course),",
       "occurrence": 2
     },
@@ -1463,13 +843,13 @@
       "occurrence": 1
     },
     {
-      "fingerprint": "9ac79ba30ca680a149e7",
+      "fingerprint": "40de9bda1f8e342f1873",
       "ruleId": "class-model",
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "prisma/bootstrap.ts",
-      "line": 232,
-      "excerpt": "const classId = classByName.get(s.className);",
+      "line": 243,
+      "excerpt": "const classId = classByName.get(co.className);",
       "occurrence": 1
     },
     {
@@ -1478,7 +858,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "prisma/bootstrap.ts",
-      "line": 233,
+      "line": 249,
       "excerpt": "if (!classId)",
       "occurrence": 1
     },
@@ -1488,39 +868,9 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "prisma/bootstrap.ts",
-      "line": 252,
-      "excerpt": "classId,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "40de9bda1f8e342f1873",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "prisma/bootstrap.ts",
       "line": 265,
-      "excerpt": "const classId = classByName.get(co.className);",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "0d91df2b13e4c0a2ddd1",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "prisma/bootstrap.ts",
-      "line": 271,
-      "excerpt": "if (!classId)",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "2d3aa5c49e953c3bd974",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "prisma/bootstrap.ts",
-      "line": 287,
       "excerpt": "classId,",
-      "occurrence": 2
+      "occurrence": 1
     },
     {
       "fingerprint": "477c54862e368760ebcc",
@@ -1573,22 +923,12 @@
       "occurrence": 1
     },
     {
-      "fingerprint": "523d764d9798e631b0d2",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "prisma/seed.ts",
-      "line": 156,
-      "excerpt": "data: { classId: class402.id },",
-      "occurrence": 1
-    },
-    {
       "fingerprint": "e4a79d180c7359a7dc79",
       "ruleId": "class-model",
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "prisma/seed.ts",
-      "line": 172,
+      "line": 162,
       "excerpt": "classId: class402.id,",
       "occurrence": 1
     },
@@ -1708,7 +1048,7 @@
       "severity": "blocker",
       "description": "Term GPA, GPAX, or cross-course status remains.",
       "path": "app/admin/classes/[id]/page.tsx",
-      "line": 143,
+      "line": 135,
       "excerpt": "// never a Term GPA rollup (CONTEXT § Learning Results: \"เกรด\" = เกรดรายวิชา).",
       "occurrence": 1
     },
@@ -2638,7 +1978,7 @@
       "severity": "blocker",
       "description": "Structured gradeLevel remains.",
       "path": "app/admin/classes/[id]/page.tsx",
-      "line": 265,
+      "line": 257,
       "excerpt": "{cls.gradeLevel} · ปีการศึกษา {cls.academicYear.name}",
       "occurrence": 1
     },
@@ -2713,62 +2053,12 @@
       "occurrence": 1
     },
     {
-      "fingerprint": "95304a4c3a55fe4d6ba3",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "app/admin/setup/actions.ts",
-      "line": 250,
-      "excerpt": "const gradeLevel = String(formData.get(\"gradeLevel\") ?? \"\");",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "7c02f78afeda2a2f4466",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "app/admin/setup/actions.ts",
-      "line": 257,
-      "excerpt": "{ academicYearId, name, gradeLevel, homeroomTeacherId },",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "ff32f1e7afbd219886a5",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "app/admin/setup/actions.ts",
-      "line": 285,
-      "excerpt": "const gradeLevel = String(formData.get(\"gradeLevel\") ?? \"\");",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "dea126075c973cf51fef",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "app/admin/setup/actions.ts",
-      "line": 291,
-      "excerpt": "{ id, name, gradeLevel, homeroomTeacherId },",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "e50f7425578e83843f1b",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "app/admin/setup/page.tsx",
-      "line": 53,
-      "excerpt": "gradeLevel: true,",
-      "occurrence": 1
-    },
-    {
       "fingerprint": "d77b59e12b2fedf87c95",
       "ruleId": "grade-level",
       "severity": "blocker",
       "description": "Structured gradeLevel remains.",
       "path": "app/admin/users/[id]/page.tsx",
-      "line": 72,
+      "line": 65,
       "excerpt": "gradeLevel: true,",
       "occurrence": 1
     },
@@ -2788,7 +2078,7 @@
       "severity": "blocker",
       "description": "Structured gradeLevel remains.",
       "path": "app/student/timetable/page.tsx",
-      "line": 39,
+      "line": 36,
       "excerpt": "gradeLevel: true,",
       "occurrence": 1
     },
@@ -2798,108 +2088,8 @@
       "severity": "blocker",
       "description": "Structured gradeLevel remains.",
       "path": "app/teacher/timetable/page.tsx",
-      "line": 33,
+      "line": 30,
       "excerpt": "gradeLevel: true,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "0fac54c966a26df8e422",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "components/admin/setup-tabs.tsx",
-      "line": 67,
-      "excerpt": "gradeLevel: string;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "8c912d65a1da5db3c4bf",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "components/admin/setup-tabs.tsx",
-      "line": 479,
-      "excerpt": "name=\"gradeLevel\"",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "a20bef47eb94318456fe",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "components/admin/setup-tabs.tsx",
-      "line": 934,
-      "excerpt": "name=\"gradeLevel\"",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "49a2132ed36bd919515c",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "components/admin/setup-tabs.tsx",
-      "line": 936,
-      "excerpt": "defaultValue={cls.gradeLevel}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "a6577bc298eccfcf1208",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "components/admin/setup-tabs.tsx",
-      "line": 969,
-      "excerpt": "{state.fieldErrors?.gradeLevel && (",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "714bd2c16173a32037fd",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "components/admin/setup-tabs.tsx",
-      "line": 971,
-      "excerpt": "{state.fieldErrors.gradeLevel}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "58b174dc694c71897d23",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "components/class-picker.tsx",
-      "line": 16,
-      "excerpt": "gradeLevel: string;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "92f5e642962ba64a8bb3",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "components/class-picker.tsx",
-      "line": 70,
-      "excerpt": "const cat = gradeCategory(c.gradeLevel);",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "31af04da9aab2267fe95",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "components/class-picker.tsx",
-      "line": 141,
-      "excerpt": "value={`recent ${c.name} ${c.gradeLevel}`}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "57d99c87884196beebac",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "components/class-picker.tsx",
-      "line": 164,
-      "excerpt": "value={`${c.name} ${c.gradeLevel} ${cat}`}",
       "occurrence": 1
     },
     {
@@ -2910,166 +2100,6 @@
       "path": "components/course/course-shell.tsx",
       "line": 36,
       "excerpt": "gradeLevel: string | null;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "48119e24532e0df66cd4",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 420,
-      "excerpt": "gradeLevel: string; // \"ม.4\"",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "7bf2ae07d786c2f8f357",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 429,
-      "excerpt": "const gradeLevel = input.gradeLevel.trim();",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "603f008532aa444f6b2b",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 431,
-      "excerpt": "if (gradeLevel.length === 0) {",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "a147ff1a8001ddef6536",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 432,
-      "excerpt": "throw new ValidationError({ gradeLevel: \"ระบุชั้นปี\" });",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "a8f85723f8948f93f293",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 463,
-      "excerpt": "gradeLevel,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "906d9a677b4fccdaf7d2",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 495,
-      "excerpt": "after: { name, gradeLevel, academicYearId: input.academicYearId },",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "92ef1570cee0351e974b",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 508,
-      "excerpt": "gradeLevel: string;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "b6242b150d0d350aaf95",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 518,
-      "excerpt": "const gradeLevel = input.gradeLevel.trim();",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "ac249826a5b9cd3a46dc",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 521,
-      "excerpt": "if (gradeLevel.length === 0) {",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "aaed367c67bafff2282f",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 522,
-      "excerpt": "throw new ValidationError({ gradeLevel: \"ระบุชั้นปี\" });",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "9fcf9aa3824b9bbcf004",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 533,
-      "excerpt": "gradeLevel: true,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "9228369023eee3e32b10",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 591,
-      "excerpt": "data: { name, gradeLevel },",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "4b1d84e13c6de1271e70",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 596,
-      "excerpt": "gradeLevel: true,",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "f5c4e41c9b66038101bb",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 610,
-      "excerpt": "gradeLevel: before.gradeLevel,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "57340b7c0b25e9e84bd9",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "lib/course/category.ts",
-      "line": 21,
-      "excerpt": "export function gradeCategory(gradeLevel: string): GradeCategory {",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "e097ba36e31f25b416a1",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "lib/course/category.ts",
-      "line": 22,
-      "excerpt": "const trimmed = gradeLevel.trim();",
       "occurrence": 1
     },
     {
@@ -3088,7 +2118,7 @@
       "severity": "blocker",
       "description": "Structured gradeLevel remains.",
       "path": "lib/course/display.ts",
-      "line": 22,
+      "line": 20,
       "excerpt": "clean(course.gradeLevel)",
       "occurrence": 1
     },
@@ -3128,7 +2158,7 @@
       "severity": "blocker",
       "description": "Structured gradeLevel remains.",
       "path": "lib/course/queries.ts",
-      "line": 22,
+      "line": 20,
       "excerpt": "gradeLevel: true,",
       "occurrence": 1
     },
@@ -3138,19 +2168,9 @@
       "severity": "blocker",
       "description": "Structured gradeLevel remains.",
       "path": "lib/course/queries.ts",
-      "line": 88,
+      "line": 83,
       "excerpt": "gradeLevel: true,",
       "occurrence": 2
-    },
-    {
-      "fingerprint": "6d86d625efd06bc90193",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "lib/course/queries.ts",
-      "line": 151,
-      "excerpt": "gradeLevel: true,",
-      "occurrence": 3
     },
     {
       "fingerprint": "c666a4b024843631acb9",
@@ -3158,7 +2178,7 @@
       "severity": "blocker",
       "description": "Structured gradeLevel remains.",
       "path": "lib/dashboard/action-center.ts",
-      "line": 260,
+      "line": 257,
       "excerpt": "gradeLevel: true,",
       "occurrence": 1
     },
@@ -3168,7 +2188,7 @@
       "severity": "blocker",
       "description": "Structured gradeLevel remains.",
       "path": "lib/dashboard/action-center.ts",
-      "line": 336,
+      "line": 333,
       "excerpt": "gradeLevel: true,",
       "occurrence": 2
     },
@@ -3178,7 +2198,7 @@
       "severity": "blocker",
       "description": "Structured gradeLevel remains.",
       "path": "lib/dashboard/action-center.ts",
-      "line": 429,
+      "line": 426,
       "excerpt": "gradeLevel: true,",
       "occurrence": 3
     },
@@ -3188,7 +2208,7 @@
       "severity": "blocker",
       "description": "Structured gradeLevel remains.",
       "path": "lib/dashboard/queries.ts",
-      "line": 267,
+      "line": 264,
       "excerpt": "gradeLevel: true,",
       "occurrence": 1
     },
@@ -3198,7 +2218,7 @@
       "severity": "blocker",
       "description": "Structured gradeLevel remains.",
       "path": "lib/dashboard/queries.ts",
-      "line": 319,
+      "line": 316,
       "excerpt": "gradeLevel: true,",
       "occurrence": 2
     },
@@ -3218,7 +2238,7 @@
       "severity": "blocker",
       "description": "Structured gradeLevel remains.",
       "path": "prisma/bootstrap.ts",
-      "line": 84,
+      "line": 83,
       "excerpt": "gradeLevel: \"ม.4\",",
       "occurrence": 1
     },
@@ -3228,7 +2248,7 @@
       "severity": "blocker",
       "description": "Structured gradeLevel remains.",
       "path": "prisma/bootstrap.ts",
-      "line": 179,
+      "line": 177,
       "excerpt": "update: { gradeLevel: c.gradeLevel },",
       "occurrence": 1
     },
@@ -3238,7 +2258,7 @@
       "severity": "blocker",
       "description": "Structured gradeLevel remains.",
       "path": "prisma/bootstrap.ts",
-      "line": 183,
+      "line": 181,
       "excerpt": "gradeLevel: c.gradeLevel,",
       "occurrence": 1
     },
@@ -3248,7 +2268,7 @@
       "severity": "blocker",
       "description": "Structured gradeLevel remains.",
       "path": "prisma/bootstrap.ts",
-      "line": 291,
+      "line": 269,
       "excerpt": "gradeLevel: co.gradeLevel,",
       "occurrence": 1
     },
@@ -3508,7 +2528,7 @@
       "severity": "blocker",
       "description": "Structured gradeLevel remains.",
       "path": "prisma/seed.ts",
-      "line": 176,
+      "line": 166,
       "excerpt": "gradeLevel: \"ม.4\",",
       "occurrence": 1
     },
@@ -3593,26 +2613,6 @@
       "occurrence": 1
     },
     {
-      "fingerprint": "28dac0eed94e664bf2db",
-      "ruleId": "homeroom",
-      "severity": "blocker",
-      "description": "Homeroom ownership remains.",
-      "path": "components/class-picker.tsx",
-      "line": 110,
-      "excerpt": "aria-label=\"homeroom\"",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "36bf8de0be82adb8406b",
-      "ruleId": "homeroom",
-      "severity": "blocker",
-      "description": "Homeroom ownership remains.",
-      "path": "lib/dashboard/queries.ts",
-      "line": 224,
-      "excerpt": "/** Display name of the homeroom (\"ม.4/2\"). */",
-      "occurrence": 1
-    },
-    {
       "fingerprint": "968d11cfbf7e510a16cc",
       "ruleId": "homeroom",
       "severity": "blocker",
@@ -3620,86 +2620,6 @@
       "path": "prisma/bootstrap.ts",
       "line": 60,
       "excerpt": "/** Homeroom classes the school has. `name` must be unique within the year. */",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "7eb38cd92ba71ee943c6",
-      "ruleId": "homeroom",
-      "severity": "blocker",
-      "description": "Homeroom ownership remains.",
-      "path": "prisma/bootstrap.ts",
-      "line": 63,
-      "excerpt": "/** Teacher accounts (e.g. พ่อ / แม่). `homeroom` is an optional class name. */",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "f39365cb62510b91fb5c",
-      "ruleId": "homeroom",
-      "severity": "blocker",
-      "description": "Homeroom ownership remains.",
-      "path": "prisma/bootstrap.ts",
-      "line": 71,
-      "excerpt": "homeroom: \"ม.4/2\" as string | null,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "5290ce81597026c232f1",
-      "ruleId": "homeroom",
-      "severity": "blocker",
-      "description": "Homeroom ownership remains.",
-      "path": "prisma/bootstrap.ts",
-      "line": 193,
-      "excerpt": "const homeroomOfId = t.homeroom",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "124bded0dc44edf89eb6",
-      "ruleId": "homeroom",
-      "severity": "blocker",
-      "description": "Homeroom ownership remains.",
-      "path": "prisma/bootstrap.ts",
-      "line": 194,
-      "excerpt": "? (classByName.get(t.homeroom) ?? null)",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "a3f028bb5b29b155892a",
-      "ruleId": "homeroom",
-      "severity": "blocker",
-      "description": "Homeroom ownership remains.",
-      "path": "prisma/bootstrap.ts",
-      "line": 196,
-      "excerpt": "if (t.homeroom && !homeroomOfId) {",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "cf643d7712f50f1d43d8",
-      "ruleId": "homeroom",
-      "severity": "blocker",
-      "description": "Homeroom ownership remains.",
-      "path": "prisma/bootstrap.ts",
-      "line": 198,
-      "excerpt": "`Teacher ${t.identifier} homeroom \"${t.homeroom}\" is not in CONFIG.classes`",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "a1dcb0a032988a9162ad",
-      "ruleId": "homeroom",
-      "severity": "blocker",
-      "description": "Homeroom ownership remains.",
-      "path": "prisma/seed.ts",
-      "line": 162,
-      "excerpt": "console.log(\"✓ Linked student to ม.4/2, teacher as homeroom\");",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "3a688f0d4e97e209ddb2",
-      "ruleId": "homeroom",
-      "severity": "blocker",
-      "description": "Homeroom ownership remains.",
-      "path": "prisma/seed.ts",
-      "line": 189,
-      "excerpt": "\" Teacher: teacher@studennnn.local / Teacher1234! (homeroom ม.4/2)\"",
       "occurrence": 1
     },
     {
@@ -3720,56 +2640,6 @@
       "path": "app/admin/classes/page.tsx",
       "line": 1,
       "excerpt": "<path dependency>",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "7be4c1aad173db6c72cd",
-      "ruleId": "legacy-admin-academic-structure",
-      "severity": "blocker",
-      "description": "Legacy Admin setup or classes surface remains.",
-      "path": "app/admin/setup/actions.ts",
-      "line": 1,
-      "excerpt": "<path dependency>",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "e84d251baf1c3968ef7c",
-      "ruleId": "legacy-admin-academic-structure",
-      "severity": "blocker",
-      "description": "Legacy Admin setup or classes surface remains.",
-      "path": "app/admin/setup/page.tsx",
-      "line": 1,
-      "excerpt": "<path dependency>",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "fbfe298c49ef5d95b234",
-      "ruleId": "legacy-admin-academic-structure",
-      "severity": "blocker",
-      "description": "Legacy Admin setup or classes surface remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 1,
-      "excerpt": "<path dependency>",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "63429fa6badd333d191d",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "app/admin/setup/actions.ts",
-      "line": 338,
-      "excerpt": "displayName?: string;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "713c13a5b8601eb4ff1c",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "app/admin/setup/actions.ts",
-      "line": 364,
-      "excerpt": "displayName: `${firstName} ${lastName} (${email})`,",
       "occurrence": 1
     },
     {
@@ -3798,7 +2668,7 @@
       "severity": "blocker",
       "description": "Legacy displayName remains in the target identity model.",
       "path": "app/admin/teachers/page.tsx",
-      "line": 229,
+      "line": 221,
       "excerpt": "typeof parsed.displayName !== \"string\" ||",
       "occurrence": 1
     },
@@ -3808,7 +2678,7 @@
       "severity": "blocker",
       "description": "Legacy displayName remains in the target identity model.",
       "path": "app/admin/teachers/page.tsx",
-      "line": 237,
+      "line": 229,
       "excerpt": "displayName: parsed.displayName,",
       "occurrence": 1
     },
@@ -3818,7 +2688,7 @@
       "severity": "blocker",
       "description": "Legacy displayName remains in the target identity model.",
       "path": "app/admin/teachers/page.tsx",
-      "line": 254,
+      "line": 246,
       "excerpt": "เพิ่มครูสำเร็จ: {flash.displayName}",
       "occurrence": 1
     },
@@ -3828,7 +2698,7 @@
       "severity": "blocker",
       "description": "Legacy displayName remains in the target identity model.",
       "path": "app/admin/users/[id]/page.tsx",
-      "line": 228,
+      "line": 214,
       "excerpt": "const displayName = user.teacher",
       "occurrence": 1
     },
@@ -3838,7 +2708,7 @@
       "severity": "blocker",
       "description": "Legacy displayName remains in the target identity model.",
       "path": "app/admin/users/[id]/page.tsx",
-      "line": 267,
+      "line": 253,
       "excerpt": "{displayName}",
       "occurrence": 1
     },
@@ -3848,7 +2718,7 @@
       "severity": "blocker",
       "description": "Legacy displayName remains in the target identity model.",
       "path": "app/admin/users/[id]/page.tsx",
-      "line": 293,
+      "line": 279,
       "excerpt": "displayName={displayName}",
       "occurrence": 1
     },
@@ -3858,7 +2728,7 @@
       "severity": "blocker",
       "description": "Legacy displayName remains in the target identity model.",
       "path": "app/admin/users/[id]/page.tsx",
-      "line": 301,
+      "line": 287,
       "excerpt": "<ResetPasswordCard userId={user.id} displayName={displayName} />",
       "occurrence": 1
     },
@@ -3868,7 +2738,7 @@
       "severity": "blocker",
       "description": "Legacy displayName remains in the target identity model.",
       "path": "app/admin/users/[id]/page.tsx",
-      "line": 307,
+      "line": 293,
       "excerpt": "<ResetProfileImageCard userId={user.id} userName={displayName} />",
       "occurrence": 1
     },
@@ -3888,7 +2758,7 @@
       "severity": "blocker",
       "description": "Legacy displayName remains in the target identity model.",
       "path": "app/dashboard/page.tsx",
-      "line": 102,
+      "line": 100,
       "excerpt": "displayName: user.displayName,",
       "occurrence": 1
     },
@@ -4000,16 +2870,6 @@
       "path": "components/admin/reset-password-card.tsx",
       "line": 41,
       "excerpt": "<span className=\"font-medium text-black\">{displayName}</span> —",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "4bc0653dd7d5804a8ca4",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "components/admin/setup-tabs.tsx",
-      "line": 646,
-      "excerpt": "เพิ่มครู {state.displayName} สำเร็จ",
       "occurrence": 1
     },
     {
@@ -4288,7 +3148,7 @@
       "severity": "blocker",
       "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
       "path": "app/admin/classes/[id]/page.tsx",
-      "line": 58,
+      "line": 50,
       "excerpt": "studentId: true,",
       "occurrence": 1
     },
@@ -4298,7 +3158,7 @@
       "severity": "blocker",
       "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
       "path": "app/admin/classes/[id]/page.tsx",
-      "line": 115,
+      "line": 107,
       "excerpt": "studentId: { in: cls.students.map((s) => s.userId) },",
       "occurrence": 1
     },
@@ -4308,7 +3168,7 @@
       "severity": "blocker",
       "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
       "path": "app/admin/classes/[id]/page.tsx",
-      "line": 120,
+      "line": 112,
       "excerpt": "studentId: true,",
       "occurrence": 2
     },
@@ -4318,7 +3178,7 @@
       "severity": "blocker",
       "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
       "path": "app/admin/classes/[id]/page.tsx",
-      "line": 131,
+      "line": 123,
       "excerpt": "const counts = attendanceMap.get(en.studentId);",
       "occurrence": 1
     },
@@ -4348,7 +3208,7 @@
       "severity": "blocker",
       "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
       "path": "app/admin/users/[id]/page.tsx",
-      "line": 86,
+      "line": 79,
       "excerpt": "studentId: true,",
       "occurrence": 1
     },
@@ -4358,7 +3218,7 @@
       "severity": "blocker",
       "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
       "path": "lib/admin/students-list.ts",
-      "line": 16,
+      "line": 15,
       "excerpt": "studentId: string;",
       "occurrence": 1
     },
@@ -4368,7 +3228,7 @@
       "severity": "blocker",
       "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
       "path": "lib/admin/students-list.ts",
-      "line": 56,
+      "line": 53,
       "excerpt": "{ studentId: { contains: search } },",
       "occurrence": 1
     },
@@ -4378,7 +3238,7 @@
       "severity": "blocker",
       "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
       "path": "lib/admin/students-list.ts",
-      "line": 66,
+      "line": 63,
       "excerpt": "orderBy: [{ studentId: \"asc\" }],",
       "occurrence": 1
     },
@@ -4388,7 +3248,7 @@
       "severity": "blocker",
       "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
       "path": "lib/admin/students-list.ts",
-      "line": 71,
+      "line": 68,
       "excerpt": "studentId: true,",
       "occurrence": 1
     },
@@ -4398,7 +3258,7 @@
       "severity": "blocker",
       "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
       "path": "lib/admin/students-list.ts",
-      "line": 87,
+      "line": 83,
       "excerpt": "studentId: s.studentId,",
       "occurrence": 1
     },
@@ -4438,18 +3298,8 @@
       "severity": "blocker",
       "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
       "path": "prisma/bootstrap.ts",
-      "line": 98,
+      "line": 97,
       "excerpt": "studentId: string;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "e296d598c972ce79a27b",
-      "ruleId": "student-number-auth-and-admin-flow",
-      "severity": "blocker",
-      "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
-      "path": "prisma/bootstrap.ts",
-      "line": 235,
-      "excerpt": "`Student ${s.studentId} class \"${s.className}\" is not in CONFIG.classes`",
       "occurrence": 1
     },
     {
@@ -4458,7 +3308,7 @@
       "severity": "blocker",
       "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
       "path": "prisma/bootstrap.ts",
-      "line": 238,
+      "line": 217,
       "excerpt": "where: { identifier: s.studentId },",
       "occurrence": 1
     },
@@ -4468,7 +3318,7 @@
       "severity": "blocker",
       "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
       "path": "prisma/bootstrap.ts",
-      "line": 242,
+      "line": 221,
       "excerpt": "identifier: s.studentId,",
       "occurrence": 1
     },
@@ -4478,7 +3328,7 @@
       "severity": "blocker",
       "description": "Student Number is still used by signup, validation, Admin, seed, or bootstrap flows.",
       "path": "prisma/bootstrap.ts",
-      "line": 249,
+      "line": 228,
       "excerpt": "studentId: s.studentId,",
       "occurrence": 1
     },
@@ -4490,16 +3340,6 @@
       "path": "prisma/seed.ts",
       "line": 64,
       "excerpt": "studentId: \"60001\",",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "c37d25a689f76e110cbe",
-      "ruleId": "student-number-copy",
-      "severity": "blocker",
-      "description": "User-facing Student Number or Student ID copy remains.",
-      "path": "prisma/bootstrap.ts",
-      "line": 95,
-      "excerpt": "* /signup and join a class with its code. Identifier is the student number.",
       "occurrence": 1
     },
     {
@@ -4573,26 +3413,6 @@
       "occurrence": 1
     },
     {
-      "fingerprint": "add5bbbbdb0cd966aff8",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "app/admin/setup/actions.ts",
-      "line": 337,
-      "excerpt": "tempPassword?: string;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "f2586751ac2de60bde24",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "app/admin/setup/actions.ts",
-      "line": 363,
-      "excerpt": "tempPassword: result.tempPassword,",
-      "occurrence": 1
-    },
-    {
       "fingerprint": "46860a85aabf7e7be63c",
       "ruleId": "temporary-password",
       "severity": "blocker",
@@ -4608,7 +3428,7 @@
       "severity": "blocker",
       "description": "Temporary-password onboarding remains.",
       "path": "app/admin/teachers/page.tsx",
-      "line": 231,
+      "line": 223,
       "excerpt": "typeof parsed.tempPassword !== \"string\"",
       "occurrence": 1
     },
@@ -4618,7 +3438,7 @@
       "severity": "blocker",
       "description": "Temporary-password onboarding remains.",
       "path": "app/admin/teachers/page.tsx",
-      "line": 239,
+      "line": 231,
       "excerpt": "tempPassword: parsed.tempPassword,",
       "occurrence": 1
     },
@@ -4628,7 +3448,7 @@
       "severity": "blocker",
       "description": "Temporary-password onboarding remains.",
       "path": "app/admin/teachers/page.tsx",
-      "line": 271,
+      "line": 263,
       "excerpt": "{flash.tempPassword}",
       "occurrence": 1
     },
@@ -4668,7 +3488,7 @@
       "severity": "blocker",
       "description": "Temporary-password onboarding remains.",
       "path": "app/admin/users/[id]/page.tsx",
-      "line": 278,
+      "line": 264,
       "excerpt": "{user.mustResetPwd && (",
       "occurrence": 1
     },
@@ -4709,66 +3529,6 @@
       "description": "Temporary-password onboarding remains.",
       "path": "components/admin/reset-password-card.tsx",
       "line": 68,
-      "excerpt": "{state.tempPassword}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "631f80f92a6b4e3161e1",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "components/admin/setup-tabs.tsx",
-      "line": 582,
-      "excerpt": "if (state.ok && !state.tempPassword) formRef.current?.reset();",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "4fd22fe0d3317c6f1328",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "components/admin/setup-tabs.tsx",
-      "line": 583,
-      "excerpt": "}, [state.ok, state.tempPassword]);",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "6326b03b0de6e420d46a",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "components/admin/setup-tabs.tsx",
-      "line": 586,
-      "excerpt": "if (!state.tempPassword) return;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "29468ad8fe6852951915",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "components/admin/setup-tabs.tsx",
-      "line": 587,
-      "excerpt": "navigator.clipboard.writeText(state.tempPassword);",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "168dff6700ecb301e9e0",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "components/admin/setup-tabs.tsx",
-      "line": 642,
-      "excerpt": "{state.ok && state.tempPassword && (",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "841683dd7f42a95f6950",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "components/admin/setup-tabs.tsx",
-      "line": 653,
       "excerpt": "{state.tempPassword}",
       "occurrence": 1
     },
@@ -5178,7 +3938,7 @@
       "severity": "blocker",
       "description": "Temporary-password onboarding remains.",
       "path": "prisma/bootstrap.ts",
-      "line": 72,
+      "line": 71,
       "excerpt": "mustResetPwd: true,",
       "occurrence": 1
     },
@@ -5188,7 +3948,7 @@
       "severity": "blocker",
       "description": "Temporary-password onboarding remains.",
       "path": "prisma/bootstrap.ts",
-      "line": 103,
+      "line": 101,
       "excerpt": "mustResetPwd: boolean;",
       "occurrence": 1
     },
@@ -5198,7 +3958,7 @@
       "severity": "blocker",
       "description": "Temporary-password onboarding remains.",
       "path": "prisma/bootstrap.ts",
-      "line": 132,
+      "line": 130,
       "excerpt": "mustResetPwd: CONFIG.admin.mustResetPwd,",
       "occurrence": 1
     },
@@ -5208,7 +3968,7 @@
       "severity": "blocker",
       "description": "Temporary-password onboarding remains.",
       "path": "prisma/bootstrap.ts",
-      "line": 208,
+      "line": 198,
       "excerpt": "mustResetPwd: t.mustResetPwd,",
       "occurrence": 1
     },
@@ -5218,7 +3978,7 @@
       "severity": "blocker",
       "description": "Temporary-password onboarding remains.",
       "path": "prisma/bootstrap.ts",
-      "line": 244,
+      "line": 223,
       "excerpt": "mustResetPwd: s.mustResetPwd,",
       "occurrence": 1
     },
@@ -5358,7 +4118,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "app/admin/classes/[id]/page.tsx",
-      "line": 65,
+      "line": 57,
       "excerpt": "where: { termId: term?.id ?? \"__no_term__\" },",
       "occurrence": 1
     },
@@ -5388,7 +4148,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "app/admin/users/[id]/page.tsx",
-      "line": 66,
+      "line": 59,
       "excerpt": "OR: [{ term: { isActive: true } }, { termId: null }],",
       "occurrence": 1
     },
@@ -5453,52 +4213,12 @@
       "occurrence": 1
     },
     {
-      "fingerprint": "4436edbb40eb25638f0c",
-      "ruleId": "term-model",
-      "severity": "blocker",
-      "description": "Admin-managed Term remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 381,
-      "excerpt": "export async function deleteTerm(termId: string, ctx: AdminCtx): Promise<void> {",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "900f07efefa984a72eac",
-      "ruleId": "term-model",
-      "severity": "blocker",
-      "description": "Admin-managed Term remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 385,
-      "excerpt": "where: { id: termId },",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "0cad9507f472f19ebe4c",
-      "ruleId": "term-model",
-      "severity": "blocker",
-      "description": "Admin-managed Term remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 395,
-      "excerpt": "await tx.term.delete({ where: { id: termId } });",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "6ef88221929632183a98",
-      "ruleId": "term-model",
-      "severity": "blocker",
-      "description": "Admin-managed Term remains.",
-      "path": "lib/admin/setup.ts",
-      "line": 402,
-      "excerpt": "targetId: termId,",
-      "occurrence": 1
-    },
-    {
       "fingerprint": "ba47d7efacc887a91fca",
       "ruleId": "term-model",
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "lib/dashboard/action-center.ts",
-      "line": 72,
+      "line": 69,
       "excerpt": "? { OR: [{ termId: term.id }, { termId: null }] }",
       "occurrence": 1
     },
@@ -5508,7 +4228,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "lib/dashboard/action-center.ts",
-      "line": 73,
+      "line": 70,
       "excerpt": ": { termId: null };",
       "occurrence": 1
     },
@@ -5518,7 +4238,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "lib/dashboard/action-center.ts",
-      "line": 229,
+      "line": 226,
       "excerpt": "? { OR: [{ termId: term.id }, { termId: null }] }",
       "occurrence": 2
     },
@@ -5528,7 +4248,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "lib/dashboard/action-center.ts",
-      "line": 230,
+      "line": 227,
       "excerpt": ": { termId: null };",
       "occurrence": 2
     },
@@ -5538,7 +4258,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "lib/dashboard/action-center.ts",
-      "line": 317,
+      "line": 314,
       "excerpt": "? { OR: [{ termId: term.id }, { termId: null }] }",
       "occurrence": 3
     },
@@ -5548,7 +4268,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "lib/dashboard/action-center.ts",
-      "line": 318,
+      "line": 315,
       "excerpt": ": { termId: null };",
       "occurrence": 3
     },
@@ -5558,7 +4278,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "lib/dashboard/action-center.ts",
-      "line": 419,
+      "line": 416,
       "excerpt": "? { OR: [{ termId: term.id }, { termId: null }] }",
       "occurrence": 4
     },
@@ -5568,7 +4288,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "lib/dashboard/action-center.ts",
-      "line": 420,
+      "line": 417,
       "excerpt": ": { termId: null };",
       "occurrence": 4
     },
@@ -5578,7 +4298,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "lib/dashboard/queries.ts",
-      "line": 88,
+      "line": 85,
       "excerpt": "? { OR: [{ termId: term.id }, { termId: null }] }",
       "occurrence": 1
     },
@@ -5588,7 +4308,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "lib/dashboard/queries.ts",
-      "line": 89,
+      "line": 86,
       "excerpt": ": { termId: null };",
       "occurrence": 1
     },
@@ -5598,7 +4318,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "lib/dashboard/queries.ts",
-      "line": 151,
+      "line": 148,
       "excerpt": "? { OR: [{ termId: term.id }, { termId: null }] }",
       "occurrence": 2
     },
@@ -5608,7 +4328,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "lib/dashboard/queries.ts",
-      "line": 152,
+      "line": 149,
       "excerpt": ": { termId: null };",
       "occurrence": 2
     },
@@ -5618,7 +4338,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "lib/dashboard/queries.ts",
-      "line": 248,
+      "line": 245,
       "excerpt": "? { OR: [{ termId: term.id }, { termId: null }] }",
       "occurrence": 3
     },
@@ -5628,7 +4348,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "lib/dashboard/queries.ts",
-      "line": 249,
+      "line": 246,
       "excerpt": ": { termId: null };",
       "occurrence": 3
     },
@@ -5638,7 +4358,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "lib/dashboard/queries.ts",
-      "line": 296,
+      "line": 293,
       "excerpt": "? { OR: [{ termId: term.id }, { termId: null }] }",
       "occurrence": 4
     },
@@ -5648,7 +4368,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "lib/dashboard/queries.ts",
-      "line": 297,
+      "line": 294,
       "excerpt": ": { termId: null };",
       "occurrence": 4
     },
@@ -5708,7 +4428,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "prisma/bootstrap.ts",
-      "line": 266,
+      "line": 244,
       "excerpt": "const termId = termByNumber.get(co.termNumber);",
       "occurrence": 1
     },
@@ -5718,7 +4438,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "prisma/bootstrap.ts",
-      "line": 275,
+      "line": 253,
       "excerpt": "if (!termId)",
       "occurrence": 1
     },
@@ -5728,7 +4448,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "prisma/bootstrap.ts",
-      "line": 288,
+      "line": 266,
       "excerpt": "termId,",
       "occurrence": 1
     },
@@ -5768,7 +4488,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "prisma/seed.ts",
-      "line": 173,
+      "line": 163,
       "excerpt": "termId: term1.id,",
       "occurrence": 1
     },
@@ -5908,7 +4628,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "app/admin/classes/[id]/page.tsx",
-      "line": 58,
+      "line": 50,
       "excerpt": "studentId: true,",
       "occurrence": 1
     },
@@ -5918,7 +4638,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "app/admin/classes/[id]/page.tsx",
-      "line": 115,
+      "line": 107,
       "excerpt": "studentId: { in: cls.students.map((s) => s.userId) },",
       "occurrence": 1
     },
@@ -5928,7 +4648,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "app/admin/classes/[id]/page.tsx",
-      "line": 120,
+      "line": 112,
       "excerpt": "studentId: true,",
       "occurrence": 2
     },
@@ -5938,7 +4658,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "app/admin/classes/[id]/page.tsx",
-      "line": 131,
+      "line": 123,
       "excerpt": "const counts = attendanceMap.get(en.studentId);",
       "occurrence": 1
     },
@@ -5968,7 +4688,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "app/admin/users/[id]/page.tsx",
-      "line": 86,
+      "line": 79,
       "excerpt": "studentId: true,",
       "occurrence": 1
     },
@@ -6078,7 +4798,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "app/student/timetable/page.tsx",
-      "line": 28,
+      "line": 25,
       "excerpt": "studentId: session.user.id,",
       "occurrence": 1
     },
@@ -6158,7 +4878,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/admin/students-list.ts",
-      "line": 16,
+      "line": 15,
       "excerpt": "studentId: string;",
       "occurrence": 1
     },
@@ -6168,7 +4888,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/admin/students-list.ts",
-      "line": 56,
+      "line": 53,
       "excerpt": "{ studentId: { contains: search } },",
       "occurrence": 1
     },
@@ -6178,7 +4898,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/admin/students-list.ts",
-      "line": 66,
+      "line": 63,
       "excerpt": "orderBy: [{ studentId: \"asc\" }],",
       "occurrence": 1
     },
@@ -6188,7 +4908,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/admin/students-list.ts",
-      "line": 71,
+      "line": 68,
       "excerpt": "studentId: true,",
       "occurrence": 1
     },
@@ -6198,7 +4918,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/admin/students-list.ts",
-      "line": 87,
+      "line": 83,
       "excerpt": "studentId: s.studentId,",
       "occurrence": 1
     },
@@ -6828,7 +5548,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/course/queries.ts",
-      "line": 111,
+      "line": 43,
       "excerpt": "studentId: true,",
       "occurrence": 1
     },
@@ -6838,7 +5558,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/course/queries.ts",
-      "line": 142,
+      "line": 74,
       "excerpt": "some: { studentId: studentUserId, removedAt: null },",
       "occurrence": 1
     },
@@ -6848,7 +5568,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/dashboard/action-center.ts",
-      "line": 77,
+      "line": 74,
       "excerpt": "studentId: studentUserId,",
       "occurrence": 1
     },
@@ -6858,7 +5578,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/dashboard/queries.ts",
-      "line": 155,
+      "line": 152,
       "excerpt": "studentId: studentUserId,",
       "occurrence": 1
     },
@@ -6868,7 +5588,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/dashboard/queries.ts",
-      "line": 189,
+      "line": 186,
       "excerpt": "none: { enrollment: { studentId: studentUserId } },",
       "occurrence": 1
     },
@@ -6878,7 +5598,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/dashboard/queries.ts",
-      "line": 195,
+      "line": 192,
       "excerpt": "enrollment: { studentId: studentUserId },",
       "occurrence": 1
     },
@@ -6888,7 +5608,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/dashboard/queries.ts",
-      "line": 306,
+      "line": 303,
       "excerpt": "enrollments: { some: { studentId: studentUserId, removedAt: null } },",
       "occurrence": 1
     },
@@ -7268,18 +5988,8 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "prisma/bootstrap.ts",
-      "line": 98,
+      "line": 97,
       "excerpt": "studentId: string;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "7d9a6585f363755c82f8",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "prisma/bootstrap.ts",
-      "line": 235,
-      "excerpt": "`Student ${s.studentId} class \"${s.className}\" is not in CONFIG.classes`",
       "occurrence": 1
     },
     {
@@ -7288,7 +5998,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "prisma/bootstrap.ts",
-      "line": 238,
+      "line": 217,
       "excerpt": "where: { identifier: s.studentId },",
       "occurrence": 1
     },
@@ -7298,7 +6008,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "prisma/bootstrap.ts",
-      "line": 242,
+      "line": 221,
       "excerpt": "identifier: s.studentId,",
       "occurrence": 1
     },
@@ -7308,7 +6018,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "prisma/bootstrap.ts",
-      "line": 249,
+      "line": 228,
       "excerpt": "studentId: s.studentId,",
       "occurrence": 1
     },

@@ -54,13 +54,6 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
           firstName: true,
           lastName: true,
           email: true,
-          homeroomOf: {
-            select: {
-              id: true,
-              name: true,
-              academicYear: { select: { name: true } },
-            },
-          },
           courses: {
             where: {
               OR: [{ term: { isActive: true } }, { termId: null }],
@@ -85,13 +78,6 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
           lastName: true,
           studentId: true,
           anonymized: true,
-          class: {
-            select: {
-              id: true,
-              name: true,
-              academicYear: { select: { name: true } },
-            },
-          },
           enrollments: {
             where: { removedAt: null, course: { term: { isActive: true } } },
             select: {
@@ -342,14 +328,6 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
             <Row label="ชื่อ" value={user.teacher.firstName} />
             <Row label="นามสกุล" value={user.teacher.lastName} />
             <Row
-              label="ครูประจำชั้น"
-              value={
-                user.teacher.homeroomOf
-                  ? `${user.teacher.homeroomOf.name} (ปี ${user.teacher.homeroomOf.academicYear.name})`
-                  : "—"
-              }
-            />
-            <Row
               label="วิชาที่สอน (เทอมปัจจุบัน)"
               value={`${user.teacher.courses.length} วิชา`}
             />
@@ -379,14 +357,6 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
           <dl className="grid grid-cols-2 gap-3 text-xs">
             <Row label="ชื่อ" value={user.student.firstName} />
             <Row label="นามสกุล" value={user.student.lastName} />
-            <Row
-              label="ห้องประจำ"
-              value={
-                user.student.class
-                  ? `${user.student.class.name} (ปี ${user.student.class.academicYear.name})`
-                  : "—"
-              }
-            />
             <Row
               label="วิชาที่ลงทะเบียน (เทอมปัจจุบัน)"
               value={`${user.student.enrollments.length} วิชา`}

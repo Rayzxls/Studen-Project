@@ -60,7 +60,7 @@ const CONFIG = {
   /** Homeroom classes the school has. `name` must be unique within the year. */
   classes: [{ name: "ม.4/2", gradeLevel: "ม.4" }],
 
-  /** Teacher accounts (e.g. พ่อ / แม่). `homeroom` is an optional class name. */
+  /** Teacher accounts (e.g. พ่อ / แม่). */
   teachers: [
     {
       identifier: "teacher1@example.com",
@@ -68,7 +68,6 @@ const CONFIG = {
       firstName: "ชื่อครู",
       lastName: "นามสกุล",
       email: "teacher1@example.com",
-      homeroom: "ม.4/2" as string | null,
       mustResetPwd: true,
     },
   ],
@@ -92,14 +91,13 @@ const CONFIG = {
 
   /**
    * Optional initial students. Leave empty [] to let students self-register at
-   * /signup and join a class with its code. Identifier is the student number.
+   * /signup and join a course with its code.
    */
   students: [] as {
     studentId: string;
     password: string;
     firstName: string;
     lastName: string;
-    className: string;
     mustResetPwd: boolean;
   }[],
 };
@@ -190,14 +188,6 @@ async function main() {
   // ── Teachers ───────────────────────────────────────────────
   const teacherUserByIdentifier = new Map<string, string>();
   for (const t of CONFIG.teachers) {
-    const homeroomOfId = t.homeroom
-      ? (classByName.get(t.homeroom) ?? null)
-      : null;
-    if (t.homeroom && !homeroomOfId) {
-      throw new Error(
-        `Teacher ${t.identifier} homeroom "${t.homeroom}" is not in CONFIG.classes`
-      );
-    }
     const user = await db.user.upsert({
       where: { identifier: t.identifier },
       update: {},
@@ -218,22 +208,11 @@ async function main() {
       },
     });
     teacherUserByIdentifier.set(t.identifier, user.id);
-    if (homeroomOfId) {
-      await db.teacher.update({
-        where: { userId: user.id },
-        data: { homeroomOfId },
-      });
-    }
   }
   console.log(`✓ ${CONFIG.teachers.length} teacher(s)`);
 
   // ── Students (optional) ────────────────────────────────────
   for (const s of CONFIG.students) {
-    const classId = classByName.get(s.className);
-    if (!classId)
-      throw new Error(
-        `Student ${s.studentId} class "${s.className}" is not in CONFIG.classes`
-      );
     await db.user.upsert({
       where: { identifier: s.studentId },
       update: {},
@@ -249,7 +228,6 @@ async function main() {
             studentId: s.studentId,
             firstName: s.firstName,
             lastName: s.lastName,
-            classId,
           },
         },
       },

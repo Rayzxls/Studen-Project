@@ -218,7 +218,7 @@ export interface TodayClass {
   classId: string;
   /** Display name of the CourseOffering ("คณิตศาสตร์"). */
   courseName: string;
-  /** Display name of the homeroom ("ม.4/2"). */
+  /** Teacher-provided learner group label ("ม.4/2"). */
   className: string;
   /** "HH:mm" start. */
   startTime: string;
@@ -336,7 +336,7 @@ export async function getStudentTodaySchedule(
 // ─────────────────────────────────────────────────────────────
 
 export interface AdminStats {
-  /** Distinct Classes (homerooms) of the active AcademicYear. */
+  /** Distinct legacy grouping rows for the Admin compatibility dashboard. */
   classCount: number;
   /** Total Teacher rows whose User account has not been soft-deleted. */
   teacherCount: number;

@@ -44,14 +44,6 @@ export default async function AdminClassDetailPage({
       name: true,
       gradeLevel: true,
       academicYear: { select: { name: true } },
-      homeroomTeacher: {
-        select: {
-          userId: true,
-          firstName: true,
-          lastName: true,
-          email: true,
-        },
-      },
       students: {
         select: {
           userId: true,
@@ -266,16 +258,6 @@ export default async function AdminClassDetailPage({
                   </p>
                 </div>
               </div>
-              {cls.homeroomTeacher && (
-                <div className="mt-3">
-                  <Link
-                    href={`/admin/users/${cls.homeroomTeacher.userId}`}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-white/90 px-3 py-1.5 text-xs font-medium text-black/80 shadow-lift backdrop-blur transition-all hover:bg-white hover:shadow-card"
-                  >
-                    ดูครูประจำชั้น →
-                  </Link>
-                </div>
-              )}
             </div>
 
             {/* Right: 3D Student Mascot — blended with the classroom scene */}
@@ -298,19 +280,10 @@ export default async function AdminClassDetailPage({
 
         {/* Stats row — sits inside the white zone */}
         <div className="px-6 pb-5 -mt-2">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Stat label="นักเรียน" value={cls.students.length} />
             <Stat label="วิชาที่เปิดในเทอมนี้" value={courses.length} />
             <Stat label="ครูที่สอนวิชา" value={teacherCount} />
-            <Stat
-              label="ครูประจำชั้น"
-              value={cls.homeroomTeacher ? 1 : 0}
-              text={
-                cls.homeroomTeacher
-                  ? `${cls.homeroomTeacher.firstName} ${cls.homeroomTeacher.lastName}`
-                  : "—"
-              }
-            />
           </div>
         </div>
       </header>

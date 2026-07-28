@@ -18,7 +18,6 @@ export interface TeacherListItem {
   accountStatus: AccountStatus;
   createdAt: Date;
   hasAvatar: boolean;
-  homeroomOf: string | null;
   courseCount: number;
 }
 
@@ -71,7 +70,6 @@ export async function listTeachers(
         user: {
           select: { isActive: true, createdAt: true, profileImageId: true },
         },
-        homeroomOf: { select: { name: true } },
         _count: { select: { courses: true } },
       },
     }),
@@ -89,7 +87,6 @@ export async function listTeachers(
       }),
       createdAt: t.user.createdAt,
       hasAvatar: t.user.profileImageId !== null,
-      homeroomOf: t.homeroomOf?.name ?? null,
       courseCount: t._count.courses,
     })),
     total,

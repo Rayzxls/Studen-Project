@@ -78,14 +78,12 @@ export default async function DashboardPage() {
         select: {
           firstName: true,
           lastName: true,
-          homeroomOf: { select: { name: true } },
         },
       },
       student: {
         select: {
           firstName: true,
           lastName: true,
-          class: { select: { name: true } },
         },
       },
     },
@@ -121,7 +119,6 @@ export default async function DashboardPage() {
             name={name}
             hasAvatar={hasAvatar}
             avatarVersion={user.profileImageId}
-            className={user.student?.class?.name ?? null}
           />
         )}
 
@@ -131,7 +128,6 @@ export default async function DashboardPage() {
             name={name}
             hasAvatar={hasAvatar}
             avatarVersion={user.profileImageId}
-            homeroomName={user.teacher?.homeroomOf?.name ?? null}
           />
         )}
 
@@ -176,13 +172,11 @@ async function StudentDashboard({
   name,
   hasAvatar,
   avatarVersion,
-  className,
 }: {
   session: Session;
   name: string;
   hasAvatar: boolean;
   avatarVersion: string | null;
-  className: string | null;
 }) {
   const [actionCenter, courses] = await Promise.all([
     getStudentActionCenter(session.user.id),
@@ -221,11 +215,6 @@ async function StudentDashboard({
               <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium text-white">
                 นักเรียน
               </span>
-              {className && (
-                <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium text-white">
-                  {className}
-                </span>
-              )}
             </div>
             <div className="flex items-center gap-3">
               <UserAvatar
@@ -381,13 +370,11 @@ async function TeacherDashboard({
   name,
   hasAvatar,
   avatarVersion,
-  homeroomName,
 }: {
   teacherUserId: string;
   name: string;
   hasAvatar: boolean;
   avatarVersion: string | null;
-  homeroomName: string | null;
 }) {
   const [reviewQueue, classHealth, term] = await Promise.all([
     getTeacherReviewQueue(teacherUserId),
@@ -397,12 +384,6 @@ async function TeacherDashboard({
 
   return (
     <>
-      {homeroomName && (
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <span className="badge">ครูประจำชั้น {homeroomName}</span>
-        </div>
-      )}
-
       <TeacherHero
         teacherUserId={teacherUserId}
         name={name}

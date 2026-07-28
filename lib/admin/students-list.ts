@@ -6,7 +6,6 @@ import {
 
 export interface StudentListParams {
   search?: string;
-  classId?: string;
   page?: number;
   pageSize?: number;
 }
@@ -16,7 +15,6 @@ export interface StudentListItem {
   studentId: string;
   firstName: string;
   lastName: string;
-  className: string | null;
   accountStatus: AccountStatus;
   createdAt: Date;
   hasAvatar: boolean;
@@ -47,7 +45,6 @@ export async function listStudents(
   const where = {
     user: { deletedAt: null },
     anonymized: false,
-    ...(params.classId ? { classId: params.classId } : {}),
     ...(search
       ? {
           OR: [
@@ -75,7 +72,6 @@ export async function listStudents(
         user: {
           select: { isActive: true, createdAt: true, profileImageId: true },
         },
-        class: { select: { name: true } },
         _count: { select: { enrollments: true } },
       },
     }),
@@ -87,7 +83,6 @@ export async function listStudents(
       studentId: s.studentId,
       firstName: s.firstName,
       lastName: s.lastName,
-      className: s.class?.name ?? null,
       accountStatus: deriveLegacyAccountStatus({
         isActive: s.user.isActive,
         deletedAt: null,

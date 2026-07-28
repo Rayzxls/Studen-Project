@@ -1,5 +1,34 @@
 # HANDOFF — Beagle Classroom
 
+## D0.1 ADMIN SETUP + HOMEROOM RUNTIME RETIREMENT — 2026-07-29 (READ FIRST)
+
+- Claude commit `b91a9c1` removed the retired Admin Academic Year, Term, Class,
+  and Homeroom setup route, actions, navigation, validation, and setup tests.
+  `/admin/classes` remains a temporary read-only compatibility observer until
+  its projection is replaced by a CourseOffering-owned observer.
+- The follow-up Codex slice removes Homeroom and shared Student Class identity
+  from Student/Teacher Dashboard projections, Admin people lists, Admin user
+  details, and the legacy Admin Class detail. Admin Students now searches
+  people directly and no longer filters or displays a school-wide Class.
+- Bootstrap and demo seed no longer assign Teacher Homeroom or Student Class
+  membership. The unused ClassPicker, grade-category helper/tests/styles, old
+  Class lookup helpers, and `cmdk` dependency are removed.
+- Compatibility boundary: Prisma `Class`, `Term`, `AcademicYear`, nullable
+  relations, and historical Audit labels remain readable. Existing
+  CourseOfferings may still fall back to legacy Class/Term labels until every
+  report/query/export is migrated. Do not drop relations or reset Production
+  in this slice.
+- Regression coverage prevents role dashboards, Admin people lists, bootstrap,
+  and seed from reintroducing the retired relations. TypeScript and ESLint pass
+  (zero errors; two unrelated warnings). The dependency release gate resolves
+  129 findings with zero new dependencies; the reviewed baseline is now
+  `462 blocker / 192 review / 654 total`.
+- Next D0.1 slice: replace the remaining Term/Class traversal in dashboards,
+  reports, Learning Results, exports, Admin observer queries, and legacy seed
+  fixtures. Only after the gate proves no runtime/report dependency remains may
+  an approved isolated-QA destructive reset be designed. Production remains
+  untouched.
+
 ## D0.1 TEACHER-OWNED COURSE METADATA — 2026-07-26 (READ FIRST)
 
 - The first additive D0.1 compatibility slice is complete on `phase-11`.
@@ -17,17 +46,18 @@
   use that projection.
 - Migration `20260726010000_add_teacher_owned_course_metadata` is additive and
   backfills the new labels. It is applied and current only on the isolated Neon
-  QA branch. Production schema/data, Admin setup removal, Homeroom removal, and
-  destructive legacy-table cleanup were not touched.
+  QA branch. Production schema/data and destructive legacy-table cleanup were
+  not touched. Admin setup and Homeroom runtime removal were completed in the
+  later 2026-07-29 slices recorded above.
 - Verification: focused unit `7/7`, full unit `815/815`, targeted integration
   `34/34`, TypeScript, ESLint with zero errors (two pre-existing warnings),
   Prisma validation/status, dependency release gate, Production build, and
   `git diff --check` pass. The initial integration attempt exposed intermittent
   Neon connectivity and Vite cache contention through the junction; rerunning
   serially from physical path `D:\Studennnn` passed.
-- Next approved D0.1 slice: retire Admin Academic Year/Term/Class/Homeroom
-  management and remaining runtime dependencies incrementally. Do not drop
-  legacy relations or reset Production as part of this commit.
+- The next D0.1 slice is the remaining Term/Class runtime/report dependency
+  migration described in the 2026-07-29 entry above. Do not drop legacy
+  relations or reset Production as part of an additive cleanup commit.
 
 ## IDENTITY V2 SYNC — 2026-07-26 (READ FIRST)
 

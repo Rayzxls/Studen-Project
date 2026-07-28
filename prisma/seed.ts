@@ -49,7 +49,7 @@ async function main() {
   console.log("✓ Teacher: teacher@studennnn.local / Teacher1234!");
 
   const studentPwd = await bcrypt.hash("Student1234", 12);
-  const studentUser = await db.user.upsert({
+  await db.user.upsert({
     where: { identifier: "60001" },
     update: {},
     create: {
@@ -108,7 +108,7 @@ async function main() {
   });
   console.log("✓ Academic Year 2568 + 2 terms");
 
-  // Classes (school-defined homerooms) — varied across ป.1 – ม.6 to demonstrate ClassPicker
+  // Legacy classes retained only for compatibility fixtures during D0.1.
   const classDefs: { name: string; gradeLevel: string }[] = [
     // ประถม
     { name: "ป.1/1", gradeLevel: "ป.1" },
@@ -151,16 +151,6 @@ async function main() {
   });
   console.log(`✓ ${classDefs.length} classes (ป.1 – ม.6)`);
 
-  await db.student.update({
-    where: { userId: studentUser.id },
-    data: { classId: class402.id },
-  });
-  await db.teacher.update({
-    where: { userId: teacherUser.id },
-    data: { homeroomOfId: class402.id },
-  });
-  console.log("✓ Linked student to ม.4/2, teacher as homeroom");
-
   // Sample CourseOffering — teacher-owned workspace (ADR-0012)
   const existing = await db.courseOffering.findUnique({
     where: { classCode: "MATH4A-DEMO1" },
@@ -185,12 +175,8 @@ async function main() {
   console.log("\n✨ Done\n");
   console.log("Test accounts:");
   console.log("  Admin:   admin@studennnn.local / Admin1234!");
-  console.log(
-    "  Teacher: teacher@studennnn.local / Teacher1234!  (homeroom ม.4/2)"
-  );
-  console.log(
-    "  Student: 60001 / Student1234                       (in ม.4/2)"
-  );
+  console.log("  Teacher: teacher@studennnn.local / Teacher1234!");
+  console.log("  Student: 60001 / Student1234!");
   console.log("\nDemo Class Code: MATH4A-DEMO1 (use at /join)");
 }
 

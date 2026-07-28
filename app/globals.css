@@ -3443,46 +3443,6 @@ html[data-theme="cream"] {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   cmdk Command Menu (ClassPicker, etc.)
-   ═══════════════════════════════════════════════════════════ */
-
-[cmdk-group-heading] {
-  @apply px-3 py-1.5 text-xs font-medium text-black/50;
-}
-
-[cmdk-item] {
-  @apply flex cursor-pointer items-center justify-between gap-2 rounded-xl px-3 py-2 text-sm;
-  transition: background-color var(--duration-spring-standard)
-    var(--ease-spring);
-}
-
-[cmdk-item][data-selected="true"] {
-  background: var(--color-blue-50);
-  color: var(--color-blue-700);
-}
-
-[cmdk-item]:hover {
-  background: rgba(0, 0, 0, 0.025);
-}
-
-[cmdk-item][data-disabled="true"] {
-  @apply cursor-not-allowed opacity-40;
-}
-
-[cmdk-empty] {
-  @apply px-3 py-6 text-center text-sm text-black/50;
-}
-
-[cmdk-group]:not(:last-child) {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  @apply pb-1;
-}
-
-[cmdk-group] + [cmdk-group] {
-  @apply pt-1;
-}
-
-/* ═══════════════════════════════════════════════════════════
    Landing FAQ — chevron flips when its <details> opens. A plain
    rule (not a Tailwind group-open variant, which this build does
    not emit). Animates the `rotate` property on the iOS spring.

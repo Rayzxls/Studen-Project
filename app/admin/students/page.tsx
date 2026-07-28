@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { KeyRound, Search } from "lucide-react";
 import { listStudents } from "@/lib/admin/students-list";
-import { getActiveAcademicYear, getClassesByYear } from "@/lib/course/queries";
 import { PaginationLinks } from "@/components/pagination";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { AccountStatusBadge } from "@/components/admin/account-status-badge";
@@ -9,7 +8,6 @@ import { AccountStatusBadge } from "@/components/admin/account-status-badge";
 interface PageProps {
   searchParams: Promise<{
     search?: string;
-    classId?: string;
     page?: string;
   }>;
 }
@@ -17,14 +15,10 @@ interface PageProps {
 export default async function AdminStudentsPage({ searchParams }: PageProps) {
   const sp = await searchParams;
   const search = sp.search ?? "";
-  const classId = sp.classId ?? "";
   const page = Math.max(1, parseInt(sp.page ?? "1", 10) || 1);
 
-  const year = await getActiveAcademicYear();
-  const classes = year ? await getClassesByYear(year.id) : [];
   const result = await listStudents({
     search,
-    classId: classId || undefined,
     page,
   });
 
@@ -61,23 +55,10 @@ export default async function AdminStudentsPage({ searchParams }: PageProps) {
               />
             </div>
           </div>
-          <div className="min-w-[160px]">
-            <label className="mb-1 block text-xs font-medium text-ink-soft">
-              ห้อง
-            </label>
-            <select name="classId" defaultValue={classId} className="input">
-              <option value="">ทุกห้อง</option>
-              {classes.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
           <button type="submit" className="btn-secondary">
             กรอง
           </button>
-          {(search || classId) && (
+          {search && (
             <Link href="/admin/students" className="btn-ghost btn-sm">
               ล้าง
             </Link>
@@ -89,7 +70,7 @@ export default async function AdminStudentsPage({ searchParams }: PageProps) {
       {result.items.length === 0 ? (
         <div className="card-flat p-10 text-center">
           <p className="text-sm text-ink-soft">
-            {search || classId
+            {search
               ? "ไม่พบนักเรียนที่ตรงกับตัวกรอง"
               : "ยังไม่มีนักเรียนในระบบ"}
           </p>
@@ -100,7 +81,6 @@ export default async function AdminStudentsPage({ searchParams }: PageProps) {
             <thead>
               <tr>
                 <th>ชื่อ-นามสกุล</th>
-                <th>ห้องประจำ</th>
                 <th>วิชาที่ลงทะเบียน</th>
                 <th>สมัครเมื่อ</th>
                 <th>สถานะ</th>
@@ -122,13 +102,6 @@ export default async function AdminStudentsPage({ searchParams }: PageProps) {
                       />
                       {s.firstName} {s.lastName}
                     </Link>
-                  </td>
-                  <td className="text-sm">
-                    {s.className ? (
-                      <span className="badge">{s.className}</span>
-                    ) : (
-                      <span className="text-ink-soft">—</span>
-                    )}
                   </td>
                   <td className="text-sm">{s.enrolledCount}</td>
                   <td className="text-xs text-ink-soft whitespace-nowrap">
@@ -165,7 +138,7 @@ export default async function AdminStudentsPage({ searchParams }: PageProps) {
         basePath="/admin/students"
         page={result.page}
         pageCount={result.pageCount}
-        searchParams={{ search, classId }}
+        searchParams={{ search }}
       />
     </div>
   );
