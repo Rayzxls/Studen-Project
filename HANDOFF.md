@@ -1,5 +1,32 @@
 # HANDOFF — Beagle Classroom
 
+## PRODUCTION RELEASE — IDENTITY V2 + STANDALONE COURSE RUNTIME — 2026-07-29 (READ FIRST)
+
+- Released all seven pending `phase-11` commits from Codex and Claude through
+  PR #27. `main`, `phase-11`, and Vercel Production were synchronized at merge
+  commit `e848571cf7b2742078a23f03029ebb955b90154c`.
+- Applied additive Production migration
+  `20260726010000_add_teacher_owned_course_metadata` to the `ep-wild-scene`
+  Neon Production endpoint before merging the application code. Prisma reports
+  all eight migrations up to date. No table, account, course, score, attendance
+  record, submission, or private R2 object was deleted or reset.
+- The release includes Google/Identity V2 compatibility work, email/password
+  Student self-registration, Student Number retirement from product surfaces,
+  Teacher-owned free-text Course metadata, Admin academic setup retirement,
+  Homeroom runtime retirement, and the completed standalone CourseOffering
+  runtime/report migration.
+- PR and post-merge CI passed Unit Tests, Lint & Typecheck, and Production Build.
+  Vercel reported the Production deployment for `e848571` complete.
+- Read-only post-deploy smoke passed `12/12` on both
+  `https://beagleclassroom.com` and
+  `https://studen-project.vercel.app`. Public routes return `200`; protected
+  Student, Teacher, Admin, timetable, dashboard, and export routes preserve the
+  expected authentication boundary.
+- The remaining legacy Class/Term/AcademicYear tables and nullable relations are
+  compatibility storage only. This release does not approve destructive schema
+  cleanup. Any future drop/reset still requires a separately reviewed migration
+  and rollback plan.
+
 ## D0.1 COURSE RUNTIME MIGRATION COMPLETE — 2026-07-29 (READ FIRST)
 
 - This entry supersedes the older D0.1 "next slice" notes below. Claude commit
