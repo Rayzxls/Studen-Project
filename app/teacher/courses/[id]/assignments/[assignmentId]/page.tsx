@@ -119,7 +119,6 @@ export default async function AssignmentReviewWorkspacePage({
               userId: true,
               firstName: true,
               lastName: true,
-              studentId: true,
               user: { select: { profileImageId: true } },
             },
           },
@@ -138,7 +137,6 @@ export default async function AssignmentReviewWorkspacePage({
               userId: true,
               firstName: true,
               lastName: true,
-              studentId: true,
               user: { select: { profileImageId: true } },
             },
           },
@@ -204,7 +202,6 @@ export default async function AssignmentReviewWorkspacePage({
     enrollmentId: string;
     submissionId: string | null;
     name: string;
-    studentId: string;
     studentUserId: string;
     hasAvatar: boolean;
     status: SubmissionStatus;
@@ -224,7 +221,6 @@ export default async function AssignmentReviewWorkspacePage({
       enrollmentId: enr.id,
       submissionId: hasSubmitted && submission ? submission.id : null,
       name: `${enr.student.firstName} ${enr.student.lastName}`,
-      studentId: enr.student.studentId,
       studentUserId: enr.student.userId,
       hasAvatar: enr.student.user.profileImageId !== null,
       status,

@@ -65,8 +65,6 @@ export async function enrollByClassCode(params: {
       codeExpiresAt: true,
       archivedAt: true,
       learnerGroupLabel: true,
-      gradeLevel: true,
-      class: { select: { name: true } },
       teacher: { select: { firstName: true, lastName: true } },
     },
   });
@@ -450,8 +448,8 @@ export async function leaveCourseAsStudent(params: {
  * downstream tabs / queries should route through here instead of issuing
  * `prisma.enrollment.findMany` directly and risking a forgotten filter.
  *
- * Field set is the teacher's Members-tab view (studentId + name +
- * enrolledAt). The student-side view (P3-6) will further narrow this.
+ * Field set is the teacher's Members-tab view (name, avatar, and enrolledAt).
+ * The student-side view (P3-6) further narrows this projection.
  */
 export async function getActiveMembers(courseOfferingId: string) {
   return db.enrollment.findMany({
@@ -466,7 +464,6 @@ export async function getActiveMembers(courseOfferingId: string) {
       student: {
         select: {
           userId: true,
-          studentId: true,
           firstName: true,
           lastName: true,
           user: { select: { profileImageId: true } },
@@ -482,7 +479,6 @@ export async function getActiveMembers(courseOfferingId: string) {
  * Counter to getActiveMembers (teacher-side), this returns ONLY the fields
  * a student is allowed to see per CONTEXT.md § L1 Visibility:
  *   ✅ firstName, lastName (display only)
- *   ❌ studentId (PII — login identifier)
  *   ❌ enrolledAt (timestamp not part of L1)
  *   ❌ userId (never exposed cross-student)
  *
@@ -531,11 +527,8 @@ export async function listStudentCourses(studentUserId: string) {
           subjectCode: true,
           learnerGroupLabel: true,
           academicPeriodLabel: true,
-          gradeLevel: true,
           creditHours: true,
           classCode: true,
-          class: { select: { id: true, name: true } },
-          term: { select: { name: true } },
           teacher: {
             select: {
               userId: true,
@@ -561,13 +554,10 @@ export async function listTeacherCourses(teacherUserId: string) {
       subjectCode: true,
       learnerGroupLabel: true,
       academicPeriodLabel: true,
-      gradeLevel: true,
       creditHours: true,
       classCode: true,
       codeActive: true,
       createdAt: true,
-      class: { select: { id: true, name: true } },
-      term: { select: { name: true } },
       teacher: {
         select: {
           userId: true,

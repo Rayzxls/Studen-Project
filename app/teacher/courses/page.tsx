@@ -92,7 +92,7 @@ export default async function TeacherCoursesPage() {
                   title={c.name}
                   subtitle={courseLearnerGroup(c) ?? ""}
                   badge={courseAcademicPeriod(c) ?? undefined}
-                  classId={courseVisualKey(c)}
+                  visualKey={courseVisualKey(c)}
                   avatarUserId={session.user.id}
                   hasAvatar={hasAvatar}
                   avatarAlt={`ครู ${c.teacher.firstName} ${c.teacher.lastName}`}

@@ -85,7 +85,7 @@ export default async function CourseSettingsPage({ params }: PageProps) {
           courseId={id}
           courseName={course.name}
           subjectCode={course.subjectCode}
-          classId={courseVisualKey(course)}
+          courseVisualKey={courseVisualKey(course)}
           className={courseLearnerGroup(course) ?? ""}
           slots={slots}
         />

@@ -35,7 +35,6 @@ export default async function AdminCourseAttendancePage({ params }: PageProps) {
         student: {
           select: {
             userId: true,
-            studentId: true,
             firstName: true,
             lastName: true,
           },

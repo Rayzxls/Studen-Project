@@ -48,7 +48,6 @@ describe("Teacher score CSV", () => {
         {
           enrollmentId: "e1",
           studentUserId: "u1",
-          studentId: "36901234",
           firstName: "ธนภัทร",
           lastName: "พิลาดี",
           removedAt: null,
@@ -77,7 +76,6 @@ describe("Teacher attendance CSV", () => {
         {
           enrollmentId: "e1",
           student: {
-            studentId: "36901234",
             firstName: "ธนภัทร",
             lastName: "พิลาดี",
           },

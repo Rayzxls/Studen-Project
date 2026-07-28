@@ -62,7 +62,7 @@ This matrix prevents an implemented screen or database field from being mistaken
 - `README.md` now describes the deployed core, sum-based scoring, Calm Ledger v2, current roles, private files, and the active roadmap.
 - `CLAUDE.md` now reflects one-way score publication, `fullScore` scoring, current theme/motion rules, and private R2 delivery.
 - `CONTEXT.md` active domain language now uses Score Total rather than Weighted Total; historical/superseded references remain explicitly labeled.
-- `docs/PROPOSAL.md` now treats course score/grade as primary, Term GPA as a secondary report value, and distinguishes implemented foundations from completeness claims.
+- `docs/PROPOSAL.md` now treats score/percentage/grade per CourseOffering as the complete result contract and explicitly excludes GPA/GPAX or any aggregate across courses.
 - `docs/DEPLOY.md` now records the shared Neon risk, four real R2 variables, private file delivery, and the local-storage/R2 mismatch.
 - `Task.md` is explicitly a historical ledger; `HANDOFF.md` and this roadmap carry current status.
 
@@ -508,37 +508,48 @@ Removal sequence:
 **D0.1 implementation record (2026-07-26):** the first additive compatibility
 slice is complete in code and on the isolated Neon QA branch. `CourseOffering`
 now owns optional `learnerGroupLabel` and `academicPeriodLabel` values;
-`classId`, `termId`, `gradeLevel`, and `creditHours` are nullable during the
-transition. Existing labels are backfilled from legacy Class and Term data.
-Teacher course creation now requires only the course name and never creates or
-looks up hidden Class/Term records. Shared display helpers prefer the new
-metadata and fall back to legacy relations only for existing courses; empty
-optional values render nothing.
-
-The same compatibility projection is used by Teacher/Student course cards,
+Teacher course creation requires only the course name and never creates or
+looks up hidden Class/Term records. Shared display helpers read optional
+`learnerGroupLabel`, `academicPeriodLabel`, and `creditHours` directly from the
+CourseOffering; empty values render nothing. Teacher/Student course cards,
 course shells, dashboards, timetables, enrollment, settings, scoring reads, and
-Admin observer surfaces. Unscoped active courses remain visible when no legacy
-active Term applies. Focused unit `7/7`, full unit `815/815`, targeted
-integration `34/34`, TypeScript, ESLint (zero errors), dependency gate, Prisma
-validation/status, and Production build pass. Migration
+Admin observer surfaces no longer traverse legacy Class or Term relations.
+Focused unit `7/7`, full unit `815/815`, targeted integration `34/34`,
+TypeScript, ESLint (zero errors), dependency gate, Prisma validation/status,
+and Production build pass. Migration
 `20260726010000_add_teacher_owned_course_metadata` is applied only to the
 isolated Neon QA branch.
 
-**D0.1 implementation update (2026-07-29):** Claude commit `b91a9c1` completed
-the retired Admin setup-surface removal. The following Codex slice removes
-Homeroom and shared Student Class identity from role Dashboards, Admin people
-lists/details, Admin Class detail, bootstrap, and seed behavior. The unused
-ClassPicker/category stack and its `cmdk` dependency are also removed.
-Historical Audit labels and nullable Prisma compatibility relations remain.
-TypeScript, ESLint, focused regression tests, and the dependency release gate
-pass. The gate resolves 129 findings with zero new dependencies and records a
-reviewed baseline of `462 blocker / 192 review / 654 total`.
+**D0.1 runtime completion update (2026-07-29):** Claude commit `b91a9c1`
+completed the retired Admin setup-surface removal. The following Codex slices
+removed Homeroom and shared Student Class identity from role Dashboards, Admin
+people lists/details, bootstrap, seed behavior, reports, Learning Results,
+exports, timetable projections, scoring queries, Dashboard/Admin aggregate
+queries, and integration fixtures. The Admin observer now uses
+`/admin/courses`; the obsolete Admin Class detail, term-summary UI, Term
+GPA/Status calculation modules, ClassPicker/category stack, and its `cmdk`
+dependency are removed.
 
-Production migration, destructive table/foreign-key cleanup, and the data
-reset remain separate unapproved steps. The next additive slice must replace
-remaining Term/Class traversal in reports, Learning Results, exports,
-Dashboard/Admin aggregate queries, and legacy fixtures before any destructive
-reset design begins.
+Learning Results is now a per-CourseOffering view over active and archived
+courses. It shows only the learner's own score total, percentage, and grade;
+there is no Term GPA, GPAX, term picker, term-completion progress, or
+cross-course aggregate. Runtime display/color identity uses CourseOffering
+metadata and CourseOffering identity rather than Class or Term relations.
+
+Full unit verification passes `94 files / 792 tests`. The dependency release
+gate reports zero new retired-concept dependencies and reduces the reviewed
+baseline from `462 blocker / 192 review / 654 total` to
+`140 blocker / 142 review / 282 total`. The remaining 18 academic-structure
+blockers are nullable Prisma compatibility schema only: `AcademicYear` (7),
+`Class` (5), `gradeLevel` (3), and `Term` (3). The remaining identity blockers
+belong to the separate D1 compatibility cleanup; `studentId` review findings
+are predominantly internal User foreign-key names and must not be bulk-renamed.
+
+Production migration, destructive table/foreign-key cleanup, and data reset
+remain separate unapproved steps. D0.1 runtime migration is complete; schema
+removal may begin only through an explicitly approved isolated-QA migration
+plan. Until then, proceed with the D1 legacy identity compatibility cleanup
+without restoring Student Number or Admin-managed academic structure.
 
 ### D1. Google Login
 

@@ -161,7 +161,12 @@ async function testLoginEachRole() {
       role: "TEACHER",
       label: "ครู",
     },
-    { id: "60001", pw: "Student1234", role: "STUDENT", label: "นักเรียน" },
+    {
+      id: "student@studennnn.local",
+      pw: "Student1234",
+      role: "STUDENT",
+      label: "นักเรียน",
+    },
   ];
 
   for (const c of cases) {
@@ -236,18 +241,18 @@ async function testRateLimitLockout() {
 async function testForceResetRedirect() {
   console.log("\n🔄 Force reset password flow");
 
-  // Set student 60001 to mustResetPwd=true
+  // Exercise the forced-reset compatibility flow.
   await db.user.update({
-    where: { identifier: "60001" },
-    data: { mustResetPwd: true },
+    where: { identifier: "student@studennnn.local" },
+    data: { mustResetPwd: true }, // dependency-gate-allow(temporary-password): explicitly exercises the remaining compatibility redirect
   });
 
-  const cookie = await signin("60001", "Student1234");
+  const cookie = await signin("student@studennnn.local", "Student1234");
   await expect("Login with mustResetPwd=true succeeds", !!cookie, "no cookie");
   if (!cookie) {
     // Reset and abort
     await db.user.update({
-      where: { identifier: "60001" },
+      where: { identifier: "student@studennnn.local" },
       data: { mustResetPwd: false },
     });
     return;
@@ -277,7 +282,7 @@ async function testForceResetRedirect() {
 
   // Cleanup
   await db.user.update({
-    where: { identifier: "60001" },
+    where: { identifier: "student@studennnn.local" },
     data: { mustResetPwd: false },
   });
 }
@@ -484,9 +489,9 @@ async function testPhase3CourseTabs() {
   );
   const tMembersBody = await tMembers.text();
   await expect(
-    "Teacher Members shows seed student (60001)",
-    tMembersBody.includes("60001"),
-    "studentId 60001 not rendered for teacher"
+    "Teacher Members shows seeded student name",
+    tMembersBody.includes("ชนากานต์"),
+    "seeded student name is missing"
   );
   await expect(
     "Teacher Members shows remove affordance",
@@ -512,8 +517,8 @@ async function testPhase3CourseTabs() {
     "regen or toggle button missing"
   );
 
-  // ── Student 2 tabs (60001 seeded in MATH4A-DEMO1) ───────────────
-  const studentCookie = await signin("60001", "Student1234");
+  // ── Student tabs (seeded in MATH4A-DEMO1) ───────────────────────
+  const studentCookie = await signin("student@studennnn.local", "Student1234");
   if (!studentCookie) {
     fail("Student login (Phase 3)", "no cookie");
     return;
@@ -546,10 +551,9 @@ async function testPhase3CourseTabs() {
   );
   const sMembersBody = await sMembers.text();
   await expect(
-    "L1: student Members does NOT contain peer studentIds",
-    !sMembersBody.includes("60001") ||
-      sMembersBody.match(/60001/g)!.length === 0,
-    "studentId 60001 found in student Members body (PII leak)"
+    "L1: student Members does NOT expose the account email",
+    !sMembersBody.includes("student@studennnn.local"),
+    "student account email found in student Members body (PII leak)"
   );
 
   // ── Role boundaries ─────────────────────────────────────────────
@@ -574,7 +578,7 @@ async function testPhase3CourseTabs() {
   );
 
   // ── L1 gate: student tries to view another course ───────────────
-  // Create a second course owned by teacher but never joined by 60001.
+  // Create a second course owned by teacher but never joined by the seed student.
   // For smoke purposes we lazily look for any OTHER course in the DB.
   const otherCourse = await db.courseOffering.findFirst({
     where: { id: { not: course.id } },
@@ -692,7 +696,7 @@ async function testPhase4Attendance() {
   );
 
   // ── Student: attendance L1 view ─────────────────────────────────
-  const studentCookie = await signin("60001", "Student1234");
+  const studentCookie = await signin("student@studennnn.local", "Student1234");
   if (!studentCookie) {
     fail("Student login (Phase 4)", "no cookie");
     return;
@@ -768,12 +772,12 @@ async function testPhase4Attendance() {
 }
 
 async function testPhase5Scoring() {
-  console.log("\n📊 Phase 5: scoring + Term GPA + transcript");
+  console.log("\n📊 Phase 5: scoring + per-course learning results");
 
   const demoCode = "MATH4A-DEMO1";
   const course = await db.courseOffering.findUnique({
     where: { classCode: demoCode },
-    select: { id: true, teacherId: true, termId: true },
+    select: { id: true, teacherId: true },
   });
   if (!course) {
     fail(
@@ -806,9 +810,9 @@ async function testPhase5Scoring() {
     "create CTA missing"
   );
   await expect(
-    "Teacher Scores shows Σ weight pill",
-    tScoresBody.includes("Σ น้ำหนัก"),
-    "weight sum pill missing"
+    "Teacher Scores shows total full score",
+    tScoresBody.includes("คะแนนเต็มรวม"),
+    "total full score is missing"
   );
   await expect(
     "Teacher Scores tab is reachable from course shell",
@@ -861,8 +865,8 @@ async function testPhase5Scoring() {
     "GradeThresholdsCard missing from Settings"
   );
 
-  // ── Student: Scores tab + /student/terms ────────────────────────
-  const studentCookie = await signin("60001", "Student1234");
+  // ── Student: Scores tab + course-oriented learning results ─────
+  const studentCookie = await signin("student@studennnn.local", "Student1234");
   if (!studentCookie) {
     fail("Student login (Phase 5)", "no cookie");
     return;
@@ -892,9 +896,9 @@ async function testPhase5Scoring() {
   );
   const sTermsBody = await sTerms.text();
   await expect(
-    "Student /terms shows 'GPA ภาคเรียน' headline",
-    sTermsBody.includes("GPA ภาคเรียน"),
-    "GPA headline missing"
+    "Student /terms shows the learning-results headline",
+    sTermsBody.includes("ผลการเรียนของฉัน"),
+    "learning-results headline missing"
   );
   await expect(
     "Student /terms shows 'Print PDF' button",
@@ -998,7 +1002,7 @@ async function testPhase6Assignments() {
   );
 
   // ── Student: Assignments tab ────────────────────────────────────
-  const studentCookie = await signin("60001", "Student1234");
+  const studentCookie = await signin("student@studennnn.local", "Student1234");
   if (!studentCookie) {
     fail("Student login (Phase 6)", "no cookie");
     return;
@@ -1104,7 +1108,7 @@ async function testPhase7StorageRoutes() {
 
   // ── Authenticated student → presign for ASSIGNMENT → 403 (cannot
   //    upload to teacher-owned brief) ─────────────────────────────
-  const studentCookie = await signin("60001", "Student1234");
+  const studentCookie = await signin("student@studennnn.local", "Student1234");
   if (!studentCookie) {
     fail("Student login (Phase 7 storage)", "no cookie");
     return;
@@ -1210,7 +1214,7 @@ async function testPhase7Bell() {
   });
 
   // Student dashboard → bell present
-  const studentCookie = await signin("60001", "Student1234");
+  const studentCookie = await signin("student@studennnn.local", "Student1234");
   if (!studentCookie) {
     fail("Student login (Phase 7 bell)", "no cookie");
     return;
@@ -1301,7 +1305,7 @@ async function testPhase7DashboardFeed() {
   const DUE_SOON_HEADER = "ใกล้ส่ง — ภายใน 24 ชั่วโมง";
 
   // Student dashboard → User Feed section present
-  const studentCookie = await signin("60001", "Student1234");
+  const studentCookie = await signin("student@studennnn.local", "Student1234");
   if (!studentCookie) {
     fail("Student login (Phase 7 dashboard feed)", "no cookie");
     return;
@@ -1428,7 +1432,7 @@ async function testPhase7TeacherPostUI() {
   );
 
   // L1 boundary — student must be redirected from teacher routes
-  const studentCookie = await signin("60001", "Student1234");
+  const studentCookie = await signin("student@studennnn.local", "Student1234");
   if (studentCookie) {
     const sMat = await fetch(`${BASE}/teacher/courses/${course.id}/materials`, {
       headers: { cookie: studentCookie },
@@ -1451,7 +1455,7 @@ async function testPhase7StudentPostUI() {
     where: { id: { startsWith: "login:" } },
   });
 
-  const studentCookie = await signin("60001", "Student1234");
+  const studentCookie = await signin("student@studennnn.local", "Student1234");
   if (!studentCookie) {
     fail("Student login (Phase 7 student post UI)", "no cookie");
     return;

@@ -95,7 +95,7 @@ export default async function StudentCoursesPage() {
                     title={e.course.name}
                     subtitle={courseLearnerGroup(e.course) ?? ""}
                     badge={courseAcademicPeriod(e.course) ?? undefined}
-                    classId={courseVisualKey(e.course)}
+                    visualKey={courseVisualKey(e.course)}
                     avatarUserId={e.course.teacher.userId}
                     hasAvatar={Boolean(e.course.teacher.user.profileImageId)}
                     avatarAlt={`ครู ${e.course.teacher.firstName} ${e.course.teacher.lastName}`}

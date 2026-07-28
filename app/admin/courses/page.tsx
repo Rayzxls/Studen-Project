@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import { BookOpen, Eye, Search } from "lucide-react";
 import { db } from "@/lib/db/client";
-import { currentTerm } from "@/lib/dashboard/queries";
 import { PaginationLinks } from "@/components/pagination";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import {
@@ -19,7 +18,8 @@ interface PageProps {
   searchParams: Promise<{
     search?: string;
     teacherId?: string;
-    classId?: string;
+    learnerGroup?: string;
+    lifecycle?: string;
     status?: string;
     page?: string;
   }>;
@@ -29,20 +29,26 @@ export default async function AdminClassesPage({ searchParams }: PageProps) {
   const sp = await searchParams;
   const search = (sp.search ?? "").trim();
   const teacherId = sp.teacherId ?? "";
-  const classId = sp.classId ?? "";
+  const learnerGroup = (sp.learnerGroup ?? "").trim();
+  const lifecycle =
+    sp.lifecycle === "archive" || sp.lifecycle === "all"
+      ? sp.lifecycle
+      : "active";
   const status = sp.status ?? "";
   const page = Math.max(1, parseInt(sp.page ?? "1", 10) || 1);
   const skip = (page - 1) * PAGE_SIZE;
 
-  const term = await currentTerm();
-  const baseWhere: Prisma.CourseOfferingWhereInput = term
-    ? { OR: [{ termId: term.id }, { termId: null }] }
-    : { termId: null };
+  const baseWhere: Prisma.CourseOfferingWhereInput =
+    lifecycle === "active"
+      ? { archivedAt: null }
+      : lifecycle === "archive"
+        ? { archivedAt: { not: null } }
+        : {};
 
   const where: Prisma.CourseOfferingWhereInput = {
     ...baseWhere,
     ...(teacherId ? { teacherId } : {}),
-    ...(classId ? { classId } : {}),
+    ...(learnerGroup ? { learnerGroupLabel: { equals: learnerGroup } } : {}),
     ...(status === "open"
       ? { codeActive: true }
       : status === "closed"
@@ -54,7 +60,12 @@ export default async function AdminClassesPage({ searchParams }: PageProps) {
             { name: { contains: search, mode: "insensitive" } },
             { subjectCode: { contains: search, mode: "insensitive" } },
             { classCode: { contains: search, mode: "insensitive" } },
-            { gradeLevel: { contains: search, mode: "insensitive" } },
+            {
+              learnerGroupLabel: { contains: search, mode: "insensitive" },
+            },
+            {
+              academicPeriodLabel: { contains: search, mode: "insensitive" },
+            },
             {
               teacher: { firstName: { contains: search, mode: "insensitive" } },
             },
@@ -62,13 +73,12 @@ export default async function AdminClassesPage({ searchParams }: PageProps) {
               teacher: { lastName: { contains: search, mode: "insensitive" } },
             },
             { teacher: { email: { contains: search, mode: "insensitive" } } },
-            { class: { name: { contains: search, mode: "insensitive" } } },
           ],
         }
       : {}),
   };
 
-  const [courses, total, teachers, classes] = await Promise.all([
+  const [courses, total, teachers, learnerGroups] = await Promise.all([
     db.courseOffering.findMany({
       where,
       orderBy: [{ createdAt: "desc" }, { name: "asc" }],
@@ -80,7 +90,6 @@ export default async function AdminClassesPage({ searchParams }: PageProps) {
         subjectCode: true,
         learnerGroupLabel: true,
         academicPeriodLabel: true,
-        gradeLevel: true,
         creditHours: true,
         classCode: true,
         codeActive: true,
@@ -92,20 +101,6 @@ export default async function AdminClassesPage({ searchParams }: PageProps) {
             lastName: true,
             email: true,
             user: { select: { profileImageId: true } },
-          },
-        },
-        class: {
-          select: {
-            id: true,
-            name: true,
-            gradeLevel: true,
-            academicYear: { select: { name: true } },
-          },
-        },
-        term: {
-          select: {
-            name: true,
-            academicYear: { select: { name: true } },
           },
         },
         _count: {
@@ -130,21 +125,25 @@ export default async function AdminClassesPage({ searchParams }: PageProps) {
         lastName: true,
       },
     }),
-    db.class.findMany({
-      where: { courses: { some: baseWhere } },
-      orderBy: [{ gradeLevel: "asc" }, { name: "asc" }],
-      select: {
-        id: true,
-        name: true,
-        gradeLevel: true,
+    db.courseOffering.findMany({
+      where: {
+        ...baseWhere,
+        learnerGroupLabel: { not: null },
       },
+      distinct: ["learnerGroupLabel"],
+      orderBy: { learnerGroupLabel: "asc" },
+      select: { learnerGroupLabel: true },
     }),
   ]);
 
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const activeFilterCount = [search, teacherId, classId, status].filter(
-    Boolean
-  ).length;
+  const activeFilterCount = [
+    search,
+    teacherId,
+    learnerGroup,
+    lifecycle === "active" ? "" : lifecycle,
+    status,
+  ].filter(Boolean).length;
 
   return (
     <div className="animate-fade-in space-y-5 p-6 md:p-10">
@@ -152,13 +151,10 @@ export default async function AdminClassesPage({ searchParams }: PageProps) {
         <div>
           <div className="badge mb-2">Admin Observer</div>
           <h1 className="text-3xl font-medium tracking-tight">
-            ห้องเรียนทั้งหมด
+            รายวิชาทั้งหมด
           </h1>
           <p className="mt-1 text-sm text-ink-soft">
-            {term
-              ? `${term.academicYearName} · ${term.name}`
-              : "ยังไม่ได้ตั้งค่าภาคเรียนปัจจุบัน"}{" "}
-            · พบ {total.toLocaleString("th-TH")} วิชา
+            มุมมองแบบอ่านอย่างเดียว · พบ {total.toLocaleString("th-TH")} วิชา
           </p>
         </div>
         <Link href="/admin/dashboard" className="btn-ghost btn-sm">
@@ -178,7 +174,7 @@ export default async function AdminClassesPage({ searchParams }: PageProps) {
                 name="search"
                 defaultValue={search}
                 className="input pl-9"
-                placeholder="ชื่อวิชา รหัสวิชา รหัสเข้าห้อง ครู หรือห้อง..."
+                placeholder="ชื่อวิชา รหัสวิชา กลุ่มผู้เรียน ช่วงการศึกษา หรือครู..."
               />
             </div>
           </div>
@@ -199,15 +195,33 @@ export default async function AdminClassesPage({ searchParams }: PageProps) {
 
           <div className="min-w-[150px]">
             <label className="mb-1 block text-xs font-medium text-ink-soft">
-              ห้อง
+              กลุ่มผู้เรียน
             </label>
-            <select name="classId" defaultValue={classId} className="input">
-              <option value="">ทุกห้อง</option>
-              {classes.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
+            <select
+              name="learnerGroup"
+              defaultValue={learnerGroup}
+              className="input"
+            >
+              <option value="">ทุกกลุ่ม</option>
+              {learnerGroups.map((course) => (
+                <option
+                  key={course.learnerGroupLabel}
+                  value={course.learnerGroupLabel ?? ""}
+                >
+                  {course.learnerGroupLabel}
                 </option>
               ))}
+            </select>
+          </div>
+
+          <div className="min-w-[150px]">
+            <label className="mb-1 block text-xs font-medium text-ink-soft">
+              วงจรชีวิต
+            </label>
+            <select name="lifecycle" defaultValue={lifecycle} className="input">
+              <option value="active">กำลังใช้งาน</option>
+              <option value="archive">เก็บถาวร</option>
+              <option value="all">ทั้งหมด</option>
             </select>
           </div>
 
@@ -226,7 +240,7 @@ export default async function AdminClassesPage({ searchParams }: PageProps) {
             กรอง
           </button>
           {activeFilterCount > 0 && (
-            <Link href="/admin/classes" className="btn-ghost btn-sm">
+            <Link href="/admin/courses" className="btn-ghost btn-sm">
               ล้าง
             </Link>
           )}
@@ -239,7 +253,7 @@ export default async function AdminClassesPage({ searchParams }: PageProps) {
           <p className="mt-3 text-sm text-ink-soft">
             {activeFilterCount > 0
               ? "ไม่พบวิชาที่ตรงกับตัวกรอง"
-              : "ยังไม่มีวิชาที่ครูสร้างในภาคเรียนนี้"}
+              : "ยังไม่มีรายวิชาที่ตรงกับมุมมองนี้"}
           </p>
         </div>
       ) : (
@@ -249,7 +263,7 @@ export default async function AdminClassesPage({ searchParams }: PageProps) {
               <tr>
                 <th>วิชา</th>
                 <th>ครูผู้สอน</th>
-                <th>ห้องเรียน</th>
+                <th>กลุ่ม / ช่วงการศึกษา</th>
                 <th>นักเรียน</th>
                 <th>งาน</th>
                 <th>คะแนน</th>
@@ -296,32 +310,17 @@ export default async function AdminClassesPage({ searchParams }: PageProps) {
                     </Link>
                   </td>
                   <td className="text-sm">
-                    {course.class ? (
-                      <>
-                        <Link
-                          href={`/admin/classes/${course.class.id}`}
-                          className="font-medium text-black hover:underline"
-                        >
-                          {courseLearnerGroup(course)}
-                        </Link>
-                        <p className="mt-0.5 text-xs text-ink-soft">
-                          {course.class.gradeLevel} · ปี{" "}
-                          {course.class.academicYear.name}
-                        </p>
-                      </>
+                    {courseLearnerGroup(course) ? (
+                      <span className="font-medium text-black">
+                        {courseLearnerGroup(course)}
+                      </span>
                     ) : (
-                      <>
-                        {courseLearnerGroup(course) && (
-                          <span className="font-medium text-black">
-                            {courseLearnerGroup(course)}
-                          </span>
-                        )}
-                        {courseAcademicPeriod(course) && (
-                          <p className="mt-0.5 text-xs text-ink-soft">
-                            {courseAcademicPeriod(course)}
-                          </p>
-                        )}
-                      </>
+                      <span className="text-ink-faint">ไม่ได้ระบุ</span>
+                    )}
+                    {courseAcademicPeriod(course) && (
+                      <p className="mt-0.5 text-xs text-ink-soft">
+                        {courseAcademicPeriod(course)}
+                      </p>
                     )}
                   </td>
                   <td className="text-sm">
@@ -360,10 +359,16 @@ export default async function AdminClassesPage({ searchParams }: PageProps) {
       )}
 
       <PaginationLinks
-        basePath="/admin/classes"
+        basePath="/admin/courses"
         page={Math.min(page, pageCount)}
         pageCount={pageCount}
-        searchParams={{ search, teacherId, classId, status }}
+        searchParams={{
+          search,
+          teacherId,
+          learnerGroup,
+          lifecycle,
+          status,
+        }}
       />
     </div>
   );

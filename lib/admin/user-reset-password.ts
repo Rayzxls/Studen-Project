@@ -55,7 +55,7 @@ export async function resetUserPassword(
         mustResetPwd: true,
         teacher: { select: { firstName: true, lastName: true, email: true } },
         student: {
-          select: { firstName: true, lastName: true, studentId: true },
+          select: { firstName: true, lastName: true },
         },
       },
     });
@@ -103,14 +103,13 @@ function displayNameFor(target: {
   student: {
     firstName: string;
     lastName: string;
-    studentId: string;
   } | null;
 }): string {
   if (target.teacher) {
     return `${target.teacher.firstName} ${target.teacher.lastName} (${target.teacher.email})`;
   }
   if (target.student) {
-    return `${target.student.firstName} ${target.student.lastName} (${target.student.studentId})`;
+    return `${target.student.firstName} ${target.student.lastName}`;
   }
   return target.identifier;
 }

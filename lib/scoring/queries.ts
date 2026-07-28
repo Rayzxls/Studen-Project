@@ -32,7 +32,6 @@ export interface TeacherScoreboardItem {
 export interface TeacherScoreboardRow {
   enrollmentId: string;
   studentUserId: string;
-  studentId: string; // dependency-gate-allow(student-id-symbol-review): compatibility projection; never display as identity
   firstName: string;
   lastName: string;
   removedAt: Date | null;
@@ -95,7 +94,6 @@ export async function getScoreboardForTeacher(
       student: {
         select: {
           userId: true,
-          studentId: true,
           firstName: true,
           lastName: true,
         },
@@ -116,7 +114,6 @@ export async function getScoreboardForTeacher(
     rows: enrollments.map((e) => ({
       enrollmentId: e.id,
       studentUserId: e.student.userId,
-      studentId: e.student.studentId,
       firstName: e.student.firstName,
       lastName: e.student.lastName,
       removedAt: e.removedAt,
@@ -132,7 +129,6 @@ export async function getScoreboardForTeacher(
 export interface ScoreItemGridRow {
   enrollmentId: string;
   studentUserId: string;
-  studentId: string;
   firstName: string;
   lastName: string;
   removedAt: Date | null;
@@ -194,7 +190,6 @@ export async function getScoreItemGridForTeacher(
       student: {
         select: {
           userId: true,
-          studentId: true,
           firstName: true,
           lastName: true,
         },
@@ -225,7 +220,6 @@ export async function getScoreItemGridForTeacher(
       return {
         enrollmentId: e.id,
         studentUserId: e.student.userId,
-        studentId: e.student.studentId,
         firstName: e.student.firstName,
         lastName: e.student.lastName,
         removedAt: e.removedAt,
@@ -238,56 +232,59 @@ export async function getScoreItemGridForTeacher(
 }
 
 // ─────────────────────────────────────────────────────────────
-// Student view — term-level (Term GPA + list of CourseOfferings)
+// Student view — course-oriented Learning Results
 // ─────────────────────────────────────────────────────────────
 
-import type { TermCourseBundle } from "./term-gpa";
-
-/**
- * Term-level read for the student's `/student/terms` page.
- *
- * Returns the bundles needed by `termGpa()` PURE — one per Active
- * Enrollment of the student in `termId` (CONTEXT § Term GPA Scope rules:
- * removed enrollments don't count).
- *
- * Also returns lightweight CourseOffering metadata (name, teacher name,
- * creditHours, gradeRulesJson) so the transcript table can render
- * alongside the GPA computation without a second query.
- */
-export interface StudentTermCourseRow {
+export interface StudentLearningResultRow {
   courseOfferingId: string;
   name: string;
   subjectCode: string | null;
-  creditHours: number;
+  learnerGroupLabel: string | null;
+  academicPeriodLabel: string | null;
+  creditHours: number | null;
+  archivedAt: Date | null;
+  enrollmentRemovedAt: Date | null;
   teacherFirstName: string;
   teacherLastName: string;
-  /** Optional override — `null` => DEFAULT_GRADE_THRESHOLDS. */
   gradeRulesJson: unknown;
+  items: {
+    id: string;
+    fullScore: number;
+    publishedAt: Date | null;
+  }[];
+  entries: {
+    scoreItemId: string;
+    value: number;
+  }[];
 }
 
-export interface StudentTermSnapshot {
-  rows: StudentTermCourseRow[];
-  bundles: TermCourseBundle[];
-}
-
-export async function getStudentTermSnapshot(
-  studentUserId: string,
-  termId: string
-): Promise<StudentTermSnapshot> {
+/**
+ * Course-oriented learning results for the signed-in student.
+ *
+ * Active enrollments are always included. A removed enrollment remains in
+ * history only when it has a score entry, so leaving a course does not erase
+ * an already-earned result. Peer score entries never leave the database.
+ */
+export async function listStudentLearningResults(
+  studentUserId: string
+): Promise<StudentLearningResultRow[]> {
   const enrollments = await db.enrollment.findMany({
     where: {
       studentId: studentUserId,
-      removedAt: null,
-      course: { termId, archivedAt: null },
+      OR: [{ removedAt: null }, { scoreEntries: { some: {} } }],
     },
     select: {
       id: true,
+      removedAt: true,
       course: {
         select: {
           id: true,
           name: true,
           subjectCode: true,
+          learnerGroupLabel: true,
+          academicPeriodLabel: true,
           creditHours: true,
+          archivedAt: true,
           gradeRulesJson: true,
           teacher: { select: { firstName: true, lastName: true } },
           scoreItems: {
@@ -295,90 +292,58 @@ export async function getStudentTermSnapshot(
               id: true,
               fullScore: true,
               publishedAt: true,
-              entries: {
-                where: { enrollmentId: { not: undefined } },
-                select: { value: true, enrollmentId: true },
-              },
             },
+            orderBy: [{ position: "asc" }, { createdAt: "asc" }],
           },
         },
       },
     },
-    orderBy: [{ course: { name: "asc" } }],
   });
 
-  const rows: StudentTermCourseRow[] = [];
-  const bundles: TermCourseBundle[] = [];
-  for (const e of enrollments) {
-    const c = e.course;
-    rows.push({
-      courseOfferingId: c.id,
-      name: c.name,
-      subjectCode: c.subjectCode,
-      creditHours: c.creditHours ?? 0,
-      teacherFirstName: c.teacher.firstName,
-      teacherLastName: c.teacher.lastName,
-      gradeRulesJson: c.gradeRulesJson,
-    });
-    bundles.push({
-      courseOfferingId: c.id,
-      creditHours: c.creditHours ?? 0,
-      items: c.scoreItems.map((it) => ({
-        id: it.id,
-        fullScore: it.fullScore,
-        publishedAt: it.publishedAt,
-      })),
-      entries: c.scoreItems.flatMap((it) =>
-        it.entries
-          .filter((en) => en.enrollmentId === e.id)
-          .map((en) => ({ scoreItemId: it.id, value: en.value }))
-      ),
-    });
-  }
-
-  return { rows, bundles };
-}
-
-/**
- * Distinct list of Terms the student has any (active or removed) Enrollment
- * in — for the history dropdown on the `/student/terms` page.
- *
- * Removed enrollments are INCLUDED here (history view); the live GPA
- * computation filters back down to active-only via `getStudentTermSnapshot`.
- */
-export interface StudentTermOption {
-  id: string;
-  name: string;
-  number: number;
-  academicYearName: string;
-  isActive: boolean;
-}
-
-export async function listTermsForStudent(
-  studentUserId: string
-): Promise<StudentTermOption[]> {
-  const terms = await db.term.findMany({
+  const scoreEntries = await db.scoreEntry.findMany({
     where: {
-      courses: {
-        some: { enrollments: { some: { studentId: studentUserId } } },
-      },
+      enrollmentId: { in: enrollments.map((enrollment) => enrollment.id) },
     },
     select: {
-      id: true,
-      name: true,
-      number: true,
-      isActive: true,
-      academicYear: { select: { name: true } },
+      enrollmentId: true,
+      scoreItemId: true,
+      value: true,
     },
-    orderBy: [{ academicYear: { name: "desc" } }, { number: "desc" }],
   });
-  return terms.map((t) => ({
-    id: t.id,
-    name: t.name,
-    number: t.number,
-    academicYearName: t.academicYear.name,
-    isActive: t.isActive,
-  }));
+
+  const entriesByEnrollment = new Map<
+    string,
+    { scoreItemId: string; value: number }[]
+  >();
+  for (const entry of scoreEntries) {
+    const ownEntries = entriesByEnrollment.get(entry.enrollmentId) ?? [];
+    ownEntries.push({ scoreItemId: entry.scoreItemId, value: entry.value });
+    entriesByEnrollment.set(entry.enrollmentId, ownEntries);
+  }
+
+  return enrollments
+    .map((enrollment) => ({
+      courseOfferingId: enrollment.course.id,
+      name: enrollment.course.name,
+      subjectCode: enrollment.course.subjectCode,
+      learnerGroupLabel: enrollment.course.learnerGroupLabel,
+      academicPeriodLabel: enrollment.course.academicPeriodLabel,
+      creditHours: enrollment.course.creditHours,
+      archivedAt: enrollment.course.archivedAt,
+      enrollmentRemovedAt: enrollment.removedAt,
+      teacherFirstName: enrollment.course.teacher.firstName,
+      teacherLastName: enrollment.course.teacher.lastName,
+      gradeRulesJson: enrollment.course.gradeRulesJson,
+      items: enrollment.course.scoreItems,
+      entries: entriesByEnrollment.get(enrollment.id) ?? [],
+    }))
+    .sort((a, b) => {
+      const aActive = a.archivedAt === null && a.enrollmentRemovedAt === null;
+      const bActive = b.archivedAt === null && b.enrollmentRemovedAt === null;
+      if (aActive && !bActive) return -1;
+      if (!aActive && bActive) return 1;
+      return a.name.localeCompare(b.name, "th");
+    });
 }
 
 // ─────────────────────────────────────────────────────────────

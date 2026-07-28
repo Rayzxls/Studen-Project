@@ -59,7 +59,6 @@ export default async function TeacherSubmissionDetailPage({
               userId: true,
               firstName: true,
               lastName: true,
-              studentId: true,
               user: { select: { profileImageId: true } },
             },
           },

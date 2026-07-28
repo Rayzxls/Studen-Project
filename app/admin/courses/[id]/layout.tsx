@@ -28,10 +28,7 @@ export default async function AdminCourseObserverLayout({
       subjectCode: true,
       learnerGroupLabel: true,
       academicPeriodLabel: true,
-      gradeLevel: true,
       creditHours: true,
-      class: { select: { id: true, name: true } },
-      term: { select: { name: true } },
       teacher: {
         select: {
           userId: true,
@@ -48,9 +45,9 @@ export default async function AdminCourseObserverLayout({
   return (
     <div className="mx-auto max-w-6xl animate-fade-in space-y-6 px-6 py-8 md:px-10">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link href="/admin/classes" className="btn-ghost btn-sm">
+        <Link href="/admin/courses" className="btn-ghost btn-sm">
           <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-          กลับไปห้องเรียนทั้งหมด
+          กลับไปรายวิชาทั้งหมด
         </Link>
         <span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-blue-500/10">
           <Eye className="h-3.5 w-3.5" aria-hidden="true" />

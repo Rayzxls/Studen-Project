@@ -97,10 +97,8 @@ describe("findOrCreateSession (ADR-0015)", () => {
     const other = await db.courseOffering.create({
       data: {
         teacherId: ctx.teacherUserId,
-        classId: ctx.classId,
-        termId: ctx.termId,
         name: "Stray Course",
-        gradeLevel: "ม.4",
+        learnerGroupLabel: "Stray Group",
         creditHours: 1,
         classCode: `TST-STRAY-${Date.now().toString(36)}`,
       },

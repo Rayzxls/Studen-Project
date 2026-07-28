@@ -64,7 +64,6 @@ export default async function ScoresListPage({ params }: PageProps) {
         removedAt: true,
         student: {
           select: {
-            studentId: true,
             firstName: true,
             lastName: true,
           },

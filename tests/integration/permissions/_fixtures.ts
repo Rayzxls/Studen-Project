@@ -21,8 +21,6 @@ export type TestCourseContext = {
   otherTeacherUserId: string;
   studentUserId: string;
   otherStudentUserId: string;
-  classId: string;
-  termId: string;
   courseOfferingId: string;
   classCode: string;
   cleanup: () => Promise<void>;
@@ -38,32 +36,13 @@ function rnd() {
  *   - 2 students (one to enrol/remove, one as bystander)
  *   - 1 CourseOffering with an active class code
  *
- * Reuses existing seed AcademicYear / Term / Class because they are stable
- * and slow to create; only owns rows the test will mutate.
+ * The CourseOffering is standalone. Tests must not depend on retired
+ * Admin-managed school setup entities.
  */
 export async function setupTestCourse(): Promise<TestCourseContext> {
   assertIsolatedTestDatabase();
   const passwordHash = await passwordHashPromise;
   const prefix = rnd();
-
-  // Reuse seed academic structure to keep fixtures lean.
-  const year = await db.academicYear.findFirst({
-    where: { isActive: true },
-    select: { id: true },
-  });
-  if (!year) {
-    throw new Error("No active AcademicYear — run `pnpm db:seed` first");
-  }
-  const term = await db.term.findFirst({
-    where: { academicYearId: year.id, isActive: true },
-    select: { id: true },
-  });
-  if (!term) throw new Error("No active Term in seed");
-  const klass = await db.class.findFirst({
-    where: { academicYearId: year.id },
-    select: { id: true, gradeLevel: true },
-  });
-  if (!klass) throw new Error("No Class in seed");
 
   // Teachers
   const teacherUser = await db.user.create({
@@ -97,10 +76,11 @@ export async function setupTestCourse(): Promise<TestCourseContext> {
     select: { id: true },
   });
 
-  // Students — Student.studentId is the login identifier, must be unique.
+  // The legacy profile-number column remains required until the separately
+  // gated D0 schema reset. Authentication uses email identifiers.
   const studentUser = await db.user.create({
     data: {
-      identifier: `${prefix}_s1`,
+      identifier: `${prefix}_s1@test.local`,
       passwordHash,
       role: "STUDENT",
       student: {
@@ -108,7 +88,6 @@ export async function setupTestCourse(): Promise<TestCourseContext> {
           studentId: `${prefix}_s1`,
           firstName: "Alice",
           lastName: "Tester",
-          classId: klass.id,
         },
       },
     },
@@ -116,7 +95,7 @@ export async function setupTestCourse(): Promise<TestCourseContext> {
   });
   const otherStudentUser = await db.user.create({
     data: {
-      identifier: `${prefix}_s2`,
+      identifier: `${prefix}_s2@test.local`,
       passwordHash,
       role: "STUDENT",
       student: {
@@ -124,7 +103,6 @@ export async function setupTestCourse(): Promise<TestCourseContext> {
           studentId: `${prefix}_s2`,
           firstName: "Bob",
           lastName: "Tester",
-          classId: klass.id,
         },
       },
     },
@@ -137,10 +115,9 @@ export async function setupTestCourse(): Promise<TestCourseContext> {
   const course = await db.courseOffering.create({
     data: {
       teacherId: teacherUser.id,
-      classId: klass.id,
-      termId: term.id,
       name: `Test Course ${prefix}`,
-      gradeLevel: klass.gradeLevel,
+      learnerGroupLabel: "QA Group",
+      academicPeriodLabel: "QA Period",
       creditHours: 1,
       classCode,
     },
@@ -160,8 +137,6 @@ export async function setupTestCourse(): Promise<TestCourseContext> {
     otherTeacherUserId: otherTeacherUser.id,
     studentUserId: studentUser.id,
     otherStudentUserId: otherStudentUser.id,
-    classId: klass.id,
-    termId: term.id,
     courseOfferingId: course.id,
     classCode: course.classCode,
     cleanup: async () => {

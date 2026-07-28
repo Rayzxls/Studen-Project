@@ -2,10 +2,7 @@ type CourseDisplaySource = {
   id: string;
   learnerGroupLabel?: string | null;
   academicPeriodLabel?: string | null;
-  gradeLevel?: string | null;
   creditHours?: number | null;
-  class?: { id?: string; name: string } | null;
-  term?: { name: string } | null;
 };
 
 function clean(value: string | null | undefined): string | null {
@@ -14,21 +11,17 @@ function clean(value: string | null | undefined): string | null {
 }
 
 export function courseLearnerGroup(course: CourseDisplaySource): string | null {
-  return (
-    clean(course.learnerGroupLabel) ??
-    clean(course.class?.name) ??
-    clean(course.gradeLevel)
-  );
+  return clean(course.learnerGroupLabel);
 }
 
 export function courseAcademicPeriod(
   course: CourseDisplaySource
 ): string | null {
-  return clean(course.academicPeriodLabel) ?? clean(course.term?.name);
+  return clean(course.academicPeriodLabel);
 }
 
 export function courseVisualKey(course: CourseDisplaySource): string {
-  return course.class?.id || course.id;
+  return course.id;
 }
 
 export function courseMetadataParts(course: CourseDisplaySource): string[] {

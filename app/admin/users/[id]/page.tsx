@@ -8,8 +8,8 @@ import { ResetPasswordCard } from "@/components/admin/reset-password-card";
 import { ResetProfileImageCard } from "@/components/admin/reset-profile-image-card";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { courseLearnerGroup } from "@/lib/course/display";
-import { currentTerm, getStudentStats } from "@/lib/dashboard/queries";
-import { getStudentTermSnapshot } from "@/lib/scoring/queries";
+import { getStudentStats } from "@/lib/dashboard/queries";
+import { listStudentLearningResults } from "@/lib/scoring/queries";
 import { gradeForCourseOffering } from "@/lib/scoring/calc";
 import { DEFAULT_GRADE_THRESHOLDS } from "@/lib/scoring/constants";
 import { getAttendanceStatsForStudent } from "@/lib/attendance/queries";
@@ -55,15 +55,11 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
           lastName: true,
           email: true,
           courses: {
-            where: {
-              OR: [{ term: { isActive: true } }, { termId: null }],
-            },
+            where: { archivedAt: null },
             select: {
               id: true,
               name: true,
               learnerGroupLabel: true,
-              gradeLevel: true,
-              class: { select: { name: true } },
               _count: {
                 select: { enrollments: { where: { removedAt: null } } },
               },
@@ -76,10 +72,9 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
         select: {
           firstName: true,
           lastName: true,
-          studentId: true,
           anonymized: true,
           enrollments: {
-            where: { removedAt: null, course: { term: { isActive: true } } },
+            where: { removedAt: null, course: { archivedAt: null } },
             select: {
               id: true,
               course: {
@@ -97,8 +92,6 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
   });
   if (!user) notFound();
 
-  const term = await currentTerm();
-
   let studentStats = null;
   let courseDetailsList: {
     courseId: string;
@@ -109,59 +102,67 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
     percent: number | null;
   }[] = [];
 
-  if (user.student && term) {
-    const [stats, snapshot] = await Promise.all([
+  if (user.student) {
+    const [stats, learningResults] = await Promise.all([
       getStudentStats(user.id),
-      getStudentTermSnapshot(user.id, term.id),
+      listStudentLearningResults(user.id),
     ]);
     studentStats = stats;
 
-    const detailsPromises = snapshot.rows.map(async (r, i) => {
-      const b = snapshot.bundles[i]!;
-      let thresholds = DEFAULT_GRADE_THRESHOLDS;
-      if (r.gradeRulesJson && Array.isArray(r.gradeRulesJson)) {
-        try {
-          const parsed = [];
-          for (const item of r.gradeRulesJson) {
-            if (
-              item &&
-              typeof item === "object" &&
-              "minPercent" in item &&
-              "grade" in item
-            ) {
-              parsed.push({
-                minPercent: Number(item.minPercent),
-                grade: Number(item.grade),
-              });
+    const detailsPromises = learningResults
+      .filter(
+        (result) =>
+          result.archivedAt === null && result.enrollmentRemovedAt === null
+      )
+      .map(async (result) => {
+        let thresholds = DEFAULT_GRADE_THRESHOLDS;
+        if (result.gradeRulesJson && Array.isArray(result.gradeRulesJson)) {
+          try {
+            const parsed = [];
+            for (const item of result.gradeRulesJson) {
+              if (
+                item &&
+                typeof item === "object" &&
+                "minPercent" in item &&
+                "grade" in item
+              ) {
+                parsed.push({
+                  minPercent: Number(item.minPercent),
+                  grade: Number(item.grade),
+                });
+              }
             }
-          }
-          if (parsed.length > 0) {
-            thresholds = parsed.sort((a, b) => b.minPercent - a.minPercent);
-          }
-        } catch (_) {}
-      }
+            if (parsed.length > 0) {
+              thresholds = parsed.sort((a, b) => b.minPercent - a.minPercent);
+            }
+          } catch (_) {}
+        }
 
-      const res = gradeForCourseOffering(b.items, b.entries, thresholds);
+        const res = gradeForCourseOffering(
+          result.items,
+          result.entries,
+          thresholds
+        );
 
-      const attStats = await getAttendanceStatsForStudent({
-        courseOfferingId: r.courseOfferingId,
-        studentUserId: user.id,
+        const attStats = await getAttendanceStatsForStudent({
+          courseOfferingId: result.courseOfferingId,
+          studentUserId: user.id,
+        });
+
+        const attRate =
+          attStats && attStats.marked > 0
+            ? Math.round((attStats.counts.PRESENT / attStats.marked) * 100)
+            : null;
+
+        return {
+          courseId: result.courseOfferingId,
+          attendanceRate: attRate,
+          marked: attStats?.marked ?? 0,
+          totalSessions: attStats?.totalSessions ?? 0,
+          grade: res.grade,
+          percent: res.percent,
+        };
       });
-
-      const attRate =
-        attStats && attStats.marked > 0
-          ? Math.round((attStats.counts.PRESENT / attStats.marked) * 100)
-          : null;
-
-      return {
-        courseId: r.courseOfferingId,
-        attendanceRate: attRate,
-        marked: attStats?.marked ?? 0,
-        totalSessions: attStats?.totalSessions ?? 0,
-        grade: res.grade,
-        percent: res.percent,
-      };
-    });
 
     courseDetailsList = await Promise.all(detailsPromises);
   }

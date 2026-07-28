@@ -8,7 +8,6 @@ import { resolveDisplayName } from "@/lib/profile/display-name";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { db } from "@/lib/db/client";
 import { listStudentCourses } from "@/lib/course/enrollment";
-import { currentTerm } from "@/lib/dashboard/queries";
 import {
   getStudentActionCenter,
   getTeacherClassHealth,
@@ -298,7 +297,7 @@ async function StudentDashboard({
                         badge={yearLabelFromTerm(
                           courseAcademicPeriod(e.course)
                         )}
-                        classId={courseVisualKey(e.course)}
+                        visualKey={courseVisualKey(e.course)}
                         avatarUserId={e.course.teacher.userId}
                         hasAvatar={Boolean(
                           e.course.teacher.user.profileImageId
@@ -376,10 +375,9 @@ async function TeacherDashboard({
   hasAvatar: boolean;
   avatarVersion: string | null;
 }) {
-  const [reviewQueue, classHealth, term] = await Promise.all([
+  const [reviewQueue, classHealth] = await Promise.all([
     getTeacherReviewQueue(teacherUserId),
     getTeacherClassHealth(teacherUserId),
-    currentTerm(),
   ]);
 
   return (
@@ -426,10 +424,8 @@ async function TeacherDashboard({
                       href={`/teacher/courses/${c.courseId}`}
                       title={c.courseName}
                       subtitle={c.className}
-                      badge={yearLabelFromTerm(
-                        term?.academicYearName ?? term?.name
-                      )}
-                      classId={c.classId}
+                      badge={yearLabelFromTerm(c.academicPeriodLabel)}
+                      visualKey={c.courseVisualKey}
                       avatarUserId={teacherUserId}
                       hasAvatar={hasAvatar}
                       avatarAlt={`ครู ${name}`}

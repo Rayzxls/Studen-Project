@@ -27,9 +27,6 @@ export default async function TeacherTimetablePage() {
       name: true,
       subjectCode: true,
       learnerGroupLabel: true,
-      gradeLevel: true,
-      classId: true,
-      class: { select: { id: true, name: true } },
       timetableSlots: {
         select: {
           id: true,
@@ -49,7 +46,7 @@ export default async function TeacherTimetablePage() {
       courseName: course.name,
       subjectCode: course.subjectCode,
       className: courseLearnerGroup(course) ?? "",
-      classId: courseVisualKey(course),
+      courseVisualKey: courseVisualKey(course),
       href: `/teacher/courses/${course.id}/settings`,
     }))
   );

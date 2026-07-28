@@ -1,25 +1,20 @@
 import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
-import {
-  getStudentTermSnapshot,
-  listTermsForStudent,
-} from "@/lib/scoring/queries";
-import { TermSummaryView } from "@/components/scoring/term-summary-view";
+import { listStudentLearningResults } from "@/lib/scoring/queries";
+import { LearningResultsView } from "@/components/scoring/learning-results-view";
 import { StudentTermsShell } from "@/components/scoring/student-terms-shell";
 
 // Auth-gated DB-fetching page — skip static prerender.
 export const dynamic = "force-dynamic";
 
-/**
- * Default landing — picks the current active Term, or the most-recent
- * Term the student has any enrollment in if there is no active term, or
- * an empty state.
- *
- * Linking `/student/terms` (no termId) here keeps the URL shareable and
- * lets the student go straight to "this semester" via nav.
- */
-export default async function StudentTermsDefaultPage() {
+interface PageProps {
+  searchParams: Promise<{ view?: string }>;
+}
+
+export default async function StudentTermsDefaultPage({
+  searchParams,
+}: PageProps) {
   let session;
   try {
     session = await requireRole(["STUDENT"]);
@@ -29,12 +24,15 @@ export default async function StudentTermsDefaultPage() {
 
   const studentUserId = session.user.id;
 
-  const [student, terms] = await Promise.all([
+  const { view: requestedView } = await searchParams;
+  const view = requestedView === "archive" ? "archive" : "active";
+
+  const [student, rows] = await Promise.all([
     db.student.findUnique({
       where: { userId: studentUserId },
       select: { firstName: true, lastName: true },
     }),
-    listTermsForStudent(studentUserId),
+    listStudentLearningResults(studentUserId),
   ]);
   if (!student) {
     return (
@@ -44,30 +42,12 @@ export default async function StudentTermsDefaultPage() {
     );
   }
 
-  if (terms.length === 0) {
-    return (
-      <StudentTermsShell session={session}>
-        <EmptyState>
-          ยังไม่ได้เข้าร่วมห้องเรียน — ใช้รหัสห้องจากครูที่หน้า{" "}
-          <a href="/join" className="underline">
-            เข้าร่วมห้องเรียน
-          </a>
-        </EmptyState>
-      </StudentTermsShell>
-    );
-  }
-
-  const selectedTerm = terms.find((t) => t.isActive) ?? terms[0]!;
-  const snapshot = await getStudentTermSnapshot(studentUserId, selectedTerm.id);
-
   return (
     <StudentTermsShell session={session}>
-      <TermSummaryView
+      <LearningResultsView
         studentName={`${student.firstName} ${student.lastName}`}
-        selectedTerm={selectedTerm}
-        allTerms={terms}
-        rows={snapshot.rows}
-        bundles={snapshot.bundles}
+        rows={rows}
+        view={view}
       />
     </StudentTermsShell>
   );

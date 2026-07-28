@@ -12,7 +12,6 @@ export interface StudentListParams {
 
 export interface StudentListItem {
   userId: string;
-  studentId: string;
   firstName: string;
   lastName: string;
   accountStatus: AccountStatus;
@@ -50,7 +49,6 @@ export async function listStudents(
           OR: [
             { firstName: { contains: search, mode: "insensitive" as const } },
             { lastName: { contains: search, mode: "insensitive" as const } },
-            { studentId: { contains: search } },
           ],
         }
       : {}),
@@ -60,12 +58,11 @@ export async function listStudents(
     db.student.count({ where }),
     db.student.findMany({
       where,
-      orderBy: [{ studentId: "asc" }],
+      orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
       skip,
       take: pageSize,
       select: {
         userId: true,
-        studentId: true,
         firstName: true,
         lastName: true,
         anonymized: true,
@@ -80,7 +77,6 @@ export async function listStudents(
   return {
     items: students.map((s) => ({
       userId: s.userId,
-      studentId: s.studentId,
       firstName: s.firstName,
       lastName: s.lastName,
       accountStatus: deriveLegacyAccountStatus({

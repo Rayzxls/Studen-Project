@@ -196,10 +196,7 @@ export default async function StudentAssignmentsListPage({
       subjectCode: true,
       learnerGroupLabel: true,
       academicPeriodLabel: true,
-      gradeLevel: true,
       creditHours: true,
-      class: { select: { id: true, name: true } },
-      term: { select: { name: true } },
       teacher: {
         select: {
           userId: true,

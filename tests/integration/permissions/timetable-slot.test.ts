@@ -150,10 +150,8 @@ describe("createTimetableSlot (DB)", () => {
     const other = await db.courseOffering.create({
       data: {
         teacherId: ctx.teacherUserId,
-        classId: ctx.classId,
-        termId: ctx.termId,
         name: "Other Course",
-        gradeLevel: "ม.4",
+        learnerGroupLabel: "Other Group",
         creditHours: 1,
         classCode: `TST-OVERLAP-${Date.now().toString(36)}`,
       },

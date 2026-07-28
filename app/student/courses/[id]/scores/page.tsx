@@ -9,7 +9,7 @@ import {
   type ScoreItemForCalculation,
   type ScoreEntryForCalculation,
 } from "@/lib/scoring/calc";
-import { formatPercent, formatGpa } from "@/lib/scoring/format";
+import { formatGradeValue, formatPercent } from "@/lib/scoring/format";
 import { CourseShell } from "@/components/course/course-shell";
 import { studentCourseTabs } from "../_tabs";
 
@@ -119,7 +119,7 @@ export default async function StudentScoresPage({ params }: PageProps) {
                   (grade !== null ? "text-blue-700" : "text-black/30")
                 }
               >
-                {grade !== null ? formatGpa(grade) : "—"}
+                {grade !== null ? formatGradeValue(grade) : "—"}
               </p>
             </div>
           </div>

@@ -361,7 +361,7 @@ function ScheduleBlock({
   style: CSSProperties;
   onSelect?: (slot: TimetableDisplaySlot) => void;
 }) {
-  const colors = getCourseSlotColors(slot.classId);
+  const colors = getCourseSlotColors(slot.courseVisualKey);
   return (
     <Link
       href={slot.href}
@@ -511,7 +511,7 @@ function MobileTimetable({
                 selectedDay === clock.dayOfWeek &&
                 timeToMinutes(slot.startTime) <= clock.minutes &&
                 clock.minutes < timeToMinutes(slot.endTime);
-              const colors = getCourseSlotColors(slot.classId);
+              const colors = getCourseSlotColors(slot.courseVisualKey);
               return (
                 <li
                   key={slot.id}

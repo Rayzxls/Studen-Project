@@ -637,7 +637,7 @@ model ScoreItem {
   quiz       Quiz? // 1:1 reverse — set when source=QUIZ_LINKED (ADR-0036)
 
   @@index([courseOfferingId, position]) // ordered list rendering
-  @@index([courseOfferingId, publishedAt]) // term-GPA completion check
+  @@index([courseOfferingId, publishedAt]) // course result publication lookup
 }
 
 // One row per (Enrollment × ScoreItem). Value stored as Int (whole points).

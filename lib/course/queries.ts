@@ -17,14 +17,11 @@ export async function getCourseOfferingForTeacher(
       subjectCode: true,
       learnerGroupLabel: true,
       academicPeriodLabel: true,
-      gradeLevel: true,
       creditHours: true,
       classCode: true,
       codeActive: true,
       codeExpiresAt: true,
       createdAt: true,
-      class: { select: { id: true, name: true } },
-      term: { select: { name: true } },
       teacher: {
         select: {
           userId: true,
@@ -40,7 +37,6 @@ export async function getCourseOfferingForTeacher(
           enrolledAt: true,
           student: {
             select: {
-              studentId: true,
               firstName: true,
               lastName: true,
             },
@@ -80,11 +76,8 @@ export async function getCourseOfferingForStudent(
       subjectCode: true,
       learnerGroupLabel: true,
       academicPeriodLabel: true,
-      gradeLevel: true,
       creditHours: true,
       createdAt: true,
-      class: { select: { id: true, name: true } },
-      term: { select: { name: true } },
       teacher: {
         select: {
           userId: true,

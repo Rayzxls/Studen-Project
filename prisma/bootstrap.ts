@@ -1,35 +1,15 @@
 /**
- * Production bootstrap — creates the REAL initial data for a live trial,
- * replacing the demo seed (prisma/seed.ts which uses @studennnn.local accounts).
+ * Idempotent bootstrap for an explicitly selected live-trial database.
  *
- * Idempotent: every write is an upsert, so re-running is safe. Re-running does
- * NOT overwrite an existing account's password/name (use the Admin
- * reset-password flow to change a password later).
- *
- * ─────────────────────────────────────────────────────────────
- * HOW TO RUN (against the PRODUCTION database)
- * ─────────────────────────────────────────────────────────────
- *   1. Edit the CONFIG block below with your real values.
- *   2. Make sure the schema is applied to the prod DB first:
- *        DATABASE_URL=<prod> pnpm prisma db push
- *   3. Run the bootstrap with the prod DATABASE_URL in scope. Either put the
- *      prod URL in .env.local temporarily, or create .env.production.local
- *      and run:
- *        pnpm dlx dotenv-cli -e .env.production.local -- pnpm tsx prisma/bootstrap.ts
- *      (or simply: pnpm db:bootstrap   — which reads .env.local)
- *
- * Passwords are NEVER printed. Set them in CONFIG and share each privately.
- * Set `mustResetPwd: true` to force a person to choose their own password on
- * first login (recommended for anyone other than yourself).
+ * This script creates only account and teacher-owned CourseOffering data.
+ * Retired school setup entities and human-facing learner numbers are omitted.
+ * Never run this script without reviewing CONFIG and the active DATABASE_URL.
  */
 
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
-// ════════════════════════ CONFIG — edit these ════════════════════════
-
 const CONFIG = {
-  /** The single admin account (you). Identifier can be an email or a username. */
   admin: {
     identifier: "admin@example.com",
     password: "CHANGE-ME-strong-password",
@@ -37,30 +17,6 @@ const CONFIG = {
     lastName: "ระบบ",
     mustResetPwd: false,
   },
-
-  /** Active academic year + its terms. */
-  academicYear: { name: "2568", active: true },
-  terms: [
-    {
-      number: 1,
-      name: "เทอม 1/2568",
-      startDate: "2025-05-15",
-      endDate: "2025-09-30",
-      active: true,
-    },
-    {
-      number: 2,
-      name: "เทอม 2/2568",
-      startDate: "2025-11-01",
-      endDate: "2026-03-31",
-      active: false,
-    },
-  ],
-
-  /** Homeroom classes the school has. `name` must be unique within the year. */
-  classes: [{ name: "ม.4/2", gradeLevel: "ม.4" }],
-
-  /** Teacher accounts (e.g. พ่อ / แม่). */
   teachers: [
     {
       identifier: "teacher1@example.com",
@@ -71,30 +27,19 @@ const CONFIG = {
       mustResetPwd: true,
     },
   ],
-
-  /**
-   * Course workspaces. Each links a teacher → class → term. `classCode` is the
-   * code students type at /join; leave "" to auto-derive a stable code.
-   */
   courseOfferings: [
     {
       name: "คณิตศาสตร์ ม.4/2",
       subjectCode: "MATH-M4",
-      gradeLevel: "ม.4",
+      learnerGroupLabel: "ม.4/2",
+      academicPeriodLabel: "ภาคเรียนที่ 1 ปี 2569",
       creditHours: 1.5,
       teacherIdentifier: "teacher1@example.com",
-      className: "ม.4/2",
-      termNumber: 1,
-      classCode: "", // "" = auto
+      classCode: "",
     },
   ],
-
-  /**
-   * Optional initial students. Leave empty [] to let students self-register at
-   * /signup and join a course with its code.
-   */
   students: [] as {
-    studentId: string;
+    email: string;
     password: string;
     firstName: string;
     lastName: string;
@@ -102,24 +47,26 @@ const CONFIG = {
   }[],
 };
 
-// ══════════════════════════════════════════════════════════════════════
-
 const db = new PrismaClient();
 const BCRYPT_COST = 12;
 const CONSENT_VERSION = "1.0";
 
-/** Deterministic short uppercase code from a string (djb2 → base36). */
 function deriveCode(seed: string): string {
-  let h = 5381;
-  for (let i = 0; i < seed.length; i++) h = (h * 33) ^ seed.charCodeAt(i);
-  const base = (h >>> 0).toString(36).toUpperCase().padStart(6, "0");
-  return `J${base}`.slice(0, 7); // 7 chars, letter-prefixed
+  let hash = 5381;
+  for (let index = 0; index < seed.length; index += 1) {
+    hash = (hash * 33) ^ seed.charCodeAt(index);
+  }
+  const base = (hash >>> 0).toString(36).toUpperCase().padStart(6, "0");
+  return `J${base}`.slice(0, 7);
+}
+
+function compatibilityStudentId(email: string): string {
+  return `compat-${deriveCode(email.toLowerCase())}`;
 }
 
 async function main() {
-  console.log("🚀 Bootstrapping production data…\n");
+  console.log("Bootstrapping Beagle Classroom...");
 
-  // ── Admin ──────────────────────────────────────────────────
   await db.user.upsert({
     where: { identifier: CONFIG.admin.identifier },
     update: {},
@@ -138,155 +85,101 @@ async function main() {
       },
     },
   });
-  console.log(`✓ Admin: ${CONFIG.admin.identifier}`);
 
-  // ── Academic year + terms ──────────────────────────────────
-  const year = await db.academicYear.upsert({
-    where: { name: CONFIG.academicYear.name },
-    update: { isActive: CONFIG.academicYear.active },
-    create: {
-      name: CONFIG.academicYear.name,
-      isActive: CONFIG.academicYear.active,
-    },
-  });
-  const termByNumber = new Map<number, string>();
-  for (const t of CONFIG.terms) {
-    const term = await db.term.upsert({
-      where: {
-        academicYearId_number: { academicYearId: year.id, number: t.number },
-      },
-      update: { isActive: t.active },
-      create: {
-        academicYearId: year.id,
-        number: t.number,
-        name: t.name,
-        startDate: new Date(t.startDate),
-        endDate: new Date(t.endDate),
-        isActive: t.active,
-      },
-    });
-    termByNumber.set(t.number, term.id);
-  }
-  console.log(`✓ Year ${year.name} + ${CONFIG.terms.length} term(s)`);
-
-  // ── Classes ────────────────────────────────────────────────
-  const classByName = new Map<string, string>();
-  for (const c of CONFIG.classes) {
-    const cls = await db.class.upsert({
-      where: { academicYearId_name: { academicYearId: year.id, name: c.name } },
-      update: { gradeLevel: c.gradeLevel },
-      create: {
-        academicYearId: year.id,
-        name: c.name,
-        gradeLevel: c.gradeLevel,
-      },
-    });
-    classByName.set(c.name, cls.id);
-  }
-  console.log(`✓ ${CONFIG.classes.length} class(es)`);
-
-  // ── Teachers ───────────────────────────────────────────────
   const teacherUserByIdentifier = new Map<string, string>();
-  for (const t of CONFIG.teachers) {
+  for (const teacher of CONFIG.teachers) {
     const user = await db.user.upsert({
-      where: { identifier: t.identifier },
+      where: { identifier: teacher.identifier },
       update: {},
       create: {
         role: "TEACHER",
-        identifier: t.identifier,
-        passwordHash: await bcrypt.hash(t.password, BCRYPT_COST),
-        mustResetPwd: t.mustResetPwd,
+        identifier: teacher.identifier,
+        passwordHash: await bcrypt.hash(teacher.password, BCRYPT_COST),
+        mustResetPwd: teacher.mustResetPwd, // dependency-gate-allow(temporary-password): compatibility field until the separately approved destructive schema migration
         consentedAt: new Date(),
         consentVersion: CONSENT_VERSION,
         teacher: {
           create: {
-            firstName: t.firstName,
-            lastName: t.lastName,
-            email: t.email,
+            firstName: teacher.firstName,
+            lastName: teacher.lastName,
+            email: teacher.email,
           },
         },
       },
     });
-    teacherUserByIdentifier.set(t.identifier, user.id);
+    teacherUserByIdentifier.set(teacher.identifier, user.id);
   }
-  console.log(`✓ ${CONFIG.teachers.length} teacher(s)`);
 
-  // ── Students (optional) ────────────────────────────────────
-  for (const s of CONFIG.students) {
+  for (const student of CONFIG.students) {
     await db.user.upsert({
-      where: { identifier: s.studentId },
+      where: { identifier: student.email.toLowerCase() },
       update: {},
       create: {
         role: "STUDENT",
-        identifier: s.studentId,
-        passwordHash: await bcrypt.hash(s.password, BCRYPT_COST),
-        mustResetPwd: s.mustResetPwd,
+        identifier: student.email.toLowerCase(),
+        passwordHash: await bcrypt.hash(student.password, BCRYPT_COST),
+        mustResetPwd: student.mustResetPwd, // dependency-gate-allow(temporary-password): compatibility field until the separately approved destructive schema migration
         consentedAt: new Date(),
         consentVersion: CONSENT_VERSION,
         student: {
           create: {
-            studentId: s.studentId,
-            firstName: s.firstName,
-            lastName: s.lastName,
+            // Compatibility-only until the separately gated D0 schema reset.
+            studentId: compatibilityStudentId(student.email), // dependency-gate-allow(student-number-auth-and-admin-flow): required synthetic compatibility value, never displayed or used for login; dependency-gate-allow(student-id-symbol-review): this symbol is temporary compatibility storage
+            firstName: student.firstName,
+            lastName: student.lastName,
           },
         },
       },
     });
   }
-  if (CONFIG.students.length)
-    console.log(`✓ ${CONFIG.students.length} student(s)`);
 
-  // ── Course offerings ───────────────────────────────────────
   const codes: { name: string; code: string }[] = [];
-  for (const co of CONFIG.courseOfferings) {
-    const teacherId = teacherUserByIdentifier.get(co.teacherIdentifier);
-    const classId = classByName.get(co.className);
-    const termId = termByNumber.get(co.termNumber);
-    if (!teacherId)
+  for (const course of CONFIG.courseOfferings) {
+    const teacherId = teacherUserByIdentifier.get(course.teacherIdentifier);
+    if (!teacherId) {
       throw new Error(
-        `CourseOffering "${co.name}" teacher "${co.teacherIdentifier}" not found`
+        `CourseOffering "${course.name}" teacher "${course.teacherIdentifier}" not found`
       );
-    if (!classId)
-      throw new Error(
-        `CourseOffering "${co.name}" class "${co.className}" not found`
-      );
-    if (!termId)
-      throw new Error(
-        `CourseOffering "${co.name}" term ${co.termNumber} not found`
-      );
+    }
+
     const classCode =
-      co.classCode.trim() ||
-      deriveCode(`${co.subjectCode}|${co.className}|${co.termNumber}`);
+      course.classCode.trim() ||
+      deriveCode(
+        [
+          course.subjectCode,
+          course.learnerGroupLabel,
+          course.academicPeriodLabel,
+        ].join("|")
+      );
+
     await db.courseOffering.upsert({
       where: { classCode },
       update: {},
       create: {
         teacherId,
-        classId,
-        termId,
-        name: co.name,
-        subjectCode: co.subjectCode,
-        gradeLevel: co.gradeLevel,
-        creditHours: co.creditHours,
+        name: course.name,
+        subjectCode: course.subjectCode || null,
+        learnerGroupLabel: course.learnerGroupLabel || null,
+        academicPeriodLabel: course.academicPeriodLabel || null,
+        creditHours: course.creditHours,
         classCode,
         codeActive: true,
       },
     });
-    codes.push({ name: co.name, code: classCode });
+    codes.push({ name: course.name, code: classCode });
   }
 
-  console.log(`✓ ${CONFIG.courseOfferings.length} course offering(s)`);
-  console.log("\n✨ Bootstrap done. Class codes (give to students for /join):");
-  for (const c of codes) console.log(`   ${c.code}  →  ${c.name}`);
-  console.log(
-    "\n(Passwords are not printed — they are the values you set in CONFIG.)"
-  );
+  console.log(`Bootstrap complete: ${codes.length} course(s).`);
+  for (const course of codes) {
+    console.log(`${course.code} -> ${course.name}`);
+  }
+  console.log("Passwords are not printed; use the reviewed CONFIG values.");
 }
 
 main()
   .then(() => db.$disconnect())
-  .catch(async (e) => {
-    console.error(e);
+  .catch(async (error) => {
+    console.error(error);
     await db.$disconnect();
     process.exit(1);
   });

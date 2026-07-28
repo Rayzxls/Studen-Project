@@ -28,7 +28,7 @@ export interface TimetableDisplaySlot {
   courseName: string;
   subjectCode: string | null;
   className: string;
-  classId: string;
+  courseVisualKey: string;
   dayOfWeek: number;
   startTime: string;
   endTime: string;

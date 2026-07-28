@@ -17,7 +17,7 @@ import { TabNav, type CourseTab } from "./tab-nav";
  * and moved the tab bar out of the hero so the hero stays "just a hero".
  *
  *   - <TopNav> (shared, sticky frosted)
- *   - course context bar (back link + term name)
+ *   - course context bar (back link + optional academic-period label)
  *   - .card-hero (banner + content zone with course title)
  *   - <TabNav> underline bar below the hero
  *   - children
@@ -33,10 +33,7 @@ export type CourseShellProps = {
     subjectCode: string | null;
     learnerGroupLabel?: string | null;
     academicPeriodLabel?: string | null;
-    gradeLevel: string | null;
     creditHours: number | null;
-    class: { id: string; name: string } | null;
-    term: { name: string } | null;
     teacher: {
       userId: string;
       firstName: string;
@@ -132,10 +129,7 @@ export function CourseShell({
                 />
               </span>
               <div className="min-w-0 flex-1 pb-1 pt-4">
-                <h1
-                  className="truncate text-2xl font-semibold text-ink md:text-3xl"
-                  style={{ letterSpacing: "-0.03em" }}
-                >
+                <h1 className="truncate text-2xl font-semibold text-ink md:text-3xl">
                   {course.name}
                 </h1>
                 <p className="mt-1 truncate text-sm text-ink-mute">

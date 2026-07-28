@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
-import { currentTerm } from "@/lib/dashboard/queries";
 import { courseLearnerGroup } from "@/lib/course/display";
 
 /**
@@ -34,7 +33,7 @@ import { courseLearnerGroup } from "@/lib/course/display";
 export const dynamic = "force-dynamic";
 
 type ActivityType = "assignment" | "material" | "announcement" | "course";
-type RangeKey = "7d" | "30d" | "term" | "all";
+type RangeKey = "7d" | "30d" | "all";
 
 const TYPE_META: Record<
   ActivityType,
@@ -65,7 +64,6 @@ const TYPE_META: Record<
 const RANGE_LABEL: Record<RangeKey, string> = {
   "7d": "7 วันล่าสุด",
   "30d": "30 วันล่าสุด",
-  term: "เทอมนี้",
   all: "ทั้งหมด",
 };
 
@@ -105,24 +103,14 @@ export default async function AdminActivityPage({ searchParams }: PageProps) {
   ).includes(sp.type as ActivityType)
     ? (sp.type as ActivityType)
     : "all";
-  const range: RangeKey = (["7d", "30d", "term", "all"] as const).includes(
+  const range: RangeKey = (["7d", "30d", "all"] as const).includes(
     sp.range as RangeKey
   )
     ? (sp.range as RangeKey)
     : "30d";
   const courseId = sp.courseId?.trim() || null;
 
-  const term = await currentTerm();
-
-  // Resolve the time floor for the selected range.
-  let since: Date | null = rangeFloor(range);
-  if (range === "term" && term) {
-    const t = await db.term.findUnique({
-      where: { id: term.id },
-      select: { startDate: true },
-    });
-    since = t?.startDate ?? null;
-  }
+  const since = rangeFloor(range);
 
   const PER_TYPE_CAP = 40;
   const courseWhere = courseId ? { courseOfferingId: courseId } : {};
@@ -148,8 +136,6 @@ export default async function AdminActivityPage({ searchParams }: PageProps) {
                   id: true,
                   name: true,
                   learnerGroupLabel: true,
-                  gradeLevel: true,
-                  class: { select: { name: true } },
                   teacher: { select: { firstName: true, lastName: true } },
                 },
               },
@@ -174,8 +160,6 @@ export default async function AdminActivityPage({ searchParams }: PageProps) {
                   id: true,
                   name: true,
                   learnerGroupLabel: true,
-                  gradeLevel: true,
-                  class: { select: { name: true } },
                   teacher: { select: { firstName: true, lastName: true } },
                 },
               },
@@ -201,8 +185,6 @@ export default async function AdminActivityPage({ searchParams }: PageProps) {
                   id: true,
                   name: true,
                   learnerGroupLabel: true,
-                  gradeLevel: true,
-                  class: { select: { name: true } },
                   teacher: { select: { firstName: true, lastName: true } },
                 },
               },
@@ -222,13 +204,11 @@ export default async function AdminActivityPage({ searchParams }: PageProps) {
               name: true,
               createdAt: true,
               learnerGroupLabel: true,
-              gradeLevel: true,
-              class: { select: { name: true } },
               teacher: { select: { firstName: true, lastName: true } },
             },
           })
         : Promise.resolve([]),
-      // Course filter options — active term first, then everything else.
+      // Course filter options are independent of academic terms.
       db.courseOffering.findMany({
         orderBy: [{ createdAt: "desc" }],
         take: 200,
@@ -236,8 +216,6 @@ export default async function AdminActivityPage({ searchParams }: PageProps) {
           id: true,
           name: true,
           learnerGroupLabel: true,
-          gradeLevel: true,
-          class: { select: { name: true } },
         },
       }),
     ]);

@@ -31,7 +31,7 @@ type Props = {
   courseId: string;
   courseName: string;
   subjectCode: string | null;
-  classId: string;
+  courseVisualKey: string;
   className: string;
   slots: TimetableSlotRow[];
 };
@@ -40,7 +40,7 @@ export function TimetableEditor({
   courseId,
   courseName,
   subjectCode,
-  classId,
+  courseVisualKey,
   className,
   slots,
 }: Props) {
@@ -58,7 +58,7 @@ export function TimetableEditor({
     courseId,
     courseName,
     subjectCode,
-    classId,
+    courseVisualKey,
     className,
     href: `/teacher/courses/${courseId}/settings`,
   }));

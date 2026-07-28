@@ -61,16 +61,20 @@ an internal relation to `User.id`, not the retired human Student Number.
 
 ## Current Reviewed Baseline
 
-The D0 and additive D0.1 slices reviewed on 2026-07-26 reduce the inventory to:
+The completed D0 and D0.1 runtime slices reviewed on 2026-07-29 reduce the
+inventory to:
 
 | Class | Findings |
 | --- | ---: |
-| Blocker | 590 |
-| Review | 193 |
-| Total | 783 |
+| Blocker | 140 |
+| Review | 142 |
+| Total | 282 |
 
 This is still a compatibility baseline, not the strict exit gate. Remaining
-findings include Admin-managed academic structure, legacy identity storage,
-Homeroom behavior, and Term/GPA compatibility code that must be removed in
-later approved slices. Baseline updates require a reviewed reduction or an
-explicit compatibility bridge; they must never hide a new product dependency.
+academic-structure blockers are limited to the nullable Prisma compatibility
+schema (`AcademicYear`, `Class`, `gradeLevel`, and `Term`). The remaining
+identity blockers cover legacy temporary-password/display-name compatibility
+and the retained Student Number storage field. Most `studentId` review findings
+are internal relations to `User.id`, not the retired human Student Number.
+Baseline updates require a reviewed reduction or an explicit compatibility
+bridge; they must never hide a new product dependency.

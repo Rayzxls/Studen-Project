@@ -1,5 +1,38 @@
 # HANDOFF — Beagle Classroom
 
+## D0.1 COURSE RUNTIME MIGRATION COMPLETE — 2026-07-29 (READ FIRST)
+
+- This entry supersedes the older D0.1 "next slice" notes below. Claude commit
+  `b91a9c1` retired the Admin Academic Year/Term/Class/Homeroom setup surface;
+  the follow-up Codex work completes the runtime migration for dashboards,
+  reports, Learning Results, exports, scoring, timetable, Admin observer
+  aggregates, bootstrap/seed, smoke fixtures, and integration fixtures.
+- Admin observes Teacher-owned CourseOfferings at `/admin/courses`. The
+  obsolete `/admin/classes` observer/detail, term-summary UI, Term GPA/Status
+  modules, and Homeroom behavior are removed.
+- Learning Results is per CourseOffering only: own score total, percentage, and
+  grade for active or archived courses. There is no Term GPA, GPAX, term picker,
+  completion progress, or cross-course aggregate.
+- Course display, color, timetable, and report identity use CourseOffering
+  metadata/identity. Runtime and report queries no longer traverse legacy
+  Class, Term, AcademicYear, or gradeLevel relations.
+- Full unit verification passes `94 files / 792 tests`. Targeted isolated-Neon
+  integration for scoring/results, attendance, session lifecycle, and timetable
+  passes. TypeScript, ESLint, Prisma validation, Production build, and
+  `git diff --check` pass. The repository-wide integration command still has
+  the previously documented runner/open-handle timeout; no assertion failure
+  was reported before timeout.
+- The reviewed dependency baseline is now
+  `140 blocker / 142 review / 282 total`, with zero new retired-concept
+  dependencies and 372 findings resolved in this slice.
+- The remaining 18 academic-structure blockers exist only in nullable Prisma
+  compatibility schema. The rest belong to the separate D1 legacy identity
+  compatibility cleanup; most `studentId` review findings are internal User
+  foreign keys and must not be bulk-renamed.
+- No Production migration, destructive table/foreign-key removal, data reset,
+  or deployment was performed. Schema cleanup requires a separately approved
+  isolated-QA migration plan.
+
 ## D0.1 ADMIN SETUP + HOMEROOM RUNTIME RETIREMENT — 2026-07-29 (READ FIRST)
 
 - Claude commit `b91a9c1` removed the retired Admin Academic Year, Term, Class,

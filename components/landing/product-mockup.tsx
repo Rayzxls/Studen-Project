@@ -63,11 +63,11 @@ export function ProductMockup({ className }: { className?: string }) {
         {/* Course rows */}
         <div className="mt-3 space-y-2">
           <CourseRow
-            classId="science-4a"
+            visualKey="science-4a"
             name="คณิตศาสตร์ ม.4/2"
             code="MATH4A"
           />
-          <CourseRow classId="phys-4a" name="ฟิสิกส์ 2" code="PHYS2" />
+          <CourseRow visualKey="phys-4a" name="ฟิสิกส์ 2" code="PHYS2" />
         </div>
       </div>
     </div>
@@ -102,17 +102,17 @@ function Kpi({
 }
 
 function CourseRow({
-  classId,
+  visualKey,
   name,
   code,
 }: {
-  classId: string;
+  visualKey: string;
   name: string;
   code: string;
 }) {
   return (
     <div className="flex items-center gap-3 rounded-lg border border-black/[0.05] bg-white px-3 py-2.5">
-      <CourseColorChip classId={classId} variant="marker" />
+      <CourseColorChip visualKey={visualKey} variant="marker" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-xs font-medium text-black">{name}</p>
         <p className="font-mono text-[9px] text-black/40">{code}</p>

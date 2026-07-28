@@ -1,9 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  findActiveTerm: vi.fn(),
-  findTerm: vi.fn(),
-  countClasses: vi.fn(),
+  countCourses: vi.fn(),
   countTeachers: vi.fn(),
   countStudents: vi.fn(),
   countAudits: vi.fn(),
@@ -11,11 +9,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/db/client", () => ({
   db: {
-    term: {
-      findFirst: mocks.findActiveTerm,
-      findUnique: mocks.findTerm,
-    },
-    class: { count: mocks.countClasses },
+    courseOffering: { count: mocks.countCourses },
     teacher: { count: mocks.countTeachers },
     student: { count: mocks.countStudents },
     auditLog: { count: mocks.countAudits },
@@ -26,7 +20,7 @@ import { getAdminStats } from "@/lib/dashboard/queries";
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mocks.findActiveTerm.mockResolvedValue(null);
+  mocks.countCourses.mockResolvedValue(1);
   mocks.countTeachers.mockResolvedValue(2);
   mocks.countStudents.mockResolvedValue(3);
   mocks.countAudits.mockResolvedValue(0);
@@ -35,10 +29,14 @@ beforeEach(() => {
 describe("getAdminStats account visibility", () => {
   it("uses the same active-identity filters as the Admin user lists", async () => {
     await expect(getAdminStats()).resolves.toMatchObject({
+      courseCount: 1,
       teacherCount: 2,
       studentCount: 3,
     });
 
+    expect(mocks.countCourses).toHaveBeenCalledWith({
+      where: { archivedAt: null },
+    });
     expect(mocks.countTeachers).toHaveBeenCalledWith({
       where: { user: { deletedAt: null } },
     });

@@ -4,36 +4,31 @@ import bcrypt from "bcryptjs";
 const db = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Seeding...");
+  console.log("Seeding Beagle Classroom...");
 
-  // ════════════ Identity (Phase 1) ════════════
-
-  const adminPwd = await bcrypt.hash("Admin1234!", 12);
+  const adminPassword = await bcrypt.hash("Admin1234!", 12);
   await db.user.upsert({
     where: { identifier: "admin@studennnn.local" },
     update: {},
     create: {
       role: "ADMIN",
       identifier: "admin@studennnn.local",
-      passwordHash: adminPwd,
+      passwordHash: adminPassword,
       mustResetPwd: false,
       consentedAt: new Date(),
       consentVersion: "1.0",
-      admin: {
-        create: { firstName: "ผู้ดูแล", lastName: "ระบบ" },
-      },
+      admin: { create: { firstName: "ผู้ดูแล", lastName: "ระบบ" } },
     },
   });
-  console.log("✓ Admin: admin@studennnn.local / Admin1234!");
 
-  const teacherPwd = await bcrypt.hash("Teacher1234!", 12);
+  const teacherPassword = await bcrypt.hash("Teacher1234!", 12);
   const teacherUser = await db.user.upsert({
     where: { identifier: "teacher@studennnn.local" },
     update: {},
     create: {
       role: "TEACHER",
       identifier: "teacher@studennnn.local",
-      passwordHash: teacherPwd,
+      passwordHash: teacherPassword,
       mustResetPwd: false,
       consentedAt: new Date(),
       consentVersion: "1.0",
@@ -46,144 +41,59 @@ async function main() {
       },
     },
   });
-  console.log("✓ Teacher: teacher@studennnn.local / Teacher1234!");
 
-  const studentPwd = await bcrypt.hash("Student1234", 12);
+  const studentPassword = await bcrypt.hash("Student1234", 12);
   await db.user.upsert({
-    where: { identifier: "60001" },
+    where: { identifier: "student@studennnn.local" },
     update: {},
     create: {
       role: "STUDENT",
-      identifier: "60001",
-      passwordHash: studentPwd,
+      identifier: "student@studennnn.local",
+      passwordHash: studentPassword,
       mustResetPwd: false,
       consentedAt: new Date(),
       consentVersion: "1.0",
       student: {
         create: {
-          studentId: "60001",
+          // Compatibility-only until the separately gated D0 schema reset.
+          studentId: "compat-demo-student", // dependency-gate-allow(student-number-auth-and-admin-flow): required synthetic compatibility value, never displayed or used for login; dependency-gate-allow(student-id-symbol-review): this symbol is temporary compatibility storage
           firstName: "ชนากานต์",
           lastName: "ใจดี",
         },
       },
     },
   });
-  console.log("✓ Student: 60001 / Student1234");
 
-  // ════════════ Academic structure (Phase 2 — workspace model) ════════════
-
-  const year2568 = await db.academicYear.upsert({
-    where: { name: "2568" },
-    update: { isActive: true },
-    create: { name: "2568", isActive: true },
-  });
-
-  const term1 = await db.term.upsert({
-    where: {
-      academicYearId_number: { academicYearId: year2568.id, number: 1 },
-    },
-    update: { isActive: true },
-    create: {
-      academicYearId: year2568.id,
-      number: 1,
-      name: "เทอม 1/2568",
-      startDate: new Date("2025-05-15"),
-      endDate: new Date("2025-09-30"),
-      isActive: true,
-    },
-  });
-  await db.term.upsert({
-    where: {
-      academicYearId_number: { academicYearId: year2568.id, number: 2 },
-    },
-    update: {},
-    create: {
-      academicYearId: year2568.id,
-      number: 2,
-      name: "เทอม 2/2568",
-      startDate: new Date("2025-11-01"),
-      endDate: new Date("2026-03-31"),
-      isActive: false,
-    },
-  });
-  console.log("✓ Academic Year 2568 + 2 terms");
-
-  // Legacy classes retained only for compatibility fixtures during D0.1.
-  const classDefs: { name: string; gradeLevel: string }[] = [
-    // ประถม
-    { name: "ป.1/1", gradeLevel: "ป.1" },
-    { name: "ป.1/2", gradeLevel: "ป.1" },
-    { name: "ป.2/1", gradeLevel: "ป.2" },
-    { name: "ป.3/1", gradeLevel: "ป.3" },
-    { name: "ป.4/1", gradeLevel: "ป.4" },
-    { name: "ป.5/1", gradeLevel: "ป.5" },
-    { name: "ป.6/1", gradeLevel: "ป.6" },
-    { name: "ป.6/2", gradeLevel: "ป.6" },
-    // ม.ต้น
-    { name: "ม.1/1", gradeLevel: "ม.1" },
-    { name: "ม.1/2", gradeLevel: "ม.1" },
-    { name: "ม.2/1", gradeLevel: "ม.2" },
-    { name: "ม.2/2", gradeLevel: "ม.2" },
-    { name: "ม.3/1", gradeLevel: "ม.3" },
-    { name: "ม.3/2", gradeLevel: "ม.3" },
-    // ม.ปลาย
-    { name: "ม.4/1", gradeLevel: "ม.4" },
-    { name: "ม.4/2", gradeLevel: "ม.4" },
-    { name: "ม.4/3", gradeLevel: "ม.4" },
-    { name: "ม.5/1", gradeLevel: "ม.5" },
-    { name: "ม.5/2", gradeLevel: "ม.5" },
-    { name: "ม.6/1", gradeLevel: "ม.6" },
-    { name: "ม.6/2", gradeLevel: "ม.6" },
-  ];
-  for (const c of classDefs) {
-    await db.class.upsert({
-      where: {
-        academicYearId_name: { academicYearId: year2568.id, name: c.name },
-      },
-      update: {},
-      create: { academicYearId: year2568.id, ...c },
-    });
-  }
-  const class402 = await db.class.findUniqueOrThrow({
-    where: {
-      academicYearId_name: { academicYearId: year2568.id, name: "ม.4/2" },
-    },
-  });
-  console.log(`✓ ${classDefs.length} classes (ป.1 – ม.6)`);
-
-  // Sample CourseOffering — teacher-owned workspace (ADR-0012)
-  const existing = await db.courseOffering.findUnique({
+  const existingCourse = await db.courseOffering.findUnique({
     where: { classCode: "MATH4A-DEMO1" },
+    select: { id: true },
   });
-  if (!existing) {
+  if (!existingCourse) {
     await db.courseOffering.create({
       data: {
         teacherId: teacherUser.id,
-        classId: class402.id,
-        termId: term1.id,
         name: "คณิตศาสตร์ ม.4/2 ครูสมชาย",
         subjectCode: "MATH-M4",
-        gradeLevel: "ม.4",
+        learnerGroupLabel: "ม.4/2",
+        academicPeriodLabel: "ภาคเรียนที่ 1 ปี 2568",
         creditHours: 1.5,
         classCode: "MATH4A-DEMO1",
         codeActive: true,
       },
     });
   }
-  console.log("✓ Sample workspace: คณิตศาสตร์ ม.4/2 (code: MATH4A-DEMO1)");
 
-  console.log("\n✨ Done\n");
-  console.log("Test accounts:");
-  console.log("  Admin:   admin@studennnn.local / Admin1234!");
-  console.log("  Teacher: teacher@studennnn.local / Teacher1234!");
-  console.log("  Student: 60001 / Student1234!");
-  console.log("\nDemo Class Code: MATH4A-DEMO1 (use at /join)");
+  console.log("Seed complete.");
+  console.log("Admin: admin@studennnn.local / Admin1234!");
+  console.log("Teacher: teacher@studennnn.local / Teacher1234!");
+  console.log("Student: student@studennnn.local / Student1234");
+  console.log("Course code: MATH4A-DEMO1");
 }
 
 main()
   .then(() => db.$disconnect())
-  .catch(async (e) => {
-    console.error(e);
+  .catch(async (error) => {
+    console.error(error);
     await db.$disconnect();
     process.exit(1);
   });

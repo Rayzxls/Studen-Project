@@ -210,7 +210,7 @@ describe("gradeFor (default thresholds)", () => {
 // ─────────────────────────────────────────────────────────────
 
 describe("gradeForCourseOffering", () => {
-  it("returns null grade when 0 items (CONTEXT § Term GPA edge)", () => {
+  it("returns null grade when a course has no score items", () => {
     const res = gradeForCourseOffering([], []);
     expect(res.grade).toBeNull();
     expect(res.percent).toBeNull();

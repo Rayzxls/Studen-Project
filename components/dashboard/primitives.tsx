@@ -190,13 +190,13 @@ export function CourseQuickLink({
   href,
   name,
   subtitle,
-  classId,
+  visualKey,
   trailing,
 }: {
   href: string;
   name: string;
   subtitle?: string;
-  classId: string;
+  visualKey: string;
   trailing?: React.ReactNode;
 }) {
   return (
@@ -204,7 +204,7 @@ export function CourseQuickLink({
       href={href}
       className="group flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-black/[0.03] hover:no-underline"
     >
-      <CourseColorChip classId={classId} variant="dot" />
+      <CourseColorChip visualKey={visualKey} variant="dot" />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-medium text-black">
           {name}
@@ -245,7 +245,7 @@ export function CourseShowcaseCard({
   badge,
   notice,
   noticeTone = "muted",
-  classId,
+  visualKey,
   avatarUserId,
   hasAvatar = false,
   avatarAlt = "",
@@ -259,7 +259,7 @@ export function CourseShowcaseCard({
   badge?: string;
   notice?: string;
   noticeTone?: "muted" | "attention" | "success";
-  classId: string;
+  visualKey: string;
   avatarUserId?: string;
   hasAvatar?: boolean;
   avatarAlt?: string;
@@ -267,7 +267,7 @@ export function CourseShowcaseCard({
   actionLabel: string;
   menu?: React.ReactNode;
 }) {
-  const color = getCourseSlotColors(classId);
+  const color = getCourseSlotColors(visualKey);
   const noticeClass =
     noticeTone === "attention"
       ? "text-orange-600"

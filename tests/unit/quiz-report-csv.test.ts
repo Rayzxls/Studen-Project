@@ -43,7 +43,6 @@ function fixture(): TeacherQuizResultsView {
       {
         enrollmentId: "enrollment-1",
         studentUserId: "student-1",
-        studentCode: "65001",
         name: "Ada Lovelace",
         status: "SUBMITTED",
         attemptCount: 2,

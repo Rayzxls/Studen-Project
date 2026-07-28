@@ -5,19 +5,19 @@ import {
 } from "@/lib/theme/course-color";
 
 /**
- * CourseColorChip — three variants of the per-class identity colour.
+ * CourseColorChip — three variants of the per-course identity colour.
  *
  * Role-modulated rendering (ADR-0028 § 8):
  *  - `chip`   : full coloured pill with the label. Student feed, dashboard.
  *  - `marker` : 4px left bar with no label. Teacher list rows.
  *  - `dot`    : small filled circle. Admin list rows where space is tight.
  *
- * Pass either `classId` (deterministic hash) or an explicit `slot` if the
+ * Pass either `visualKey` (deterministic hash) or an explicit `slot` if the
  * caller has already resolved one. `label` is optional and only renders on
  * the `chip` variant.
  */
 export interface CourseColorChipProps {
-  classId?: string;
+  visualKey?: string;
   slot?: CourseSlot;
   variant?: "chip" | "marker" | "dot";
   label?: string;
@@ -25,14 +25,14 @@ export interface CourseColorChipProps {
 }
 
 export function CourseColorChip({
-  classId,
+  visualKey,
   slot: explicitSlot,
   variant = "chip",
   label,
   className,
 }: CourseColorChipProps) {
   const slot =
-    explicitSlot ?? (classId ? getCourseSlot(classId) : (0 as CourseSlot));
+    explicitSlot ?? (visualKey ? getCourseSlot(visualKey) : (0 as CourseSlot));
   const c = colorsForSlot(slot);
 
   if (variant === "marker") {
