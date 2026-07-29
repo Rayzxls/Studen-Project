@@ -1,6 +1,6 @@
 {
   "rulesVersion": "2026-07-24.3",
-  "generatedAt": "2026-07-29T05:15:28.974Z",
+  "generatedAt": "2026-07-29T08:03:06.725Z",
   "findings": [
     {
       "fingerprint": "0a611fb460e051e0e05a",
@@ -8,7 +8,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "prisma/schema.prisma",
-      "line": 418,
+      "line": 413,
       "excerpt": "model AcademicYear {",
       "occurrence": 1
     },
@@ -18,7 +18,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "prisma/schema.prisma",
-      "line": 428,
+      "line": 423,
       "excerpt": "academicYearId String",
       "occurrence": 1
     },
@@ -28,7 +28,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "prisma/schema.prisma",
-      "line": 429,
+      "line": 424,
       "excerpt": "academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)",
       "occurrence": 1
     },
@@ -38,7 +38,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "prisma/schema.prisma",
-      "line": 438,
+      "line": 433,
       "excerpt": "@@unique([academicYearId, number])",
       "occurrence": 1
     },
@@ -48,7 +48,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "prisma/schema.prisma",
-      "line": 443,
+      "line": 438,
       "excerpt": "academicYearId String",
       "occurrence": 2
     },
@@ -58,7 +58,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "prisma/schema.prisma",
-      "line": 444,
+      "line": 439,
       "excerpt": "academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)",
       "occurrence": 2
     },
@@ -68,7 +68,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "prisma/schema.prisma",
-      "line": 452,
+      "line": 447,
       "excerpt": "@@unique([academicYearId, name])",
       "occurrence": 1
     },
@@ -78,7 +78,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "prisma/schema.prisma",
-      "line": 365,
+      "line": 360,
       "excerpt": "classId String?",
       "occurrence": 1
     },
@@ -88,7 +88,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "prisma/schema.prisma",
-      "line": 366,
+      "line": 361,
       "excerpt": "class Class? @relation(fields: [classId], references: [id], onDelete: SetNull)",
       "occurrence": 1
     },
@@ -98,7 +98,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "prisma/schema.prisma",
-      "line": 462,
+      "line": 457,
       "excerpt": "classId String?",
       "occurrence": 2
     },
@@ -108,7 +108,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "prisma/schema.prisma",
-      "line": 463,
+      "line": 458,
       "excerpt": "class Class? @relation(fields: [classId], references: [id], onDelete: Restrict)",
       "occurrence": 1
     },
@@ -118,7 +118,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "prisma/schema.prisma",
-      "line": 496,
+      "line": 491,
       "excerpt": "@@index([classId, termId])",
       "occurrence": 1
     },
@@ -128,7 +128,7 @@
       "severity": "blocker",
       "description": "Structured gradeLevel remains.",
       "path": "prisma/schema.prisma",
-      "line": 446,
+      "line": 441,
       "excerpt": "gradeLevel String // \"ม.4\"",
       "occurrence": 1
     },
@@ -138,7 +138,7 @@
       "severity": "blocker",
       "description": "Structured gradeLevel remains.",
       "path": "prisma/schema.prisma",
-      "line": 453,
+      "line": 448,
       "excerpt": "@@index([gradeLevel])",
       "occurrence": 1
     },
@@ -148,328 +148,8 @@
       "severity": "blocker",
       "description": "Structured gradeLevel remains.",
       "path": "prisma/schema.prisma",
-      "line": 472,
+      "line": 467,
       "excerpt": "gradeLevel String? // legacy compatibility only",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "491e47b4084fe7e2db2f",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "prisma/schema.prisma",
-      "line": 89,
-      "excerpt": "displayName String?",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "111ff99e0243d2ad5342",
-      "ruleId": "student-number-schema",
-      "severity": "blocker",
-      "description": "Student Number remains a persisted unique identity field.",
-      "path": "prisma/schema.prisma",
-      "line": 361,
-      "excerpt": "studentId String @unique",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "d13ac48d8f12df573958",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "app/(auth)/reset-password/force/actions.ts",
-      "line": 57,
-      "excerpt": "// Sign out so the stale JWT (mustResetPwd=true) is discarded.",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "ac0680e641ddec11c13e",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "app/admin/users/[id]/page.tsx",
-      "line": 42,
-      "excerpt": "mustResetPwd: true,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "ac983c6f5c3e8961b83a",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "app/admin/users/[id]/page.tsx",
-      "line": 264,
-      "excerpt": "{user.mustResetPwd && (",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "999258e758b7e3c832df",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/auth/change-password.ts",
-      "line": 73,
-      "excerpt": "mustResetPwd: false,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "7a2c26afacd82e2aa8fa",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/auth/config.ts",
-      "line": 55,
-      "excerpt": "// If logged in AND mustResetPwd, redirect everywhere except force-reset itself",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "8c944bdd2e267e4fe025",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/auth/config.ts",
-      "line": 59,
-      "excerpt": "auth.user.mustResetPwd &&",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "c9a75cd18bf493329a1e",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/auth/config.ts",
-      "line": 95,
-      "excerpt": "token.mustResetPwd = user.mustResetPwd;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "4ff0a2943a4bf2b5863c",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/auth/config.ts",
-      "line": 101,
-      "excerpt": "// Allow session update to refresh mustResetPwd after password change",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "194cc96657b3ff4061a6",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/auth/config.ts",
-      "line": 103,
-      "excerpt": "token.mustResetPwd = false;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "623a0a59cd99087e08de",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/auth/config.ts",
-      "line": 118,
-      "excerpt": "session.user.mustResetPwd = token.mustResetPwd as boolean;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "eb3cc958ebe39783d994",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/auth/index.ts",
-      "line": 234,
-      "excerpt": "mustResetPwd: true,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "13513c8debb48f9cecd5",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/auth/index.ts",
-      "line": 321,
-      "excerpt": "mustResetPwd: user.mustResetPwd,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "d4312aad46d9f76a7503",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/auth/permissions.ts",
-      "line": 15,
-      "excerpt": "mustResetPwd: boolean;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "bb016388a4f11d8cbf3f",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/lesson/queries.ts",
-      "line": 107,
-      "excerpt": "mustResetPwd: false,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "42377ca727c81cfaa15b",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/lesson/service.ts",
-      "line": 43,
-      "excerpt": "mustResetPwd: false,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "a4870726ecc652dee786",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "prisma/bootstrap.ts",
-      "line": 18,
-      "excerpt": "mustResetPwd: false,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "8846e9e10ae82ead6fdf",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "prisma/bootstrap.ts",
-      "line": 27,
-      "excerpt": "mustResetPwd: true,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "e9d01681c2052bddd34a",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "prisma/bootstrap.ts",
-      "line": 46,
-      "excerpt": "mustResetPwd: boolean;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "271fabfdeab7f8f72a11",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "prisma/bootstrap.ts",
-      "line": 77,
-      "excerpt": "mustResetPwd: CONFIG.admin.mustResetPwd,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "5bec26d0cea795ef6ed3",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "prisma/reset-to-admin.ts",
-      "line": 58,
-      "excerpt": "mustResetPwd: false,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "93b677e33f670e47a164",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "prisma/schema.prisma",
-      "line": 69,
-      "excerpt": "mustResetPwd Boolean @default(false)",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "af497c207d38d5432e63",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "prisma/seed.ts",
-      "line": 17,
-      "excerpt": "mustResetPwd: false,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "88e3f5d2c492b43f1c8a",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "prisma/seed.ts",
-      "line": 32,
-      "excerpt": "mustResetPwd: false,",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "755516f62575937bc180",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "prisma/seed.ts",
-      "line": 53,
-      "excerpt": "mustResetPwd: false,",
-      "occurrence": 3
-    },
-    {
-      "fingerprint": "0c90711ba55dd2d7039e",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "scripts/smoke-test.ts",
-      "line": 251,
-      "excerpt": "await expect(\"Login with mustResetPwd=true succeeds\", !!cookie, \"no cookie\");",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "a2c96ebf3502b5575e81",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "scripts/smoke-test.ts",
-      "line": 256,
-      "excerpt": "data: { mustResetPwd: false },",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "ee135e9c00236f1485cb",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "scripts/smoke-test.ts",
-      "line": 286,
-      "excerpt": "data: { mustResetPwd: false },",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "36af60c3e536343dc3ed",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "tests/integration/permissions/feed-aggregator.test.ts",
-      "line": 44,
-      "excerpt": "user: { id: userId, role, identifier, mustResetPwd: false },",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "02bf4e817919ac6675f2",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "tests/unit/lesson-permissions.test.ts",
-      "line": 6,
-      "excerpt": "user: { id, role, identifier: id, mustResetPwd: false },",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "9411dfde608f0838b867",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "tests/unit/permissions.test.ts",
-      "line": 10,
-      "excerpt": "mustResetPwd: false,",
       "occurrence": 1
     },
     {
@@ -478,7 +158,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "prisma/schema.prisma",
-      "line": 464,
+      "line": 459,
       "excerpt": "termId String?",
       "occurrence": 1
     },
@@ -488,7 +168,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "prisma/schema.prisma",
-      "line": 465,
+      "line": 460,
       "excerpt": "term Term? @relation(fields: [termId], references: [id], onDelete: Restrict)",
       "occurrence": 1
     },
@@ -498,7 +178,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "prisma/schema.prisma",
-      "line": 496,
+      "line": 491,
       "excerpt": "@@index([classId, termId])",
       "occurrence": 1
     },
@@ -918,7 +598,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 80,
+      "line": 79,
       "excerpt": "enrollment: { studentId: string; removedAt: Date | null } | null;",
       "occurrence": 1
     },
@@ -928,7 +608,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 92,
+      "line": 91,
       "excerpt": "session.user.id === scope.enrollment.studentId",
       "occurrence": 1
     },
@@ -938,7 +618,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 110,
+      "line": 109,
       "excerpt": "* Pure predicate — caller fetches `enrollment.studentId` and",
       "occurrence": 1
     },
@@ -948,7 +628,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 117,
+      "line": 116,
       "excerpt": "enrollment: { studentId: string; removedAt: Date | null }",
       "occurrence": 1
     },
@@ -958,7 +638,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 121,
+      "line": 120,
       "excerpt": "return session.user.id === enrollment.studentId;",
       "occurrence": 1
     },
@@ -968,7 +648,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 207,
+      "line": 206,
       "excerpt": "enrollment: { studentId: string; removedAt: Date | null } | null",
       "occurrence": 1
     },
@@ -978,7 +658,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 212,
+      "line": 211,
       "excerpt": "return session.user.id === enrollment.studentId;",
       "occurrence": 2
     },
@@ -988,7 +668,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 233,
+      "line": 232,
       "excerpt": "enrollment: { studentId: string };",
       "occurrence": 1
     },
@@ -998,7 +678,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 241,
+      "line": 240,
       "excerpt": "return session.user.id === submission.enrollment.studentId;",
       "occurrence": 1
     },
@@ -1008,7 +688,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 310,
+      "line": 309,
       "excerpt": "* Pure — caller resolves the owning enrollment's studentId + removedAt and",
       "occurrence": 1
     },
@@ -1018,7 +698,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 316,
+      "line": 315,
       "excerpt": "enrollment: { studentId: string; removedAt: Date | null };",
       "occurrence": 1
     },
@@ -1028,7 +708,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 321,
+      "line": 320,
       "excerpt": "return session.user.id === submission.enrollment.studentId;",
       "occurrence": 2
     },
@@ -1238,7 +918,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/lesson/queries.ts",
-      "line": 236,
+      "line": 235,
       "excerpt": "studentId: string;",
       "occurrence": 1
     },
@@ -1248,7 +928,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/lesson/queries.ts",
-      "line": 252,
+      "line": 251,
       "excerpt": "where: { studentId: input.studentId, removedAt: null },",
       "occurrence": 1
     },
@@ -1493,32 +1173,12 @@
       "occurrence": 1
     },
     {
-      "fingerprint": "f769b4f6df2e21db1965",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "prisma/schema.prisma",
-      "line": 67,
-      "excerpt": "identifier String @unique // email (admin/teacher) | studentId (student)",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "5be2b7b3c76abe59e71b",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "prisma/schema.prisma",
-      "line": 361,
-      "excerpt": "studentId String @unique",
-      "occurrence": 1
-    },
-    {
       "fingerprint": "d582d80a8a288e156961",
       "ruleId": "student-id-symbol-review",
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "prisma/schema.prisma",
-      "line": 502,
+      "line": 497,
       "excerpt": "studentId String",
       "occurrence": 1
     },
@@ -1528,7 +1188,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "prisma/schema.prisma",
-      "line": 503,
+      "line": 498,
       "excerpt": "student Student @relation(fields: [studentId], references: [userId], onDelete: Cascade)",
       "occurrence": 1
     },
@@ -1538,7 +1198,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "prisma/schema.prisma",
-      "line": 519,
+      "line": 514,
       "excerpt": "@@unique([studentId, courseOfferingId])",
       "occurrence": 1
     },
@@ -1548,7 +1208,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "scripts/smoke-test.ts",
-      "line": 363,
+      "line": 313,
       "excerpt": "where: { studentId: user.id, courseOfferingId: course.id },",
       "occurrence": 1
     },
@@ -1558,7 +1218,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "scripts/smoke-test.ts",
-      "line": 431,
+      "line": 381,
       "excerpt": "await db.enrollment.deleteMany({ where: { studentId: user.id } });",
       "occurrence": 1
     },
@@ -1593,16 +1253,6 @@
       "occurrence": 2
     },
     {
-      "fingerprint": "398b238af23810c3b011",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "tests/integration/account-lifecycle-suspend.test.ts",
-      "line": 37,
-      "excerpt": "studentId: `${prefix}_student`,",
-      "occurrence": 1
-    },
-    {
       "fingerprint": "1287054fa2c9bebca651",
       "ruleId": "student-id-symbol-review",
       "severity": "review",
@@ -1623,32 +1273,12 @@
       "occurrence": 2
     },
     {
-      "fingerprint": "b4169e90ec23aabc85da",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "tests/integration/permissions/_fixtures.ts",
-      "line": 88,
-      "excerpt": "studentId: `${prefix}_s1`,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "c70ff2ba3b7f7bb19056",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "tests/integration/permissions/_fixtures.ts",
-      "line": 103,
-      "excerpt": "studentId: `${prefix}_s2`,",
-      "occurrence": 1
-    },
-    {
       "fingerprint": "9ce7783d478f1fd5f47e",
       "ruleId": "student-id-symbol-review",
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "tests/integration/permissions/_fixtures.ts",
-      "line": 270,
+      "line": 266,
       "excerpt": "data: { studentId: studentUserId, courseOfferingId },",
       "occurrence": 1
     },
@@ -1788,7 +1418,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "tests/unit/permissions.test.ts",
-      "line": 85,
+      "line": 84,
       "excerpt": "studentId: \"alice\",",
       "occurrence": 1
     },
@@ -1798,7 +1428,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "tests/unit/permissions.test.ts",
-      "line": 94,
+      "line": 93,
       "excerpt": "studentId: \"alice\",",
       "occurrence": 2
     },
@@ -1808,7 +1438,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "tests/unit/permissions.test.ts",
-      "line": 103,
+      "line": 102,
       "excerpt": "studentId: \"alice\",",
       "occurrence": 3
     },
@@ -1818,7 +1448,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "tests/unit/permissions.test.ts",
-      "line": 112,
+      "line": 111,
       "excerpt": "studentId: \"alice\",",
       "occurrence": 4
     },
@@ -1828,7 +1458,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "tests/unit/permissions.test.ts",
-      "line": 121,
+      "line": 120,
       "excerpt": "studentId: \"alice\",",
       "occurrence": 5
     },
@@ -1838,7 +1468,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "tests/unit/permissions.test.ts",
-      "line": 246,
+      "line": 245,
       "excerpt": "const activeEnrollment = { studentId: \"s1\", removedAt: null };",
       "occurrence": 1
     },
@@ -1848,7 +1478,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "tests/unit/permissions.test.ts",
-      "line": 248,
+      "line": 247,
       "excerpt": "studentId: \"s1\",",
       "occurrence": 1
     },
@@ -1858,7 +1488,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "tests/unit/permissions.test.ts",
-      "line": 287,
+      "line": 286,
       "excerpt": "enrollment: { studentId: \"s1\" },",
       "occurrence": 1
     },
@@ -1868,7 +1498,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "tests/unit/permissions.test.ts",
-      "line": 398,
+      "line": 397,
       "excerpt": "enrollment: { studentId: \"s1\", removedAt: null as Date | null },",
       "occurrence": 1
     },
@@ -1878,7 +1508,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "tests/unit/permissions.test.ts",
-      "line": 415,
+      "line": 414,
       "excerpt": "enrollment: { studentId: \"s1\", removedAt: new Date(\"2026-01-01\") },",
       "occurrence": 1
     },

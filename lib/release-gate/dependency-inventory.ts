@@ -168,11 +168,30 @@ export const IDENTITY_DEPENDENCY_RULE_IDS = new Set([
   "temporary-password",
 ]);
 
+export const ACADEMIC_DEPENDENCY_RULE_IDS = new Set([
+  "academic-year-model",
+  "term-model",
+  "class-model",
+  "grade-level",
+  "homeroom",
+  "cross-course-grade-aggregate",
+  "legacy-admin-academic-structure",
+  "legacy-student-term-surface",
+]);
+
 export function filterIdentityDependencyFindings(
   findings: DependencyFinding[]
 ): DependencyFinding[] {
   return findings.filter((finding) =>
     IDENTITY_DEPENDENCY_RULE_IDS.has(finding.ruleId)
+  );
+}
+
+export function filterAcademicDependencyFindings(
+  findings: DependencyFinding[]
+): DependencyFinding[] {
+  return findings.filter((finding) =>
+    ACADEMIC_DEPENDENCY_RULE_IDS.has(finding.ruleId)
   );
 }
 

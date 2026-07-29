@@ -1,5 +1,25 @@
 # HANDOFF — Beagle Classroom
 
+## D0 ACADEMIC COMPATIBILITY READ-ONLY PREFLIGHT — 2026-07-29 (READ FIRST)
+
+- Added an academic-only dependency scope and
+  `npm run qa:release:dependencies:academic:strict`.
+- Added guarded read-only command
+  `npm run db:academic-compatibility:qa:preflight`. It replaces the active
+  datasource with the isolated `QA_DATABASE_URL`, verifies it differs from the
+  primary database, and prints aggregate counts only.
+- Neon QA currently has zero Academic Year, Term, or Class rows; zero Teacher
+  Homeroom, Student Class, Course Class, Course Term, or structured Course
+  Grade links; and zero missing/mismatched teacher-owned display labels. The
+  preflight reports `destructiveQaMigrationReady: true`.
+- The refreshed reviewed baseline is `18 blocker / 137 review / 155 total`.
+  Identity blockers are zero; all 18 blockers are the retained academic
+  compatibility schema. The academic strict gate remains closed as intended.
+- No D0 migration SQL was written and no QA or Production schema/data was
+  mutated. Next requires an explicit product decision that Student Class and
+  Teacher Homeroom links are discarded, a current disposable restore child,
+  and separately named approval for an isolated-QA-only migration.
+
 ## D1 IDENTITY COMPATIBILITY QA DRILL COMPLETE — 2026-07-29 (READ FIRST)
 
 - Commits `e373630` and `58e39ef` prepare and complete the guarded D1 drill on

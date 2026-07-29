@@ -614,6 +614,20 @@ schema topic is the separate D0 academic compatibility cleanup for
 grill, read-only preflight, preservation decision, migration plan, and explicit
 QA-only approval. Do not combine it with D1 or infer Production approval.
 
+**D0 academic compatibility planning update (2026-07-29):** an academic-only
+strict dependency scope and guarded read-only Neon QA preflight now exist. The
+QA branch contains zero Academic Year, Term, or Class rows and zero Teacher,
+Student, or CourseOffering links to the retired structure. There are no
+missing or mismatched CourseOffering learner-group/academic-period labels, so
+the preflight reports `destructiveQaMigrationReady: true`. The strict gate
+correctly reports `18 blocker / 0 review` because the compatibility schema has
+not been removed.
+
+The next D0 action is a decision/approval gate, not an automatic migration:
+confirm that Student Class and Teacher Homeroom associations are intentionally
+discarded, prepare a current disposable restore child, then explicitly approve
+an isolated-QA-only schema migration. Production remains out of scope.
+
 ### D1. Google Login
 
 Architecture decisions: [`ADR-0041`](./adr/0041-google-first-identity-uses-gated-role-onboarding.md) (Google-first identity), [`ADR-0042`](./adr/0042-transactional-email-uses-a-gated-provider-port.md) (transactional email delivery, unblocking verified-email change and password recovery), and [`ADR-0043`](./adr/0043-students-may-self-register-with-email-and-password.md) (email/password student self-registration alongside Google, revising the Google-only student stance of ADR-0041).
