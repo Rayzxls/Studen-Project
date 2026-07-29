@@ -101,7 +101,8 @@ until the final QA migration commit.
 2. **Complete 2026-07-29:** removed the obsolete forced-reset route,
    middleware interception, and JWT/session property after the read-only QA
    preflight found zero accounts with `mustResetPwd=true`.
-3. Remove the remaining anonymization write to `displayName`.
+3. **Complete 2026-07-29:** removed the remaining anonymization write and
+   assertion for legacy `displayName`.
 4. Stop creating synthetic `Student.studentId` values. Do not rename or delete
    internal Enrollment/Submission/Attendance relations named `studentId`.
 5. Remove the three fields from the current Prisma schema and generate one
