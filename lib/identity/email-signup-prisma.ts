@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import type { PrismaClient } from "@prisma/client";
 
 import { db } from "@/lib/db/client";
@@ -9,11 +8,6 @@ const TX_OPTS = {
   timeout: 20_000,
   isolationLevel: "Serializable" as const,
 };
-
-function unassignedLegacyIdentifier(): string {
-  // dependency-gate-allow(student-id-symbol-review): legacy required unique column; synthetic placeholder is never displayed or used for lookup
-  return `identity-v2-unassigned:${randomUUID()}`;
-}
 
 export type EmailStudentSignupInput = {
   email: string;
@@ -60,7 +54,6 @@ export async function registerEmailPasswordStudent(
           createdAt: input.occurredAt,
           student: {
             create: {
-              studentId: unassignedLegacyIdentifier(), // dependency-gate-allow(student-id-symbol-review): compatibility storage until the destructive identity migration
               firstName: input.firstName,
               lastName: input.lastName,
             },

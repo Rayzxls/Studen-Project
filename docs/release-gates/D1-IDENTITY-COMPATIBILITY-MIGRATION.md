@@ -28,17 +28,24 @@ Configure a separate Neon child branch in local secret storage:
 DATABASE_URL="postgresql://...production..."
 QA_DATABASE_URL="postgresql://...isolated-qa..."
 IDENTITY_PRESERVE_EMAIL="verified-owner-email@example.com"
+IDENTITY_PRESERVE_EMAIL_VERIFIED="1"
+IDENTITY_PRESERVE_LEGACY_IDENTIFIER="Razyxls"
+IDENTITY_PRESERVE_QA_PASSWORD="a-new-QA-only-password"
 ```
 
 `IDENTITY_PRESERVE_EMAIL` is optional. It checks the selected Admin without
 printing the address or any personal data.
+
+The destructive drill additionally requires the verification attestation and
+a new QA-only fallback password. The password is hashed during import and is
+never included in the preserve bundle or command output.
 
 Run:
 
 ```powershell
 npm run db:identity-compatibility:qa:preflight
 npm run qa:release:dependencies
-npm run qa:release:dependencies:strict
+npm run qa:release:dependencies:identity:strict
 ```
 
 The preflight is read-only and fails closed when QA is missing or resolves to
@@ -49,7 +56,9 @@ The source dependency gate is separate from the data preflight:
 
 - Preflight proves the isolated QA data is understood.
 - The normal gate proves no new retired dependency was added.
-- The strict gate must reach zero blockers before any destructive migration.
+- The D1 identity strict gate must reach zero blockers before any destructive
+  identity migration. The all-scope strict gate remains the D0 exit gate and is
+  expected to report retained academic compatibility debt during D1.
 
 ### Preflight evidence: 2026-07-29
 
@@ -86,8 +95,9 @@ Production.
 4. Every retained User has canonical email and real first/last name.
 5. The preserve Admin check finds exactly one active `ADMIN` with verified
    email and real name.
-6. `qa:release:dependencies:strict` passes. A reviewed compatibility marker is
-   not an exit from this requirement.
+6. `qa:release:dependencies:identity:strict` passes. A reviewed compatibility
+   marker is not an exit from this requirement. The all-scope strict gate is
+   intentionally deferred to D0.
 7. Unit, integration, type, lint, build, and authenticated role acceptance pass
    against the same commit and isolated QA branch.
 
@@ -178,3 +188,21 @@ Column drops are not rolled back by reconstructing guessed personal data.
 Never reset Production as a rollback experiment. Production requires a new,
 separately named approval after backup/restore evidence, zero P0/P1 QA defects,
 and an explicit cutover checklist.
+
+## Guarded QA drill commands
+
+After configuring the private preserve variables, run these commands in order:
+
+```powershell
+npm run db:identity-d1:qa:export
+npm run db:identity-d1:qa:reset
+npm run db:migrate:qa:deploy
+npm run db:identity-d1:qa:verify
+```
+
+Every command replaces the active datasource with `QA_DATABASE_URL` and
+compares its normalized identity with `DATABASE_URL`. A missing QA URL, a QA
+URL equal to the primary URL, or a changed active datasource fails closed.
+The reset command also requires the literal confirmation token embedded in the
+package script. The private preserve bundle and checksum are written under
+`.local-storage/identity-d1/`, which is excluded from Git.

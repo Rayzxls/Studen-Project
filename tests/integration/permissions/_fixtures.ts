@@ -76,8 +76,6 @@ export async function setupTestCourse(): Promise<TestCourseContext> {
     select: { id: true },
   });
 
-  // The legacy profile-number column remains required until the separately
-  // gated D0 schema reset. Authentication uses email identifiers.
   const studentUser = await db.user.create({
     data: {
       identifier: `${prefix}_s1@test.local`,
@@ -85,7 +83,6 @@ export async function setupTestCourse(): Promise<TestCourseContext> {
       role: "STUDENT",
       student: {
         create: {
-          studentId: `${prefix}_s1`,
           firstName: "Alice",
           lastName: "Tester",
         },
@@ -100,7 +97,6 @@ export async function setupTestCourse(): Promise<TestCourseContext> {
       role: "STUDENT",
       student: {
         create: {
-          studentId: `${prefix}_s2`,
           firstName: "Bob",
           lastName: "Tester",
         },

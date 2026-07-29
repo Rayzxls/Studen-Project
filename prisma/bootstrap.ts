@@ -57,10 +57,6 @@ function deriveCode(seed: string): string {
   return `J${base}`.slice(0, 7);
 }
 
-function compatibilityStudentId(email: string): string {
-  return `compat-${deriveCode(email.toLowerCase())}`;
-}
-
 async function main() {
   console.log("Bootstrapping Beagle Classroom...");
 
@@ -117,8 +113,6 @@ async function main() {
         consentVersion: CONSENT_VERSION,
         student: {
           create: {
-            // Compatibility-only until the separately gated D0 schema reset.
-            studentId: compatibilityStudentId(student.email), // dependency-gate-allow(student-number-auth-and-admin-flow): required synthetic compatibility value, never displayed or used for login; dependency-gate-allow(student-id-symbol-review): this symbol is temporary compatibility storage
             firstName: student.firstName,
             lastName: student.lastName,
           },

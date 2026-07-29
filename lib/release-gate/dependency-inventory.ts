@@ -160,6 +160,22 @@ export const DEPENDENCY_RULES: DependencyRule[] = [
   },
 ];
 
+export const IDENTITY_DEPENDENCY_RULE_IDS = new Set([
+  "student-number-schema",
+  "student-number-copy",
+  "student-number-auth-and-admin-flow",
+  "legacy-display-name",
+  "temporary-password",
+]);
+
+export function filterIdentityDependencyFindings(
+  findings: DependencyFinding[]
+): DependencyFinding[] {
+  return findings.filter((finding) =>
+    IDENTITY_DEPENDENCY_RULE_IDS.has(finding.ruleId)
+  );
+}
+
 function normalizePath(filePath: string, rootDir: string) {
   return path.relative(rootDir, filePath).split(path.sep).join("/");
 }

@@ -272,7 +272,6 @@ async function testPhase2Join() {
       consentVersion: "2026-07",
       student: {
         create: {
-          studentId: `identity-v2-unassigned:${nonce}`, // dependency-gate-allow(student-id-symbol-review): required compatibility placeholder in isolated QA
           firstName: "Join",
           lastName: "Test",
         },

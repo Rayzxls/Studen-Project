@@ -64,9 +64,8 @@ enum ThemeMode {
 model User {
   id                   String        @id @default(cuid())
   role                 Role
-  identifier           String        @unique // email (admin/teacher) | studentId (student)
+  identifier           String        @unique // canonical email
   passwordHash         String
-  mustResetPwd         Boolean       @default(false)
   // Additive Identity V2 foundation. Nullable until the explicit cutover.
   email                String?       @unique
   emailVerifiedAt      DateTime?
@@ -84,9 +83,6 @@ model User {
   deletionScheduledFor DateTime?
   anonymizedAt         DateTime?
 
-  // Legacy personal-label storage retained only for compatibility cleanup and
-  // historical anonymization. Runtime surfaces use the role profile real name.
-  displayName    String?
   // Pointer to the current PROFILE_IMAGE FileAttachment (cropped 512×512).
   // Null = default avatar. Plain string (no FK) — FileAttachment is the
   // polymorphic table looked up via (ownerType, ownerId).
@@ -358,7 +354,6 @@ model Teacher {
 model Student {
   userId     String  @id
   user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  studentId  String  @unique
   firstName  String
   lastName   String
   anonymized Boolean @default(false)

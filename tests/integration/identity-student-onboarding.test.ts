@@ -73,7 +73,7 @@ describe("Prisma Student Google onboarding", () => {
         lastName: true,
         passwordHash: true,
         student: {
-          select: { studentId: true, firstName: true, lastName: true }, // dependency-gate-allow(student-id-symbol-review): assert the legacy column holds a synthetic placeholder
+          select: { firstName: true, lastName: true },
         },
         authIdentities: {
           select: {
@@ -98,7 +98,6 @@ describe("Prisma Student Google onboarding", () => {
       lastName: "ใจดี",
       passwordHash: expect.stringMatching(/^\$2[aby]\$/),
       student: {
-        studentId: expect.stringMatching(/^identity-v2-unassigned:/), // dependency-gate-allow(student-id-symbol-review): synthetic placeholder is never displayed
         firstName: "สมชาย",
         lastName: "ใจดี",
       },
