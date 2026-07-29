@@ -8,6 +8,10 @@ import {
   deleteProfileImageAction,
   saveProfileImageAction,
 } from "@/app/profile/actions";
+import {
+  formatProfileUploadError,
+  type ProfileUploadStage,
+} from "@/lib/profile/upload-error";
 import { UserAvatar } from "./user-avatar";
 
 /**
@@ -77,6 +81,7 @@ export function AvatarEditor({
   async function saveCrop() {
     if (phase.kind !== "cropping" || !croppedArea) return;
     const src = phase.src;
+    let uploadStage: ProfileUploadStage = "presign";
     setPhase({ kind: "saving" });
     try {
       const blob = await renderCrop(src, croppedArea);
@@ -100,6 +105,7 @@ export function AvatarEditor({
       };
 
       // 2. PUT the cropped bytes
+      uploadStage = "upload";
       const putRes = await fetch(uploadUrl, {
         method: "PUT",
         headers: { "content-type": "image/jpeg" },
@@ -108,6 +114,7 @@ export function AvatarEditor({
       if (!putRes.ok) throw new Error("upload_failed");
 
       // 3. commit (magic-byte verify + EXIF strip server-side)
+      uploadStage = "commit";
       const commitRes = await fetch("/api/storage/commit", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -117,6 +124,7 @@ export function AvatarEditor({
       const { fileId } = (await commitRes.json()) as { fileId: string };
 
       // 4. point the profile at the new attachment (audited)
+      uploadStage = "save";
       const result = await saveProfileImageAction(fileId);
       if (!result.ok) throw new Error(result.error ?? "save_failed");
 
@@ -127,10 +135,7 @@ export function AvatarEditor({
       dialogRef.current?.close();
       setPhase({
         kind: "error",
-        message:
-          err instanceof Error && err.message !== "save_failed"
-            ? `อัปโหลดไม่สำเร็จ (${err.message}) — ลองใหม่อีกครั้ง`
-            : "บันทึกรูปไม่สำเร็จ — ลองใหม่อีกครั้ง",
+        message: formatProfileUploadError(err, uploadStage),
       });
     }
   }

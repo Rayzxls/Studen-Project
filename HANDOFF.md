@@ -1,5 +1,26 @@
 # HANDOFF — Beagle Classroom
 
+## PRODUCTION PROFILE UPLOAD CORS HOTFIX — 2026-07-29 (READ FIRST)
+
+- Production Profile Avatar upload failed in the browser with `Failed to fetch`
+  after the primary application origin moved to `https://beagleclassroom.com`.
+  The upload pipeline itself remained valid: the browser performs a presigned
+  `PUT` directly to the private Cloudflare R2 bucket before committing the
+  attachment through the authenticated application route.
+- Cloudflare R2 CORS was updated manually to allow the apex custom domain,
+  `www`, and the retained Vercel production origin. Authenticated Production
+  acceptance then passed: the owner can crop, upload, commit, and display a new
+  Profile Avatar. Public bucket access remains disabled.
+- The client now tracks presign, direct-upload, commit, and profile-save stages
+  so a blocked R2 request reports a storage-connection message instead of the
+  raw browser exception. Focused regression `5/5`, TypeScript, and targeted
+  ESLint pass.
+- Next roadmap slice: D1 legacy identity compatibility cleanup. Classify the
+  retired human Student Number separately from internal `studentId` User
+  foreign keys, and design/apply destructive cleanup only on isolated Neon QA.
+  Do not reset or remove Production schema/data without a separate named
+  approval, backup/restore evidence, and rollback plan.
+
 ## PRODUCTION RELEASE — IDENTITY V2 + STANDALONE COURSE RUNTIME — 2026-07-29 (READ FIRST)
 
 - Released all seven pending `phase-11` commits from Codex and Claude through

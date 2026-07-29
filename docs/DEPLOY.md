@@ -29,12 +29,17 @@
 ### 1.1 🧑‍💻 ตั้ง CORS ให้ R2 bucket (สำคัญ — ไม่งั้นอัปโหลดไฟล์พัง)
 
 นักเรียนอัปโหลดไฟล์ผ่าน **presigned PUT จากเบราว์เซอร์ตรงไป R2** → bucket ต้องอนุญาต CORS
-ที่ R2 bucket → Settings → CORS policy ใส่ (เปลี่ยน origin เป็นโดเมน Vercel ของคุณ):
+ที่ R2 bucket → Settings → CORS policy ใส่ origin ของ production ทุกโดเมนที่ผู้ใช้เปิดจริง
+(ทั้ง custom domain และโดเมน Vercel เดิม):
 
 ```json
 [
   {
-    "AllowedOrigins": ["https://YOUR-APP.vercel.app"],
+    "AllowedOrigins": [
+      "https://beagleclassroom.com",
+      "https://www.beagleclassroom.com",
+      "https://studen-project.vercel.app"
+    ],
     "AllowedMethods": ["PUT", "GET"],
     "AllowedHeaders": ["content-type"],
     "MaxAgeSeconds": 3600
