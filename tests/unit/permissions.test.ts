@@ -50,32 +50,6 @@ describe("can.changeOwnPassword", () => {
   });
 });
 
-describe("can.resetUserPassword (Phase 1)", () => {
-  it("ADMIN can reset anyone", () => {
-    const admin = mkSession("ADMIN");
-    expect(can.resetUserPassword(admin, "STUDENT")).toBe(true);
-    expect(can.resetUserPassword(admin, "TEACHER")).toBe(true);
-  });
-
-  it("TEACHER cannot reset others in Phase 1 (Phase 2+ adds course scope)", () => {
-    const teacher = mkSession("TEACHER");
-    expect(can.resetUserPassword(teacher, "STUDENT")).toBe(false);
-  });
-
-  it("STUDENT cannot reset others", () => {
-    const student = mkSession("STUDENT");
-    expect(can.resetUserPassword(student, "STUDENT")).toBe(false);
-  });
-});
-
-describe("can.importTeachersCSV", () => {
-  it("ADMIN only", () => {
-    expect(can.importTeachersCSV(mkSession("ADMIN"))).toBe(true);
-    expect(can.importTeachersCSV(mkSession("TEACHER"))).toBe(false);
-    expect(can.importTeachersCSV(mkSession("STUDENT"))).toBe(false);
-  });
-});
-
 describe("can.toggleUserActive", () => {
   it("ADMIN only", () => {
     expect(can.toggleUserActive(mkSession("ADMIN"))).toBe(true);

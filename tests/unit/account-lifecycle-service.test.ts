@@ -114,7 +114,7 @@ describe("suspendOrReactivateAccount", () => {
         { repository, mutationsEnabled: true }
       )
     ).rejects.toMatchObject({
-      code: "temporary_password_required_for_restore",
+      code: "account_transition_not_allowed",
     });
 
     expect(repository.commitTransition).not.toHaveBeenCalled();

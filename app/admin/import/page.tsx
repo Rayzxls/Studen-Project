@@ -18,7 +18,7 @@ export default function AdminImportPage() {
 
       <div className="grid gap-4 md:grid-cols-2">
         <Link
-          href="/admin/import/teachers"
+          href="/admin/teachers/invites"
           className="card group p-6 hover:no-underline"
         >
           <div className="flex items-start justify-between">
@@ -31,11 +31,11 @@ export default function AdminImportPage() {
             className="mt-4 font-medium text-black"
             style={{ letterSpacing: "-0.02em" }}
           >
-            นำเข้าครู
+            เพิ่มหรือนำเข้าครู
           </h2>
           <p className="mt-1 text-sm text-black/60">
-            อัพโหลด CSV ที่มี email, firstName, lastName — ระบบสร้างบัญชี +
-            รหัสผ่านชั่วคราว
+            ส่งคำเชิญทางอีเมลทีละคน หรืออัปโหลด CSV ที่มีคอลัมน์ email
+            เพื่อเชิญครูหลายคนพร้อมกัน
           </p>
         </Link>
 

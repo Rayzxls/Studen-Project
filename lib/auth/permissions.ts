@@ -40,21 +40,6 @@ export const can = {
     return session.user.id === targetUserId;
   },
 
-  /**
-   * Reset another user's password
-   * Phase 1: ADMIN can reset anyone
-   * Phase 2+: TEACHER can reset students in their courses (extended via scope param)
-   */
-  resetUserPassword(session: Session, _targetRole: Role): boolean {
-    if (session.user.role === "ADMIN") return true;
-    return false;
-  },
-
-  /** Admin only — import users via CSV */
-  importTeachersCSV(session: Session): boolean {
-    return session.user.role === "ADMIN";
-  },
-
   /** Admin only — disable/enable user account */
   toggleUserActive(session: Session): boolean {
     return session.user.role === "ADMIN";

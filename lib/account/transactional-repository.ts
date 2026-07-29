@@ -96,7 +96,6 @@ async function commitTransition(
       target,
       to: input.transition.to,
       activeAdminCount,
-      temporaryPasswordPrepared: false,
       hasOpenWorkOrDispute: false,
     });
 

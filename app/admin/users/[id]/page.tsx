@@ -4,7 +4,6 @@ import { ChevronLeft, KeyRound, Mail, ShieldCheck, User2 } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { renderAuditLog } from "@/lib/audit/render";
-import { ResetPasswordCard } from "@/components/admin/reset-password-card";
 import { ResetProfileImageCard } from "@/components/admin/reset-profile-image-card";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { courseLearnerGroup } from "@/lib/course/display";
@@ -282,22 +281,9 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
           />
         )}
 
-      {/* Reset password card — full reveal-once flow */}
-      {!isSelf && !user.deletedAt && (
-        <div id="reset-password" className="scroll-mt-24">
-          <ResetPasswordCard userId={user.id} fullName={fullName} />
-        </div>
-      )}
-
       {/* Avatar moderation — only when the target actually has one */}
       {!isSelf && !user.deletedAt && user.profileImageId !== null && (
         <ResetProfileImageCard userId={user.id} userName={fullName} />
-      )}
-      {isSelf && (
-        <div className="card-flat p-4 text-xs text-black/50">
-          คุณไม่สามารถรีเซ็ตรหัสผ่านของตัวเองได้ผ่านหน้านี้ — ใช้เมนู
-          &ldquo;เปลี่ยนรหัสผ่าน&rdquo; แทน
-        </div>
       )}
 
       <section className="card p-6">

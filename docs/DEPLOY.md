@@ -87,7 +87,8 @@ DATABASE_URL="<prod-neon-url>" pnpm prisma db push
 
 1. 🤖/🧑‍💻 แก้ `prisma/bootstrap.ts` ส่วน `CONFIG` ให้เป็นค่าจริง:
    - `admin` = บัญชีคุณ (identifier + รหัสผ่าน + ชื่อ)
-   - `teachers` = พ่อ/แม่ (ตั้ง `mustResetPwd: true` ให้เขาตั้งรหัสเองตอน login แรก)
+   - ไม่ต้องสร้าง Teacher ล่วงหน้า หลัง Admin เข้าระบบแล้วให้ส่งคำเชิญจาก
+     `/admin/teachers/invites` ครูจะยืนยันอีเมลและสร้างบัญชีด้วย Google ด้วยตนเอง
    - `academicYear` / `terms` / `classes` / `courseOfferings` ตามจริง
    - `students` = ใส่เลย หรือเว้น `[]` ให้นักเรียน join ด้วย class code ทีหลัง
 2. 🧑‍💻 รัน (ชี้ DATABASE_URL ไป prod):
@@ -98,7 +99,9 @@ DATABASE_URL="<prod-neon-url>" pnpm prisma db push
    จะพิมพ์ **class code** ของแต่ละวิชาออกมา (เอาให้นักเรียนใช้ที่ `/join`)
    *รหัสผ่านจะไม่ถูกพิมพ์* — เป็นค่าที่คุณตั้งใน CONFIG
 
-> bootstrap เป็น idempotent — รันซ้ำได้ ไม่ทับบัญชีเดิม (เปลี่ยนรหัสผ่านภายหลังใช้หน้า admin reset)
+> bootstrap เป็น idempotent — รันซ้ำได้ ไม่ทับบัญชีเดิม
+> ผู้ใช้จัดการรหัสผ่านของตนเองผ่าน Profile หรือ verified-email recovery;
+> Admin ไม่มีสิทธิ์สร้างหรือรีเซ็ตรหัสผ่านของผู้อื่น
 
 ---
 

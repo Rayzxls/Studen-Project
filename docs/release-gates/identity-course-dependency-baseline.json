@@ -1,6 +1,6 @@
 {
   "rulesVersion": "2026-07-24.3",
-  "generatedAt": "2026-07-29T04:40:33.157Z",
+  "generatedAt": "2026-07-29T05:15:28.974Z",
   "findings": [
     {
       "fingerprint": "0a611fb460e051e0e05a",
@@ -183,122 +183,12 @@
       "occurrence": 1
     },
     {
-      "fingerprint": "83be966b05f6344c8635",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "app/admin/import/teachers/form.tsx",
-      "line": 19,
-      "excerpt": "tempPassword: string;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "d09d0e542b5e4ebcafa2",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "app/admin/import/teachers/form.tsx",
-      "line": 109,
-      "excerpt": "const text = created.map((c) => `${c.email}\\t${c.tempPassword}`).join(\"\\n\");",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "bcdf2791bc2120a2d0f6",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "app/admin/import/teachers/form.tsx",
-      "line": 115,
-      "excerpt": "\"email,firstName,lastName,tempPassword\\n\" +",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "ceb0ee23307d97c1b7d7",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "app/admin/import/teachers/form.tsx",
-      "line": 117,
-      "excerpt": ".map((c) => `${c.email},${c.firstName},${c.lastName},${c.tempPassword}`)",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "33f72f08e8ef73fef8ae",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "app/admin/import/teachers/form.tsx",
-      "line": 182,
-      "excerpt": "<td className=\"font-mono text-xs\">{c.tempPassword}</td>",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "46860a85aabf7e7be63c",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "app/admin/teachers/actions.ts",
-      "line": 45,
-      "excerpt": "tempPassword: result.tempPassword,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "2f381e770c1731c7cded",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "app/admin/teachers/page.tsx",
-      "line": 223,
-      "excerpt": "typeof parsed.tempPassword !== \"string\"",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "bf4ff8bdb1c916519594",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "app/admin/teachers/page.tsx",
-      "line": 231,
-      "excerpt": "tempPassword: parsed.tempPassword,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "0ce72c10d8a5c423f0e4",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "app/admin/teachers/page.tsx",
-      "line": 263,
-      "excerpt": "{flash.tempPassword}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "356f300472b9b246e837",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "app/admin/users/[id]/actions.ts",
-      "line": 15,
-      "excerpt": "tempPassword?: string;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "c16841a691bbfbf734c3",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "app/admin/users/[id]/actions.ts",
-      "line": 36,
-      "excerpt": "tempPassword: result.tempPassword,",
-      "occurrence": 1
-    },
-    {
       "fingerprint": "ac0680e641ddec11c13e",
       "ruleId": "temporary-password",
       "severity": "blocker",
       "description": "Temporary-password onboarding remains.",
       "path": "app/admin/users/[id]/page.tsx",
-      "line": 43,
+      "line": 42,
       "excerpt": "mustResetPwd: true,",
       "occurrence": 1
     },
@@ -308,298 +198,8 @@
       "severity": "blocker",
       "description": "Temporary-password onboarding remains.",
       "path": "app/admin/users/[id]/page.tsx",
-      "line": 265,
+      "line": 264,
       "excerpt": "{user.mustResetPwd && (",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "22ea8fe8dd697cc80705",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "components/admin/reset-password-card.tsx",
-      "line": 24,
-      "excerpt": "if (!state.tempPassword) return;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "cae3c47c92992d6c3f92",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "components/admin/reset-password-card.tsx",
-      "line": 25,
-      "excerpt": "navigator.clipboard.writeText(state.tempPassword);",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "9002db3e6b889aa9e966",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "components/admin/reset-password-card.tsx",
-      "line": 57,
-      "excerpt": "{state.ok && state.tempPassword && (",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "25ade36d94fe83db543d",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "components/admin/reset-password-card.tsx",
-      "line": 68,
-      "excerpt": "{state.tempPassword}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "c5922d24e70022fde57b",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/admin/csv-import.ts",
-      "line": 21,
-      "excerpt": "* + returns { email, tempPassword } per created teacher (for distribution)",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "e1849ef54f8379463cdb",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/admin/csv-import.ts",
-      "line": 177,
-      "excerpt": "tempPassword: string;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "f59865c2a89c47b08e02",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/admin/csv-import.ts",
-      "line": 196,
-      "excerpt": "const tempPassword = generateTempPassword();",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "222183b63841db35cfc0",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/admin/csv-import.ts",
-      "line": 197,
-      "excerpt": "const hash = await hashPassword(tempPassword);",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "fa2bfa55137998e8385d",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/admin/csv-import.ts",
-      "line": 198,
-      "excerpt": "return { ...r, tempPassword, hash };",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "d86aaeefa3a1eb84987a",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/admin/csv-import.ts",
-      "line": 213,
-      "excerpt": "mustResetPwd: true,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "42e43fcda2e143135c6e",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/admin/csv-import.ts",
-      "line": 255,
-      "excerpt": "tempPassword: p.tempPassword,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "6fe62f2d7bf9ec0295f4",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/admin/teacher-create-single.ts",
-      "line": 4,
-      "excerpt": "* Distinct from `lib/admin/csv-import` (bulk path with mustResetPwd=true",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "f1a45b3fd94963679751",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/admin/teacher-create-single.ts",
-      "line": 11,
-      "excerpt": "* - bcrypt-hash + persist + mustResetPwd=true",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "20d0726162c064be3982",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/admin/teacher-create-single.ts",
-      "line": 33,
-      "excerpt": "tempPassword: string; // reveal-once at the calling Server Action",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "26fbe6379be8ea848ac2",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/admin/teacher-create-single.ts",
-      "line": 60,
-      "excerpt": "const tempPassword = generateTempPassword();",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "76e1f7b9bc71e6a1fb0f",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/admin/teacher-create-single.ts",
-      "line": 61,
-      "excerpt": "const passwordHash = await hashPassword(tempPassword);",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "e9ae7c6545213e31da39",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/admin/teacher-create-single.ts",
-      "line": 78,
-      "excerpt": "mustResetPwd: true,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "971e7996a853a9684c0e",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/admin/teacher-create-single.ts",
-      "line": 99,
-      "excerpt": "mustResetPwd: true,",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "2f03ba2c4a1ad8e0a8bf",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/admin/teacher-create-single.ts",
-      "line": 110,
-      "excerpt": "return { userId, tempPassword };",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "592c7e9f00f12d94f558",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/admin/teacher-created-flash.ts",
-      "line": 12,
-      "excerpt": "tempPassword: string;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "f6ccbfe3e3fdf268bf9d",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/admin/user-reset-password.ts",
-      "line": 5,
-      "excerpt": "* mustResetPwd=true + lockout cleared, returns the plaintext for the",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "be10b99d6ede853bdc61",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/admin/user-reset-password.ts",
-      "line": 24,
-      "excerpt": "tempPassword: string;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "b272b76410b091d8e4eb",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/admin/user-reset-password.ts",
-      "line": 39,
-      "excerpt": "const tempPassword = generateTempPassword();",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "b8fa4933e67056024182",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/admin/user-reset-password.ts",
-      "line": 40,
-      "excerpt": "const passwordHash = await hashPassword(tempPassword);",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "a91d7259d1e1906d54e0",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/admin/user-reset-password.ts",
-      "line": 55,
-      "excerpt": "mustResetPwd: true,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "f6e0215bd9254d7e788e",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/admin/user-reset-password.ts",
-      "line": 72,
-      "excerpt": "mustResetPwd: true,",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "c4ddad14e0a41617f279",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/admin/user-reset-password.ts",
-      "line": 86,
-      "excerpt": "before: { mustResetPwd: target.mustResetPwd },",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "4d3919d99138ae64c09b",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/admin/user-reset-password.ts",
-      "line": 87,
-      "excerpt": "after: { mustResetPwd: true },",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "5afecad410470aac6575",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/admin/user-reset-password.ts",
-      "line": 97,
-      "excerpt": "return { tempPassword, targetDisplayName };",
       "occurrence": 1
     },
     {
@@ -700,16 +300,6 @@
       "path": "lib/auth/permissions.ts",
       "line": 15,
       "excerpt": "mustResetPwd: boolean;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "eda36de2b188dc8321db",
-      "ruleId": "temporary-password",
-      "severity": "blocker",
-      "description": "Temporary-password onboarding remains.",
-      "path": "lib/auth/temp-password.ts",
-      "line": 20,
-      "excerpt": "* that expires on first login (mustResetPwd=true gate)",
       "occurrence": 1
     },
     {
@@ -1218,7 +808,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/guards.ts",
-      "line": 140,
+      "line": 135,
       "excerpt": "studentId: string;",
       "occurrence": 1
     },
@@ -1228,7 +818,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/guards.ts",
-      "line": 151,
+      "line": 146,
       "excerpt": "studentId: session.user.id,",
       "occurrence": 1
     },
@@ -1238,7 +828,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/guards.ts",
-      "line": 157,
+      "line": 152,
       "excerpt": "studentId: true,",
       "occurrence": 1
     },
@@ -1248,7 +838,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/guards.ts",
-      "line": 177,
+      "line": 172,
       "excerpt": "studentId: enrollment.studentId,",
       "occurrence": 1
     },
@@ -1258,7 +848,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/guards.ts",
-      "line": 364,
+      "line": 359,
       "excerpt": "enrollment: { id: string; studentId: string };",
       "occurrence": 1
     },
@@ -1268,7 +858,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/guards.ts",
-      "line": 385,
+      "line": 380,
       "excerpt": "studentId: session.user.id,",
       "occurrence": 2
     },
@@ -1278,7 +868,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/guards.ts",
-      "line": 389,
+      "line": 384,
       "excerpt": "select: { id: true, studentId: true, removedAt: true },",
       "occurrence": 1
     },
@@ -1288,7 +878,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/guards.ts",
-      "line": 395,
+      "line": 390,
       "excerpt": "enrollment: { id: enrollment!.id, studentId: enrollment!.studentId },",
       "occurrence": 1
     },
@@ -1298,7 +888,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/guards.ts",
-      "line": 420,
+      "line": 415,
       "excerpt": "enrollment: { studentId: string };",
       "occurrence": 1
     },
@@ -1308,7 +898,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/guards.ts",
-      "line": 438,
+      "line": 433,
       "excerpt": "enrollment: { select: { studentId: true } },",
       "occurrence": 1
     },
@@ -1318,7 +908,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/guards.ts",
-      "line": 577,
+      "line": 572,
       "excerpt": "enrollment: { select: { studentId: true, removedAt: true } },",
       "occurrence": 1
     },
@@ -1328,7 +918,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 95,
+      "line": 80,
       "excerpt": "enrollment: { studentId: string; removedAt: Date | null } | null;",
       "occurrence": 1
     },
@@ -1338,7 +928,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 107,
+      "line": 92,
       "excerpt": "session.user.id === scope.enrollment.studentId",
       "occurrence": 1
     },
@@ -1348,7 +938,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 125,
+      "line": 110,
       "excerpt": "* Pure predicate — caller fetches `enrollment.studentId` and",
       "occurrence": 1
     },
@@ -1358,7 +948,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 132,
+      "line": 117,
       "excerpt": "enrollment: { studentId: string; removedAt: Date | null }",
       "occurrence": 1
     },
@@ -1368,7 +958,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 136,
+      "line": 121,
       "excerpt": "return session.user.id === enrollment.studentId;",
       "occurrence": 1
     },
@@ -1378,7 +968,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 222,
+      "line": 207,
       "excerpt": "enrollment: { studentId: string; removedAt: Date | null } | null",
       "occurrence": 1
     },
@@ -1388,7 +978,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 227,
+      "line": 212,
       "excerpt": "return session.user.id === enrollment.studentId;",
       "occurrence": 2
     },
@@ -1398,7 +988,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 248,
+      "line": 233,
       "excerpt": "enrollment: { studentId: string };",
       "occurrence": 1
     },
@@ -1408,7 +998,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 256,
+      "line": 241,
       "excerpt": "return session.user.id === submission.enrollment.studentId;",
       "occurrence": 1
     },
@@ -1418,7 +1008,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 325,
+      "line": 310,
       "excerpt": "* Pure — caller resolves the owning enrollment's studentId + removedAt and",
       "occurrence": 1
     },
@@ -1428,7 +1018,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 331,
+      "line": 316,
       "excerpt": "enrollment: { studentId: string; removedAt: Date | null };",
       "occurrence": 1
     },
@@ -1438,7 +1028,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/auth/permissions.ts",
-      "line": 336,
+      "line": 321,
       "excerpt": "return session.user.id === submission.enrollment.studentId;",
       "occurrence": 2
     },
@@ -2198,7 +1788,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "tests/unit/permissions.test.ts",
-      "line": 111,
+      "line": 85,
       "excerpt": "studentId: \"alice\",",
       "occurrence": 1
     },
@@ -2208,7 +1798,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "tests/unit/permissions.test.ts",
-      "line": 120,
+      "line": 94,
       "excerpt": "studentId: \"alice\",",
       "occurrence": 2
     },
@@ -2218,7 +1808,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "tests/unit/permissions.test.ts",
-      "line": 129,
+      "line": 103,
       "excerpt": "studentId: \"alice\",",
       "occurrence": 3
     },
@@ -2228,7 +1818,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "tests/unit/permissions.test.ts",
-      "line": 138,
+      "line": 112,
       "excerpt": "studentId: \"alice\",",
       "occurrence": 4
     },
@@ -2238,7 +1828,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "tests/unit/permissions.test.ts",
-      "line": 147,
+      "line": 121,
       "excerpt": "studentId: \"alice\",",
       "occurrence": 5
     },
@@ -2248,7 +1838,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "tests/unit/permissions.test.ts",
-      "line": 272,
+      "line": 246,
       "excerpt": "const activeEnrollment = { studentId: \"s1\", removedAt: null };",
       "occurrence": 1
     },
@@ -2258,7 +1848,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "tests/unit/permissions.test.ts",
-      "line": 274,
+      "line": 248,
       "excerpt": "studentId: \"s1\",",
       "occurrence": 1
     },
@@ -2268,7 +1858,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "tests/unit/permissions.test.ts",
-      "line": 313,
+      "line": 287,
       "excerpt": "enrollment: { studentId: \"s1\" },",
       "occurrence": 1
     },
@@ -2278,7 +1868,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "tests/unit/permissions.test.ts",
-      "line": 424,
+      "line": 398,
       "excerpt": "enrollment: { studentId: \"s1\", removedAt: null as Date | null },",
       "occurrence": 1
     },
@@ -2288,7 +1878,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "tests/unit/permissions.test.ts",
-      "line": 441,
+      "line": 415,
       "excerpt": "enrollment: { studentId: \"s1\", removedAt: new Date(\"2026-01-01\") },",
       "occurrence": 1
     },

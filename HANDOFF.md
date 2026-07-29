@@ -1,5 +1,36 @@
 # HANDOFF — Beagle Classroom
 
+## D1 TEACHER INVITE + OWNER-RECOVERY CUTOVER — 2026-07-29 (READ FIRST)
+
+- Admin no longer creates Teacher accounts or temporary passwords. Both the
+  single-email and CSV flows now issue email-bound, single-use Teacher Invites
+  from `/admin/teachers/invites`; neither flow creates a User or exposes a
+  credential.
+- The CSV flow accepts an `email` column, normalizes and deduplicates addresses,
+  rejects an invalid file before issuing invitations, supports up to 500 rows,
+  and reveals each raw invite link only in the immediate result. Existing
+  invite history and revoke behavior remain available.
+- Admin password reset and temporary-password creation/import runtime were
+  removed from Teacher, Student, Admin user-detail, permissions, and lifecycle
+  surfaces. Password recovery is user-owned through verified email. Suspended
+  account reactivation does not replace credentials; terminated restoration
+  remains fail-closed.
+- Compatibility boundary: `User.mustResetPwd`, historical audit labels, and
+  related Prisma storage remain readable until an isolated-Neon destructive
+  migration is separately approved with backup and rollback evidence.
+- Verification: focused unit `91/91`, full unit `779/779`, TypeScript,
+  repository ESLint, dependency gate, and `git diff --check` pass. The
+  dependency baseline moves
+  from `91 blocker / 142 review / 233 total` to
+  `50 blocker / 142 review / 192 total`, resolving 41 blockers with zero new
+  retired-concept dependencies. Production build is the final pre-commit check
+  for this slice. The unguarded integration command was intentionally blocked
+  by `mutating_test_database_gate_not_enabled`; run DB integration only against
+  the approved isolated Neon QA branch.
+- Next: prepare the isolated Neon QA migration/rollback drill for the remaining
+  compatibility identity fields. Do not mutate or reset Production schema/data
+  as part of this slice.
+
 ## D1 REAL-NAME RUNTIME CLEANUP — 2026-07-29 (READ FIRST)
 
 - Retired optional `User.displayName` from Profile editing and from personal

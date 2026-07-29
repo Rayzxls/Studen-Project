@@ -17,7 +17,6 @@ export type AccountTransitionInput = {
   };
   to: AccountStatus;
   activeAdminCount: number;
-  temporaryPasswordPrepared: boolean;
   hasOpenWorkOrDispute?: boolean;
 };
 
@@ -84,30 +83,6 @@ export function decideAccountTransition(
     return {
       allowed: false,
       code: "teacher_active_courses_must_be_archived",
-    };
-  }
-
-  if (
-    input.target.status === "TERMINATED" &&
-    input.to === "ACTIVE" &&
-    !input.temporaryPasswordPrepared
-  ) {
-    return {
-      allowed: false,
-      code: "temporary_password_required_for_restore",
-    };
-  }
-
-  if (input.target.status === "TERMINATED" && input.to === "ACTIVE") {
-    return {
-      allowed: true,
-      from: input.target.status,
-      to: input.to,
-      effects: {
-        revokeSessions: true,
-        withdrawActiveEnrollments: false,
-        requirePasswordReset: true,
-      },
     };
   }
 

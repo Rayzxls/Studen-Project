@@ -122,7 +122,6 @@ export async function suspendOrReactivateAccount(
     target: context.target,
     to: command.to,
     activeAdminCount: context.activeAdminCount,
-    temporaryPasswordPrepared: false,
     hasOpenWorkOrDispute: context.hasOpenWorkOrDispute,
   });
 

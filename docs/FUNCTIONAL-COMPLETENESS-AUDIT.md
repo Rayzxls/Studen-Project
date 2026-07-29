@@ -35,9 +35,9 @@ model or button exists.
 
 | Capability | Status | Evidence and decision |
 | --- | --- | --- |
-| Create/import Teacher accounts | **Shipped** | Single-create and CSV import flows exist under `/admin/teachers` and `/admin/import/teachers`. |
+| Invite Teachers individually or by CSV | **Shipped** | `/admin/teachers/invites` issues email-bound, single-use Teacher Invites. Neither path creates a User or password; the Teacher accepts with the invited Google account. |
 | Read Teacher/Student details | **Shipped** | Lists and `/admin/users/[id]` expose identity, current relationships, activity/audit context, and account state. |
-| Reset password and avatar moderation | **Shipped** | Admin can issue a temporary password and reset an inappropriate profile image; both mutations are audited. |
+| Account recovery and avatar moderation | **Shipped** | Users recover their own access through verified-email recovery. Admin cannot issue, view, or reset another User's password, but may reset an inappropriate profile image with an audit trail. |
 | Disable/reactivate login | **Deferred - A4 Account Lifecycle** | `User.isActive` is enforced by authentication, but no complete Admin transition flow with reason, confirmation, audit, self-protection, and last-Admin protection exists. |
 | Soft-delete/restore account | **Deferred - A4 Account Lifecycle** | `User.deletedAt` is enforced by authentication, but the product has no complete Admin transition and restore workflow. Historical teaching records must remain intact. |
 | Student anonymization | **Deferred - A4 Account Lifecycle** | `Student.anonymized` exists and list queries exclude it, but there is no end-to-end request/approval/anonymize workflow. |

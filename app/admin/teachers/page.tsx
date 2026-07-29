@@ -1,30 +1,15 @@
 import Link from "next/link";
-import { cookies } from "next/headers";
-import {
-  CheckCircle2,
-  KeyRound,
-  Mail,
-  Search,
-  Upload,
-  UserPlus,
-} from "lucide-react";
+import { Mail, Search, UserPlus } from "lucide-react";
 import { listTeachers } from "@/lib/admin/teachers-list";
 import { identityFoundationMutationsEnabled } from "@/lib/identity/feature-flags";
-import {
-  TEACHER_CREATED_FLASH_COOKIE,
-  type TeacherCreatedFlash,
-} from "@/lib/admin/teacher-created-flash";
 import { PaginationLinks } from "@/components/pagination";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { AccountStatusBadge } from "@/components/admin/account-status-badge";
-import { dismissTeacherCreatedFlashAction } from "./actions";
 
 interface PageProps {
   searchParams: Promise<{
     search?: string;
     page?: string;
-    created?: string;
-    imported?: string;
   }>;
 }
 
@@ -34,12 +19,7 @@ export default async function AdminTeachersPage({ searchParams }: PageProps) {
   const sp = await searchParams;
   const search = sp.search ?? "";
   const page = Math.max(1, parseInt(sp.page ?? "1", 10) || 1);
-  const importedCount = Math.max(0, parseInt(sp.imported ?? "0", 10) || 0);
-
-  const [result, createdFlash] = await Promise.all([
-    listTeachers({ search, page }),
-    readTeacherCreatedFlash(sp.created),
-  ]);
+  const result = await listTeachers({ search, page });
 
   const dateFmt = new Intl.DateTimeFormat("th-TH", {
     year: "numeric",
@@ -56,41 +36,13 @@ export default async function AdminTeachersPage({ searchParams }: PageProps) {
             ทั้งหมด {result.total.toLocaleString("th-TH")} คน
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link href="/admin/teachers/new" className="btn-primary btn-sm">
+        {identityFoundationMutationsEnabled() && (
+          <Link href="/admin/teachers/invites" className="btn-primary btn-sm">
             <UserPlus className="h-4 w-4" />
-            เพิ่มครูรายคน
+            เพิ่มหรือนำเข้าครู
           </Link>
-          <Link href="/admin/import/teachers" className="btn-secondary btn-sm">
-            <Upload className="h-4 w-4" />
-            นำเข้าครูหลายคน
-          </Link>
-          {identityFoundationMutationsEnabled() && (
-            <Link
-              href="/admin/teachers/invites"
-              className="btn-secondary btn-sm"
-            >
-              <Mail className="h-4 w-4" />
-              คำเชิญครู
-            </Link>
-          )}
-        </div>
+        )}
       </div>
-
-      {createdFlash && <TeacherCreatedBanner flash={createdFlash} />}
-      {importedCount > 0 && (
-        <div className="card flex items-start gap-3 border-green-200 bg-green-50/70 p-4">
-          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-green-700" />
-          <div>
-            <p className="font-medium text-green-900">
-              นำเข้าครูสำเร็จ {importedCount.toLocaleString("th-TH")} คน
-            </p>
-            <p className="mt-0.5 text-xs text-green-800/70">
-              รายชื่อครูที่นำเข้าจะปรากฏในตารางด้านล่าง
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* Search */}
       <form method="get" className="card p-4">
@@ -122,15 +74,11 @@ export default async function AdminTeachersPage({ searchParams }: PageProps) {
           <p className="text-sm text-ink-soft">
             {search ? "ไม่พบครูที่ค้นหา" : "ยังไม่มีครูในระบบ"}
           </p>
-          {!search && (
-            <div className="mt-4 flex justify-center gap-2">
-              <Link href="/admin/teachers/new" className="btn-primary">
-                <UserPlus className="h-4 w-4" />
-                เพิ่มครูรายคน
-              </Link>
-              <Link href="/admin/import/teachers" className="btn-secondary">
-                <Upload className="h-4 w-4" />
-                นำเข้าครูหลายคน
+          {!search && identityFoundationMutationsEnabled() && (
+            <div className="mt-4 flex justify-center">
+              <Link href="/admin/teachers/invites" className="btn-primary">
+                <Mail className="h-4 w-4" />
+                เพิ่มหรือนำเข้าครู
               </Link>
             </div>
           )}
@@ -173,21 +121,12 @@ export default async function AdminTeachersPage({ searchParams }: PageProps) {
                     <AccountStatusBadge status={t.accountStatus} />
                   </td>
                   <td>
-                    <div className="flex flex-wrap gap-2">
-                      <Link
-                        href={`/admin/users/${t.userId}`}
-                        className="btn-ghost btn-sm"
-                      >
-                        ดูข้อมูล
-                      </Link>
-                      <Link
-                        href={`/admin/users/${t.userId}#reset-password`}
-                        className="btn-secondary btn-sm"
-                      >
-                        <KeyRound className="h-3.5 w-3.5" />
-                        Reset Password
-                      </Link>
-                    </div>
+                    <Link
+                      href={`/admin/users/${t.userId}`}
+                      className="btn-ghost btn-sm"
+                    >
+                      ดูข้อมูล
+                    </Link>
                   </td>
                 </tr>
               ))}
@@ -203,81 +142,5 @@ export default async function AdminTeachersPage({ searchParams }: PageProps) {
         searchParams={{ search }}
       />
     </div>
-  );
-}
-
-async function readTeacherCreatedFlash(
-  createdUserId?: string
-): Promise<TeacherCreatedFlash | null> {
-  if (!createdUserId) return null;
-  const cookieStore = await cookies();
-  const raw = cookieStore.get(TEACHER_CREATED_FLASH_COOKIE)?.value;
-  if (!raw) return null;
-
-  try {
-    const parsed = JSON.parse(raw) as Partial<TeacherCreatedFlash>;
-    if (
-      parsed.userId !== createdUserId ||
-      typeof parsed.teacherName !== "string" ||
-      typeof parsed.email !== "string" ||
-      typeof parsed.tempPassword !== "string"
-    ) {
-      return null;
-    }
-    return {
-      userId: parsed.userId,
-      teacherName: parsed.teacherName,
-      email: parsed.email,
-      tempPassword: parsed.tempPassword,
-    };
-  } catch {
-    return null;
-  }
-}
-
-function TeacherCreatedBanner({ flash }: { flash: TeacherCreatedFlash }) {
-  return (
-    <section className="card border-green-200 bg-green-50/70 p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex items-start gap-3">
-          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-green-700" />
-          <div>
-            <p className="font-medium text-green-950">
-              เพิ่มครูสำเร็จ: {flash.teacherName}
-            </p>
-            <p className="mt-0.5 text-xs text-green-800/70">{flash.email}</p>
-          </div>
-        </div>
-        <form action={dismissTeacherCreatedFlashAction}>
-          <button type="submit" className="btn-ghost btn-sm">
-            ปิด
-          </button>
-        </form>
-      </div>
-
-      <div className="mt-4 rounded-2xl border border-green-200 bg-white p-4">
-        <p className="text-xs text-green-800/80">
-          รหัสผ่านชั่วคราว (แสดงครั้งเดียว — เก็บไว้แจ้งครูตอนนี้)
-        </p>
-        <code className="mt-2 block rounded-xl bg-black/[0.04] px-3 py-2 font-mono text-sm tracking-wider text-black">
-          {flash.tempPassword}
-        </code>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Link
-            href={`/admin/users/${flash.userId}`}
-            className="btn-primary btn-sm"
-          >
-            ดูข้อมูลครูคนนี้
-          </Link>
-          <Link
-            href={`/admin/users/${flash.userId}#reset-password`}
-            className="btn-secondary btn-sm"
-          >
-            <KeyRound className="h-3.5 w-3.5" />
-            Reset Password
-          </Link>
-        </div>
-      </div>
-    </section>
   );
 }
