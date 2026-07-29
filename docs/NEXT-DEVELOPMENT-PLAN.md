@@ -591,12 +591,28 @@ schema drops, reset, and Production mutation remain blocked until the strict
 dependency gate reaches zero and the separately named approval/evidence gates
 are satisfied.
 
-The first guarded QA preflight found 43 Users, including 40 without canonical
-email, 41 without complete real name, and 18 human-like Student Number values.
-No User still has `mustResetPwd=true` and no non-empty legacy Display Name
-remains. This QA branch is therefore not ready for destructive migration. The
-next D1 step is to refresh/reseed isolated QA, configure the private Razyxls
-preserve target, and repeat preflight; it is not a Production schema change.
+**D1 isolated-QA completion update (2026-07-29):** the owner approved a reset
+of the isolated Neon QA branch only. The guarded drill exported the approved
+Admin identity outside Git, reset 42 disposable application tables, restored
+exactly one active Admin, and applied
+`20260729010000_drop_identity_compatibility_fields`. Prisma reports all nine
+migrations up to date; the three legacy identity columns are absent; post-drill
+preflight reports `destructiveQaMigrationReady: true`; and the identity strict
+dependency gate reports zero blockers and zero review findings.
+
+Full unit `780/780`, isolated integration, TypeScript, ESLint, Production
+build, preserved Admin credential sign-in/authorization, and safe route smoke
+`12/12` pass against the migrated QA schema. The project-level Neon branch
+reset procedure was previously rehearsed successfully on 2026-07-14. A new
+D1-specific restore-child was not created because Neon branch lifecycle
+operations remain owner-only. Production was not connected, reset, migrated,
+or authorized by this drill.
+
+D1 is now complete as an isolated-QA migration rehearsal. The next destructive
+schema topic is the separate D0 academic compatibility cleanup for
+`AcademicYear`, `Term`, `Class`, and `gradeLevel`. It must begin with its own
+grill, read-only preflight, preservation decision, migration plan, and explicit
+QA-only approval. Do not combine it with D1 or infer Production approval.
 
 ### D1. Google Login
 

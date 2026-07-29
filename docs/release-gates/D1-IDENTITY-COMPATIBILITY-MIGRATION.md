@@ -242,15 +242,23 @@ were intentionally not preserved.
 | Unit tests | 94 files; 780 tests passed |
 | Integration tests | Complete isolated integration command exited successfully |
 | Lint / TypeScript / Production build | Passed |
+| Preserved Admin sign-in | Auth.js credential session returned Role `ADMIN` and a User id |
+| Preserved Admin authorization | `/admin/dashboard` returned `200` with the authenticated session |
+| Safe route smoke | 12/12 public and protected-route checks passed |
 
 Automated integration acceptance covered Teacher, Student, permissions, Feed,
 submission/review, score, attendance, notification, moderation, and identity
-service paths against the migrated QA schema. Interactive Google OAuth, Resend
-delivery, and preserved-Admin browser sign-in are separate manual acceptance
+service paths against the migrated QA schema. The preserved Admin acceptance
+used the canonical email as the credential identifier; the legacy identifier
+is an export selector only and is not a supported sign-in identifier after D1.
+Interactive Google OAuth and Resend delivery remain separate manual acceptance
 checks and are not implied by the automated result.
 
-The rollback procedure is documented but a disposable Neon restore-child drill
-was not performed in this run because Neon branch-management credentials and
-local `pg_dump`/`pg_restore` tooling were not configured. This limitation does
-not affect the QA migration result, but it remains a required release gate
-before any separately approved Production cutover.
+The project-level Neon branch reset and application recovery procedure was
+successfully rehearsed on disposable QA branches on 2026-07-14, as recorded in
+`docs/DATA-SAFETY-RUNBOOK.md`. A new D1-specific restore-child was not created
+in this run because Neon branch-management credentials and local
+`pg_dump`/`pg_restore` tooling were not configured, and branch lifecycle
+operations remain owner-only. This does not change the isolated D1 QA result.
+Production migration remains unauthorized and requires a separately approved
+cutover with current restore evidence.

@@ -1,5 +1,35 @@
 # HANDOFF — Beagle Classroom
 
+## D1 IDENTITY COMPATIBILITY QA DRILL COMPLETE — 2026-07-29 (READ FIRST)
+
+- Commits `e373630` and `58e39ef` prepare and complete the guarded D1 drill on
+  the isolated Neon QA branch. Production was not connected, reset, migrated,
+  or otherwise modified.
+- The drill exported the approved Admin identity bundle and checksum outside
+  Git, reset 42 disposable application tables, restored exactly one active
+  Admin, and applied
+  `20260729010000_drop_identity_compatibility_fields`.
+- Prisma reports nine migrations up to date. `User.mustResetPwd`,
+  `User.displayName`, and the retired human `Student.studentId` column are
+  absent. Post-drill preflight reports
+  `destructiveQaMigrationReady: true`; the D1 strict dependency gate reports
+  `0 blocker / 0 review`.
+- Verification passes: full unit `94 files / 780 tests`, complete isolated
+  integration, TypeScript, ESLint, Production build, preserved Admin Auth.js
+  credential sign-in with Role `ADMIN`, authenticated `/admin/dashboard`
+  access, and safe route smoke `12/12`.
+- The preserved Admin signs in with the canonical email. `Rayzxls` is only the
+  legacy export selector and is not a post-D1 sign-in identifier.
+- The project-level Neon branch reset/application recovery procedure was
+  successfully rehearsed on disposable QA branches on 2026-07-14. A new
+  D1-specific restore-child was not created because Neon branch lifecycle
+  operations are owner-only and branch-management tooling is not configured
+  locally. Do not claim a D1-specific restore rehearsal.
+- Next roadmap decision: grill and plan the separate D0 academic compatibility
+  schema cleanup for `AcademicYear`, `Term`, `Class`, and `gradeLevel`.
+  Production migration remains unauthorized and requires a separately named
+  approval, current restore evidence, and a cutover checklist.
+
 ## D1 FORCED-RESET RUNTIME RETIREMENT — 2026-07-29 (READ FIRST)
 
 - Removed the obsolete `/reset-password/force` route, middleware interception,
