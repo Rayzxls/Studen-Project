@@ -34,13 +34,13 @@ export async function createTeacherAction(
     );
 
     const normalizedEmail = email.trim().toLowerCase();
-    const displayName = `${firstName.trim()} ${lastName.trim()}`.trim();
+    const teacherName = `${firstName.trim()} ${lastName.trim()}`.trim();
     const cookieStore = await cookies();
     cookieStore.set(
       TEACHER_CREATED_FLASH_COOKIE,
       JSON.stringify({
         userId: result.userId,
-        displayName,
+        teacherName,
         email: normalizedEmail,
         tempPassword: result.tempPassword,
       } satisfies TeacherCreatedFlash),

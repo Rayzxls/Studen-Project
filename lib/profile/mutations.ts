@@ -1,13 +1,9 @@
 /**
  * Profile mutations — Phase 13 · learning identity (not social media).
  *
- * Three write paths, all audited (CLAUDE.md: every mutation touching user
+ * Profile image write paths are audited (CLAUDE.md: every mutation touching user
  * data leaves a trail):
  *
- *   updateDisplayName  — self-service set/clear of User.displayName.
- *                        displayName is friendly-UI-only (dashboard
- *                        greeting, profile heading); real name stays
- *                        authoritative everywhere else.
  *   setProfileImage    — points User.profileImageId at a committed
  *                        PROFILE_IMAGE FileAttachment (client crops to
  *                        512×512 before upload; the original is never
@@ -21,8 +17,6 @@ import { db } from "@/lib/db/client";
 import { audit } from "@/lib/audit/log";
 import { TX_OPTS } from "@/lib/assignment/constants";
 import { Forbidden, NotFound, ValidationError } from "@/lib/errors";
-
-export const DISPLAY_NAME_MAX = 50;
 
 export interface ActorCtx {
   actorUserId: string;
@@ -48,51 +42,6 @@ async function userLabel(
   if (!u) return userId;
   const p = u.admin ?? u.teacher ?? u.student;
   return p ? `${p.firstName} ${p.lastName}` : u.identifier;
-}
-
-// ─────────────────────────────────────────────────────────────
-
-export async function updateDisplayName(
-  input: { displayName: string },
-  ctx: ActorCtx
-): Promise<void> {
-  const trimmed = input.displayName.trim();
-  if (trimmed.length > DISPLAY_NAME_MAX) {
-    throw new ValidationError({
-      displayName: `ชื่อที่แสดงยาวได้ไม่เกิน ${DISPLAY_NAME_MAX} ตัวอักษร`,
-    });
-  }
-  const next = trimmed === "" ? null : trimmed;
-
-  await db.$transaction(async (tx) => {
-    const user = await tx.user.findUnique({
-      where: { id: ctx.actorUserId },
-      select: { displayName: true },
-    });
-    if (!user) throw new NotFound("user_not_found");
-    if (user.displayName === next) return; // no-op, no audit noise
-
-    await tx.user.update({
-      where: { id: ctx.actorUserId },
-      data: { displayName: next },
-    });
-
-    await audit(
-      {
-        actorId: ctx.actorUserId,
-        actorRole: ctx.actorRole,
-        action: "DISPLAY_NAME_CHANGED",
-        targetType: "User",
-        targetId: ctx.actorUserId,
-        targetLabel: await userLabel(tx, ctx.actorUserId),
-        before: { displayName: user.displayName },
-        after: { displayName: next },
-        ipAddress: ctx.ipAddress,
-        userAgent: ctx.userAgent,
-      },
-      tx
-    );
-  }, TX_OPTS);
 }
 
 // ─────────────────────────────────────────────────────────────

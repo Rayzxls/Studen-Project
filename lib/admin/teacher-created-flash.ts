@@ -7,7 +7,7 @@ export interface CreateTeacherState {
 
 export interface TeacherCreatedFlash {
   userId: string;
-  displayName: string;
+  teacherName: string;
   email: string;
   tempPassword: string;
 }

@@ -84,10 +84,8 @@ model User {
   deletionScheduledFor DateTime?
   anonymizedAt         DateTime?
 
-  // Learning-identity profile (Phase 13) — NOT social media.
-  // displayName: optional friendly name for personal UI (dashboard greeting,
-  // profile heading) only. Real name stays authoritative everywhere else
-  // (comments, review, grades, attendance, admin, audit). May duplicate.
+  // Legacy personal-label storage retained only for compatibility cleanup and
+  // historical anonymization. Runtime surfaces use the role profile real name.
   displayName    String?
   // Pointer to the current PROFILE_IMAGE FileAttachment (cropped 512×512).
   // Null = default avatar. Plain string (no FK) — FileAttachment is the

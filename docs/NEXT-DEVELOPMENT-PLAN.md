@@ -551,6 +551,17 @@ removal may begin only through an explicitly approved isolated-QA migration
 plan. Until then, proceed with the D1 legacy identity compatibility cleanup
 without restoring Student Number or Admin-managed academic structure.
 
+**D1 compatibility cleanup update (2026-07-29):** the first non-destructive
+runtime slice retires optional `User.displayName` from Profile editing and from
+Dashboard/Profile name resolution. Personal and shared surfaces now use the
+authoritative real name, with the account identifier only as a fallback for
+incomplete compatibility rows. Misleading Admin-only local labels now use
+`fullName`/`teacherName`; the database column and historical Audit event label
+remain untouched until the isolated-QA destructive migration. Focused tests,
+TypeScript, and ESLint pass; the dependency gate resolves 49 blockers and moves
+to `91 blocker / 142 review / 233 total` with no new retired-concept
+dependencies.
+
 ### D1. Google Login
 
 Architecture decisions: [`ADR-0041`](./adr/0041-google-first-identity-uses-gated-role-onboarding.md) (Google-first identity), [`ADR-0042`](./adr/0042-transactional-email-uses-a-gated-provider-port.md) (transactional email delivery, unblocking verified-email change and password recovery), and [`ADR-0043`](./adr/0043-students-may-self-register-with-email-and-password.md) (email/password student self-registration alongside Google, revising the Google-only student stance of ADR-0041).

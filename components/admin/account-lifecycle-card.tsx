@@ -19,11 +19,11 @@ type ManageableAccountStatus = "ACTIVE" | "SUSPENDED";
 
 export function AccountLifecycleCard({
   userId,
-  displayName,
+  fullName,
   status,
 }: {
   userId: string;
-  displayName: string;
+  fullName: string;
   status: ManageableAccountStatus;
 }) {
   const [state, action] = useActionState(
@@ -54,8 +54,8 @@ export function AccountLifecycleCard({
           </h2>
           <p className="mt-1 text-xs leading-5 text-black/55">
             {isSuspending
-              ? `หยุดการเข้าสู่ระบบของ ${displayName} และออกจากระบบทุกอุปกรณ์ทันที โดยไม่ลบงาน คะแนน หรือประวัติการเรียน`
-              : `อนุญาตให้ ${displayName} กลับเข้าสู่ระบบได้อีกครั้ง ข้อมูลการเรียนเดิมยังคงอยู่`}
+              ? `หยุดการเข้าสู่ระบบของ ${fullName} และออกจากระบบทุกอุปกรณ์ทันที โดยไม่ลบงาน คะแนน หรือประวัติการเรียน`
+              : `อนุญาตให้ ${fullName} กลับเข้าสู่ระบบได้อีกครั้ง ข้อมูลการเรียนเดิมยังคงอยู่`}
           </p>
         </div>
       </div>

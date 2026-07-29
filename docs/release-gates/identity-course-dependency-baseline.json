@@ -1,6 +1,6 @@
 {
   "rulesVersion": "2026-07-24.3",
-  "generatedAt": "2026-07-28T21:59:52.331Z",
+  "generatedAt": "2026-07-29T04:40:33.157Z",
   "findings": [
     {
       "fingerprint": "0a611fb460e051e0e05a",
@@ -8,7 +8,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "prisma/schema.prisma",
-      "line": 420,
+      "line": 418,
       "excerpt": "model AcademicYear {",
       "occurrence": 1
     },
@@ -18,7 +18,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "prisma/schema.prisma",
-      "line": 430,
+      "line": 428,
       "excerpt": "academicYearId String",
       "occurrence": 1
     },
@@ -28,7 +28,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "prisma/schema.prisma",
-      "line": 431,
+      "line": 429,
       "excerpt": "academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)",
       "occurrence": 1
     },
@@ -38,7 +38,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "prisma/schema.prisma",
-      "line": 440,
+      "line": 438,
       "excerpt": "@@unique([academicYearId, number])",
       "occurrence": 1
     },
@@ -48,7 +48,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "prisma/schema.prisma",
-      "line": 445,
+      "line": 443,
       "excerpt": "academicYearId String",
       "occurrence": 2
     },
@@ -58,7 +58,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "prisma/schema.prisma",
-      "line": 446,
+      "line": 444,
       "excerpt": "academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)",
       "occurrence": 2
     },
@@ -68,7 +68,7 @@
       "severity": "blocker",
       "description": "Admin-managed AcademicYear remains.",
       "path": "prisma/schema.prisma",
-      "line": 454,
+      "line": 452,
       "excerpt": "@@unique([academicYearId, name])",
       "occurrence": 1
     },
@@ -78,7 +78,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "prisma/schema.prisma",
-      "line": 367,
+      "line": 365,
       "excerpt": "classId String?",
       "occurrence": 1
     },
@@ -88,7 +88,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "prisma/schema.prisma",
-      "line": 368,
+      "line": 366,
       "excerpt": "class Class? @relation(fields: [classId], references: [id], onDelete: SetNull)",
       "occurrence": 1
     },
@@ -98,7 +98,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "prisma/schema.prisma",
-      "line": 464,
+      "line": 462,
       "excerpt": "classId String?",
       "occurrence": 2
     },
@@ -108,7 +108,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "prisma/schema.prisma",
-      "line": 465,
+      "line": 463,
       "excerpt": "class Class? @relation(fields: [classId], references: [id], onDelete: Restrict)",
       "occurrence": 1
     },
@@ -118,7 +118,7 @@
       "severity": "blocker",
       "description": "Admin-managed Class remains.",
       "path": "prisma/schema.prisma",
-      "line": 498,
+      "line": 496,
       "excerpt": "@@index([classId, termId])",
       "occurrence": 1
     },
@@ -128,7 +128,7 @@
       "severity": "blocker",
       "description": "Structured gradeLevel remains.",
       "path": "prisma/schema.prisma",
-      "line": 448,
+      "line": 446,
       "excerpt": "gradeLevel String // \"ม.4\"",
       "occurrence": 1
     },
@@ -138,7 +138,7 @@
       "severity": "blocker",
       "description": "Structured gradeLevel remains.",
       "path": "prisma/schema.prisma",
-      "line": 455,
+      "line": 453,
       "excerpt": "@@index([gradeLevel])",
       "occurrence": 1
     },
@@ -148,468 +148,8 @@
       "severity": "blocker",
       "description": "Structured gradeLevel remains.",
       "path": "prisma/schema.prisma",
-      "line": 474,
+      "line": 472,
       "excerpt": "gradeLevel String? // legacy compatibility only",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "fb07e7108a0b56b2f840",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "app/admin/teachers/actions.ts",
-      "line": 37,
-      "excerpt": "const displayName = `${firstName.trim()} ${lastName.trim()}`.trim();",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "ec5c30a35b39266ffdff",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "app/admin/teachers/actions.ts",
-      "line": 43,
-      "excerpt": "displayName,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "3426e90d850d2f4a219f",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "app/admin/teachers/page.tsx",
-      "line": 221,
-      "excerpt": "typeof parsed.displayName !== \"string\" ||",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "146b2191df9ff488502f",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "app/admin/teachers/page.tsx",
-      "line": 229,
-      "excerpt": "displayName: parsed.displayName,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "9596a87b463a9eb0db5f",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "app/admin/teachers/page.tsx",
-      "line": 246,
-      "excerpt": "เพิ่มครูสำเร็จ: {flash.displayName}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "11e6643fd6e8d2fdef51",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "app/admin/users/[id]/page.tsx",
-      "line": 215,
-      "excerpt": "const displayName = user.teacher",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "95208d2c7f2029925d23",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "app/admin/users/[id]/page.tsx",
-      "line": 254,
-      "excerpt": "{displayName}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "c47299fddae624557d24",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "app/admin/users/[id]/page.tsx",
-      "line": 280,
-      "excerpt": "displayName={displayName}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "86e25595314b01dfc2eb",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "app/admin/users/[id]/page.tsx",
-      "line": 288,
-      "excerpt": "<ResetPasswordCard userId={user.id} displayName={displayName} />",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "4e47ad29e1ebe663a8dd",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "app/admin/users/[id]/page.tsx",
-      "line": 294,
-      "excerpt": "<ResetProfileImageCard userId={user.id} userName={displayName} />",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "51cd222a2b13f8be321d",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "app/dashboard/page.tsx",
-      "line": 74,
-      "excerpt": "displayName: true,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "d8dbd006eedabff1f342",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "app/dashboard/page.tsx",
-      "line": 99,
-      "excerpt": "displayName: user.displayName,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "d62b58b9a171433f7f8b",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "app/profile/actions.ts",
-      "line": 52,
-      "excerpt": "{ displayName: String(formData.get(\"displayName\") ?? \"\") },",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "a9d2fc4bbf5697fb6746",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "app/profile/page.tsx",
-      "line": 79,
-      "excerpt": "displayName: true,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "f34b8e905fe06bb6d62e",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "app/profile/page.tsx",
-      "line": 119,
-      "excerpt": "displayName: user.displayName,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "ebdda1c4d284a91efbe1",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "app/profile/page.tsx",
-      "line": 163,
-      "excerpt": "initialDisplayName={user.displayName}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "6c06f74e07b54d4695cc",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "components/admin/account-lifecycle-card.tsx",
-      "line": 22,
-      "excerpt": "displayName,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "279b49bb38946473812a",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "components/admin/account-lifecycle-card.tsx",
-      "line": 26,
-      "excerpt": "displayName: string;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "58397a42ee7d52614b47",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "components/admin/account-lifecycle-card.tsx",
-      "line": 57,
-      "excerpt": "? `หยุดการเข้าสู่ระบบของ ${displayName} และออกจากระบบทุกอุปกรณ์ทันที โดยไม่ลบงาน คะแนน หรือประวัติการเรียน`",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "747caf66e46c53ba8b51",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "components/admin/account-lifecycle-card.tsx",
-      "line": 58,
-      "excerpt": ": `อนุญาตให้ ${displayName} กลับเข้าสู่ระบบได้อีกครั้ง ข้อมูลการเรียนเดิมยังคงอยู่`}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "e0872fd6692db2bfa8bf",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "components/admin/reset-password-card.tsx",
-      "line": 15,
-      "excerpt": "displayName,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "1591c1a0dc76af127f78",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "components/admin/reset-password-card.tsx",
-      "line": 18,
-      "excerpt": "displayName: string;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "c3f0e1e8181ade6c44d2",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "components/admin/reset-password-card.tsx",
-      "line": 41,
-      "excerpt": "<span className=\"font-medium text-black\">{displayName}</span> —",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "0b42ba9ccc8806412c2e",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "components/comment/comments-thread.tsx",
-      "line": 224,
-      "excerpt": "(displayName never reaches shared surfaces). */}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "ccc7123d52f4612d54bd",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "components/profile/display-name-form.tsx",
-      "line": 10,
-      "excerpt": "* displayName editor — Phase 13. Optional friendly name; clearing the",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "e1aff64b75d1a8e8d83a",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "components/profile/display-name-form.tsx",
-      "line": 29,
-      "excerpt": "htmlFor=\"displayName\"",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "1cde04870abad8688fb8",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "components/profile/display-name-form.tsx",
-      "line": 36,
-      "excerpt": "id=\"displayName\"",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "b4f135eced45e10475db",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "components/profile/display-name-form.tsx",
-      "line": 37,
-      "excerpt": "name=\"displayName\"",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "ba9436d75c16834d26c7",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "components/profile/display-name-form.tsx",
-      "line": 56,
-      "excerpt": "{state.fieldErrors?.displayName && (",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "a80cdb7e39e40a1892ab",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "components/profile/display-name-form.tsx",
-      "line": 58,
-      "excerpt": "{state.fieldErrors.displayName}",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "1452534c18c7e024a7c8",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "lib/admin/teacher-created-flash.ts",
-      "line": 10,
-      "excerpt": "displayName: string;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "2d722d4b9a25281499a5",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "lib/audit/log.ts",
-      "line": 68,
-      "excerpt": "| \"DISPLAY_NAME_CHANGED\" // Important · self-service set/clear of User.displayName",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "9fa1e0aa89a628fb4e60",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "lib/profile/display-name.ts",
-      "line": 4,
-      "excerpt": "* displayName → real name → identifier. Used ONLY for friendly personal",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "9e0d072203027af1186a",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "lib/profile/display-name.ts",
-      "line": 10,
-      "excerpt": "displayName: string | null | undefined;",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "3da35a9ab365fe3a7fac",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "lib/profile/display-name.ts",
-      "line": 14,
-      "excerpt": "const dn = args.displayName?.trim();",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "37820501a21e81e3f7b6",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "lib/profile/mutations.ts",
-      "line": 7,
-      "excerpt": "* updateDisplayName — self-service set/clear of User.displayName.",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "fdf2c9b363d6e5240e40",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "lib/profile/mutations.ts",
-      "line": 8,
-      "excerpt": "* displayName is friendly-UI-only (dashboard",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "147d5a146c173df50fac",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "lib/profile/mutations.ts",
-      "line": 56,
-      "excerpt": "input: { displayName: string },",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "b3219025dfe7bcaaca69",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "lib/profile/mutations.ts",
-      "line": 59,
-      "excerpt": "const trimmed = input.displayName.trim();",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "8771cab90c30d04f7d79",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "lib/profile/mutations.ts",
-      "line": 62,
-      "excerpt": "displayName: `ชื่อที่แสดงยาวได้ไม่เกิน ${DISPLAY_NAME_MAX} ตัวอักษร`,",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "d5c3e2570d072c6463c7",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "lib/profile/mutations.ts",
-      "line": 70,
-      "excerpt": "select: { displayName: true },",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "e3c9652fab9980cd7cc4",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "lib/profile/mutations.ts",
-      "line": 73,
-      "excerpt": "if (user.displayName === next) return; // no-op, no audit noise",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "b2f6e918f0de3668fec3",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "lib/profile/mutations.ts",
-      "line": 77,
-      "excerpt": "data: { displayName: next },",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "476664fba411bec9d7e9",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "lib/profile/mutations.ts",
-      "line": 88,
-      "excerpt": "before: { displayName: user.displayName },",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "6d594d9b22a839051741",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "lib/profile/mutations.ts",
-      "line": 89,
-      "excerpt": "after: { displayName: next },",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "73597ace50da97192ce6",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "prisma/schema.prisma",
-      "line": 88,
-      "excerpt": "// displayName: optional friendly name for personal UI (dashboard greeting,",
       "occurrence": 1
     },
     {
@@ -618,38 +158,8 @@
       "severity": "blocker",
       "description": "Legacy displayName remains in the target identity model.",
       "path": "prisma/schema.prisma",
-      "line": 91,
+      "line": 89,
       "excerpt": "displayName String?",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "b1ae0868c4f194e147e8",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "tests/unit/profile-theme.test.ts",
-      "line": 15,
-      "excerpt": "displayName: \" Ava \",",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "c5bfaf06641b53133c61",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "tests/unit/profile-theme.test.ts",
-      "line": 22,
-      "excerpt": "displayName: \" \",",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "d4178f34884922e036f3",
-      "ruleId": "legacy-display-name",
-      "severity": "blocker",
-      "description": "Legacy displayName remains in the target identity model.",
-      "path": "tests/unit/profile-theme.test.ts",
-      "line": 29,
-      "excerpt": "displayName: null,",
       "occurrence": 1
     },
     {
@@ -658,7 +168,7 @@
       "severity": "blocker",
       "description": "Student Number remains a persisted unique identity field.",
       "path": "prisma/schema.prisma",
-      "line": 363,
+      "line": 361,
       "excerpt": "studentId String @unique",
       "occurrence": 1
     },
@@ -1378,7 +888,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "prisma/schema.prisma",
-      "line": 466,
+      "line": 464,
       "excerpt": "termId String?",
       "occurrence": 1
     },
@@ -1388,7 +898,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "prisma/schema.prisma",
-      "line": 467,
+      "line": 465,
       "excerpt": "term Term? @relation(fields: [termId], references: [id], onDelete: Restrict)",
       "occurrence": 1
     },
@@ -1398,7 +908,7 @@
       "severity": "blocker",
       "description": "Admin-managed Term remains.",
       "path": "prisma/schema.prisma",
-      "line": 498,
+      "line": 496,
       "excerpt": "@@index([classId, termId])",
       "occurrence": 1
     },
@@ -2408,7 +1918,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "prisma/schema.prisma",
-      "line": 363,
+      "line": 361,
       "excerpt": "studentId String @unique",
       "occurrence": 1
     },
@@ -2418,7 +1928,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "prisma/schema.prisma",
-      "line": 504,
+      "line": 502,
       "excerpt": "studentId String",
       "occurrence": 1
     },
@@ -2428,7 +1938,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "prisma/schema.prisma",
-      "line": 505,
+      "line": 503,
       "excerpt": "student Student @relation(fields: [studentId], references: [userId], onDelete: Cascade)",
       "occurrence": 1
     },
@@ -2438,7 +1948,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "prisma/schema.prisma",
-      "line": 521,
+      "line": 519,
       "excerpt": "@@unique([studentId, courseOfferingId])",
       "occurrence": 1
     },

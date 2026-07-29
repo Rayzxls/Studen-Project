@@ -1,5 +1,26 @@
 # HANDOFF — Beagle Classroom
 
+## D1 REAL-NAME RUNTIME CLEANUP — 2026-07-29 (READ FIRST)
+
+- Retired optional `User.displayName` from Profile editing and from personal
+  Dashboard/Profile name resolution. The authoritative Teacher/Student/Admin
+  real name is now used consistently; `User.identifier` is only a compatibility
+  fallback for incomplete legacy rows.
+- Removed the obsolete Display Name form, Server Action, mutation, resolver,
+  and renamed misleading Admin-only local labels to `fullName`/`teacherName`.
+  The database column and historical
+  `DISPLAY_NAME_CHANGED` Audit rendering remain compatibility-only until the
+  approved isolated-Neon destructive migration.
+- Focused unit tests `18/18`, full unit `797/797`, TypeScript, and targeted
+  ESLint pass. The reviewed
+  dependency gate moves from `140 blocker / 142 review / 282 total` to
+  `91 blocker / 142 review / 233 total`, with 49 blockers resolved and zero
+  new retired dependencies.
+- Remaining identity blockers are 71 temporary-password references, the legacy
+  Prisma `User.displayName` column, and the persisted Student Number schema
+  field. Next: retire the Admin temporary-password creation/reset path in a
+  separate slice. Do not bulk-edit internal `studentId` foreign keys.
+
 ## PRODUCTION PROFILE UPLOAD CORS HOTFIX — 2026-07-29 (READ FIRST)
 
 - Production Profile Avatar upload failed in the browser with `Failed to fetch`

@@ -218,7 +218,7 @@ async function readTeacherCreatedFlash(
     const parsed = JSON.parse(raw) as Partial<TeacherCreatedFlash>;
     if (
       parsed.userId !== createdUserId ||
-      typeof parsed.displayName !== "string" ||
+      typeof parsed.teacherName !== "string" ||
       typeof parsed.email !== "string" ||
       typeof parsed.tempPassword !== "string"
     ) {
@@ -226,7 +226,7 @@ async function readTeacherCreatedFlash(
     }
     return {
       userId: parsed.userId,
-      displayName: parsed.displayName,
+      teacherName: parsed.teacherName,
       email: parsed.email,
       tempPassword: parsed.tempPassword,
     };
@@ -243,7 +243,7 @@ function TeacherCreatedBanner({ flash }: { flash: TeacherCreatedFlash }) {
           <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-green-700" />
           <div>
             <p className="font-medium text-green-950">
-              เพิ่มครูสำเร็จ: {flash.displayName}
+              เพิ่มครูสำเร็จ: {flash.teacherName}
             </p>
             <p className="mt-0.5 text-xs text-green-800/70">{flash.email}</p>
           </div>

@@ -12,10 +12,10 @@ const INITIAL: ResetPasswordState = {};
 
 export function ResetPasswordCard({
   userId,
-  displayName,
+  fullName,
 }: {
   userId: string;
-  displayName: string;
+  fullName: string;
 }) {
   const [state, action] = useActionState(resetPasswordAction, INITIAL);
   const [copied, setCopied] = useState(false);
@@ -38,7 +38,7 @@ export function ResetPasswordCard({
         <>
           <p className="mb-3 text-xs text-black/60">
             ระบบจะสร้างรหัสผ่านชั่วคราวให้{" "}
-            <span className="font-medium text-black">{displayName}</span> —
+            <span className="font-medium text-black">{fullName}</span> —
             แสดงครั้งเดียวเพื่อให้คุณคัดลอกไปแจ้งผู้ใช้
             ผู้ใช้จะต้องเปลี่ยนรหัสผ่านในการเข้าระบบครั้งแรก
           </p>

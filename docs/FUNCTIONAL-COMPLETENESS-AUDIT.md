@@ -73,8 +73,8 @@ The first central Moderation Center slice was implemented and verified on isolat
 
 | Capability | Status | Evidence and decision |
 | --- | --- | --- |
-| Minimal learning identity | **Shipped** | Own avatar, optional friendly display name, read-only real identity, password change, and System/Light/Dark/Cream theme are implemented and audited where applicable. |
-| Real identity on shared learning surfaces | **Shipped** | `resolveDisplayName` is restricted to personal UI. Feed/comments/course/submission review use authoritative Teacher/Student names. |
+| Minimal learning identity | **Shipped** | Own avatar, authoritative real name, verified email where permitted, password controls, and System/Dark/Cream theme are implemented and audited where applicable. |
+| Real identity across the product | **Shipped** | Personal and shared learning surfaces use the authoritative Teacher/Student real name. The account identifier is only a compatibility fallback for incomplete legacy rows. |
 | Avatar consistency | **Shipped** | Avatar is present in navigation, dashboard, course shell/cards, Feed, comments, review queue, Teacher submission detail, and Teacher member management. Dense score/attendance tables remain text-first by design; the Student peer list remains real-name-only under its narrow L1 projection. |
 | Full personal-information profile | **Removed from Proposal** | Phone, address, birth date, bio, guardian, and social fields are intentionally absent. Adding them would expand PII and PDPA obligations without improving the Core classroom workflow. |
 | Public/social profile | **Removed from Proposal** | No public wall, followers, learning activity profile, or public grades. Beagle Classroom is a learning workspace, not a social network. |

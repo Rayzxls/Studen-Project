@@ -212,7 +212,7 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
     actorNameMap.set(a.id, n);
   }
 
-  const displayName = user.teacher
+  const fullName = user.teacher
     ? `${user.teacher.firstName} ${user.teacher.lastName}`
     : user.student
       ? `${user.student.firstName} ${user.student.lastName}`
@@ -251,7 +251,7 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
                 className="text-2xl font-medium text-black"
                 style={{ letterSpacing: "-0.02em" }}
               >
-                {displayName}
+                {fullName}
               </h1>
               <p className="mt-1 flex items-center gap-2 text-sm text-black/60">
                 <Mail className="h-3.5 w-3.5" />
@@ -277,7 +277,7 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
         (accountStatus === "ACTIVE" || accountStatus === "SUSPENDED") && (
           <AccountLifecycleCard
             userId={user.id}
-            displayName={displayName}
+            fullName={fullName}
             status={accountStatus}
           />
         )}
@@ -285,13 +285,13 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
       {/* Reset password card — full reveal-once flow */}
       {!isSelf && !user.deletedAt && (
         <div id="reset-password" className="scroll-mt-24">
-          <ResetPasswordCard userId={user.id} displayName={displayName} />
+          <ResetPasswordCard userId={user.id} fullName={fullName} />
         </div>
       )}
 
       {/* Avatar moderation — only when the target actually has one */}
       {!isSelf && !user.deletedAt && user.profileImageId !== null && (
-        <ResetProfileImageCard userId={user.id} userName={displayName} />
+        <ResetProfileImageCard userId={user.id} userName={fullName} />
       )}
       {isSelf && (
         <div className="card-flat p-4 text-xs text-black/50">
