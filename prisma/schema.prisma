@@ -64,7 +64,7 @@ enum ThemeMode {
 model User {
   id                   String        @id @default(cuid())
   role                 Role
-  identifier           String        @unique // canonical email
+  identifier           String        @unique // canonical sign-in identifier
   passwordHash         String
   // Additive Identity V2 foundation. Nullable until the explicit cutover.
   email                String?       @unique

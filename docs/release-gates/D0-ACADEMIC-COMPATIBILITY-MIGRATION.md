@@ -1,8 +1,9 @@
 # D0 Academic Compatibility Migration
 
-**Status:** isolated Neon QA migration drill complete; Production unauthorized
+**Status:** QA drill and authorized Production migration complete
 **Updated:** 2026-07-29
-**Scope:** isolated Neon QA first; Production is explicitly out of scope
+**Scope:** historical QA-first evidence plus the separately authorized
+Production cutover completed on 2026-07-29
 
 ## Purpose
 
@@ -124,6 +125,21 @@ Against the same isolated QA branch and source tree:
 
 Use Neon branch reset or branch switching only on a disposable QA child. Do
 not reconstruct dropped academic records by guessing from free-text labels.
-Production reset, schema migration, or data repair remains blocked and
-requires a separate named approval, current restore evidence, and cutover
-checklist.
+At the time of this isolated QA record, Production remained blocked pending a
+separate named approval. That historical restriction was later superseded by
+the Production cutover record below.
+
+## Production cutover record: 2026-07-29
+
+The owner later supplied the separate named approval for Production migration
+and complete QA/Production application-data deletion. The guarded Production
+runner confirmed that the primary and QA URLs represented different Neon
+branches, then applied
+`20260729020000_drop_academic_compatibility_structure`. Production now reports
+all ten migrations up to date.
+
+After migration, QA and Production were reset independently and verified. Each
+database contains one active Admin User and no course, enrollment, lesson,
+quiz, score, attendance, file metadata, notification, moderation, or other
+application rows. The pre-reset aggregate inventories are not recoverable
+backups.

@@ -1,5 +1,35 @@
 # HANDOFF — Beagle Classroom
 
+## PRODUCTION D0/D1 CUTOVER + SINGLE-ADMIN RESET — 2026-07-29 (READ FIRST)
+
+- The owner explicitly authorized the D1 identity and D0 academic migrations
+  on Production and the permanent deletion of all application data on both the
+  isolated Neon QA branch and Production.
+- Production and QA are confirmed as different normalized Neon database
+  identities. Both now report all ten Prisma migrations up to date.
+- QA and Production were reset independently with different exact confirmation
+  tokens. Each database now contains exactly one `User` row and one related
+  `Admin` row; every other application table contains zero rows.
+- The sole active Admin sign-in identifier is `Rayzxls`. Its email and
+  `emailVerifiedAt` are null and it has no `AuthIdentity`, so it is not linked
+  to Google or any email address. The password exists only in ignored local
+  secret storage and as a bcrypt hash in each database; it is not in Git,
+  evidence files, or command output.
+- The verifier confirms Role `ADMIN`, active account status, no deletion state,
+  no linked identity, and a successful bcrypt comparison with the configured
+  local secret on both databases.
+- Aggregate pre-reset inventories were written under ignored
+  `.local-storage/database-reset-evidence/`. They contain row counts and
+  migration names only. They are **not backups** and cannot restore deleted
+  user/course data.
+- Production acceptance after migration/reset: Prisma status up to date,
+  identity and academic strict gates `0/0`, full unit
+  `94 files / 781 tests`, safe route smoke `12/12`, repository ESLint,
+  TypeScript, and Production build all pass.
+- Login copy now says email or username because the emergency owner account is
+  intentionally username-only. Password recovery and Google linking are not
+  available for this no-email account.
+
 ## D0 ACADEMIC COMPATIBILITY QA DRILL COMPLETE — 2026-07-29 (READ FIRST)
 
 - The owner explicitly approved dropping Academic Year, Term, Class, Student
@@ -926,7 +956,7 @@ npm.cmd run build
 ### 🚀 Production (deployed, ใช้งานจริงได้)
 - **URL:** `https://studen-project.vercel.app` (Vercel project `studen-project`, team `rayzxls' projects`)
 - **DB:** Neon `neondb` (`ep-wild-scene-ao2ft9vq-pooler` · ap-southeast-1) — **dev = prod อันเดียวกัน** (ผู้ใช้เลือกใช้ตัวนี้เป็น prod)
-- **Admin คนเดียว:** identifier `Rayzxls` / pwd `Rayzxls0088` (สร้างผ่าน `pnpm db:reset-admin` — DB ถูกล้างเหลือ admin เดียว)
+- **Admin คนเดียว:** identifier `Rayzxls` / password stored only in ignored local secret storage (สร้างผ่าน `pnpm db:reset-admin` — DB ถูกล้างเหลือ admin เดียว)
 - **Env บน Vercel:** `DATABASE_URL` (+`connect_timeout`), `AUTH_SECRET`, `AUTH_URL`, `NEXT_PUBLIC_APP_URL` · Turnstile/Upstash **ไม่ได้ตั้ง** (signup ทำงานได้เพราะแก้ให้ optional)
 - **`main` = source of truth ของ deploy** (Vercel auto-deploy on push to main). phase-11 merged เข้า main ผ่าน PR #1/#2/#3
 

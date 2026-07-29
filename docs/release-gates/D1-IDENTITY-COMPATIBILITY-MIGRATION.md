@@ -1,9 +1,9 @@
 # D1 Identity Compatibility Migration
 
-**Status:** isolated Neon QA drill passed; Production migration not authorized
+**Status:** QA drill and authorized Production migration complete
 **Updated:** 2026-07-29  
-**Scope:** isolated Neon QA first; no Production schema or data mutation is
-authorized by this document.
+**Scope:** historical QA-first evidence plus the separately authorized
+Production cutover completed on 2026-07-29.
 
 ## Purpose
 
@@ -179,6 +179,19 @@ On the isolated branch, verify:
 
 Column drops are not rolled back by reconstructing guessed personal data.
 
+## Production cutover record: 2026-07-29
+
+The owner separately authorized Production after the isolated QA drill. The
+guarded Production runner confirmed that `DATABASE_URL` and `QA_DATABASE_URL`
+resolved to different Neon branch identities, then applied
+`20260729010000_drop_identity_compatibility_fields`. Production migration
+status reports all ten migrations up to date.
+
+The owner also authorized a complete application-data reset on both QA and
+Production. Each database was verified to contain one active username-only
+Admin, no email, no linked auth identity, and no other application rows.
+Aggregate inventories written before truncation are not backups.
+
 1. Create a disposable restore-drill child from the pre-migration QA branch.
 2. Record branch names, commit SHA, migration name, and restore point.
 3. Apply the migration to the isolated QA branch only.
@@ -260,5 +273,6 @@ successfully rehearsed on disposable QA branches on 2026-07-14, as recorded in
 in this run because Neon branch-management credentials and local
 `pg_dump`/`pg_restore` tooling were not configured, and branch lifecycle
 operations remain owner-only. This does not change the isolated D1 QA result.
-Production migration remains unauthorized and requires a separately approved
-cutover with current restore evidence.
+At the time of this isolated QA record, Production remained unauthorized. That
+historical restriction was later superseded by the separately approved
+Production cutover recorded above.
