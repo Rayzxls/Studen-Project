@@ -5,11 +5,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { AuthError } from "next-auth";
 import { requireAuth } from "@/lib/auth/guards";
-import {
-  removeProfileImage,
-  setProfileImage,
-  updateDisplayName,
-} from "@/lib/profile/mutations";
+import { removeProfileImage, setProfileImage } from "@/lib/profile/mutations";
 import { parseThemeMode, updateOwnThemeMode } from "@/lib/theme/mode";
 import { changeOwnPassword } from "@/lib/auth/change-password";
 import { signIn, signOut } from "@/lib/auth";
@@ -40,32 +36,6 @@ export type ProfileFormState = {
   error?: string;
   ok?: boolean;
 };
-
-export async function updateDisplayNameAction(
-  _prev: ProfileFormState,
-  formData: FormData
-): Promise<ProfileFormState> {
-  const session = await requireAuth();
-  const meta = await getRequestMeta();
-  try {
-    await updateDisplayName(
-      { displayName: String(formData.get("displayName") ?? "") },
-      {
-        actorUserId: session.user.id,
-        actorRole: session.user.role,
-        ipAddress: meta.ipAddress ?? undefined,
-        userAgent: meta.userAgent ?? undefined,
-      }
-    );
-  } catch (err) {
-    if (err instanceof ValidationError) return { fieldErrors: err.errors };
-    if (err instanceof HttpError) return { error: err.message };
-    throw err;
-  }
-  revalidatePath("/profile");
-  revalidatePath("/dashboard");
-  return { ok: true };
-}
 
 /** Imperative action — the avatar editor calls this after commit succeeds. */
 export async function saveProfileImageAction(

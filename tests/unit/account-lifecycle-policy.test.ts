@@ -11,7 +11,6 @@ const activeStudentInput = {
   },
   to: "SUSPENDED",
   activeAdminCount: 1,
-  temporaryPasswordPrepared: false,
 } as const;
 
 describe("decideAccountTransition", () => {
@@ -40,7 +39,6 @@ describe("decideAccountTransition", () => {
         },
         to: "SUSPENDED",
         activeAdminCount: 1,
-        temporaryPasswordPrepared: false,
       })
     ).toEqual({
       allowed: false,
@@ -60,7 +58,6 @@ describe("decideAccountTransition", () => {
         },
         to: "SUSPENDED",
         activeAdminCount: 2,
-        temporaryPasswordPrepared: false,
       })
     ).toEqual({
       allowed: false,
@@ -80,7 +77,6 @@ describe("decideAccountTransition", () => {
         },
         to: "SUSPENDED",
         activeAdminCount: 1,
-        temporaryPasswordPrepared: false,
       })
     ).toEqual({ allowed: false, code: "last_active_admin_protected" });
   });
@@ -97,7 +93,6 @@ describe("decideAccountTransition", () => {
         },
         to: "TERMINATED",
         activeAdminCount: 1,
-        temporaryPasswordPrepared: false,
       })
     ).toEqual({
       allowed: false,
@@ -117,7 +112,6 @@ describe("decideAccountTransition", () => {
         },
         to: "TERMINATED",
         activeAdminCount: 1,
-        temporaryPasswordPrepared: false,
       })
     ).toEqual({
       allowed: true,
@@ -131,7 +125,7 @@ describe("decideAccountTransition", () => {
     });
   });
 
-  it("requires a temporary password before restoring a terminated account", () => {
+  it("keeps terminated-account restoration out of the Admin lifecycle flow", () => {
     expect(
       decideAccountTransition({
         actor: { userId: "admin-1", role: "ADMIN" },
@@ -143,37 +137,10 @@ describe("decideAccountTransition", () => {
         },
         to: "ACTIVE",
         activeAdminCount: 1,
-        temporaryPasswordPrepared: false,
       })
     ).toEqual({
       allowed: false,
-      code: "temporary_password_required_for_restore",
-    });
-  });
-
-  it("restores a terminated account with a prepared temporary password", () => {
-    expect(
-      decideAccountTransition({
-        actor: { userId: "admin-1", role: "ADMIN" },
-        target: {
-          userId: "student-1",
-          role: "STUDENT",
-          status: "TERMINATED",
-          activeOwnedCourseCount: 0,
-        },
-        to: "ACTIVE",
-        activeAdminCount: 1,
-        temporaryPasswordPrepared: true,
-      })
-    ).toEqual({
-      allowed: true,
-      from: "TERMINATED",
-      to: "ACTIVE",
-      effects: {
-        revokeSessions: true,
-        withdrawActiveEnrollments: false,
-        requirePasswordReset: true,
-      },
+      code: "account_transition_not_allowed",
     });
   });
 
@@ -189,7 +156,6 @@ describe("decideAccountTransition", () => {
         },
         to: "ACTIVE",
         activeAdminCount: 1,
-        temporaryPasswordPrepared: true,
       })
     ).toEqual({ allowed: false, code: "account_anonymized_irreversible" });
   });
@@ -232,7 +198,6 @@ describe("decideAccountTransition", () => {
         },
         to: "ANONYMIZED",
         activeAdminCount: 1,
-        temporaryPasswordPrepared: false,
       })
     ).toEqual({
       allowed: true,
@@ -258,7 +223,6 @@ describe("decideAccountTransition", () => {
         },
         to: "ANONYMIZED",
         activeAdminCount: 1,
-        temporaryPasswordPrepared: false,
       })
     ).toEqual({
       allowed: false,
@@ -278,7 +242,6 @@ describe("decideAccountTransition", () => {
         },
         to: "ACTIVE",
         activeAdminCount: 1,
-        temporaryPasswordPrepared: false,
       })
     ).toEqual({
       allowed: true,
@@ -304,7 +267,6 @@ describe("decideAccountTransition", () => {
         },
         to: "ANONYMIZED",
         activeAdminCount: 1,
-        temporaryPasswordPrepared: false,
         hasOpenWorkOrDispute: true,
       })
     ).toEqual({

@@ -238,55 +238,6 @@ async function testRateLimitLockout() {
     .catch(() => {});
 }
 
-async function testForceResetRedirect() {
-  console.log("\n🔄 Force reset password flow");
-
-  // Exercise the forced-reset compatibility flow.
-  await db.user.update({
-    where: { identifier: "student@studennnn.local" },
-    data: { mustResetPwd: true }, // dependency-gate-allow(temporary-password): explicitly exercises the remaining compatibility redirect
-  });
-
-  const cookie = await signin("student@studennnn.local", "Student1234");
-  await expect("Login with mustResetPwd=true succeeds", !!cookie, "no cookie");
-  if (!cookie) {
-    // Reset and abort
-    await db.user.update({
-      where: { identifier: "student@studennnn.local" },
-      data: { mustResetPwd: false },
-    });
-    return;
-  }
-
-  // GET /dashboard should redirect to /reset-password/force
-  const r = await getWithCookie("/dashboard", cookie);
-  await expect(
-    "/dashboard redirects (force reset interception)",
-    r.status === 307 || r.status === 302,
-    `got ${r.status}`
-  );
-  const loc = r.headers.get("location") ?? "";
-  await expect(
-    "Redirect target is /reset-password/force",
-    loc.includes("/reset-password/force"),
-    `got: ${loc}`
-  );
-
-  // GET /reset-password/force should be 200
-  const r2 = await getWithCookie("/reset-password/force", cookie);
-  await expect(
-    "/reset-password/force → 200",
-    r2.status === 200,
-    `got ${r2.status}`
-  );
-
-  // Cleanup
-  await db.user.update({
-    where: { identifier: "student@studennnn.local" },
-    data: { mustResetPwd: false },
-  });
-}
-
 async function testPhase2Join() {
   console.log("\n📚 Phase 2: Join course via class code");
 
@@ -321,7 +272,6 @@ async function testPhase2Join() {
       consentVersion: "2026-07",
       student: {
         create: {
-          studentId: `identity-v2-unassigned:${nonce}`, // dependency-gate-allow(student-id-symbol-review): required compatibility placeholder in isolated QA
           firstName: "Join",
           lastName: "Test",
         },
@@ -1719,7 +1669,6 @@ async function main() {
   await testLoginEachRole();
   await testWrongPasswordRejected();
   await testRateLimitLockout();
-  await testForceResetRedirect();
   await testPhase2Join();
   await testPhase3CourseTabs();
   await testPhase4Attendance();

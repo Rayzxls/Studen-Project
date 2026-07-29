@@ -126,7 +126,6 @@ describe("Google provider registration", () => {
       dbUserId: "user-1",
       role: "STUDENT",
       identifier: "student@example.com",
-      mustResetPwd: false, // dependency-gate-allow(temporary-password): asserts Google accounts carry no reset flow
       sessionVersion: 0,
       name: "student@example.com",
       email: "student@example.com",

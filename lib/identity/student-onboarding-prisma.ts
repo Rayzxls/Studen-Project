@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto";
-
 import type { Prisma, PrismaClient } from "@prisma/client";
 
 import { db } from "@/lib/db/client";
@@ -16,18 +14,6 @@ const TX_OPTS = {
   timeout: 20_000,
   isolationLevel: "Serializable" as const,
 };
-
-/**
- * ADR-0039 retires the human-entered enrolment identifier, but the legacy
- * `Student` row still carries a required unique column. Identity V2 accounts
- * therefore receive an opaque, obviously-synthetic placeholder: it is never
- * shown, never typed by a person, and never used for authentication or lookup.
- * The prefix keeps the remaining schema debt greppable until the column is
- * dropped by the approved destructive migration.
- */
-function unassignedLegacyIdentifier(): string {
-  return `identity-v2-unassigned:${randomUUID()}`;
-}
 
 function createTransactionPort(
   tx: Prisma.TransactionClient
@@ -58,7 +44,6 @@ function createTransactionPort(
           identifier: input.email,
           passwordHash: input.compatibilityPasswordHash,
           role: "STUDENT",
-          mustResetPwd: false, // dependency-gate-allow(temporary-password): legacy non-null schema bridge; no credential is issued
           email: input.email,
           emailVerifiedAt: input.emailVerifiedAt,
           firstName: input.firstName,
@@ -66,7 +51,6 @@ function createTransactionPort(
           createdAt: input.createdAt,
           student: {
             create: {
-              studentId: unassignedLegacyIdentifier(), // dependency-gate-allow(student-id-symbol-review): legacy required unique column; synthetic placeholder is never displayed or used for lookup
               firstName: input.firstName,
               lastName: input.lastName,
             },

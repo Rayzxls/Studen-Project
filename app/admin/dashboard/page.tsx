@@ -4,10 +4,10 @@ import {
   GraduationCap,
   BookOpen,
   ScrollText,
-  Upload,
+  MailPlus,
   Activity,
   AlertTriangle,
-  KeyRound,
+  UsersRound,
 } from "lucide-react";
 import { getAdminStats } from "@/lib/dashboard/queries";
 import { ActionRow, MetricTile } from "@/components/dashboard/primitives";
@@ -35,8 +35,8 @@ export default async function AdminDashboardPage() {
     alerts.push({
       key: "no-teachers",
       text: "ยังไม่มีบัญชีครูในระบบ",
-      href: "/admin/import/teachers",
-      label: "นำเข้าครูจาก CSV",
+      href: "/admin/teachers/invites",
+      label: "เชิญครูเข้าระบบ",
     });
   }
 
@@ -132,16 +132,16 @@ export default async function AdminDashboardPage() {
           </h2>
           <div className="-mx-3 mt-2">
             <ActionRow
-              href="/admin/import/teachers"
-              title="นำเข้าครูจาก CSV"
-              meta="สร้างบัญชีครูเป็นชุด พร้อมรหัสผ่านชั่วคราว"
-              leading={<IconChip icon={<Upload className="h-4 w-4" />} />}
+              href="/admin/teachers/invites"
+              title="เพิ่มหรือนำเข้าครู"
+              meta="ส่งคำเชิญทางอีเมลได้ทั้งรายคนและหลายคนจาก CSV"
+              leading={<IconChip icon={<MailPlus className="h-4 w-4" />} />}
             />
             <ActionRow
               href="/admin/teachers"
-              title="รีเซ็ตรหัสผ่าน"
-              meta="เลือกครู/นักเรียนจากรายชื่อ แล้วรีเซ็ตจากหน้าโปรไฟล์"
-              leading={<IconChip icon={<KeyRound className="h-4 w-4" />} />}
+              title="จัดการข้อมูลครู"
+              meta="ดูสถานะบัญชี การเชิญ และข้อมูลครูในระบบ"
+              leading={<IconChip icon={<UsersRound className="h-4 w-4" />} />}
             />
           </div>
         </section>

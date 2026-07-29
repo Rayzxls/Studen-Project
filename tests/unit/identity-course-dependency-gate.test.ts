@@ -7,6 +7,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   compareDependencyBaseline,
   createDependencyBaseline,
+  filterAcademicDependencyFindings,
+  filterIdentityDependencyFindings,
   scanDependencyInventory,
 } from "@/lib/release-gate/dependency-inventory";
 
@@ -108,5 +110,63 @@ describe("identity and course dependency gate", () => {
           finding.ruleId === "temporary-password" && finding.line === 3
       )
     ).toBe(true);
+  });
+
+  it("keeps the D1 identity strict scope separate from D0 academic debt", () => {
+    const fixture = createFixture();
+    writeFileSync(
+      path.join(fixture, "app", "compatibility.ts"),
+      [
+        "const studentId = input.studentId;",
+        "const academicYearId = input.academicYearId;",
+        "",
+      ].join("\n")
+    );
+
+    const identityFindings = filterIdentityDependencyFindings(
+      scanDependencyInventory(fixture)
+    );
+
+    expect(
+      identityFindings.some(
+        (finding) => finding.ruleId === "student-id-symbol-review"
+      )
+    ).toBe(false);
+    expect(
+      identityFindings.some(
+        (finding) => finding.ruleId === "academic-year-model"
+      )
+    ).toBe(false);
+  });
+
+  it("keeps the D0 academic strict scope separate from identity review symbols", () => {
+    const fixture = createFixture();
+    writeFileSync(
+      path.join(fixture, "app", "compatibility.ts"),
+      [
+        "const studentId = input.studentId;",
+        "const academicYearId = input.academicYearId;",
+        "const gradeLevel = input.gradeLevel;",
+        "",
+      ].join("\n")
+    );
+
+    const academicFindings = filterAcademicDependencyFindings(
+      scanDependencyInventory(fixture)
+    );
+
+    expect(
+      academicFindings.some(
+        (finding) => finding.ruleId === "academic-year-model"
+      )
+    ).toBe(true);
+    expect(
+      academicFindings.some((finding) => finding.ruleId === "grade-level")
+    ).toBe(true);
+    expect(
+      academicFindings.some(
+        (finding) => finding.ruleId === "student-id-symbol-review"
+      )
+    ).toBe(false);
   });
 });

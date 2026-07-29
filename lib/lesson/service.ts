@@ -40,7 +40,6 @@ function teacherSession(actorUserId: string): Session {
       id: actorUserId,
       role: "TEACHER",
       identifier: actorUserId,
-      mustResetPwd: false,
     },
   };
 }

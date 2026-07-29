@@ -35,9 +35,9 @@ model or button exists.
 
 | Capability | Status | Evidence and decision |
 | --- | --- | --- |
-| Create/import Teacher accounts | **Shipped** | Single-create and CSV import flows exist under `/admin/teachers` and `/admin/import/teachers`. |
+| Invite Teachers individually or by CSV | **Shipped** | `/admin/teachers/invites` issues email-bound, single-use Teacher Invites. Neither path creates a User or password; the Teacher accepts with the invited Google account. |
 | Read Teacher/Student details | **Shipped** | Lists and `/admin/users/[id]` expose identity, current relationships, activity/audit context, and account state. |
-| Reset password and avatar moderation | **Shipped** | Admin can issue a temporary password and reset an inappropriate profile image; both mutations are audited. |
+| Account recovery and avatar moderation | **Shipped** | Users recover their own access through verified-email recovery. Admin cannot issue, view, or reset another User's password, but may reset an inappropriate profile image with an audit trail. |
 | Disable/reactivate login | **Deferred - A4 Account Lifecycle** | `User.isActive` is enforced by authentication, but no complete Admin transition flow with reason, confirmation, audit, self-protection, and last-Admin protection exists. |
 | Soft-delete/restore account | **Deferred - A4 Account Lifecycle** | `User.deletedAt` is enforced by authentication, but the product has no complete Admin transition and restore workflow. Historical teaching records must remain intact. |
 | Student anonymization | **Deferred - A4 Account Lifecycle** | `Student.anonymized` exists and list queries exclude it, but there is no end-to-end request/approval/anonymize workflow. |
@@ -73,8 +73,8 @@ The first central Moderation Center slice was implemented and verified on isolat
 
 | Capability | Status | Evidence and decision |
 | --- | --- | --- |
-| Minimal learning identity | **Shipped** | Own avatar, optional friendly display name, read-only real identity, password change, and System/Light/Dark/Cream theme are implemented and audited where applicable. |
-| Real identity on shared learning surfaces | **Shipped** | `resolveDisplayName` is restricted to personal UI. Feed/comments/course/submission review use authoritative Teacher/Student names. |
+| Minimal learning identity | **Shipped** | Own avatar, authoritative real name, verified email where permitted, password controls, and System/Dark/Cream theme are implemented and audited where applicable. |
+| Real identity across the product | **Shipped** | Personal and shared learning surfaces use the authoritative Teacher/Student real name. The account identifier is only a compatibility fallback for incomplete legacy rows. |
 | Avatar consistency | **Shipped** | Avatar is present in navigation, dashboard, course shell/cards, Feed, comments, review queue, Teacher submission detail, and Teacher member management. Dense score/attendance tables remain text-first by design; the Student peer list remains real-name-only under its narrow L1 projection. |
 | Full personal-information profile | **Removed from Proposal** | Phone, address, birth date, bio, guardian, and social fields are intentionally absent. Adding them would expand PII and PDPA obligations without improving the Core classroom workflow. |
 | Public/social profile | **Removed from Proposal** | No public wall, followers, learning activity profile, or public grades. Beagle Classroom is a learning workspace, not a social network. |

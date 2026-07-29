@@ -67,11 +67,6 @@ export const assert = {
     if (!can.viewUserData(s, targetUserId)) throw new Forbidden();
     return s;
   },
-  async importTeachersCSV(): Promise<Session> {
-    const s = await requireAuth();
-    if (!can.importTeachersCSV(s)) throw new Forbidden();
-    return s;
-  },
 
   /**
    * Assert the session belongs to the teacher who owns this CourseOffering.

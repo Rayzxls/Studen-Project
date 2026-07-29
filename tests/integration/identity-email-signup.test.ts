@@ -52,7 +52,7 @@ describe("student email + password self-registration", () => {
         email: true,
         emailVerifiedAt: true,
         passwordHash: true,
-        student: { select: { studentId: true } }, // dependency-gate-allow(student-id-symbol-review): verify the temporary compatibility value, not a product identifier
+        student: { select: { userId: true } },
         authIdentities: { select: { provider: true } },
       },
     });
@@ -61,7 +61,7 @@ describe("student email + password self-registration", () => {
     expect(user.email).toBe(email);
     expect(user.emailVerifiedAt).toBeNull(); // self-registered, not verified
     expect(await verifyPassword(PASSWORD, user.passwordHash)).toBe(true);
-    expect(user.student?.studentId).toMatch(/^identity-v2-unassigned:/); // dependency-gate-allow(student-id-symbol-review): verify compatibility storage until the destructive identity migration
+    expect(user.student?.userId).toBe(userId);
     expect(user.authIdentities).toHaveLength(0); // no Google — E² can link later
 
     const consents = await db.consentAcceptance.count({ where: { userId } });

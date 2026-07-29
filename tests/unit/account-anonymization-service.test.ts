@@ -22,7 +22,6 @@ describe("anonymizedUserFields", () => {
       passwordHash: DISABLED_COMPATIBILITY_PASSWORD_HASH,
       firstName: null,
       lastName: null,
-      displayName: null, // dependency-gate-allow(legacy-display-name): asserts the legacy column is nulled on anonymization
       profileImageId: null,
       isActive: false,
     });

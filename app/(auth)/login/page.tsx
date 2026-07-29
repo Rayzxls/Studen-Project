@@ -63,7 +63,7 @@ function LoginForm() {
             htmlFor="identifier"
             className="mb-1.5 block text-sm font-medium"
           >
-            อีเมล
+            อีเมลหรือชื่อผู้ใช้
           </label>
           <input
             id="identifier"
@@ -72,7 +72,7 @@ function LoginForm() {
             autoComplete="username"
             required
             className="input"
-            placeholder="name@example.com"
+            placeholder="name@example.com หรือชื่อผู้ใช้"
           />
         </div>
 

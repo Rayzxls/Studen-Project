@@ -51,27 +51,10 @@ export const authConfig = {
         return Response.redirect(url);
       }
 
-      // ── Force reset interception ──
-      // If logged in AND mustResetPwd, redirect everywhere except force-reset itself
-      // and the signout endpoint (so user can escape if needed)
-      if (
-        isLoggedIn &&
-        auth.user.mustResetPwd &&
-        path !== "/reset-password/force" &&
-        !path.startsWith("/api/auth")
-      ) {
-        return Response.redirect(new URL("/reset-password/force", nextUrl));
-      }
-
-      // ── Force-reset page requires auth ──
-      if (path === "/reset-password/force") {
-        return isLoggedIn;
-      }
-
       if (isPublic) return true;
       return isLoggedIn;
     },
-    jwt({ token, user, trigger }) {
+    jwt({ token, user }) {
       const nowSec = Math.floor(Date.now() / 1000);
       if (user) {
         // Transient sign-in markers (onboarding, recovery, consent refresh)
@@ -92,15 +75,10 @@ export const authConfig = {
         token.id = user.dbUserId ?? user.id;
         token.role = user.role;
         token.identifier = user.identifier;
-        token.mustResetPwd = user.mustResetPwd;
         token.sessionVersion = user.sessionVersion;
         // Anchor the absolute-session cap at sign-in. Activity extends the
         // inactivity window but can never push a session past this point.
         token.signInAt = nowSec;
-      }
-      // Allow session update to refresh mustResetPwd after password change
-      if (trigger === "update") {
-        token.mustResetPwd = false;
       }
       // Absolute 30-day cap: end the session regardless of recent activity.
       // Returning null invalidates it; pure and DB-free, so it holds in the
@@ -115,7 +93,6 @@ export const authConfig = {
         session.user.id = token.id as string;
         session.user.role = token.role as "ADMIN" | "TEACHER" | "STUDENT";
         session.user.identifier = token.identifier as string;
-        session.user.mustResetPwd = token.mustResetPwd as boolean;
         session.user.sessionVersion = token.sessionVersion;
         // Surfaced for the pragmatic re-authentication rule: a sensitive Profile
         // mutation treats a sign-in within the window as a recent re-auth.

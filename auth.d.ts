@@ -6,7 +6,6 @@ declare module "next-auth" {
     id: string;
     role: "ADMIN" | "TEACHER" | "STUDENT";
     identifier: string;
-    mustResetPwd: boolean;
     /** Account session version at sign-in; drives server-side revocation. */
     sessionVersion?: number;
     /**
@@ -41,7 +40,6 @@ declare module "next-auth" {
       id: string;
       role: "ADMIN" | "TEACHER" | "STUDENT";
       identifier: string;
-      mustResetPwd: boolean;
       /** Unix seconds of sign-in; drives the pragmatic re-auth window. */
       signInAt?: number;
       /** Account session version at sign-in; drives server-side revocation. */
@@ -58,7 +56,6 @@ declare module "next-auth/jwt" {
     id?: string;
     role?: "ADMIN" | "TEACHER" | "STUDENT";
     identifier?: string;
-    mustResetPwd?: boolean;
     /** Account session version at sign-in; drives server-side revocation. */
     sessionVersion?: number;
     /**

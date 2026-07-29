@@ -65,7 +65,7 @@ export type AuditEvent =
   | "SUBMISSION_WITHDRAWN" // Important · student pulls own work out of the review queue (history preserved)
   | "SUBMISSION_VERSION_HIDDEN" // student soft-hides one past version from their own list (teacher + audit still see it)
   // Profile (Phase 13) — learning identity, not social media
-  | "DISPLAY_NAME_CHANGED" // Important · self-service set/clear of User.displayName
+  | "DISPLAY_NAME_CHANGED" // dependency-gate-allow(legacy-display-name): retained to render historical audit records until the compatibility column is removed
   | "PROFILE_IMAGE_CHANGED" // Important · user uploads/replaces own avatar
   | "PROFILE_IMAGE_DELETED" // Important · user removes own avatar (back to default)
   | "PROFILE_IMAGE_RESET_BY_ADMIN" // Important · admin clears another user's avatar

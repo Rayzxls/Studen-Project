@@ -1,5 +1,219 @@
 # HANDOFF — Beagle Classroom
 
+## PRODUCTION D0/D1 CUTOVER + SINGLE-ADMIN RESET — 2026-07-29 (READ FIRST)
+
+- The owner explicitly authorized the D1 identity and D0 academic migrations
+  on Production and the permanent deletion of all application data on both the
+  isolated Neon QA branch and Production.
+- Production and QA are confirmed as different normalized Neon database
+  identities. Both now report all ten Prisma migrations up to date.
+- QA and Production were reset independently with different exact confirmation
+  tokens. Each database now contains exactly one `User` row and one related
+  `Admin` row; every other application table contains zero rows.
+- The sole active Admin sign-in identifier is `Rayzxls`. Its email and
+  `emailVerifiedAt` are null and it has no `AuthIdentity`, so it is not linked
+  to Google or any email address. The password exists only in ignored local
+  secret storage and as a bcrypt hash in each database; it is not in Git,
+  evidence files, or command output.
+- The verifier confirms Role `ADMIN`, active account status, no deletion state,
+  no linked identity, and a successful bcrypt comparison with the configured
+  local secret on both databases.
+- Aggregate pre-reset inventories were written under ignored
+  `.local-storage/database-reset-evidence/`. They contain row counts and
+  migration names only. They are **not backups** and cannot restore deleted
+  user/course data.
+- Production acceptance after migration/reset: Prisma status up to date,
+  identity and academic strict gates `0/0`, full unit
+  `94 files / 781 tests`, safe route smoke `12/12`, repository ESLint,
+  TypeScript, and Production build all pass.
+- Login copy now says email or username because the emergency owner account is
+  intentionally username-only. Password recovery and Google linking are not
+  available for this no-email account.
+
+## D0 ACADEMIC COMPATIBILITY QA DRILL COMPLETE — 2026-07-29 (READ FIRST)
+
+- The owner explicitly approved dropping Academic Year, Term, Class, Student
+  Class, and Teacher Homeroom on the isolated Neon QA branch only. Production
+  was not connected, migrated, reset, or otherwise modified.
+- Applied
+  `20260729020000_drop_academic_compatibility_structure` through the guarded
+  isolated Prisma runner. Prisma reports ten migrations up to date.
+- Removed the retired `AcademicYear`, `Term`, and `Class` models;
+  `Teacher.homeroomOfId`; `Student.classId`; and
+  `CourseOffering.classId`, `termId`, and `gradeLevel`, including owned
+  constraints and indexes. Teacher-owned `learnerGroupLabel`,
+  `academicPeriodLabel`, and `creditHours` remain.
+- The post-migration absence verifier passes. Dependency inventory is
+  `0 blocker / 137 review / 137 total`; academic and identity strict scopes
+  both report zero findings.
+- Verification passes: full isolated integration `128 files / 985 tests`
+  (including standalone-course regression), full unit `94 files / 781 tests`,
+  TypeScript, ESLint, safe route smoke `12/12`, and Production build.
+- The project-level Neon reset/application recovery procedure was rehearsed on
+  disposable QA branches on 2026-07-14. A new D0-specific restore child was not
+  created because Neon branch lifecycle remains owner-only; do not claim one.
+- Production deployment remains unauthorized and requires current restore
+  evidence, complete role acceptance, a cutover checklist, and a separately
+  named approval.
+
+## D1 IDENTITY COMPATIBILITY QA DRILL COMPLETE — 2026-07-29 (READ FIRST)
+
+- Commits `e373630` and `58e39ef` prepare and complete the guarded D1 drill on
+  the isolated Neon QA branch. Production was not connected, reset, migrated,
+  or otherwise modified.
+- The drill exported the approved Admin identity bundle and checksum outside
+  Git, reset 42 disposable application tables, restored exactly one active
+  Admin, and applied
+  `20260729010000_drop_identity_compatibility_fields`.
+- Prisma reports nine migrations up to date. `User.mustResetPwd`,
+  `User.displayName`, and the retired human `Student.studentId` column are
+  absent. Post-drill preflight reports
+  `destructiveQaMigrationReady: true`; the D1 strict dependency gate reports
+  `0 blocker / 0 review`.
+- Verification passes: full unit `94 files / 780 tests`, complete isolated
+  integration, TypeScript, ESLint, Production build, preserved Admin Auth.js
+  credential sign-in with Role `ADMIN`, authenticated `/admin/dashboard`
+  access, and safe route smoke `12/12`.
+- The preserved Admin signs in with the canonical email. `Rayzxls` is only the
+  legacy export selector and is not a post-D1 sign-in identifier.
+- The project-level Neon branch reset/application recovery procedure was
+  successfully rehearsed on disposable QA branches on 2026-07-14. A new
+  D1-specific restore-child was not created because Neon branch lifecycle
+  operations are owner-only and branch-management tooling is not configured
+  locally. Do not claim a D1-specific restore rehearsal.
+- Next roadmap decision: grill and plan the separate D0 academic compatibility
+  schema cleanup for `AcademicYear`, `Term`, `Class`, and `gradeLevel`.
+  Production migration remains unauthorized and requires a separately named
+  approval, current restore evidence, and a cutover checklist.
+
+## D1 FORCED-RESET RUNTIME RETIREMENT — 2026-07-29 (READ FIRST)
+
+- Removed the obsolete `/reset-password/force` route, middleware interception,
+  JWT/session `mustResetPwd` property, auth reads, onboarding/recovery writes,
+  seed/bootstrap writes, Admin badge, smoke case, and related test fixtures.
+- Password recovery now has one owner-controlled contract: verified-email
+  recovery when Identity mutations are enabled. When email recovery is not
+  configured, the page fails closed with configuration guidance and never
+  issues a temporary password or asks for the old password.
+- `User.mustResetPwd` remains only as a compatibility column in the current
+  Prisma schema and as aggregate-only evidence in the read-only QA preflight.
+  No migration SQL was created and no QA or Production schema/data was mutated.
+- Verification passes: TypeScript, repository ESLint, Prettier, full unit
+  (`779/779`), Production build, and the reviewed dependency gate. The gate
+  moves from `50 blocker / 142 review / 192 total` to
+  `21 blocker / 142 review / 163 total`, resolving 29 blockers with zero new
+  retired-concept dependencies.
+- The strict gate still fails intentionally on 21 compatibility blockers:
+  3 D1 identity schema fields and 18 D0 academic-schema fields. Next: refresh
+  or deliberately reseed isolated Neon QA, configure
+  `IDENTITY_PRESERVE_EMAIL` privately, repeat preflight, then rehearse the
+  narrowly scoped schema drop only after explicit destructive-QA approval.
+
+## D1 IDENTITY COMPATIBILITY QA PREFLIGHT — 2026-07-29 (READ FIRST)
+
+- Added `npm run db:identity-compatibility:qa:preflight`, a read-only command
+  that fails closed unless `QA_DATABASE_URL` is isolated from `DATABASE_URL`.
+  It reports aggregate readiness for canonical email, email verification, real
+  name, `mustResetPwd`, legacy `displayName`, and synthetic versus human-like
+  `Student.studentId` storage without printing personal data or secrets.
+- Optional local secret `IDENTITY_PRESERVE_EMAIL` checks that the selected
+  preserve target resolves to exactly one Admin-ready identity, while keeping
+  the address out of output and Git.
+- The migration/rollback gate is documented in
+  `docs/release-gates/D1-IDENTITY-COMPATIBILITY-MIGRATION.md`. It explicitly
+  separates 32 identity blockers from 18 D0 academic-schema blockers, preserves
+  internal `studentId` User foreign keys, and requires source strict-gate zero
+  before writing/applying destructive migration SQL.
+- No migration SQL was created and no QA or Production database was mutated in
+  this preparation slice. The first guarded read-only run found 43 QA Users:
+  40 lack canonical email, 41 lack complete real name, and 18 Students retain
+  human-like Student Number values. There are zero `mustResetPwd=true` Users
+  and zero non-empty legacy Display Names. The preserve Admin email was not
+  configured.
+- Verification passes: TypeScript, repository ESLint, Prettier, dependency
+  gate (`50 blocker / 142 review / 192 total`), unit tests (`779/779`), and
+  Production build. Run Vitest from the canonical physical path
+  `D:\Studennnn`; invoking it through the workspace junction can make Vite
+  resolve `tests/setup.ts` inconsistently on Windows.
+- QA is not ready for destructive migration. Next: refresh or deliberately
+  reseed the isolated Neon QA branch, configure `IDENTITY_PRESERVE_EMAIL`
+  privately, repeat preflight, and remove runtime compatibility only after the
+  strict source gate reaches zero. Do not infer anything about Production from
+  these QA aggregates.
+
+## D1 TEACHER INVITE + OWNER-RECOVERY CUTOVER — 2026-07-29 (READ FIRST)
+
+- Admin no longer creates Teacher accounts or temporary passwords. Both the
+  single-email and CSV flows now issue email-bound, single-use Teacher Invites
+  from `/admin/teachers/invites`; neither flow creates a User or exposes a
+  credential.
+- The CSV flow accepts an `email` column, normalizes and deduplicates addresses,
+  rejects an invalid file before issuing invitations, supports up to 500 rows,
+  and reveals each raw invite link only in the immediate result. Existing
+  invite history and revoke behavior remain available.
+- Admin password reset and temporary-password creation/import runtime were
+  removed from Teacher, Student, Admin user-detail, permissions, and lifecycle
+  surfaces. Password recovery is user-owned through verified email. Suspended
+  account reactivation does not replace credentials; terminated restoration
+  remains fail-closed.
+- Compatibility boundary: `User.mustResetPwd`, historical audit labels, and
+  related Prisma storage remain readable until an isolated-Neon destructive
+  migration is separately approved with backup and rollback evidence.
+- Verification: focused unit `91/91`, full unit `779/779`, TypeScript,
+  repository ESLint, dependency gate, and `git diff --check` pass. The
+  dependency baseline moves
+  from `91 blocker / 142 review / 233 total` to
+  `50 blocker / 142 review / 192 total`, resolving 41 blockers with zero new
+  retired-concept dependencies. Production build is the final pre-commit check
+  for this slice. The unguarded integration command was intentionally blocked
+  by `mutating_test_database_gate_not_enabled`; run DB integration only against
+  the approved isolated Neon QA branch.
+- Next: prepare the isolated Neon QA migration/rollback drill for the remaining
+  compatibility identity fields. Do not mutate or reset Production schema/data
+  as part of this slice.
+
+## D1 REAL-NAME RUNTIME CLEANUP — 2026-07-29 (READ FIRST)
+
+- Retired optional `User.displayName` from Profile editing and from personal
+  Dashboard/Profile name resolution. The authoritative Teacher/Student/Admin
+  real name is now used consistently; `User.identifier` is only a compatibility
+  fallback for incomplete legacy rows.
+- Removed the obsolete Display Name form, Server Action, mutation, resolver,
+  and renamed misleading Admin-only local labels to `fullName`/`teacherName`.
+  The database column and historical
+  `DISPLAY_NAME_CHANGED` Audit rendering remain compatibility-only until the
+  approved isolated-Neon destructive migration.
+- Focused unit tests `18/18`, full unit `797/797`, TypeScript, and targeted
+  ESLint pass. The reviewed
+  dependency gate moves from `140 blocker / 142 review / 282 total` to
+  `91 blocker / 142 review / 233 total`, with 49 blockers resolved and zero
+  new retired dependencies.
+- Remaining identity blockers are 71 temporary-password references, the legacy
+  Prisma `User.displayName` column, and the persisted Student Number schema
+  field. Next: retire the Admin temporary-password creation/reset path in a
+  separate slice. Do not bulk-edit internal `studentId` foreign keys.
+
+## PRODUCTION PROFILE UPLOAD CORS HOTFIX — 2026-07-29 (READ FIRST)
+
+- Production Profile Avatar upload failed in the browser with `Failed to fetch`
+  after the primary application origin moved to `https://beagleclassroom.com`.
+  The upload pipeline itself remained valid: the browser performs a presigned
+  `PUT` directly to the private Cloudflare R2 bucket before committing the
+  attachment through the authenticated application route.
+- Cloudflare R2 CORS was updated manually to allow the apex custom domain,
+  `www`, and the retained Vercel production origin. Authenticated Production
+  acceptance then passed: the owner can crop, upload, commit, and display a new
+  Profile Avatar. Public bucket access remains disabled.
+- The client now tracks presign, direct-upload, commit, and profile-save stages
+  so a blocked R2 request reports a storage-connection message instead of the
+  raw browser exception. Focused regression `5/5`, TypeScript, and targeted
+  ESLint pass.
+- Next roadmap slice: D1 legacy identity compatibility cleanup. Classify the
+  retired human Student Number separately from internal `studentId` User
+  foreign keys, and design/apply destructive cleanup only on isolated Neon QA.
+  Do not reset or remove Production schema/data without a separate named
+  approval, backup/restore evidence, and rollback plan.
+
 ## PRODUCTION RELEASE — IDENTITY V2 + STANDALONE COURSE RUNTIME — 2026-07-29 (READ FIRST)
 
 - Released all seven pending `phase-11` commits from Codex and Claude through
@@ -742,7 +956,7 @@ npm.cmd run build
 ### 🚀 Production (deployed, ใช้งานจริงได้)
 - **URL:** `https://studen-project.vercel.app` (Vercel project `studen-project`, team `rayzxls' projects`)
 - **DB:** Neon `neondb` (`ep-wild-scene-ao2ft9vq-pooler` · ap-southeast-1) — **dev = prod อันเดียวกัน** (ผู้ใช้เลือกใช้ตัวนี้เป็น prod)
-- **Admin คนเดียว:** identifier `Rayzxls` / pwd `Rayzxls0088` (สร้างผ่าน `pnpm db:reset-admin` — DB ถูกล้างเหลือ admin เดียว)
+- **Admin คนเดียว:** identifier `Rayzxls` / password stored only in ignored local secret storage (สร้างผ่าน `pnpm db:reset-admin` — DB ถูกล้างเหลือ admin เดียว)
 - **Env บน Vercel:** `DATABASE_URL` (+`connect_timeout`), `AUTH_SECRET`, `AUTH_URL`, `NEXT_PUBLIC_APP_URL` · Turnstile/Upstash **ไม่ได้ตั้ง** (signup ทำงานได้เพราะแก้ให้ optional)
 - **`main` = source of truth ของ deploy** (Vercel auto-deploy on push to main). phase-11 merged เข้า main ผ่าน PR #1/#2/#3
 

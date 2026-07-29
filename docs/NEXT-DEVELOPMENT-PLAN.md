@@ -1,6 +1,6 @@
 # Next Development Plan
 
-**Updated:** 2026-07-24
+**Updated:** 2026-07-29
 **Sequence:** Core completion -> Lesson Workspace -> Quiz -> Identity/Integrations -> AI -> Optional product modules
 **Current state:** A0 Documentation Alignment, A1 Report/Export v1, A2 Critical-path QA, and A3/A3.1 static correctness work are complete. Automated invite coverage plus a physical-phone Production QR scan passed, and authenticated Production private-R2 upload/preview/download passed after the explicit attachment-disposition fix. A4 Account Lifecycle and the operational Moderation Center have additive persistence, audited transactions, and feature-flagged Admin surfaces. Lesson Workspace B1-B6 are implemented and accepted on isolated Neon QA. Quiz C1-C5c are implemented; the additive Quiz migrations are current in Production and the exact ENG 4/3 CourseOffering pilot has read/mutations enabled. The first expansion review kept that exact allowlist because the Production pilot has no Quiz record yet for full role/lifecycle/private-file acceptance; other and future CourseOfferings remain fail-closed.
 
@@ -550,6 +550,97 @@ remain separate unapproved steps. D0.1 runtime migration is complete; schema
 removal may begin only through an explicitly approved isolated-QA migration
 plan. Until then, proceed with the D1 legacy identity compatibility cleanup
 without restoring Student Number or Admin-managed academic structure.
+
+**D1 compatibility cleanup update (2026-07-29):** the first non-destructive
+runtime slice retires optional `User.displayName` from Profile editing and from
+Dashboard/Profile name resolution. Personal and shared surfaces now use the
+authoritative real name, with the account identifier only as a fallback for
+incomplete compatibility rows. Misleading Admin-only local labels now use
+`fullName`/`teacherName`; the database column and historical Audit event label
+remain untouched until the isolated-QA destructive migration. Focused tests,
+TypeScript, and ESLint pass; the dependency gate resolves 49 blockers and moves
+to `91 blocker / 142 review / 233 total` with no new retired-concept
+dependencies.
+
+**D1 owner-recovery and migration-preparation update (2026-07-29):** Admin no
+longer creates Teacher accounts, temporary passwords, or password resets.
+Single and CSV Teacher onboarding issue email-bound, single-use Teacher
+Invites; password recovery is controlled by the account owner through verified
+email. The reviewed dependency baseline is now
+`50 blocker / 142 review / 192 total`, with no new retired dependencies.
+
+**D1 forced-reset runtime retirement update (2026-07-29):** the obsolete
+forced-reset route and middleware redirect, JWT/session property, auth reads,
+identity writes, seed/bootstrap writes, Admin badge, smoke case, and test
+fixtures no longer depend on `mustResetPwd`. Verified-email recovery is the
+only self-service recovery contract; when transactional recovery is disabled,
+the UI fails closed without issuing a temporary password. The dependency gate
+now reports `21 blocker / 142 review / 163 total`, resolving another 29
+blockers with zero new retired dependencies. The current Prisma compatibility
+column is deliberately retained until the isolated-QA migration drill; this
+slice did not mutate QA or Production schema/data.
+
+The remaining blockers are classified, not one migration: 3 identity
+compatibility schema findings (`mustResetPwd`, `displayName`, and the persisted
+human Student Number field) and 18 D0 academic compatibility findings
+(`AcademicYear`, `Term`, `Class`, and `gradeLevel`). A guarded read-only
+preflight and migration/rollback runbook now exist at
+[`D1-IDENTITY-COMPATIBILITY-MIGRATION.md`](./release-gates/D1-IDENTITY-COMPATIBILITY-MIGRATION.md).
+The preflight may inspect only an isolated Neon QA branch. Migration SQL,
+schema drops, reset, and Production mutation remain blocked until the strict
+dependency gate reaches zero and the separately named approval/evidence gates
+are satisfied.
+
+**D1 isolated-QA completion update (2026-07-29):** the owner approved a reset
+of the isolated Neon QA branch only. The guarded drill exported the approved
+Admin identity outside Git, reset 42 disposable application tables, restored
+exactly one active Admin, and applied
+`20260729010000_drop_identity_compatibility_fields`. Prisma reports all nine
+migrations up to date; the three legacy identity columns are absent; post-drill
+preflight reports `destructiveQaMigrationReady: true`; and the identity strict
+dependency gate reports zero blockers and zero review findings.
+
+Full unit `780/780`, isolated integration, TypeScript, ESLint, Production
+build, preserved Admin credential sign-in/authorization, and safe route smoke
+`12/12` pass against the migrated QA schema. The project-level Neon branch
+reset procedure was previously rehearsed successfully on 2026-07-14. A new
+D1-specific restore-child was not created because Neon branch lifecycle
+operations remain owner-only. Production was not connected, reset, migrated,
+or authorized by this drill.
+
+D1 is now complete as an isolated-QA migration rehearsal. The next destructive
+schema topic is the separate D0 academic compatibility cleanup for
+`AcademicYear`, `Term`, `Class`, and `gradeLevel`. It must begin with its own
+grill, read-only preflight, preservation decision, migration plan, and explicit
+QA-only approval. Do not combine it with D1 or infer Production approval.
+
+**D0 academic compatibility planning update (2026-07-29):** an academic-only
+strict dependency scope and guarded read-only Neon QA preflight now exist. The
+QA branch contains zero Academic Year, Term, or Class rows and zero Teacher,
+Student, or CourseOffering links to the retired structure. There are no
+missing or mismatched CourseOffering learner-group/academic-period labels, so
+the preflight reports `destructiveQaMigrationReady: true`. The strict gate
+correctly reports `18 blocker / 0 review` because the compatibility schema has
+not been removed.
+
+**D0 isolated-QA completion update (2026-07-29):** the owner explicitly
+approved discarding Academic Year, Term, Class, Student Class, and Teacher
+Homeroom on Neon QA only. Migration
+`20260729020000_drop_academic_compatibility_structure` removed the retired
+tables, relations, columns, indexes, and constraints while preserving
+teacher-owned CourseOffering labels and credit hours. Prisma reports all ten
+migrations current; the absence verifier passes; dependency inventory is
+`0 blocker / 137 review / 137 total`; both strict scopes are zero; focused
+standalone-course integration, full isolated integration `128 files / 985
+tests`, full unit `781/781`, TypeScript, ESLint, safe route smoke `12/12`, and
+Production build pass.
+
+The project-level Neon reset/recovery procedure was rehearsed on disposable QA
+branches on 2026-07-14. No new D0-specific restore child was created because
+branch lifecycle operations remain owner-only. Production was not connected or
+modified. Production deployment of this destructive migration remains a
+separate blocked release decision requiring current restore evidence, role
+acceptance, and a separately named approval.
 
 ### D1. Google Login
 

@@ -1,6 +1,6 @@
 # Beagle Classroom Data Safety Runbook
 
-**Updated:** 2026-07-14  
+**Updated:** 2026-07-29
 **Scope:** isolated QA database provisioning, backup/restore rehearsal, and the gate for mutating tests.
 
 ## Current risk
@@ -136,6 +136,52 @@ Mutating integration/E2E tests remain blocked until all conditions are true:
 
 Passing this gate authorizes QA mutation only. It does not authorize a production
 schema change, backfill, repair, or retention purge.
+
+## Guarded single-admin reset
+
+These commands permanently clear all application tables except Prisma migration
+bookkeeping. They require `DATABASE_URL` and `QA_DATABASE_URL` to resolve to
+different normalized database identities. Credentials must stay in ignored
+local secret storage:
+
+```dotenv
+RESET_ADMIN_IDENTIFIER="owner-username"
+RESET_ADMIN_PASSWORD="owner-password"
+```
+
+Run QA first and do not continue unless verification passes:
+
+```powershell
+npm run db:single-admin:qa:preflight
+npm run db:single-admin:qa:reset
+npm run db:single-admin:qa:verify
+```
+
+Production reset is a separate command with a separate exact confirmation
+token embedded in the npm script:
+
+```powershell
+npm run db:single-admin:production:preflight
+npm run db:single-admin:production:reset
+npm run db:single-admin:production:verify
+```
+
+Before truncation, the reset tool writes aggregate row counts and migration
+names to ignored `.local-storage/database-reset-evidence/`. This inventory is
+not a backup. Never claim that it can restore deleted data.
+
+### Authorized reset record: 2026-07-29
+
+- The owner explicitly authorized deletion of all QA and Production
+  application data and retention of one username-only Admin.
+- QA was reset and verified before Production.
+- Both databases contain one `User`, one `Admin`, no other application rows,
+  no email, and no linked auth identity.
+- The configured password was compared successfully with the stored bcrypt
+  hash without printing or persisting the plaintext outside ignored local
+  secret storage.
+- Production has all ten migrations applied, including D1 identity and D0
+  academic compatibility removal.
 
 ## References
 

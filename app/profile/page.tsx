@@ -9,8 +9,7 @@ import {
 } from "lucide-react";
 import { requireAuth } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
-import { resolveDisplayName } from "@/lib/profile/display-name";
-import { DISPLAY_NAME_MAX } from "@/lib/profile/mutations";
+import { resolveAccountName } from "@/lib/profile/account-name";
 import { identityFoundationMutationsEnabled } from "@/lib/identity/feature-flags";
 import { DISABLED_COMPATIBILITY_PASSWORD_HASH } from "@/lib/identity/foundation";
 import { TopNav } from "@/components/layout/top-nav";
@@ -19,7 +18,6 @@ import { ChangePasswordForm } from "@/components/profile/change-password-form";
 import { DeleteAccountForm } from "@/components/profile/delete-account-form";
 import { SetFallbackPasswordForm } from "@/components/profile/set-fallback-password-form";
 import { ChangeEmailForm } from "@/components/profile/change-email-form";
-import { DisplayNameForm } from "@/components/profile/display-name-form";
 import { ThemeModeControl } from "@/components/theme/theme-mode-control";
 import { startGoogleLinkAction } from "./actions";
 
@@ -52,8 +50,8 @@ const LINK_STATUS: Record<string, { ok: boolean; text: string }> = {
  * Own-profile only; there is no public profile route for other users.
  * Deliberately absent: bio, followers, wall, course list, grades,
  * learning status, activity log, role badge. What remains is exactly
- * what a person manages about themselves: avatar, friendly display
- * name, read-only identity, theme (Batch 2), and password.
+ * what a person manages about themselves: avatar, read-only identity,
+ * theme, and password.
  */
 
 export const dynamic = "force-dynamic";
@@ -76,7 +74,6 @@ export default async function ProfilePage({
       id: true,
       role: true,
       identifier: true,
-      displayName: true,
       profileImageId: true,
       themeMode: true,
       passwordHash: true,
@@ -115,8 +112,7 @@ export default async function ProfilePage({
 
   const person = user.admin ?? user.teacher ?? user.student;
   const realName = person ? `${person.firstName} ${person.lastName}` : null;
-  const friendly = resolveDisplayName({
-    displayName: user.displayName,
+  const friendly = resolveAccountName({
     realName,
     identifier: user.identifier,
   });
@@ -155,13 +151,6 @@ export default async function ProfilePage({
                 userId={user.id}
                 hasImage={user.profileImageId !== null}
                 version={user.profileImageId}
-              />
-            </div>
-
-            <div className="mt-6 border-t border-black/[0.06] pt-5">
-              <DisplayNameForm
-                initialDisplayName={user.displayName}
-                maxLength={DISPLAY_NAME_MAX}
               />
             </div>
 

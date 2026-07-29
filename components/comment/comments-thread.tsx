@@ -221,7 +221,7 @@ export async function CommentsThread({
               >
                 <div className="flex items-start justify-between gap-3">
                   {/* Avatar only — the visible name stays the REAL name
-                      (displayName never reaches shared surfaces). */}
+                      (the account label never reaches shared surfaces). */}
                   <UserAvatar
                     userId={c.authorId}
                     hasImage={c.author.profileImageId !== null}

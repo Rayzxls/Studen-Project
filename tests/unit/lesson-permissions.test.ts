@@ -3,7 +3,7 @@ import { can, type Session } from "@/lib/auth/permissions";
 
 function session(role: "ADMIN" | "TEACHER" | "STUDENT", id: string): Session {
   return {
-    user: { id, role, identifier: id, mustResetPwd: false },
+    user: { id, role, identifier: id },
   };
 }
 

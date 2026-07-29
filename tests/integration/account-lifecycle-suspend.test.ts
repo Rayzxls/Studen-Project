@@ -34,7 +34,6 @@ describe("Prisma account lifecycle port", () => {
         role: "STUDENT",
         student: {
           create: {
-            studentId: `${prefix}_student`,
             firstName: "Lifecycle",
             lastName: "Student",
           },

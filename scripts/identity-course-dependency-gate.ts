@@ -6,6 +6,8 @@ import {
   countDependencyFindings,
   createDependencyBaseline,
   DEPENDENCY_RULES_VERSION,
+  filterAcademicDependencyFindings,
+  filterIdentityDependencyFindings,
   scanDependencyInventory,
   type DependencyBaseline,
   type DependencyFinding,
@@ -22,6 +24,14 @@ const args = new Set(process.argv.slice(2));
 const writeBaseline = args.has("--write-baseline");
 const strict = args.has("--strict");
 const jsonOutput = args.has("--json");
+const identityScope = args.has("--scope=identity");
+const academicScope = args.has("--scope=academic");
+
+if (identityScope && academicScope) {
+  throw new Error("dependency_gate_scope_must_be_unique");
+}
+
+const scope = identityScope ? "identity" : academicScope ? "academic" : "all";
 
 function printFinding(prefix: string, finding: DependencyFinding) {
   console.error(
@@ -41,7 +51,12 @@ function readBaseline(): DependencyBaseline {
 }
 
 const findings = scanDependencyInventory(rootDir);
-const counts = countDependencyFindings(findings);
+const scopedFindings = identityScope
+  ? filterIdentityDependencyFindings(findings)
+  : academicScope
+    ? filterAcademicDependencyFindings(findings)
+    : findings;
+const counts = countDependencyFindings(scopedFindings);
 
 if (writeBaseline) {
   const baseline = createDependencyBaseline(findings);
@@ -80,6 +95,7 @@ if (jsonOutput) {
     JSON.stringify(
       {
         rulesVersion: DEPENDENCY_RULES_VERSION,
+        scope,
         counts,
         added: comparison.added,
         resolved: comparison.resolved,
@@ -90,7 +106,7 @@ if (jsonOutput) {
   );
 } else {
   console.log(
-    `Dependency gate: ${counts.blocker} blocker, ${counts.review} review, ${counts.total} total`
+    `Dependency gate (${scope}): ${counts.blocker} blocker, ${counts.review} review, ${counts.total} total`
   );
   console.log(
     `Delta: +${comparison.added.length} new, -${comparison.resolved.length} resolved`

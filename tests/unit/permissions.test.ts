@@ -7,7 +7,6 @@ function mkSession(role: "ADMIN" | "TEACHER" | "STUDENT", id = "u1"): Session {
       id,
       role,
       identifier: id,
-      mustResetPwd: false,
     },
   };
 }
@@ -47,32 +46,6 @@ describe("can.changeOwnPassword", () => {
     const s = mkSession("STUDENT", "alice");
     expect(can.changeOwnPassword(s, "alice")).toBe(true);
     expect(can.changeOwnPassword(s, "bob")).toBe(false);
-  });
-});
-
-describe("can.resetUserPassword (Phase 1)", () => {
-  it("ADMIN can reset anyone", () => {
-    const admin = mkSession("ADMIN");
-    expect(can.resetUserPassword(admin, "STUDENT")).toBe(true);
-    expect(can.resetUserPassword(admin, "TEACHER")).toBe(true);
-  });
-
-  it("TEACHER cannot reset others in Phase 1 (Phase 2+ adds course scope)", () => {
-    const teacher = mkSession("TEACHER");
-    expect(can.resetUserPassword(teacher, "STUDENT")).toBe(false);
-  });
-
-  it("STUDENT cannot reset others", () => {
-    const student = mkSession("STUDENT");
-    expect(can.resetUserPassword(student, "STUDENT")).toBe(false);
-  });
-});
-
-describe("can.importTeachersCSV", () => {
-  it("ADMIN only", () => {
-    expect(can.importTeachersCSV(mkSession("ADMIN"))).toBe(true);
-    expect(can.importTeachersCSV(mkSession("TEACHER"))).toBe(false);
-    expect(can.importTeachersCSV(mkSession("STUDENT"))).toBe(false);
   });
 });
 

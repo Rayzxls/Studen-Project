@@ -2,7 +2,10 @@
 
 ## Status
 
-Accepted — 2026-06-05 (Phase 10B) — Extends [CLAUDE.md § 1 "Admin ไม่ใช่ผู้ใส่ข้อมูล"](../../CLAUDE.md). Does not supersede prior ADRs.
+Superseded in part — 2026-07-29. The read-only drill-down remains accepted,
+but the Admin password-reset decision is replaced by
+[ADR-0044](0044-teacher-invites-and-user-owned-account-recovery.md). Historical
+audit action names remain readable for records created before the replacement.
 
 ## Context
 

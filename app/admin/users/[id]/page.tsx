@@ -4,7 +4,6 @@ import { ChevronLeft, KeyRound, Mail, ShieldCheck, User2 } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { renderAuditLog } from "@/lib/audit/render";
-import { ResetPasswordCard } from "@/components/admin/reset-password-card";
 import { ResetProfileImageCard } from "@/components/admin/reset-profile-image-card";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { courseLearnerGroup } from "@/lib/course/display";
@@ -40,7 +39,6 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
       id: true,
       identifier: true,
       role: true,
-      mustResetPwd: true,
       isActive: true,
       profileImageId: true,
       createdAt: true,
@@ -212,7 +210,7 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
     actorNameMap.set(a.id, n);
   }
 
-  const displayName = user.teacher
+  const fullName = user.teacher
     ? `${user.teacher.firstName} ${user.teacher.lastName}`
     : user.student
       ? `${user.student.firstName} ${user.student.lastName}`
@@ -251,7 +249,7 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
                 className="text-2xl font-medium text-black"
                 style={{ letterSpacing: "-0.02em" }}
               >
-                {displayName}
+                {fullName}
               </h1>
               <p className="mt-1 flex items-center gap-2 text-sm text-black/60">
                 <Mail className="h-3.5 w-3.5" />
@@ -262,11 +260,6 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
           <div className="flex flex-wrap gap-2">
             <RoleBadge role={user.role} />
             <AccountStatusBadge status={accountStatus} />
-            {user.mustResetPwd && (
-              <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] text-orange-700">
-                ต้องตั้งรหัสผ่านใหม่ตอนเข้าใช้
-              </span>
-            )}
           </div>
         </div>
       </header>
@@ -277,27 +270,14 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
         (accountStatus === "ACTIVE" || accountStatus === "SUSPENDED") && (
           <AccountLifecycleCard
             userId={user.id}
-            displayName={displayName}
+            fullName={fullName}
             status={accountStatus}
           />
         )}
 
-      {/* Reset password card — full reveal-once flow */}
-      {!isSelf && !user.deletedAt && (
-        <div id="reset-password" className="scroll-mt-24">
-          <ResetPasswordCard userId={user.id} displayName={displayName} />
-        </div>
-      )}
-
       {/* Avatar moderation — only when the target actually has one */}
       {!isSelf && !user.deletedAt && user.profileImageId !== null && (
-        <ResetProfileImageCard userId={user.id} userName={displayName} />
-      )}
-      {isSelf && (
-        <div className="card-flat p-4 text-xs text-black/50">
-          คุณไม่สามารถรีเซ็ตรหัสผ่านของตัวเองได้ผ่านหน้านี้ — ใช้เมนู
-          &ldquo;เปลี่ยนรหัสผ่าน&rdquo; แทน
-        </div>
+        <ResetProfileImageCard userId={user.id} userName={fullName} />
       )}
 
       <section className="card p-6">

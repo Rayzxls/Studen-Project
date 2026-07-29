@@ -89,7 +89,6 @@ describe("post-window account anonymization", () => {
         identifier: true,
         firstName: true,
         lastName: true,
-        displayName: true, // dependency-gate-allow(legacy-display-name): selects the legacy column to assert it is nulled on anonymization
         profileImageId: true,
         anonymizedAt: true,
         passwordHash: true,
@@ -102,7 +101,6 @@ describe("post-window account anonymization", () => {
       identifier: `anonymized:${studentUserId}`,
       firstName: null,
       lastName: null,
-      displayName: null, // dependency-gate-allow(legacy-display-name): asserts the legacy column is nulled on anonymization
       profileImageId: null,
       passwordHash: DISABLED_COMPATIBILITY_PASSWORD_HASH,
       isActive: false,

@@ -15,7 +15,6 @@ const CONFIG = {
     password: "CHANGE-ME-strong-password",
     firstName: "ผู้ดูแล",
     lastName: "ระบบ",
-    mustResetPwd: false,
   },
   teachers: [
     {
@@ -24,7 +23,6 @@ const CONFIG = {
       firstName: "ชื่อครู",
       lastName: "นามสกุล",
       email: "teacher1@example.com",
-      mustResetPwd: true,
     },
   ],
   courseOfferings: [
@@ -43,7 +41,6 @@ const CONFIG = {
     password: string;
     firstName: string;
     lastName: string;
-    mustResetPwd: boolean;
   }[],
 };
 
@@ -60,10 +57,6 @@ function deriveCode(seed: string): string {
   return `J${base}`.slice(0, 7);
 }
 
-function compatibilityStudentId(email: string): string {
-  return `compat-${deriveCode(email.toLowerCase())}`;
-}
-
 async function main() {
   console.log("Bootstrapping Beagle Classroom...");
 
@@ -74,7 +67,6 @@ async function main() {
       role: "ADMIN",
       identifier: CONFIG.admin.identifier,
       passwordHash: await bcrypt.hash(CONFIG.admin.password, BCRYPT_COST),
-      mustResetPwd: CONFIG.admin.mustResetPwd,
       consentedAt: new Date(),
       consentVersion: CONSENT_VERSION,
       admin: {
@@ -95,7 +87,6 @@ async function main() {
         role: "TEACHER",
         identifier: teacher.identifier,
         passwordHash: await bcrypt.hash(teacher.password, BCRYPT_COST),
-        mustResetPwd: teacher.mustResetPwd, // dependency-gate-allow(temporary-password): compatibility field until the separately approved destructive schema migration
         consentedAt: new Date(),
         consentVersion: CONSENT_VERSION,
         teacher: {
@@ -118,13 +109,10 @@ async function main() {
         role: "STUDENT",
         identifier: student.email.toLowerCase(),
         passwordHash: await bcrypt.hash(student.password, BCRYPT_COST),
-        mustResetPwd: student.mustResetPwd, // dependency-gate-allow(temporary-password): compatibility field until the separately approved destructive schema migration
         consentedAt: new Date(),
         consentVersion: CONSENT_VERSION,
         student: {
           create: {
-            // Compatibility-only until the separately gated D0 schema reset.
-            studentId: compatibilityStudentId(student.email), // dependency-gate-allow(student-number-auth-and-admin-flow): required synthetic compatibility value, never displayed or used for login; dependency-gate-allow(student-id-symbol-review): this symbol is temporary compatibility storage
             firstName: student.firstName,
             lastName: student.lastName,
           },

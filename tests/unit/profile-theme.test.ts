@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveDisplayName } from "@/lib/profile/display-name";
+import { resolveAccountName } from "@/lib/profile/account-name";
 import { ACCEPTED_THEME_MODES, THEME_MODES } from "@/lib/theme/constants";
 import { parseThemeMode } from "@/lib/theme/mode";
 import {
@@ -8,25 +8,22 @@ import {
   THEME_STORAGE_KEY,
 } from "@/components/theme/theme-utils";
 
-describe("resolveDisplayName", () => {
-  it("uses display name, then real name, then identifier", () => {
+describe("resolveAccountName", () => {
+  it("uses real name, then identifier", () => {
     expect(
-      resolveDisplayName({
-        displayName: " Ava ",
+      resolveAccountName({
         realName: "Real Name",
         identifier: "student-1",
       })
-    ).toBe("Ava");
+    ).toBe("Real Name");
     expect(
-      resolveDisplayName({
-        displayName: " ",
+      resolveAccountName({
         realName: " Real Name ",
         identifier: "student-1",
       })
     ).toBe("Real Name");
     expect(
-      resolveDisplayName({
-        displayName: null,
+      resolveAccountName({
         realName: null,
         identifier: "student-1",
       })

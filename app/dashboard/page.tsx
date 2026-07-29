@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { CalendarDays, GraduationCap, Plus } from "lucide-react";
 import type { Session } from "@/lib/auth/permissions";
 import { getValidSession } from "@/lib/auth/guards";
-import { resolveDisplayName } from "@/lib/profile/display-name";
+import { resolveAccountName } from "@/lib/profile/account-name";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { db } from "@/lib/db/client";
 import { listStudentCourses } from "@/lib/course/enrollment";
@@ -71,7 +71,6 @@ export default async function DashboardPage() {
     select: {
       role: true,
       identifier: true,
-      displayName: true,
       profileImageId: true,
       teacher: {
         select: {
@@ -94,9 +93,7 @@ export default async function DashboardPage() {
     : user.student
       ? `${user.student.firstName} ${user.student.lastName}`
       : null;
-  // Friendly greeting only — every shared surface keeps the real name.
-  const name = resolveDisplayName({
-    displayName: user.displayName,
+  const name = resolveAccountName({
     realName,
     identifier: user.identifier,
   });
