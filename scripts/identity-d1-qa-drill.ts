@@ -47,6 +47,9 @@ type PreserveBundle = {
 
 const mode = process.argv[2] as DrillMode | undefined;
 const confirmation = process.argv.find((arg) => arg.startsWith("--confirm="));
+const emailReassignmentConfirmed = process.argv.includes(
+  "--confirm-email-reassignment=D1_QA_EMAIL_REASSIGN"
+);
 const bundleDir = path.join(process.cwd(), ".local-storage", "identity-d1");
 const bundlePath = path.join(bundleDir, "qa-admin-preserve.json");
 const checksumPath = `${bundlePath}.sha256`;
@@ -125,7 +128,7 @@ async function avatarExists(r2Key: string): Promise<boolean> {
 
 async function exportPreservedAdmin(): Promise<void> {
   const legacyIdentifier =
-    process.env.IDENTITY_PRESERVE_LEGACY_IDENTIFIER?.trim() ?? "Razyxls";
+    process.env.IDENTITY_PRESERVE_LEGACY_IDENTIFIER?.trim() ?? "Rayzxls";
   const email = normalizedEmail(required("IDENTITY_PRESERVE_EMAIL"));
   if (process.env.IDENTITY_PRESERVE_EMAIL_VERIFIED !== "1") {
     throw new Error(
@@ -175,7 +178,7 @@ async function exportPreservedAdmin(): Promise<void> {
       NOT: { id: source.id },
     },
   });
-  if (emailOwnerCount > 0) {
+  if (emailOwnerCount > 0 && !emailReassignmentConfirmed) {
     throw new Error("identity_preserve_email_already_owned");
   }
 

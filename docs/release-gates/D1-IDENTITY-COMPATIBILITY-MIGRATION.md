@@ -1,6 +1,6 @@
 # D1 Identity Compatibility Migration
 
-**Status:** runtime compatibility retired; schema migration not authorized
+**Status:** isolated Neon QA drill passed; Production migration not authorized
 **Updated:** 2026-07-29  
 **Scope:** isolated Neon QA first; no Production schema or data mutation is
 authorized by this document.
@@ -29,12 +29,12 @@ DATABASE_URL="postgresql://...production..."
 QA_DATABASE_URL="postgresql://...isolated-qa..."
 IDENTITY_PRESERVE_EMAIL="verified-owner-email@example.com"
 IDENTITY_PRESERVE_EMAIL_VERIFIED="1"
-IDENTITY_PRESERVE_LEGACY_IDENTIFIER="Razyxls"
+IDENTITY_PRESERVE_LEGACY_IDENTIFIER="Rayzxls"
 IDENTITY_PRESERVE_QA_PASSWORD="a-new-QA-only-password"
 ```
 
-`IDENTITY_PRESERVE_EMAIL` is optional. It checks the selected Admin without
-printing the address or any personal data.
+`IDENTITY_PRESERVE_EMAIL` is required. It becomes the canonical Admin email
+without printing the address or any personal data.
 
 The destructive drill additionally requires the verification attestation and
 a new QA-only fallback password. The password is hashed during import and is
@@ -77,11 +77,10 @@ branch at commit `8ff6e8c` plus this preparation slice:
 | Synthetic Student Number values | 1 |
 | Human-like Student Number values | 18 |
 
-The preserve Admin email was not configured for this run. QA is **not ready**
-for a destructive identity migration: refresh or deliberately reseed the
-isolated branch, configure the preserve target privately, and repeat preflight.
-This result is evidence about QA only and does not inspect or authorize
-Production.
+The preserve Admin email was not configured for this historical preflight, so
+QA was **not ready** at that point. This result was superseded by the successful
+guarded QA drill recorded below. It remains evidence about QA only and does not
+inspect or authorize Production.
 
 ## Exit conditions before writing migration SQL
 
@@ -113,14 +112,17 @@ until the final QA migration commit.
    preflight found zero accounts with `mustResetPwd=true`.
 3. **Complete 2026-07-29:** removed the remaining anonymization write and
    assertion for legacy `displayName`.
-4. Stop creating synthetic `Student.studentId` values. Do not rename or delete
-   internal Enrollment/Submission/Attendance relations named `studentId`.
-5. Remove the three fields from the current Prisma schema and generate one
-   narrowly scoped migration that drops only their columns/index.
-6. Generate Prisma Client, run the complete verification set, then deploy the
-   migration only through `db:migrate:qa:deploy`.
-7. Repeat the read-only preflight. The schema booleans should be false and all
-   normal role flows must remain functional.
+4. **Complete 2026-07-29:** stopped creating synthetic
+   `Student.studentId` values without renaming internal
+   Enrollment/Submission/Attendance relations named `studentId`.
+5. **Complete 2026-07-29:** removed the three compatibility fields from the
+   current Prisma schema and generated one narrowly scoped migration that drops
+   only their columns/index.
+6. **Complete 2026-07-29:** generated Prisma Client, ran the verification set,
+   and deployed the migration only through `db:migrate:qa:deploy`.
+7. **Complete 2026-07-29:** repeated guarded verification and preflight. All
+   three legacy schema booleans are false and automated normal-role integration
+   flows pass.
 
 Do not combine D1 identity drops with D0 Academic Year/Term/Class drops.
 
@@ -136,7 +138,7 @@ Do not combine D1 identity drops with D0 Academic Year/Term/Class drops.
   baseline or apply destructive SQL.
 - No QA or Production schema/data mutation occurred in this runtime slice.
 
-## Razyxls preserve bundle
+## Rayzxls preserve bundle
 
 Before any disposable QA reset rehearsal, export only the approved Admin
 identity bundle:
@@ -200,9 +202,55 @@ npm run db:migrate:qa:deploy
 npm run db:identity-d1:qa:verify
 ```
 
+If the verified preserve email is already attached to a disposable QA user,
+the export remains blocked by default. Reassign it only after the owner has
+explicitly confirmed that the disposable identity may be removed:
+
+```powershell
+npm run db:identity-d1:qa:export -- --confirm-email-reassignment=D1_QA_EMAIL_REASSIGN
+```
+
 Every command replaces the active datasource with `QA_DATABASE_URL` and
 compares its normalized identity with `DATABASE_URL`. A missing QA URL, a QA
 URL equal to the primary URL, or a changed active datasource fails closed.
 The reset command also requires the literal confirmation token embedded in the
 package script. The private preserve bundle and checksum are written under
 `.local-storage/identity-d1/`, which is excluded from Git.
+
+## Successful isolated QA drill: 2026-07-29
+
+The guarded D1 drill completed against the configured isolated Neon QA branch.
+The scripts compared the normalized QA database identity with `DATABASE_URL`
+before every destructive step. Production was not connected to or modified.
+
+The owner explicitly approved moving the configured verified preserve email
+from a disposable QA Teacher to the preserved Admin. The export required the
+additional `D1_QA_EMAIL_REASSIGN` confirmation token; it remains blocked by
+default without that token. The disposable Teacher and its Google identity
+were intentionally not preserved.
+
+| Check | Result |
+| --- | --- |
+| Preserve export | Bundle and SHA-256 checksum created outside Git |
+| QA reset | 42 application tables cleared |
+| Preserve import | Exactly 1 active Admin restored |
+| D1 migration | `20260729010000_drop_identity_compatibility_fields` applied |
+| Prisma migration status | 9 migrations; schema up to date |
+| Legacy identity columns | 0 present |
+| Post-drill preflight | `destructiveQaMigrationReady: true` |
+| Identity strict dependency gate | 0 blocker, 0 review |
+| Unit tests | 94 files; 780 tests passed |
+| Integration tests | Complete isolated integration command exited successfully |
+| Lint / TypeScript / Production build | Passed |
+
+Automated integration acceptance covered Teacher, Student, permissions, Feed,
+submission/review, score, attendance, notification, moderation, and identity
+service paths against the migrated QA schema. Interactive Google OAuth, Resend
+delivery, and preserved-Admin browser sign-in are separate manual acceptance
+checks and are not implied by the automated result.
+
+The rollback procedure is documented but a disposable Neon restore-child drill
+was not performed in this run because Neon branch-management credentials and
+local `pg_dump`/`pg_restore` tooling were not configured. This limitation does
+not affect the QA migration result, but it remains a required release gate
+before any separately approved Production cutover.
