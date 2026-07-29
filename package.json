@@ -33,6 +33,7 @@
     "db:migrate:qa:verify-identity-foundation": "dotenv -e .env.local -- tsx scripts/verify-identity-foundation.ts",
     "db:identity-compatibility:qa:preflight": "dotenv -e .env.local -- tsx scripts/identity-compatibility-preflight.ts",
     "db:academic-compatibility:qa:preflight": "dotenv -e .env.local -- tsx scripts/academic-compatibility-preflight.ts",
+    "db:academic-compatibility:qa:verify": "dotenv -e .env.local -- tsx scripts/verify-academic-compatibility-removal.ts",
     "db:identity-d1:qa:export": "dotenv -e .env.local -- tsx scripts/identity-d1-qa-drill.ts export",
     "db:identity-d1:qa:reset": "dotenv -e .env.local -- tsx scripts/identity-d1-qa-drill.ts reset --confirm=D1_QA_RESET",
     "db:identity-d1:qa:verify": "dotenv -e .env.local -- tsx scripts/identity-d1-qa-drill.ts verify",

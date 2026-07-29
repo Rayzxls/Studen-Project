@@ -50,9 +50,6 @@ describe("teacher-owned CourseOffering creation", () => {
       select: {
         id: true,
         name: true,
-        classId: true, // dependency-gate-allow(class-model): regression assertion proves standalone courses have no legacy Class relation
-        termId: true, // dependency-gate-allow(term-model): regression assertion proves standalone courses have no legacy Term relation
-        gradeLevel: true, // dependency-gate-allow(grade-level): regression assertion proves grade level is not silently inferred
         learnerGroupLabel: true,
         academicPeriodLabel: true,
         creditHours: true,
@@ -64,18 +61,12 @@ describe("teacher-owned CourseOffering creation", () => {
       expect.arrayContaining([
         expect.objectContaining({
           id: nameOnly.id,
-          classId: null, // dependency-gate-allow(class-model): expected absence of the legacy Class relation
-          termId: null, // dependency-gate-allow(term-model): expected absence of the legacy Term relation
-          gradeLevel: null, // dependency-gate-allow(grade-level): expected absence of inferred grade level
           learnerGroupLabel: null,
           academicPeriodLabel: null,
           creditHours: null,
         }),
         expect.objectContaining({
           id: withMetadata.id,
-          classId: null, // dependency-gate-allow(class-model): optional labels do not recreate the legacy Class relation
-          termId: null, // dependency-gate-allow(term-model): optional labels do not recreate the legacy Term relation
-          gradeLevel: null, // dependency-gate-allow(grade-level): optional labels do not infer grade level
           learnerGroupLabel: "Conversation Group A",
           academicPeriodLabel: "Summer 2026",
           creditHours: 1.5,

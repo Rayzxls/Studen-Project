@@ -66,16 +66,14 @@ reduce the inventory to:
 
 | Class | Findings |
 | --- | ---: |
-| Blocker | 18 |
+| Blocker | 0 |
 | Review | 137 |
-| Total | 155 |
+| Total | 137 |
 
-This is still a compatibility baseline, not the strict exit gate. Remaining
-academic-structure blockers are limited to the nullable Prisma compatibility
-schema (`AcademicYear`, `Class`, `gradeLevel`, and `Term`). The remaining
-identity blocker count is zero after the isolated D1 migration drill. All 18
-blockers now belong to academic compatibility. Most `studentId` review
-findings are internal relations to `User.id`, not the retired human Student
-Number.
+The blocker exit gate is closed after the isolated D1 and D0 migration drills.
+Identity and academic strict scopes both report zero findings. The remaining
+137 review findings are predominantly internal `studentId` relations to
+`User.id`, not the retired human Student Number, and are retained intentionally
+until individually classified.
 Baseline updates require a reviewed reduction or an explicit compatibility
 bridge; they must never hide a new product dependency.

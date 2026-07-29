@@ -340,13 +340,11 @@ model Admin {
 }
 
 model Teacher {
-  userId       String  @id
-  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  firstName    String
-  lastName     String
-  email        String  @unique
-  homeroomOfId String? @unique // FK to Class (1:1)
-  homeroomOf   Class?  @relation("HomeroomOf", fields: [homeroomOfId], references: [id])
+  userId    String @id
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName String
+  lastName  String
+  email     String @unique
 
   courses CourseOffering[]
 }
@@ -357,8 +355,6 @@ model Student {
   firstName  String
   lastName   String
   anonymized Boolean @default(false)
-  classId    String?
-  class      Class?  @relation(fields: [classId], references: [id], onDelete: SetNull)
 
   enrollments Enrollment[]
 }
@@ -407,64 +403,19 @@ model AuditLog {
 }
 
 // ═══════════════════════════════════════════════════════════
-// Academic Structure (Phase 2)
+// Teacher-owned course workspaces
 // ═══════════════════════════════════════════════════════════
-
-model AcademicYear {
-  id       String  @id @default(cuid())
-  name     String  @unique // "2568" (พ.ศ.)
-  isActive Boolean @default(false) // current academic year
-  terms    Term[]
-  classes  Class[]
-}
-
-model Term {
-  id             String       @id @default(cuid())
-  academicYearId String
-  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
-  name           String // "เทอม 1/2568"
-  number         Int // 1 or 2
-  startDate      DateTime
-  endDate        DateTime
-  isActive       Boolean      @default(false)
-
-  courses CourseOffering[]
-
-  @@unique([academicYearId, number])
-}
-
-model Class {
-  id              String       @id @default(cuid())
-  academicYearId  String
-  academicYear    AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
-  name            String // "ม.4/2"
-  gradeLevel      String // "ม.4"
-  homeroomTeacher Teacher?     @relation("HomeroomOf")
-
-  students Student[]
-  courses  CourseOffering[]
-
-  @@unique([academicYearId, name])
-  @@index([gradeLevel])
-}
 
 model CourseOffering {
   id        String  @id @default(cuid())
   teacherId String
   teacher   Teacher @relation(fields: [teacherId], references: [userId], onDelete: Restrict)
-  // Legacy school-structure links. New teacher-owned courses do not require
-  // either relation; existing rows keep them during the D0.1 transition.
-  classId   String?
-  class     Class?  @relation(fields: [classId], references: [id], onDelete: Restrict)
-  termId    String?
-  term      Term?   @relation(fields: [termId], references: [id], onDelete: Restrict)
 
   // Workspace fields (teacher-defined) — replaces former Subject FK
   name                String // "คณิตศาสตร์ ม.4 ครูสมชาย"
   subjectCode         String? // optional teacher-set code for transcript ("MATH-M4")
   learnerGroupLabel   String? // free text, e.g. "ม.4/3"
   academicPeriodLabel String? // free text, e.g. "ภาคเรียน 1 ปี 2569"
-  gradeLevel          String? // legacy compatibility only
   creditHours         Float? // optional display/report metadata
 
   classCode      String    @unique
@@ -488,7 +439,6 @@ model CourseOffering {
 
   @@index([classCode])
   @@index([teacherId])
-  @@index([classId, termId])
   @@index([archivedAt])
 }
 

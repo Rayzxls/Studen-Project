@@ -1,187 +1,7 @@
 {
   "rulesVersion": "2026-07-24.3",
-  "generatedAt": "2026-07-29T08:03:06.725Z",
+  "generatedAt": "2026-07-29T08:31:43.430Z",
   "findings": [
-    {
-      "fingerprint": "0a611fb460e051e0e05a",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "prisma/schema.prisma",
-      "line": 413,
-      "excerpt": "model AcademicYear {",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "9d832b8959d12418e7f8",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "prisma/schema.prisma",
-      "line": 423,
-      "excerpt": "academicYearId String",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "b36bd873db2519cdd287",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "prisma/schema.prisma",
-      "line": 424,
-      "excerpt": "academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "b13777d7c188ae0de360",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "prisma/schema.prisma",
-      "line": 433,
-      "excerpt": "@@unique([academicYearId, number])",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "5b0282b7bf6a33e1495e",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "prisma/schema.prisma",
-      "line": 438,
-      "excerpt": "academicYearId String",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "dad28eb206914df3466f",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "prisma/schema.prisma",
-      "line": 439,
-      "excerpt": "academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "6a147cecb57f904fb355",
-      "ruleId": "academic-year-model",
-      "severity": "blocker",
-      "description": "Admin-managed AcademicYear remains.",
-      "path": "prisma/schema.prisma",
-      "line": 447,
-      "excerpt": "@@unique([academicYearId, name])",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "477c54862e368760ebcc",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "prisma/schema.prisma",
-      "line": 360,
-      "excerpt": "classId String?",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "050ef94ca5cc7be11757",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "prisma/schema.prisma",
-      "line": 361,
-      "excerpt": "class Class? @relation(fields: [classId], references: [id], onDelete: SetNull)",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "840e175d315cc85521b8",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "prisma/schema.prisma",
-      "line": 457,
-      "excerpt": "classId String?",
-      "occurrence": 2
-    },
-    {
-      "fingerprint": "56f576d855815696d011",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "prisma/schema.prisma",
-      "line": 458,
-      "excerpt": "class Class? @relation(fields: [classId], references: [id], onDelete: Restrict)",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "0f1c913f4917153f273a",
-      "ruleId": "class-model",
-      "severity": "blocker",
-      "description": "Admin-managed Class remains.",
-      "path": "prisma/schema.prisma",
-      "line": 491,
-      "excerpt": "@@index([classId, termId])",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "d6810e5923a7fcd10181",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "prisma/schema.prisma",
-      "line": 441,
-      "excerpt": "gradeLevel String // \"ม.4\"",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "e97e99e04ecd91c5fab9",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "prisma/schema.prisma",
-      "line": 448,
-      "excerpt": "@@index([gradeLevel])",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "7370faa31206f8c15791",
-      "ruleId": "grade-level",
-      "severity": "blocker",
-      "description": "Structured gradeLevel remains.",
-      "path": "prisma/schema.prisma",
-      "line": 467,
-      "excerpt": "gradeLevel String? // legacy compatibility only",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "5875893ac55cbfe1a364",
-      "ruleId": "term-model",
-      "severity": "blocker",
-      "description": "Admin-managed Term remains.",
-      "path": "prisma/schema.prisma",
-      "line": 459,
-      "excerpt": "termId String?",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "d1f5ded0044552ff80af",
-      "ruleId": "term-model",
-      "severity": "blocker",
-      "description": "Admin-managed Term remains.",
-      "path": "prisma/schema.prisma",
-      "line": 460,
-      "excerpt": "term Term? @relation(fields: [termId], references: [id], onDelete: Restrict)",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "83bac209552c2c1eb633",
-      "ruleId": "term-model",
-      "severity": "blocker",
-      "description": "Admin-managed Term remains.",
-      "path": "prisma/schema.prisma",
-      "line": 491,
-      "excerpt": "@@index([classId, termId])",
-      "occurrence": 1
-    },
     {
       "fingerprint": "3ec5322f2f86ea915d4f",
       "ruleId": "student-id-symbol-review",
@@ -1178,7 +998,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "prisma/schema.prisma",
-      "line": 497,
+      "line": 447,
       "excerpt": "studentId String",
       "occurrence": 1
     },
@@ -1188,7 +1008,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "prisma/schema.prisma",
-      "line": 498,
+      "line": 448,
       "excerpt": "student Student @relation(fields: [studentId], references: [userId], onDelete: Cascade)",
       "occurrence": 1
     },
@@ -1198,7 +1018,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "prisma/schema.prisma",
-      "line": 514,
+      "line": 464,
       "excerpt": "@@unique([studentId, courseOfferingId])",
       "occurrence": 1
     },

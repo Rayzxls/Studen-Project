@@ -1,24 +1,30 @@
 # HANDOFF — Beagle Classroom
 
-## D0 ACADEMIC COMPATIBILITY READ-ONLY PREFLIGHT — 2026-07-29 (READ FIRST)
+## D0 ACADEMIC COMPATIBILITY QA DRILL COMPLETE — 2026-07-29 (READ FIRST)
 
-- Added an academic-only dependency scope and
-  `npm run qa:release:dependencies:academic:strict`.
-- Added guarded read-only command
-  `npm run db:academic-compatibility:qa:preflight`. It replaces the active
-  datasource with the isolated `QA_DATABASE_URL`, verifies it differs from the
-  primary database, and prints aggregate counts only.
-- Neon QA currently has zero Academic Year, Term, or Class rows; zero Teacher
-  Homeroom, Student Class, Course Class, Course Term, or structured Course
-  Grade links; and zero missing/mismatched teacher-owned display labels. The
-  preflight reports `destructiveQaMigrationReady: true`.
-- The refreshed reviewed baseline is `18 blocker / 137 review / 155 total`.
-  Identity blockers are zero; all 18 blockers are the retained academic
-  compatibility schema. The academic strict gate remains closed as intended.
-- No D0 migration SQL was written and no QA or Production schema/data was
-  mutated. Next requires an explicit product decision that Student Class and
-  Teacher Homeroom links are discarded, a current disposable restore child,
-  and separately named approval for an isolated-QA-only migration.
+- The owner explicitly approved dropping Academic Year, Term, Class, Student
+  Class, and Teacher Homeroom on the isolated Neon QA branch only. Production
+  was not connected, migrated, reset, or otherwise modified.
+- Applied
+  `20260729020000_drop_academic_compatibility_structure` through the guarded
+  isolated Prisma runner. Prisma reports ten migrations up to date.
+- Removed the retired `AcademicYear`, `Term`, and `Class` models;
+  `Teacher.homeroomOfId`; `Student.classId`; and
+  `CourseOffering.classId`, `termId`, and `gradeLevel`, including owned
+  constraints and indexes. Teacher-owned `learnerGroupLabel`,
+  `academicPeriodLabel`, and `creditHours` remain.
+- The post-migration absence verifier passes. Dependency inventory is
+  `0 blocker / 137 review / 137 total`; academic and identity strict scopes
+  both report zero findings.
+- Verification passes: full isolated integration `128 files / 985 tests`
+  (including standalone-course regression), full unit `94 files / 781 tests`,
+  TypeScript, ESLint, safe route smoke `12/12`, and Production build.
+- The project-level Neon reset/application recovery procedure was rehearsed on
+  disposable QA branches on 2026-07-14. A new D0-specific restore child was not
+  created because Neon branch lifecycle remains owner-only; do not claim one.
+- Production deployment remains unauthorized and requires current restore
+  evidence, complete role acceptance, a cutover checklist, and a separately
+  named approval.
 
 ## D1 IDENTITY COMPATIBILITY QA DRILL COMPLETE — 2026-07-29 (READ FIRST)
 

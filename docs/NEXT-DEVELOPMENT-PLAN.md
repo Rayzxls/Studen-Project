@@ -623,10 +623,24 @@ the preflight reports `destructiveQaMigrationReady: true`. The strict gate
 correctly reports `18 blocker / 0 review` because the compatibility schema has
 not been removed.
 
-The next D0 action is a decision/approval gate, not an automatic migration:
-confirm that Student Class and Teacher Homeroom associations are intentionally
-discarded, prepare a current disposable restore child, then explicitly approve
-an isolated-QA-only schema migration. Production remains out of scope.
+**D0 isolated-QA completion update (2026-07-29):** the owner explicitly
+approved discarding Academic Year, Term, Class, Student Class, and Teacher
+Homeroom on Neon QA only. Migration
+`20260729020000_drop_academic_compatibility_structure` removed the retired
+tables, relations, columns, indexes, and constraints while preserving
+teacher-owned CourseOffering labels and credit hours. Prisma reports all ten
+migrations current; the absence verifier passes; dependency inventory is
+`0 blocker / 137 review / 137 total`; both strict scopes are zero; focused
+standalone-course integration, full isolated integration `128 files / 985
+tests`, full unit `781/781`, TypeScript, ESLint, safe route smoke `12/12`, and
+Production build pass.
+
+The project-level Neon reset/recovery procedure was rehearsed on disposable QA
+branches on 2026-07-14. No new D0-specific restore child was created because
+branch lifecycle operations remain owner-only. Production was not connected or
+modified. Production deployment of this destructive migration remains a
+separate blocked release decision requiring current restore evidence, role
+acceptance, and a separately named approval.
 
 ### D1. Google Login
 

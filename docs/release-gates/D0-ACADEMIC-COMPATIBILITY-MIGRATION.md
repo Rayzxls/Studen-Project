@@ -1,6 +1,6 @@
 # D0 Academic Compatibility Migration
 
-**Status:** read-only planning; no migration SQL or database mutation authorized
+**Status:** isolated Neon QA migration drill complete; Production unauthorized
 **Updated:** 2026-07-29
 **Scope:** isolated Neon QA first; Production is explicitly out of scope
 
@@ -23,7 +23,7 @@ This migration must not remove `CourseOffering.learnerGroupLabel`,
 archive state, historical Audit snapshots, or internal User relations such as
 `Enrollment.studentId`.
 
-## Read-only preflight
+## Isolated QA drill
 
 Configure an isolated Neon child through private local environment values:
 
@@ -62,29 +62,36 @@ D1 drill:
 | Missing/mismatched learner-group labels | 0 |
 | Missing/mismatched academic-period labels | 0 |
 
-The preflight reports `destructiveQaMigrationReady: true`. The academic strict
-dependency gate correctly remains closed at `18 blocker / 0 review` because
-the compatibility models, fields, relations, and indexes still exist in the
-current Prisma schema. No migration SQL was written and no QA or Production
-schema/data mutation occurred in this planning slice.
+The preflight reported `destructiveQaMigrationReady: true`. The owner then
+explicitly approved dropping the compatibility structure on Neon QA only.
+Production remained out of scope.
 
-## Required decisions before migration SQL
+### Migration evidence: 2026-07-29
 
-1. Confirm the target product still has no shared Class membership, Homeroom
-   Teacher, Admin-managed Academic Year, or Admin-managed Term behavior.
-2. Confirm every legacy-linked CourseOffering has its learner-group and
-   academic-period display values preserved in the teacher-owned labels.
-3. Confirm `Student.classId` and `Teacher.homeroomOfId` are retired
-   associations, not data that must be converted into another product concept.
-4. Confirm historical Audit rows remain readable through their stored
-   snapshots without joins to the retired tables.
-5. Reach zero blockers in the academic strict dependency gate.
-6. Create a disposable Neon restore child and record a current restore point.
-7. Obtain a separately named approval for an isolated-QA migration drill.
+- Applied `20260729020000_drop_academic_compatibility_structure` through the
+  fail-closed isolated Prisma runner.
+- Prisma reports all ten migrations up to date on Neon QA.
+- The post-migration verifier confirms that `AcademicYear`, `Term`, and
+  `Class`; all five retired relation/metadata columns; and their foreign keys,
+  indexes, and unique constraints are absent.
+- `CourseOffering.learnerGroupLabel`, `academicPeriodLabel`, and `creditHours`
+  remain present.
+- Dependency inventory is `0 blocker / 137 review / 137 total`; both academic
+  and identity strict scopes report zero findings.
+- Full isolated integration passes against the migrated schema at
+  `128 files / 985 tests`, including the standalone-course regression. The
+  separately run unit suite is `94 files / 781 tests`; TypeScript, ESLint, and
+  Production build pass.
+- The project-level Neon branch reset/application recovery procedure was
+  rehearsed successfully on disposable QA branches on 2026-07-14. A new
+  D0-specific restore child was not created because Neon branch lifecycle
+  operations remain owner-only and local branch-management tooling is not
+  configured. Do not claim a D0-specific restore rehearsal.
+- Production was not connected, migrated, reset, or otherwise modified.
 
-## Planned drop boundary
+## Applied QA drop boundary
 
-The future D0 migration may drop only:
+The D0 QA migration drops only:
 
 1. Foreign keys and indexes for Teacher Homeroom, Student Class, and
    CourseOffering Class/Term compatibility.
@@ -97,9 +104,9 @@ The future D0 migration may drop only:
 Do not combine this migration with identity, Lesson, Quiz, score, attendance,
 file, notification, moderation, or retention changes.
 
-## Acceptance
+## Acceptance result
 
-Against the same isolated QA branch and commit:
+Against the same isolated QA branch and source tree:
 
 - Prisma migration status and schema verification pass.
 - Academic strict dependency gate reports zero blockers.
@@ -109,12 +116,14 @@ Against the same isolated QA branch and commit:
   reports, results, archive, and Admin observer views remain correct.
 - Existing legacy-linked courses retain their visible learner-group and
   academic-period labels.
-- Safe route smoke and authenticated Teacher, Student, and Admin acceptance
-  pass.
+- Safe route smoke and authenticated role acceptance remain required before
+  any separately approved Production cutover; they are not inferred from this
+  schema drill.
 
 ## Rollback
 
 Use Neon branch reset or branch switching only on a disposable QA child. Do
 not reconstruct dropped academic records by guessing from free-text labels.
-Production reset, schema migration, or data repair requires a separate
-approval, current restore evidence, and cutover checklist.
+Production reset, schema migration, or data repair remains blocked and
+requires a separate named approval, current restore evidence, and cutover
+checklist.
