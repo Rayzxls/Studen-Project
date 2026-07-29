@@ -71,7 +71,6 @@ describe("Prisma Student Google onboarding", () => {
         emailVerifiedAt: true,
         firstName: true,
         lastName: true,
-        mustResetPwd: true, // dependency-gate-allow(temporary-password): assert Google-only account has no reset flow
         passwordHash: true,
         student: {
           select: { studentId: true, firstName: true, lastName: true }, // dependency-gate-allow(student-id-symbol-review): assert the legacy column holds a synthetic placeholder
@@ -97,7 +96,6 @@ describe("Prisma Student Google onboarding", () => {
       emailVerifiedAt: occurredAt,
       firstName: "สมชาย",
       lastName: "ใจดี",
-      mustResetPwd: false, // dependency-gate-allow(temporary-password): assert Google-only account has no reset flow
       passwordHash: expect.stringMatching(/^\$2[aby]\$/),
       student: {
         studentId: expect.stringMatching(/^identity-v2-unassigned:/), // dependency-gate-allow(student-id-symbol-review): synthetic placeholder is never displayed

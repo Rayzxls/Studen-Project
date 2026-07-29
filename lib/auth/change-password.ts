@@ -70,7 +70,6 @@ export async function changeOwnPassword(params: {
       where: { id: userId },
       data: {
         passwordHash: newHash,
-        mustResetPwd: false,
       },
     });
 

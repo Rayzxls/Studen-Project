@@ -88,7 +88,6 @@ export function createGoogleProvider(input: {
         dbUserId: resolved.userId,
         role: resolved.role,
         identifier: resolved.email,
-        mustResetPwd: false, // dependency-gate-allow(temporary-password): Google accounts never carry a reset flow
         sessionVersion: resolved.sessionVersion,
         name: resolved.email,
         email: resolved.email,
@@ -108,7 +107,6 @@ function onboardingSentinel(providerAccountId: string, email: string): User {
     id: `google-onboarding:${providerAccountId}`,
     role: "STUDENT",
     identifier: email,
-    mustResetPwd: false, // dependency-gate-allow(temporary-password): sentinel placeholder, never persisted
     name: email,
     email,
     image: null,
@@ -121,7 +119,6 @@ function consentRefreshSentinel(email: string): User {
     id: "google-consent-refresh",
     role: "STUDENT",
     identifier: email,
-    mustResetPwd: false, // dependency-gate-allow(temporary-password): sentinel placeholder, never persisted
     name: email,
     email,
     image: null,
@@ -134,7 +131,6 @@ function recoverySentinel(userId: string, email: string): User {
     id: `google-recovery:${userId}`,
     role: "STUDENT",
     identifier: email,
-    mustResetPwd: false, // dependency-gate-allow(temporary-password): sentinel placeholder, never persisted
     name: email,
     email,
     image: null,

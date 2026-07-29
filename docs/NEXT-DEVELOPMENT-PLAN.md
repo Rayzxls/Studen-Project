@@ -1,6 +1,6 @@
 # Next Development Plan
 
-**Updated:** 2026-07-24
+**Updated:** 2026-07-29
 **Sequence:** Core completion -> Lesson Workspace -> Quiz -> Identity/Integrations -> AI -> Optional product modules
 **Current state:** A0 Documentation Alignment, A1 Report/Export v1, A2 Critical-path QA, and A3/A3.1 static correctness work are complete. Automated invite coverage plus a physical-phone Production QR scan passed, and authenticated Production private-R2 upload/preview/download passed after the explicit attachment-disposition fix. A4 Account Lifecycle and the operational Moderation Center have additive persistence, audited transactions, and feature-flagged Admin surfaces. Lesson Workspace B1-B6 are implemented and accepted on isolated Neon QA. Quiz C1-C5c are implemented; the additive Quiz migrations are current in Production and the exact ENG 4/3 CourseOffering pilot has read/mutations enabled. The first expansion review kept that exact allowlist because the Production pilot has no Quiz record yet for full role/lifecycle/private-file acceptance; other and future CourseOfferings remain fail-closed.
 
@@ -569,9 +569,20 @@ Invites; password recovery is controlled by the account owner through verified
 email. The reviewed dependency baseline is now
 `50 blocker / 142 review / 192 total`, with no new retired dependencies.
 
-The remaining blockers are classified, not one migration: 32 identity
-compatibility findings (`mustResetPwd`, `displayName`, and the persisted human
-Student Number field) and 18 D0 academic compatibility findings
+**D1 forced-reset runtime retirement update (2026-07-29):** the obsolete
+forced-reset route and middleware redirect, JWT/session property, auth reads,
+identity writes, seed/bootstrap writes, Admin badge, smoke case, and test
+fixtures no longer depend on `mustResetPwd`. Verified-email recovery is the
+only self-service recovery contract; when transactional recovery is disabled,
+the UI fails closed without issuing a temporary password. The dependency gate
+now reports `21 blocker / 142 review / 163 total`, resolving another 29
+blockers with zero new retired dependencies. The current Prisma compatibility
+column is deliberately retained until the isolated-QA migration drill; this
+slice did not mutate QA or Production schema/data.
+
+The remaining blockers are classified, not one migration: 3 identity
+compatibility schema findings (`mustResetPwd`, `displayName`, and the persisted
+human Student Number field) and 18 D0 academic compatibility findings
 (`AcademicYear`, `Term`, `Class`, and `gradeLevel`). A guarded read-only
 preflight and migration/rollback runbook now exist at
 [`D1-IDENTITY-COMPATIBILITY-MIGRATION.md`](./release-gates/D1-IDENTITY-COMPATIBILITY-MIGRATION.md).

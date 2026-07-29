@@ -104,7 +104,6 @@ export async function getLessonWorkspaceForViewer(input: {
       id: input.viewer.id,
       role: input.viewer.role,
       identifier: input.viewer.id,
-      mustResetPwd: false,
     },
   };
   const enrollment = course.enrollments[0] ?? null;

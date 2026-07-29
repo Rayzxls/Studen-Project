@@ -101,7 +101,6 @@ describe("Prisma Teacher Google onboarding", () => {
         emailVerifiedAt: true,
         firstName: true,
         lastName: true,
-        mustResetPwd: true, // dependency-gate-allow(temporary-password): disposable legacy Admin fixture
         passwordHash: true,
         teacher: {
           select: { email: true, firstName: true, lastName: true },
@@ -126,7 +125,6 @@ describe("Prisma Teacher Google onboarding", () => {
       emailVerifiedAt: new Date("2026-07-24T06:05:00.000Z"),
       firstName: "Ada",
       lastName: "Lovelace",
-      mustResetPwd: false, // dependency-gate-allow(temporary-password): assert Google-only account has no reset flow
       passwordHash: expect.stringMatching(/^\$2[aby]\$/),
       teacher: {
         email: teacherEmail,

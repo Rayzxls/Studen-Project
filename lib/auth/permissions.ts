@@ -12,7 +12,6 @@ export type SessionUser = {
   id: string;
   role: Role;
   identifier: string;
-  mustResetPwd: boolean;
   /** Unix seconds of sign-in; drives the pragmatic re-auth window. */
   signInAt?: number;
   /** Account session version at sign-in; drives server-side revocation. */

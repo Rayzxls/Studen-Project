@@ -14,7 +14,6 @@ async function main() {
       role: "ADMIN",
       identifier: "admin@studennnn.local",
       passwordHash: adminPassword,
-      mustResetPwd: false,
       consentedAt: new Date(),
       consentVersion: "1.0",
       admin: { create: { firstName: "ผู้ดูแล", lastName: "ระบบ" } },
@@ -29,7 +28,6 @@ async function main() {
       role: "TEACHER",
       identifier: "teacher@studennnn.local",
       passwordHash: teacherPassword,
-      mustResetPwd: false,
       consentedAt: new Date(),
       consentVersion: "1.0",
       teacher: {
@@ -50,7 +48,6 @@ async function main() {
       role: "STUDENT",
       identifier: "student@studennnn.local",
       passwordHash: studentPassword,
-      mustResetPwd: false,
       consentedAt: new Date(),
       consentVersion: "1.0",
       student: {

@@ -66,16 +66,16 @@ reduce the inventory to:
 
 | Class | Findings |
 | --- | ---: |
-| Blocker | 50 |
+| Blocker | 21 |
 | Review | 142 |
-| Total | 192 |
+| Total | 163 |
 
 This is still a compatibility baseline, not the strict exit gate. Remaining
 academic-structure blockers are limited to the nullable Prisma compatibility
 schema (`AcademicYear`, `Class`, `gradeLevel`, and `Term`). The remaining
-identity blockers cover 30 temporary-password compatibility references plus
-the retained Display Name and Student Number storage fields. The reviewed
-split is 32 identity blockers and 18 academic-structure blockers. Most
+identity blockers are the retained `mustResetPwd`, Display Name, and human
+Student Number storage fields. The reviewed split is 3 identity schema
+blockers and 18 academic-structure blockers. Most
 `studentId` review findings are internal relations to `User.id`, not the
 retired human Student Number.
 Baseline updates require a reviewed reduction or an explicit compatibility

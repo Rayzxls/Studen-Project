@@ -55,7 +55,6 @@ async function main() {
       role: "ADMIN",
       identifier,
       passwordHash: await bcrypt.hash(password, 12),
-      mustResetPwd: false,
       consentedAt: new Date(),
       consentVersion: "1.0",
       admin: { create: { firstName, lastName } },

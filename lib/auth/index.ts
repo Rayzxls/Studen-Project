@@ -231,7 +231,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             role: true,
             identifier: true,
             passwordHash: true,
-            mustResetPwd: true,
             sessionVersion: true,
             isActive: true,
             deletedAt: true,
@@ -296,7 +295,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             id: `credentials-recovery:${user.id}`,
             role: user.role,
             identifier: user.identifier,
-            mustResetPwd: false, // dependency-gate-allow(temporary-password): sentinel placeholder, never persisted
             name: user.identifier,
             email: gate.email,
             image: null,
@@ -318,7 +316,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           id: user.id,
           role: user.role,
           identifier: user.identifier,
-          mustResetPwd: user.mustResetPwd,
           sessionVersion: user.sessionVersion,
           name: user.identifier,
           email: null,

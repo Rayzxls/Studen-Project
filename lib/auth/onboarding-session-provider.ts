@@ -75,7 +75,6 @@ export function onboardingSessionProviderIfEnabled(input?: {
           id: user.id,
           role: user.role,
           identifier: user.email,
-          mustResetPwd: false, // dependency-gate-allow(temporary-password): Google accounts never carry a reset flow
           sessionVersion: user.sessionVersion,
           name: user.email,
           email: user.email,

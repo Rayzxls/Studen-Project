@@ -58,7 +58,6 @@ function createTransactionPort(
           identifier: input.email,
           passwordHash: input.compatibilityPasswordHash,
           role: "STUDENT",
-          mustResetPwd: false, // dependency-gate-allow(temporary-password): legacy non-null schema bridge; no credential is issued
           email: input.email,
           emailVerifiedAt: input.emailVerifiedAt,
           firstName: input.firstName,

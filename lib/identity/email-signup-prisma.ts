@@ -55,7 +55,6 @@ export async function registerEmailPasswordStudent(
           emailVerifiedAt: null,
           passwordHash: input.passwordHash,
           role: "STUDENT",
-          mustResetPwd: false, // dependency-gate-allow(temporary-password): the owner set their own password at sign-up; no reset is issued
           firstName: input.firstName,
           lastName: input.lastName,
           createdAt: input.occurredAt,

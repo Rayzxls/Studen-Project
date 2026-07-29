@@ -39,7 +39,6 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
       id: true,
       identifier: true,
       role: true,
-      mustResetPwd: true,
       isActive: true,
       profileImageId: true,
       createdAt: true,
@@ -261,11 +260,6 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
           <div className="flex flex-wrap gap-2">
             <RoleBadge role={user.role} />
             <AccountStatusBadge status={accountStatus} />
-            {user.mustResetPwd && (
-              <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] text-orange-700">
-                ต้องตั้งรหัสผ่านใหม่ตอนเข้าใช้
-              </span>
-            )}
           </div>
         </div>
       </header>

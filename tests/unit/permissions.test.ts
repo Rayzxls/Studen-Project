@@ -7,7 +7,6 @@ function mkSession(role: "ADMIN" | "TEACHER" | "STUDENT", id = "u1"): Session {
       id,
       role,
       identifier: id,
-      mustResetPwd: false,
     },
   };
 }

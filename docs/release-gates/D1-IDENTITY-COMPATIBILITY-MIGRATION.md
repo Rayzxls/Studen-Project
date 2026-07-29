@@ -1,6 +1,6 @@
 # D1 Identity Compatibility Migration
 
-**Status:** preparation only  
+**Status:** runtime compatibility retired; schema migration not authorized
 **Updated:** 2026-07-29  
 **Scope:** isolated Neon QA first; no Production schema or data mutation is
 authorized by this document.
@@ -96,10 +96,11 @@ Production.
 Use small commits and keep the application compatible with the old schema
 until the final QA migration commit.
 
-1. Stop bootstrap, seed, onboarding, recovery, auth session, and smoke code
-   from writing or reading `mustResetPwd`.
-2. Remove the obsolete forced-reset route and JWT/session property only after
-   preflight proves no account depends on it.
+1. **Complete 2026-07-29:** bootstrap, seed, onboarding, recovery, auth
+   session, and smoke runtime no longer write or read `mustResetPwd`.
+2. **Complete 2026-07-29:** removed the obsolete forced-reset route,
+   middleware interception, and JWT/session property after the read-only QA
+   preflight found zero accounts with `mustResetPwd=true`.
 3. Remove the remaining anonymization write to `displayName`.
 4. Stop creating synthetic `Student.studentId` values. Do not rename or delete
    internal Enrollment/Submission/Attendance relations named `studentId`.
@@ -111,6 +112,18 @@ until the final QA migration commit.
    normal role flows must remain functional.
 
 Do not combine D1 identity drops with D0 Academic Year/Term/Class drops.
+
+### Runtime retirement evidence: 2026-07-29
+
+- TypeScript, repository ESLint, Prettier, full unit `779/779`, and Production
+  build pass.
+- The reviewed dependency gate reports
+  `21 blocker / 142 review / 163 total`, with zero new retired dependencies
+  and 29 blockers resolved from the previous baseline.
+- The strict gate still fails by design on 3 D1 identity schema fields plus
+  18 D0 academic compatibility fields. This is not approval to rewrite the
+  baseline or apply destructive SQL.
+- No QA or Production schema/data mutation occurred in this runtime slice.
 
 ## Razyxls preserve bundle
 

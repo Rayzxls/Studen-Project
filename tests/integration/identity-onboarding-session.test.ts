@@ -93,7 +93,6 @@ describe("Google onboarding session handoff (one-click)", () => {
       role: "STUDENT",
       identifier: studentEmail,
       email: studentEmail,
-      mustResetPwd: false, // dependency-gate-allow(temporary-password): Google account carries no reset flow
     });
     expect(user?.id).toMatch(/^c[a-z0-9]{20,}$/); // Prisma cuid shape, not a UUID
   });

@@ -84,7 +84,6 @@ function createDatabasePort(
           where: { id: input.userId },
           data: {
             passwordHash: input.passwordHash,
-            mustResetPwd: false, // dependency-gate-allow(temporary-password): recovery sets the user's own password, clearing any forced-reset flag
             // Revoke every other session: a recovered password ends sessions an
             // attacker may hold.
             sessionVersion: { increment: 1 },

@@ -1,5 +1,28 @@
 # HANDOFF — Beagle Classroom
 
+## D1 FORCED-RESET RUNTIME RETIREMENT — 2026-07-29 (READ FIRST)
+
+- Removed the obsolete `/reset-password/force` route, middleware interception,
+  JWT/session `mustResetPwd` property, auth reads, onboarding/recovery writes,
+  seed/bootstrap writes, Admin badge, smoke case, and related test fixtures.
+- Password recovery now has one owner-controlled contract: verified-email
+  recovery when Identity mutations are enabled. When email recovery is not
+  configured, the page fails closed with configuration guidance and never
+  issues a temporary password or asks for the old password.
+- `User.mustResetPwd` remains only as a compatibility column in the current
+  Prisma schema and as aggregate-only evidence in the read-only QA preflight.
+  No migration SQL was created and no QA or Production schema/data was mutated.
+- Verification passes: TypeScript, repository ESLint, Prettier, full unit
+  (`779/779`), Production build, and the reviewed dependency gate. The gate
+  moves from `50 blocker / 142 review / 192 total` to
+  `21 blocker / 142 review / 163 total`, resolving 29 blockers with zero new
+  retired-concept dependencies.
+- The strict gate still fails intentionally on 21 compatibility blockers:
+  3 D1 identity schema fields and 18 D0 academic-schema fields. Next: refresh
+  or deliberately reseed isolated Neon QA, configure
+  `IDENTITY_PRESERVE_EMAIL` privately, repeat preflight, then rehearse the
+  narrowly scoped schema drop only after explicit destructive-QA approval.
+
 ## D1 IDENTITY COMPATIBILITY QA PREFLIGHT — 2026-07-29 (READ FIRST)
 
 - Added `npm run db:identity-compatibility:qa:preflight`, a read-only command
