@@ -29,6 +29,7 @@
     "db:migrate:qa:deploy": "dotenv -e .env.local -- tsx scripts/run-isolated-prisma.ts deploy",
     "db:migrate:qa:verify-account-status": "dotenv -e .env.local -- tsx scripts/verify-account-status-backfill.ts",
     "db:migrate:qa:verify-identity-foundation": "dotenv -e .env.local -- tsx scripts/verify-identity-foundation.ts",
+    "db:identity-compatibility:qa:preflight": "dotenv -e .env.local -- tsx scripts/identity-compatibility-preflight.ts",
     "db:migrate:qa:verify-lesson-foundation": "dotenv -e .env.local -- tsx scripts/verify-lesson-workspace-foundation.ts",
     "db:lesson-backfill:qa:dry-run": "dotenv -e .env.local -- tsx scripts/plan-lesson-backfill.ts",
     "db:anonymize:qa:dry-run": "dotenv -e .env.local -- tsx scripts/anonymize-expired-deletions.ts",

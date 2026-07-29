@@ -1,5 +1,37 @@
 # HANDOFF — Beagle Classroom
 
+## D1 IDENTITY COMPATIBILITY QA PREFLIGHT — 2026-07-29 (READ FIRST)
+
+- Added `npm run db:identity-compatibility:qa:preflight`, a read-only command
+  that fails closed unless `QA_DATABASE_URL` is isolated from `DATABASE_URL`.
+  It reports aggregate readiness for canonical email, email verification, real
+  name, `mustResetPwd`, legacy `displayName`, and synthetic versus human-like
+  `Student.studentId` storage without printing personal data or secrets.
+- Optional local secret `IDENTITY_PRESERVE_EMAIL` checks that the selected
+  preserve target resolves to exactly one Admin-ready identity, while keeping
+  the address out of output and Git.
+- The migration/rollback gate is documented in
+  `docs/release-gates/D1-IDENTITY-COMPATIBILITY-MIGRATION.md`. It explicitly
+  separates 32 identity blockers from 18 D0 academic-schema blockers, preserves
+  internal `studentId` User foreign keys, and requires source strict-gate zero
+  before writing/applying destructive migration SQL.
+- No migration SQL was created and no QA or Production database was mutated in
+  this preparation slice. The first guarded read-only run found 43 QA Users:
+  40 lack canonical email, 41 lack complete real name, and 18 Students retain
+  human-like Student Number values. There are zero `mustResetPwd=true` Users
+  and zero non-empty legacy Display Names. The preserve Admin email was not
+  configured.
+- Verification passes: TypeScript, repository ESLint, Prettier, dependency
+  gate (`50 blocker / 142 review / 192 total`), unit tests (`779/779`), and
+  Production build. Run Vitest from the canonical physical path
+  `D:\Studennnn`; invoking it through the workspace junction can make Vite
+  resolve `tests/setup.ts` inconsistently on Windows.
+- QA is not ready for destructive migration. Next: refresh or deliberately
+  reseed the isolated Neon QA branch, configure `IDENTITY_PRESERVE_EMAIL`
+  privately, repeat preflight, and remove runtime compatibility only after the
+  strict source gate reaches zero. Do not infer anything about Production from
+  these QA aggregates.
+
 ## D1 TEACHER INVITE + OWNER-RECOVERY CUTOVER — 2026-07-29 (READ FIRST)
 
 - Admin no longer creates Teacher accounts or temporary passwords. Both the

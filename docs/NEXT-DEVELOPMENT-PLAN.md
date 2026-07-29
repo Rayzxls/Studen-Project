@@ -562,6 +562,31 @@ TypeScript, and ESLint pass; the dependency gate resolves 49 blockers and moves
 to `91 blocker / 142 review / 233 total` with no new retired-concept
 dependencies.
 
+**D1 owner-recovery and migration-preparation update (2026-07-29):** Admin no
+longer creates Teacher accounts, temporary passwords, or password resets.
+Single and CSV Teacher onboarding issue email-bound, single-use Teacher
+Invites; password recovery is controlled by the account owner through verified
+email. The reviewed dependency baseline is now
+`50 blocker / 142 review / 192 total`, with no new retired dependencies.
+
+The remaining blockers are classified, not one migration: 32 identity
+compatibility findings (`mustResetPwd`, `displayName`, and the persisted human
+Student Number field) and 18 D0 academic compatibility findings
+(`AcademicYear`, `Term`, `Class`, and `gradeLevel`). A guarded read-only
+preflight and migration/rollback runbook now exist at
+[`D1-IDENTITY-COMPATIBILITY-MIGRATION.md`](./release-gates/D1-IDENTITY-COMPATIBILITY-MIGRATION.md).
+The preflight may inspect only an isolated Neon QA branch. Migration SQL,
+schema drops, reset, and Production mutation remain blocked until the strict
+dependency gate reaches zero and the separately named approval/evidence gates
+are satisfied.
+
+The first guarded QA preflight found 43 Users, including 40 without canonical
+email, 41 without complete real name, and 18 human-like Student Number values.
+No User still has `mustResetPwd=true` and no non-empty legacy Display Name
+remains. This QA branch is therefore not ready for destructive migration. The
+next D1 step is to refresh/reseed isolated QA, configure the private Razyxls
+preserve target, and repeat preflight; it is not a Production schema change.
+
 ### D1. Google Login
 
 Architecture decisions: [`ADR-0041`](./adr/0041-google-first-identity-uses-gated-role-onboarding.md) (Google-first identity), [`ADR-0042`](./adr/0042-transactional-email-uses-a-gated-provider-port.md) (transactional email delivery, unblocking verified-email change and password recovery), and [`ADR-0043`](./adr/0043-students-may-self-register-with-email-and-password.md) (email/password student self-registration alongside Google, revising the Google-only student stance of ADR-0041).
