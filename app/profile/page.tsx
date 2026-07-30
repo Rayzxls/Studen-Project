@@ -169,7 +169,9 @@ export default async function ProfilePage({
               {visibleEmail && (
                 <div>
                   <dt className="text-xs font-medium text-black/50">
-                    อีเมลที่ใช้กับบัญชี
+                    {user.email
+                      ? "อีเมลที่ใช้กับบัญชี"
+                      : "ชื่อผู้ใช้สำหรับเข้าสู่ระบบ"}
                   </dt>
                   <dd className="mt-1 text-sm text-black">{visibleEmail}</dd>
                 </div>
