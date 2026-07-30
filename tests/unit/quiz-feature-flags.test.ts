@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  parseQuizPilotAllowlist,
   quizCourseEnabled,
   quizCourseMutationsEnabled,
   quizEnabled,
@@ -35,6 +36,26 @@ describe("Quiz feature flags", () => {
         QUIZ_PILOT_COURSE_IDS: "*",
       })
     ).toBe(false);
+  });
+
+  it("reads the allowlist the same way the operational verifier does", () => {
+    expect(parseQuizPilotAllowlist({})).toEqual({ wildcard: false, ids: [] });
+    expect(parseQuizPilotAllowlist({ QUIZ_PILOT_COURSE_IDS: "  " })).toEqual({
+      wildcard: false,
+      ids: [],
+    });
+    // A separator-only value allows nothing rather than allowing everything.
+    expect(parseQuizPilotAllowlist({ QUIZ_PILOT_COURSE_IDS: " , ," })).toEqual({
+      wildcard: false,
+      ids: [],
+    });
+    expect(parseQuizPilotAllowlist({ QUIZ_PILOT_COURSE_IDS: "*" })).toEqual({
+      wildcard: true,
+      ids: [],
+    });
+    expect(
+      parseQuizPilotAllowlist({ QUIZ_PILOT_COURSE_IDS: " a , b ,, c " })
+    ).toEqual({ wildcard: false, ids: ["a", "b", "c"] });
   });
 
   it("requires read, mutation, and pilot gates together", () => {

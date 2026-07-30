@@ -19,6 +19,7 @@
     "test:e2e": "dotenv -e .env.local -- tsx scripts/run-isolated-tests.ts e2e",
     "test:smoke": "dotenv -e .env.local -- tsx scripts/run-isolated-tests.ts smoke",
     "qa:safe": "tsx scripts/qa-safe-smoke.ts",
+    "qa:quiz:pilot:verify": "dotenv -e .env.local -- tsx scripts/verify-quiz-pilot-allowlist.ts",
     "qa:release:dependencies": "tsx scripts/identity-course-dependency-gate.ts",
     "qa:release:dependencies:strict": "tsx scripts/identity-course-dependency-gate.ts --strict",
     "qa:release:dependencies:identity:strict": "tsx scripts/identity-course-dependency-gate.ts --strict --scope=identity",

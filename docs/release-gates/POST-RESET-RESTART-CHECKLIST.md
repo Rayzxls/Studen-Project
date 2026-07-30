@@ -113,9 +113,21 @@ fail-closed: an empty value, or an id that no longer exists, enables Quiz for no
 course. Every course the previous allowlist named was deleted in the reset, so
 the value now refers to nothing.
 
-- [ ] After step 5 creates a real course, replace the value with that
-      CourseOffering id.
+- [ ] Take the CourseOffering id from the teacher course URL
+      (`/teacher/courses/<id>`) of the course created in step 5, and set
+      `QUIZ_PILOT_COURSE_IDS` to it. Multiple ids are comma-separated.
 - [ ] Keep `QUIZ_ENABLED` and `QUIZ_MUTATIONS_ENABLED` as they are; they gate
       the feature globally, while the allowlist gates it per course.
 - [ ] The `*` wildcard is for identity-checked isolated QA only. Do not set it
       in Production.
+- [ ] Confirm the result rather than assuming it:
+
+      ```powershell
+      npm run qa:quiz:pilot:verify
+      ```
+
+      The command is read-only. It resolves every configured id against the
+      database and exits non-zero on a missing or archived course, on an empty
+      allowlist while `QUIZ_ENABLED` is on, and on the wildcard in Production.
+      It reads `DATABASE_URL` from `.env.local`, so point that at the
+      environment being checked.
