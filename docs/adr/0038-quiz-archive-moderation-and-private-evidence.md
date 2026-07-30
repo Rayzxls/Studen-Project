@@ -43,6 +43,8 @@ All Quiz behavior fails closed behind exact-string flags:
 - `QUIZ_ENABLED` enables read projections;
 - `QUIZ_MUTATIONS_ENABLED` additionally enables approved mutations; and
 - `QUIZ_PILOT_COURSE_IDS` limits both surfaces to an explicit course allowlist.
+  **Superseded by ADR-0045**, which retired this third gate once the one-course
+  pilot was accepted. The first two flags are unchanged.
 
 Disabling the flags removes Quiz surfaces without deleting evidence or changing
 existing Feed, Lesson, Assignment, Score, Notification, Moderation, or file
