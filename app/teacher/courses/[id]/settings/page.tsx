@@ -81,14 +81,17 @@ export default async function CourseSettingsPage({ params }: PageProps) {
           codeActive={course.codeActive}
           codeExpiresAt={course.codeExpiresAt}
         />
-        <TimetableEditor
-          courseId={id}
-          courseName={course.name}
-          subjectCode={course.subjectCode}
-          courseVisualKey={courseVisualKey(course)}
-          className={courseLearnerGroup(course) ?? ""}
-          slots={slots}
-        />
+        {/* Anchor target for the "set the timetable" hint on the course feed. */}
+        <div id="timetable" className="scroll-mt-24">
+          <TimetableEditor
+            courseId={id}
+            courseName={course.name}
+            subjectCode={course.subjectCode}
+            courseVisualKey={courseVisualKey(course)}
+            className={courseLearnerGroup(course) ?? ""}
+            slots={slots}
+          />
+        </div>
         <GradeThresholdsCard />
         <ArchiveCourseDialog courseId={id} courseName={course.name} />
       </div>
