@@ -5,7 +5,7 @@ import { CourseShell } from "@/components/course/course-shell";
 import { QuizAttachmentPreview } from "@/components/quiz/quiz-attachment-preview";
 import { requireRole } from "@/lib/auth/guards";
 import { getCourseOfferingForTeacher } from "@/lib/course/queries";
-import { getTeacherQuizDraft, quizCourseEnabled } from "@/lib/quiz";
+import { getTeacherQuizDraft, quizEnabled } from "@/lib/quiz";
 import { teacherCourseTabs } from "../../../_tabs";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +20,7 @@ export default async function TeacherQuizPreviewPage({ params }: PageProps) {
     redirect("/dashboard");
   }
   const { id, quizId } = await params;
-  if (!quizCourseEnabled(id)) notFound();
+  if (!quizEnabled()) notFound();
 
   const [course, quiz] = await Promise.all([
     getCourseOfferingForTeacher(id, session.user.id),

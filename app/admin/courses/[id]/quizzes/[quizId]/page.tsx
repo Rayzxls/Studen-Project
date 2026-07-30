@@ -9,7 +9,7 @@ import {
   Users,
 } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
-import { getAdminQuizDetail, quizCourseEnabled } from "@/lib/quiz";
+import { getAdminQuizDetail, quizEnabled } from "@/lib/quiz";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +24,7 @@ export default async function AdminQuizDetailPage({ params }: PageProps) {
   }
 
   const { id, quizId } = await params;
-  if (!quizCourseEnabled(id)) notFound();
+  if (!quizEnabled()) notFound();
   const quiz = await getAdminQuizDetail({
     courseOfferingId: id,
     quizId,

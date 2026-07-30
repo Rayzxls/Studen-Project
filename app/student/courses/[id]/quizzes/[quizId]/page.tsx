@@ -16,8 +16,8 @@ import { getCourseOfferingForStudent } from "@/lib/course/queries";
 import { HttpError } from "@/lib/errors";
 import {
   getStudentQuizSummary,
-  quizCourseEnabled,
-  quizCourseMutationsEnabled,
+  quizEnabled,
+  quizMutationsEnabled,
 } from "@/lib/quiz";
 import { studentCourseTabs } from "../../_tabs";
 import { startQuizAttemptAction } from "../actions";
@@ -34,7 +34,7 @@ export default async function StudentQuizOverviewPage({
   searchParams,
 }: PageProps) {
   const { id, quizId } = await params;
-  if (!quizCourseEnabled(id)) notFound();
+  if (!quizEnabled()) notFound();
   let guard;
   try {
     guard = await assert.isActiveCourseMember(id);
@@ -59,7 +59,7 @@ export default async function StudentQuizOverviewPage({
   const afterClose =
     quiz.status === "CLOSED" ||
     (!!quiz.closesAt && now.getTime() >= quiz.closesAt.getTime());
-  const canStart = quizCourseMutationsEnabled(id) && !beforeOpen && !afterClose;
+  const canStart = quizMutationsEnabled() && !beforeOpen && !afterClose;
 
   return (
     <CourseShell

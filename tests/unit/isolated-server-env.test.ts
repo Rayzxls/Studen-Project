@@ -17,7 +17,6 @@ describe("isolated QA server feature flags", () => {
       MODERATION_CENTER_ENABLED: "1",
       QUIZ_ENABLED: "1",
       QUIZ_MUTATIONS_ENABLED: "1",
-      QUIZ_PILOT_COURSE_IDS: "*",
     });
   });
 
@@ -29,7 +28,6 @@ describe("isolated QA server feature flags", () => {
       MODERATION_CENTER_ENABLED: "0",
       QUIZ_ENABLED: "0",
       QUIZ_MUTATIONS_ENABLED: "0",
-      QUIZ_PILOT_COURSE_IDS: "production-course-id",
     });
 
     expect(env).toMatchObject({
@@ -39,7 +37,6 @@ describe("isolated QA server feature flags", () => {
       MODERATION_CENTER_ENABLED: "0",
       QUIZ_ENABLED: "0",
       QUIZ_MUTATIONS_ENABLED: "0",
-      QUIZ_PILOT_COURSE_IDS: "*",
     });
   });
 });

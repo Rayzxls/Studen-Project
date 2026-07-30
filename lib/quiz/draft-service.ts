@@ -1,8 +1,5 @@
 import { Forbidden } from "@/lib/errors";
-import {
-  quizCourseMutationsEnabled,
-  type QuizFeatureFlagEnv,
-} from "./feature-flags";
+import { quizMutationsEnabled, type QuizFeatureFlagEnv } from "./feature-flags";
 import {
   CreateQuizDraftSchema,
   type CreateQuizDraftData,
@@ -65,7 +62,7 @@ function assertMutationsEnabled(
   courseOfferingId: string,
   env?: QuizFeatureFlagEnv
 ) {
-  if (!quizCourseMutationsEnabled(courseOfferingId, env)) {
+  if (!quizMutationsEnabled(env)) {
     throw new Forbidden("quiz_mutations_disabled");
   }
 }

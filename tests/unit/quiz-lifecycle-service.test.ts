@@ -11,7 +11,6 @@ import {
 const enabledEnv = {
   QUIZ_ENABLED: "1",
   QUIZ_MUTATIONS_ENABLED: "1",
-  QUIZ_PILOT_COURSE_IDS: "course-1",
 };
 
 function makeRepository(): QuizLifecycleRepository {

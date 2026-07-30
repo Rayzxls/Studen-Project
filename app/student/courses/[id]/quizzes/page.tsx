@@ -4,10 +4,7 @@ import { ArrowRight, CircleHelp, Clock3 } from "lucide-react";
 import { CourseShell } from "@/components/course/course-shell";
 import { assert } from "@/lib/auth/guards";
 import { getCourseOfferingForStudent } from "@/lib/course/queries";
-import {
-  getStudentQuizSummariesForCourse,
-  quizCourseEnabled,
-} from "@/lib/quiz";
+import { getStudentQuizSummariesForCourse, quizEnabled } from "@/lib/quiz";
 import { studentCourseTabs } from "../_tabs";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +13,7 @@ type PageProps = { params: Promise<{ id: string }> };
 
 export default async function StudentQuizzesPage({ params }: PageProps) {
   const { id } = await params;
-  if (!quizCourseEnabled(id)) notFound();
+  if (!quizEnabled()) notFound();
   let guard;
   try {
     guard = await assert.isActiveCourseMember(id);

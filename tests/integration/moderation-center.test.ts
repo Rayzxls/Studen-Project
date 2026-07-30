@@ -459,7 +459,6 @@ describe("Moderation Center workflow", () => {
           studentId: ctx.studentUserId,
           env: {
             QUIZ_ENABLED: "1",
-            QUIZ_PILOT_COURSE_IDS: ctx.courseOfferingId,
           },
         })
       ).resolves.toEqual([]);
@@ -471,7 +470,6 @@ describe("Moderation Center workflow", () => {
             env: {
               QUIZ_ENABLED: "1",
               QUIZ_MUTATIONS_ENABLED: "1",
-              QUIZ_PILOT_COURSE_IDS: ctx.courseOfferingId,
             },
           }
         )

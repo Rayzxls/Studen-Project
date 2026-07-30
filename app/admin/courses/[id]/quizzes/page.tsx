@@ -11,7 +11,7 @@ import {
 import { requireRole } from "@/lib/auth/guards";
 import {
   getAdminQuizWorkspace,
-  quizCourseEnabled,
+  quizEnabled,
   type AdminQuizObserverItem,
 } from "@/lib/quiz";
 
@@ -28,7 +28,7 @@ export default async function AdminQuizzesPage({ params }: PageProps) {
   }
 
   const { id } = await params;
-  if (!quizCourseEnabled(id)) notFound();
+  if (!quizEnabled()) notFound();
   const workspace = await getAdminQuizWorkspace({
     courseOfferingId: id,
     viewer: { id: session.user.id, role: session.user.role },

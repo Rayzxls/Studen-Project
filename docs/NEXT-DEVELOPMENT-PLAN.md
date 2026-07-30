@@ -2,7 +2,7 @@
 
 **Updated:** 2026-07-29
 **Sequence:** Core completion -> Lesson Workspace -> Quiz -> Identity/Integrations -> AI -> Optional product modules
-**Current state:** A0 Documentation Alignment, A1 Report/Export v1, A2 Critical-path QA, and A3/A3.1 static correctness work are complete. Automated invite coverage plus a physical-phone Production QR scan passed, and authenticated Production private-R2 upload/preview/download passed after the explicit attachment-disposition fix. A4 Account Lifecycle and the operational Moderation Center have additive persistence, audited transactions, and feature-flagged Admin surfaces. Lesson Workspace B1-B6 are implemented and accepted on isolated Neon QA. Quiz C1-C5c are implemented; the additive Quiz migrations are current in Production and the exact ENG 4/3 CourseOffering pilot has read/mutations enabled. The first expansion review kept that exact allowlist because the Production pilot has no Quiz record yet for full role/lifecycle/private-file acceptance; other and future CourseOfferings remain fail-closed.
+**Current state:** A0 Documentation Alignment, A1 Report/Export v1, A2 Critical-path QA, and A3/A3.1 static correctness work are complete. Automated invite coverage plus a physical-phone Production QR scan passed, and authenticated Production private-R2 upload/preview/download passed after the explicit attachment-disposition fix. A4 Account Lifecycle and the operational Moderation Center have additive persistence, audited transactions, and feature-flagged Admin surfaces. Lesson Workspace B1-B6 are implemented and accepted on isolated Neon QA. Quiz C1-C5c are implemented and the additive Quiz migrations are current in Production. The owner accepted the pilot on 2026-07-31, so ADR-0045 retired the per-course allowlist: `QUIZ_ENABLED` and `QUIZ_MUTATIONS_ENABLED` now cover every CourseOffering alike, and a new course needs no environment change.
 
 ## Why this order
 
@@ -22,7 +22,7 @@ This matrix prevents an implemented screen or database field from being mistaken
 | QR and invite link | Class Code, `qrcode.react`, `ClassCodeCard`, join route, automated lifecycle/mobile coverage, and physical-phone Production scan exist | Accepted: invite copy, expiry, deactivate, regenerate, mobile, rejoin, and Production camera-to-prefilled-code flow passed QA |
 | Moderation | Existing Teacher comment moderation plus a case-based Admin queue for reports, evidence snapshots, temporary restrictions, decisions, restore, and one-time appeal | Code/schema deployed behind `MODERATION_CENTER_ENABLED`; flag cutover and manual all-theme/mobile/private-R2 acceptance remain open |
 | Profile personal information | Avatar, legacy display-name behavior, real identity, password, and theme exist | Target profile is intentionally minimal: editable re-authenticated Real Name, user-uploaded Avatar, owner/Admin-only verified email, optional fallback password, and theme; no separate Display Name |
-| Quiz / Testing | Approved contract, four ADRs, additive schema, Teacher Builder, Student Attempt/autosave/auto-grading, Teacher Results/lifecycle/publication, private attachments, Moderation evidence, Teacher CSV analytics, and an aggregate-only Admin observer | Production schema and exact ENG 4/3 pilot are enabled; authenticated Teacher list-route smoke passes, but the empty pilot has not exercised the full role/lifecycle/private-file workflow, so expansion is deferred and non-allowlisted CourseOfferings stay fail-closed |
+| Quiz / Testing | Approved contract, four ADRs, additive schema, Teacher Builder, Student Attempt/autosave/auto-grading, Teacher Results/lifecycle/publication, private attachments, Moderation evidence, Teacher CSV analytics, and an aggregate-only Admin observer | Shipped to every course: the pilot was accepted on 2026-07-31 and ADR-0045 retired per-course gating, leaving `QUIZ_ENABLED`/`QUIZ_MUTATIONS_ENABLED` as the only switches |
 | AI Assistant | No model-provider integration found | Not implemented; planned only after stable Lesson/Quiz contracts |
 | Google Login | NextAuth currently uses Credentials only | Not implemented; identity-linking rules must be designed first |
 | Chat Room, Reward, Meeting | No domain model or route found | Candidate backlog; not committed to the current release plan |
@@ -173,8 +173,9 @@ Automate and manually verify these end-to-end paths:
   the current Beagle Feed URL.
 - Physical-phone Production QR acceptance passed on 2026-07-22. The camera
   opened the Beagle join flow with the room code prefilled, and testing stopped
-  before changing enrollment. A2 is closed; the Quiz pilot allowlist remains
-  exact until the separate controlled expansion review is approved.
+  before changing enrollment. A2 is closed. The Quiz pilot allowlist that this
+  entry required was later retired by ADR-0045, once the owner accepted the
+  pilot on 2026-07-31.
 
 ### A3. Functional completeness audit
 

@@ -5,8 +5,8 @@ import { requireRole } from "@/lib/auth/guards";
 import { getCourseOfferingForTeacher } from "@/lib/course/queries";
 import {
   getTeacherQuizDraft,
-  quizCourseEnabled,
-  quizCourseMutationsEnabled,
+  quizEnabled,
+  quizMutationsEnabled,
 } from "@/lib/quiz";
 import { teacherCourseTabs } from "../../_tabs";
 import {
@@ -34,7 +34,7 @@ export default async function TeacherQuizBuilderPage({
   }
 
   const { id, quizId } = await params;
-  if (!quizCourseEnabled(id)) notFound();
+  if (!quizEnabled()) notFound();
   const { notice } = await searchParams;
   const [course, quiz] = await Promise.all([
     getCourseOfferingForTeacher(id, session.user.id),
@@ -63,7 +63,7 @@ export default async function TeacherQuizBuilderPage({
         autosaveAction={autosaveQuizDraftAction}
         notice={notice}
         locked={
-          !quizCourseMutationsEnabled(id) ||
+          !quizMutationsEnabled() ||
           quiz.status !== "DRAFT" ||
           quiz.attemptCount > 0
         }

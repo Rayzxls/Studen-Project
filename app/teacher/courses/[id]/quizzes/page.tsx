@@ -4,10 +4,7 @@ import { ArrowRight, BookOpen, CircleHelp } from "lucide-react";
 import { CourseShell } from "@/components/course/course-shell";
 import { requireRole } from "@/lib/auth/guards";
 import { getCourseOfferingForTeacher } from "@/lib/course/queries";
-import {
-  getTeacherQuizSummariesForCourse,
-  quizCourseEnabled,
-} from "@/lib/quiz";
+import { getTeacherQuizSummariesForCourse, quizEnabled } from "@/lib/quiz";
 import { teacherCourseTabs } from "../_tabs";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +13,7 @@ type PageProps = { params: Promise<{ id: string }> };
 
 export default async function TeacherQuizzesPage({ params }: PageProps) {
   const { id } = await params;
-  if (!quizCourseEnabled(id)) notFound();
+  if (!quizEnabled()) notFound();
   let session;
   try {
     session = await requireRole(["TEACHER"]);

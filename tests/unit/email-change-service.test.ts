@@ -166,3 +166,56 @@ describe("email change — confirm", () => {
     ).rejects.toMatchObject({ code: "email_change_invalid" });
   });
 });
+
+describe("email change — first email on a username-only account", () => {
+  beforeEach(() => {
+    db.add({
+      userId: "owner",
+      email: null,
+      identifier: "Rayzxls",
+      role: "ADMIN",
+      isActive: true,
+      deletedAt: null,
+      accountStatus: "ACTIVE",
+    });
+  });
+
+  it("sets the first email and keeps the username sign-in identifier", async () => {
+    const { service, sender } = makeService(db);
+    await service.request({
+      actor: { userId: "owner", reauthenticatedAt: recent() },
+      newEmail: "owner@studennnn.local",
+    });
+    const token = tokenFrom(
+      (sender.outbox[0]!.template as { verifyUrl: string }).verifyUrl
+    );
+
+    await service.confirm({ token });
+
+    const after = db.users.get("owner")!;
+    expect(after.email).toBe("owner@studennnn.local");
+    // The identifier never tracked an email, so it must survive the change:
+    // the emergency owner keeps signing in with the username.
+    expect(after.identifier).toBe("Rayzxls");
+  });
+
+  it("makes a link stale once the first email is set", async () => {
+    const { service, sender } = makeService(db);
+    await service.request({
+      actor: { userId: "owner", reauthenticatedAt: recent() },
+      newEmail: "first@studennnn.local",
+    });
+    await service.request({
+      actor: { userId: "owner", reauthenticatedAt: recent() },
+      newEmail: "second@studennnn.local",
+    });
+    const [firstLink, secondLink] = sender.outbox.map((message) =>
+      tokenFrom((message.template as { verifyUrl: string }).verifyUrl)
+    );
+
+    await service.confirm({ token: firstLink! });
+    await expect(service.confirm({ token: secondLink! })).rejects.toMatchObject(
+      { code: "email_change_superseded" }
+    );
+  });
+});

@@ -1,8 +1,5 @@
 import { Forbidden } from "@/lib/errors";
-import {
-  quizCourseMutationsEnabled,
-  type QuizFeatureFlagEnv,
-} from "./feature-flags";
+import { quizMutationsEnabled, type QuizFeatureFlagEnv } from "./feature-flags";
 import { prismaQuizLifecycleRepository } from "./lifecycle-repository";
 import {
   PublishQuizResultsSchema,
@@ -71,7 +68,7 @@ export async function openQuiz(
   input: { courseOfferingId: string; quizId: string },
   ctx: QuizLifecycleActorCtx
 ): Promise<{ id: string }> {
-  if (!quizCourseMutationsEnabled(input.courseOfferingId, ctx.env)) {
+  if (!quizMutationsEnabled(ctx.env)) {
     throw new Forbidden("quiz_mutations_disabled");
   }
   return (ctx.repository ?? prismaQuizLifecycleRepository).openQuiz({
@@ -149,7 +146,7 @@ function assertMutationsEnabled(
   courseOfferingId: string,
   env?: QuizFeatureFlagEnv
 ) {
-  if (!quizCourseMutationsEnabled(courseOfferingId, env)) {
+  if (!quizMutationsEnabled(env)) {
     throw new Forbidden("quiz_mutations_disabled");
   }
 }
