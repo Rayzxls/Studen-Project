@@ -7,6 +7,9 @@ import {
 import { getCourseFeed } from "@/lib/feed/aggregator";
 import { CourseShell } from "@/components/course/course-shell";
 import { TimetableSetupHint } from "@/components/course/timetable-setup-hint";
+import { TeacherSetupGuideMount } from "@/components/course/teacher-setup-guide-mount";
+import { shouldShowTeacherSetupGuide } from "@/lib/course/setup-guide";
+import { markSetupGuideSeenAction } from "./actions";
 import {
   CourseFeedView,
   feedKindsForFilter,
@@ -46,9 +49,10 @@ export default async function TeacherCourseFeedPage({
 
   const filter = normalizeFilter(type);
   const kindFilter = feedKindsForFilter(filter);
-  const [page, hasTimetable] = await Promise.all([
+  const [page, hasTimetable, showSetupGuide] = await Promise.all([
     getCourseFeed(id, undefined, kindFilter ?? undefined),
     courseHasTimetableSlot(id),
+    shouldShowTeacherSetupGuide(session.user.id),
   ]);
   const lessonWorkspace = lessonWorkspaceCourseEnabled(id)
     ? await getLessonWorkspaceForViewer({
@@ -70,6 +74,9 @@ export default async function TeacherCourseFeedPage({
       tabs={teacherCourseTabs(id)}
     >
       <div className="space-y-4">
+        {showSetupGuide && (
+          <TeacherSetupGuideMount markSeen={markSetupGuideSeenAction} />
+        )}
         {!hasTimetable && <TimetableSetupHint courseId={id} />}
         <div className="flex items-center justify-end">
           <UnifiedComposer

@@ -91,6 +91,7 @@ export function TabNav({ tabs }: { tabs: CourseTab[] }) {
       ref={navRef}
       role="tablist"
       aria-label="Course sections"
+      data-guide="course-tabs"
       className="flex w-full gap-0.5 overflow-x-auto border-b border-black/[0.08]"
       style={{ scrollbarWidth: "none" }}
     >
@@ -105,6 +106,7 @@ export function TabNav({ tabs }: { tabs: CourseTab[] }) {
             role="tab"
             aria-selected={active}
             aria-current={active ? "page" : undefined}
+            data-guide-tab={tab.icon}
             className={
               "-mb-px inline-flex min-h-11 shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-3.5 text-sm font-medium hover:no-underline " +
               (active
