@@ -5,7 +5,7 @@ import { TeacherQuizBuilder } from "@/components/quiz/teacher-quiz-builder";
 import { requireRole } from "@/lib/auth/guards";
 import { getCourseOfferingForTeacher } from "@/lib/course/queries";
 import { getTeacherLessonDetail } from "@/lib/lesson";
-import { quizCourseEnabled, quizCourseMutationsEnabled } from "@/lib/quiz";
+import { quizEnabled, quizMutationsEnabled } from "@/lib/quiz";
 import { teacherCourseTabs } from "../../../../_tabs";
 import { createQuizDraftAction } from "../../../../quizzes/actions";
 
@@ -28,7 +28,7 @@ export default async function NewTeacherQuizPage({
   }
 
   const { id, lessonId } = await params;
-  if (!quizCourseEnabled(id) || !quizCourseMutationsEnabled(id)) notFound();
+  if (!quizEnabled() || !quizMutationsEnabled()) notFound();
   const { notice } = await searchParams;
   const [course, lesson] = await Promise.all([
     getCourseOfferingForTeacher(id, session.user.id),

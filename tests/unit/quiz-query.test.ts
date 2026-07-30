@@ -32,16 +32,15 @@ describe("Quiz teacher queries", () => {
     mocks.courseFindUnique.mockReset();
   });
 
-  it("fails closed before querying an unlisted course", async () => {
+  it("fails closed before touching the database when Quiz is off", async () => {
+    // ADR-0045: the gate is the flag alone, so this must reject for any course
+    // rather than for a course missing from a retired allowlist.
     await expect(
       getTeacherQuizSummariesForLesson({
         courseOfferingId: "course-b",
         lessonId: "lesson-1",
         teacherId: "teacher-1",
-        env: {
-          QUIZ_ENABLED: "1",
-          QUIZ_PILOT_COURSE_IDS: "course-a",
-        },
+        env: {},
       })
     ).rejects.toMatchObject({ code: "quiz_disabled" });
 
@@ -78,7 +77,6 @@ describe("Quiz teacher queries", () => {
       teacherId: "teacher-1",
       env: {
         QUIZ_ENABLED: "1",
-        QUIZ_PILOT_COURSE_IDS: "course-a",
       },
     });
 
@@ -178,7 +176,6 @@ describe("Quiz teacher queries", () => {
       teacherId: "teacher-1",
       env: {
         QUIZ_ENABLED: "1",
-        QUIZ_PILOT_COURSE_IDS: "course-a",
       },
     });
 
@@ -219,7 +216,6 @@ describe("Quiz teacher queries", () => {
         viewer: { id: "teacher-1", role: "TEACHER" },
         env: {
           QUIZ_ENABLED: "1",
-          QUIZ_PILOT_COURSE_IDS: "course-a",
         },
       })
     ).rejects.toMatchObject({ code: "quiz_observer_forbidden" });
@@ -274,7 +270,6 @@ describe("Quiz teacher queries", () => {
       viewer: { id: "admin-1", role: "ADMIN" },
       env: {
         QUIZ_ENABLED: "1",
-        QUIZ_PILOT_COURSE_IDS: "course-a",
       },
     });
 

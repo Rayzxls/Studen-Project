@@ -26,8 +26,8 @@ import {
 } from "@/lib/lesson";
 import {
   getTeacherQuizSummariesForLesson,
-  quizCourseEnabled,
-  quizCourseMutationsEnabled,
+  quizEnabled,
+  quizMutationsEnabled,
 } from "@/lib/quiz";
 import { teacherCourseTabs } from "../../_tabs";
 import {
@@ -56,7 +56,7 @@ export default async function TeacherLessonDetailPage({
   }
   const { id, lessonId } = await params;
   if (!lessonWorkspaceCourseEnabled(id)) notFound();
-  const quizEnabled = quizCourseEnabled(id);
+  const showQuizzes = quizEnabled();
   const { notice } = await searchParams;
   const [course, lesson, workspace, quizzes] = await Promise.all([
     getCourseOfferingForTeacher(id, session.user.id),
@@ -69,7 +69,7 @@ export default async function TeacherLessonDetailPage({
       courseOfferingId: id,
       viewer: { id: session.user.id, role: session.user.role },
     }),
-    quizEnabled
+    showQuizzes
       ? getTeacherQuizSummariesForLesson({
           courseOfferingId: id,
           lessonId,
@@ -268,7 +268,7 @@ export default async function TeacherLessonDetailPage({
               ))}
             </ContentSection>
 
-            {quizEnabled && (
+            {showQuizzes && (
               <ContentSection
                 title="แบบทดสอบ"
                 icon={CircleHelp}
@@ -308,7 +308,7 @@ export default async function TeacherLessonDetailPage({
                       ))}
                     </div>
                   )}
-                  {quizCourseMutationsEnabled(id) && canMutate && (
+                  {quizMutationsEnabled() && canMutate && (
                     <Link
                       href={`/teacher/courses/${id}/lessons/${lesson.id}/quizzes/new`}
                       className="btn-secondary btn-sm mt-3 w-fit"

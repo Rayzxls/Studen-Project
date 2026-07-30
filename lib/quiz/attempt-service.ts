@@ -2,8 +2,8 @@ import { createHash, randomBytes } from "node:crypto";
 import { z } from "zod";
 import { Forbidden, ValidationError } from "@/lib/errors";
 import {
-  quizCourseEnabled,
-  quizCourseMutationsEnabled,
+  quizEnabled,
+  quizMutationsEnabled,
   type QuizFeatureFlagEnv,
 } from "./feature-flags";
 import { prismaQuizAttemptRepository } from "./attempt-repository";
@@ -174,7 +174,7 @@ export async function getStudentQuizAttempt(
   },
   ctx: QuizAttemptActorCtx
 ) {
-  if (!quizCourseEnabled(input.courseOfferingId, ctx.env)) {
+  if (!quizEnabled(ctx.env)) {
     throw new Forbidden("quiz_disabled");
   }
   return (ctx.repository ?? prismaQuizAttemptRepository).getAttempt({
@@ -182,7 +182,7 @@ export async function getStudentQuizAttempt(
     attemptId: input.attemptId,
     studentUserId: ctx.studentUserId,
     leaseTokenHash: input.leaseToken ? hashLeaseToken(input.leaseToken) : null,
-    allowFinalize: quizCourseMutationsEnabled(input.courseOfferingId, ctx.env),
+    allowFinalize: quizMutationsEnabled(ctx.env),
     now: ctx.now ?? new Date(),
   });
 }
@@ -206,7 +206,7 @@ function assertMutationsEnabled(
   courseOfferingId: string,
   env?: QuizFeatureFlagEnv
 ) {
-  if (!quizCourseMutationsEnabled(courseOfferingId, env)) {
+  if (!quizMutationsEnabled(env)) {
     throw new Forbidden("quiz_mutations_disabled");
   }
 }

@@ -1,6 +1,4 @@
 export {
-  quizCourseEnabled,
-  quizCourseMutationsEnabled,
   quizEnabled,
   quizMutationsEnabled,
   type QuizFeatureFlagEnv,

@@ -1,6 +1,6 @@
 import type { CourseTab } from "@/components/course/tab-nav";
 import { lessonWorkspaceCourseEnabled } from "@/lib/lesson";
-import { quizCourseEnabled } from "@/lib/quiz";
+import { quizEnabled } from "@/lib/quiz";
 
 /**
  * Student CourseOffering tab list — Phase 10C reshape per ADR-0025.
@@ -23,7 +23,7 @@ export const studentCourseTabs = (courseId: string): CourseTab[] => [
         },
       ]
     : []),
-  ...(quizCourseEnabled(courseId)
+  ...(quizEnabled()
     ? [
         {
           label: "แบบทดสอบ",

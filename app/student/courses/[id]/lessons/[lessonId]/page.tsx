@@ -23,10 +23,7 @@ import {
   type StudentLessonAssignment,
 } from "@/lib/lesson";
 import { moderationCenterEnabled } from "@/lib/moderation/feature-flags";
-import {
-  getStudentQuizSummariesForLesson,
-  quizCourseEnabled,
-} from "@/lib/quiz";
+import { getStudentQuizSummariesForLesson, quizEnabled } from "@/lib/quiz";
 import { studentCourseTabs } from "../../_tabs";
 
 export const dynamic = "force-dynamic";
@@ -57,8 +54,8 @@ export default async function StudentLessonDetailPage({ params }: PageProps) {
   const lesson = workspace.lessons.find((item) => item.id === lessonId);
   if (!lesson) notFound();
   const canReport = moderationCenterEnabled();
-  const quizEnabled = quizCourseEnabled(id);
-  const quizzes = quizEnabled
+  const showQuizzes = quizEnabled();
+  const quizzes = showQuizzes
     ? await getStudentQuizSummariesForLesson({
         courseOfferingId: id,
         lessonId,
@@ -201,7 +198,7 @@ export default async function StudentLessonDetailPage({ params }: PageProps) {
             )}
           </ContentSection>
 
-          {quizEnabled && (
+          {showQuizzes && (
             <ContentSection
               icon={CircleHelp}
               title="แบบทดสอบ"

@@ -49,7 +49,6 @@ function repository(overrides: Partial<QuizDraftRepository> = {}) {
 const enabledEnv = {
   QUIZ_ENABLED: "1",
   QUIZ_MUTATIONS_ENABLED: "1",
-  QUIZ_PILOT_COURSE_IDS: "course-1",
 };
 
 describe("Quiz draft service", () => {

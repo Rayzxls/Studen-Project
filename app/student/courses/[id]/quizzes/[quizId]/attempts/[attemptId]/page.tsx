@@ -5,7 +5,7 @@ import { StudentQuizAttempt } from "@/components/quiz/student-quiz-attempt";
 import { assert } from "@/lib/auth/guards";
 import { getCourseOfferingForStudent } from "@/lib/course/queries";
 import { HttpError } from "@/lib/errors";
-import { getStudentQuizAttempt, quizCourseEnabled } from "@/lib/quiz";
+import { getStudentQuizAttempt, quizEnabled } from "@/lib/quiz";
 import { studentCourseTabs } from "../../../../_tabs";
 import {
   saveQuizAnswerAction,
@@ -20,7 +20,7 @@ type PageProps = {
 
 export default async function StudentQuizAttemptPage({ params }: PageProps) {
   const { id, quizId, attemptId } = await params;
-  if (!quizCourseEnabled(id)) notFound();
+  if (!quizEnabled()) notFound();
   let guard;
   try {
     guard = await assert.isActiveCourseMember(id);

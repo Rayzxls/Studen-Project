@@ -1,6 +1,6 @@
 import type { CourseTab } from "@/components/course/tab-nav";
 import { lessonWorkspaceCourseEnabled } from "@/lib/lesson";
-import { quizCourseEnabled } from "@/lib/quiz";
+import { quizEnabled } from "@/lib/quiz";
 
 export const adminCourseTabs = (courseId: string): CourseTab[] => [
   { label: "ภาพรวม", href: `/admin/courses/${courseId}`, icon: "overview" },
@@ -14,7 +14,7 @@ export const adminCourseTabs = (courseId: string): CourseTab[] => [
         },
       ]
     : []),
-  ...(quizCourseEnabled(courseId)
+  ...(quizEnabled()
     ? [
         {
           label: "แบบทดสอบ",

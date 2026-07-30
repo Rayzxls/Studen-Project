@@ -10,7 +10,7 @@ import {
   attachmentIds,
   getOrderedAttachments,
 } from "@/lib/storage/attachments";
-import { quizCourseEnabled, type QuizFeatureFlagEnv } from "./feature-flags";
+import { quizEnabled, type QuizFeatureFlagEnv } from "./feature-flags";
 import { selectBestAttempt } from "./policy";
 
 export type TeacherQuizSummary = {
@@ -1022,7 +1022,7 @@ function assertCourseEnabled(
   courseOfferingId: string,
   env?: QuizFeatureFlagEnv
 ) {
-  if (!quizCourseEnabled(courseOfferingId, env)) {
+  if (!quizEnabled(env)) {
     throw new Forbidden("quiz_disabled");
   }
 }

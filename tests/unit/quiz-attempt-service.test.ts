@@ -12,7 +12,6 @@ import {
 const enabledEnv = {
   QUIZ_ENABLED: "1",
   QUIZ_MUTATIONS_ENABLED: "1",
-  QUIZ_PILOT_COURSE_IDS: "course-1",
 };
 
 const view = {
@@ -157,7 +156,6 @@ describe("Quiz Attempt service", () => {
         env: {
           QUIZ_ENABLED: "1",
           QUIZ_MUTATIONS_ENABLED: "0",
-          QUIZ_PILOT_COURSE_IDS: "course-1",
         },
       }
     );

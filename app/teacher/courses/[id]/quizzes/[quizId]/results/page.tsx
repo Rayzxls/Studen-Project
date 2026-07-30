@@ -7,8 +7,8 @@ import { requireRole } from "@/lib/auth/guards";
 import { getCourseOfferingForTeacher } from "@/lib/course/queries";
 import {
   getTeacherQuizResults,
-  quizCourseEnabled,
-  quizCourseMutationsEnabled,
+  quizEnabled,
+  quizMutationsEnabled,
 } from "@/lib/quiz";
 import { teacherCourseTabs } from "../../../_tabs";
 
@@ -25,7 +25,7 @@ export default async function TeacherQuizResultsPage({
 }: PageProps) {
   const { id, quizId } = await params;
   const { notice } = await searchParams;
-  if (!quizCourseEnabled(id)) notFound();
+  if (!quizEnabled()) notFound();
 
   let session;
   try {
@@ -63,7 +63,7 @@ export default async function TeacherQuizResultsPage({
       <TeacherQuizResults
         result={result}
         notice={notice}
-        mutationsEnabled={quizCourseMutationsEnabled(id)}
+        mutationsEnabled={quizMutationsEnabled()}
       />
     </CourseShell>
   );
