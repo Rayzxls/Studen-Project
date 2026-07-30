@@ -115,12 +115,13 @@ function CourseCardMenuShell({
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [menuOpen]);
 
+  // Only the student action returns a success state: archiving a course
+  // redirects from the server so the browser leaves before any course-scoped
+  // page can render again.
   useEffect(() => {
-    if (!state.ok) return;
+    if (role !== "student" || !state.ok) return;
     dialogRef.current?.close();
-    router.replace(
-      role === "student" ? "/student/courses" : "/teacher/courses"
-    );
+    router.replace("/student/courses");
     router.refresh();
   }, [role, router, state.ok]);
 

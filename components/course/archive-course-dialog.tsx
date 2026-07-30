@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import { useRouter } from "next/navigation";
 import { Archive, X } from "lucide-react";
 import {
   archiveCourseAction,
@@ -20,20 +19,14 @@ type Props = {
 };
 
 export function ArchiveCourseDialog({ courseId, courseName }: Props) {
-  const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [reason, setReason] = useState("");
+  // A successful archive redirects from the server, so there is no success
+  // state to react to here — only validation and failure states render.
   const [state, formAction] = useActionState(
     archiveCourseAction,
     INITIAL_STATE
   );
-
-  useEffect(() => {
-    if (!state.ok) return;
-    dialogRef.current?.close();
-    router.replace("/teacher/courses");
-    router.refresh();
-  }, [router, state.ok]);
 
   const close = () => {
     dialogRef.current?.close();
