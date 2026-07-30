@@ -16,12 +16,33 @@ import {
   quizEnabled,
   quizMutationsEnabled,
 } from "../lib/quiz/feature-flags";
+import { databaseIdentity } from "../tests/helpers/database-safety";
 
 type CourseRow = {
   id: string;
   archivedAt: Date | null;
   _count: { quizzes: number };
 };
+
+/**
+ * Whether the active datasource is the isolated QA branch. `NODE_ENV` is not a
+ * usable signal here: a CLI run against the Production database still reports
+ * "development", so trusting it would wave the wildcard through on exactly the
+ * database it must never be set on. The database identity cannot be spoofed by
+ * how the command happens to be invoked.
+ */
+function activeDatabaseIsIsolatedQa(
+  env: Readonly<Record<string, string | undefined>>
+): boolean {
+  const active = env.DATABASE_URL?.trim();
+  const qa = env.QA_DATABASE_URL?.trim();
+  if (!active || !qa) return false;
+  try {
+    return databaseIdentity(active) === databaseIdentity(qa);
+  } catch {
+    return false;
+  }
+}
 
 async function main(): Promise<void> {
   const enabled = quizEnabled(process.env);
@@ -35,9 +56,10 @@ async function main(): Promise<void> {
 
   if (allowlist.wildcard) {
     console.log("Allowlist: * (every course)");
-    if (process.env.NODE_ENV === "production") {
+    if (!activeDatabaseIsIsolatedQa(process.env)) {
       problems.push(
-        "The wildcard is for identity-checked isolated QA only and must never be set in Production."
+        "The wildcard enables Quiz for every course and is for the isolated QA branch only, " +
+          "but the active DATABASE_URL is not QA_DATABASE_URL."
       );
     }
   } else if (allowlist.ids.length === 0) {

@@ -128,6 +128,14 @@ the value now refers to nothing.
 
       The command is read-only. It resolves every configured id against the
       database and exits non-zero on a missing or archived course, on an empty
-      allowlist while `QUIZ_ENABLED` is on, and on the wildcard in Production.
-      It reads `DATABASE_URL` from `.env.local`, so point that at the
-      environment being checked.
+      allowlist while `QUIZ_ENABLED` is on, and on the wildcard whenever the
+      active `DATABASE_URL` is not the isolated `QA_DATABASE_URL`. It reads
+      `DATABASE_URL` from `.env.local`, so point that at the environment being
+      checked.
+
+- [ ] Separately, note that local `.env.local` currently pairs the Production
+      `DATABASE_URL` with `QUIZ_PILOT_COURSE_IDS=*` and
+      `QUIZ_MUTATIONS_ENABLED=1`. Port 3000 therefore runs Quiz mutations
+      against every Production course. Port 3100 (`pnpm dev:qa`) is the
+      isolated server and sets its own wildcard deliberately. Prefer 3100, or
+      narrow the local allowlist.
