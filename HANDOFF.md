@@ -1,5 +1,29 @@
 # HANDOFF — Beagle Classroom
 
+## QUIZ PILOT ALLOWLIST RETIRED — 2026-07-31 (READ FIRST)
+
+- The owner accepted the Quiz pilot on the restored ENG course and decided to
+  cover every course. ADR-0045 records it and amends the flag section of
+  ADR-0038; `QUIZ_ENABLED` and `QUIZ_MUTATIONS_ENABLED` remain the fail-closed
+  gates and are now course-independent.
+- Removed `QUIZ_PILOT_COURSE_IDS`, `quizCourseEnabled`, and
+  `quizCourseMutationsEnabled`. Every call site now uses `quizEnabled` /
+  `quizMutationsEnabled`. A leftover environment value is ignored rather than
+  reintroducing a gate, which is covered by a regression test.
+- Also removed the `qa:quiz:pilot:verify` command added earlier the same day: it
+  verified a concept that no longer exists.
+- **Production still needs the environment change**: delete
+  `QUIZ_PILOT_COURSE_IDS` in Vercel and redeploy. Until a deployment carries
+  this code, the old allowlist is still in force.
+- Context for why this changed: the allowlist matched CourseOffering ids
+  exactly, so a course omitted from it had no Quiz surfaces and returned 404
+  with nothing explaining why. After the 2026-07-29 reset it named deleted
+  courses, so Production Quiz was unreachable while the configuration looked
+  set. Enabling a newly created course required an owner to edit an environment
+  variable and redeploy.
+- Verification: TypeScript, ESLint, full unit `95 files / 784 tests`,
+  dependency gate, and Production build pass.
+
 ## POST-RESET OWNER RECOVERY UNBLOCKED — 2026-07-31 (READ FIRST)
 
 - The sole Production Admin is username-only, so Profile hid both the
@@ -20,9 +44,9 @@
   the account.** `resolveEmailSender` is fail-closed, so without both
   `RESEND_API_KEY` and `RESEND_FROM` the verification link is never sent and
   never logged — the flow looks like it worked and strands the account.
-- `QUIZ_PILOT_COURSE_IDS` is an exact CourseOffering-id allowlist. Every course
-  it named was deleted in the reset, so Quiz is fail-closed everywhere until it
-  is re-pointed at a real course.
+- `QUIZ_PILOT_COURSE_IDS` was an exact CourseOffering-id allowlist naming
+  courses the reset deleted, so Quiz was fail-closed everywhere. Superseded the
+  same day by ADR-0045, which retired the allowlist entirely.
 - Verification: TypeScript, ESLint, full unit `95 files / 785 tests`,
   dependency gate `0 blocker / 137 review / delta +0`, and Production build all
   pass. No schema, data, flag, or environment change was made.

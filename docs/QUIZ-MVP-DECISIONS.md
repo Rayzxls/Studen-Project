@@ -55,7 +55,7 @@
 
 ## Delivery guardrails
 
-- Additive schema only. Use fail-closed `QUIZ_ENABLED`, `QUIZ_MUTATIONS_ENABLED`, and `QUIZ_PILOT_COURSE_IDS`.
+- Additive schema only. Use fail-closed `QUIZ_ENABLED` and `QUIZ_MUTATIONS_ENABLED`. The per-course `QUIZ_PILOT_COURSE_IDS` allowlist was retired by ADR-0045 after the one-course pilot was accepted.
 - Migration and mutating acceptance run on identity-checked Neon QA only. Production requires backup, migration verification, read-only smoke, one-course pilot, mutation smoke, rollback rehearsal, and explicit widening approval.
 - Existing Feed, Assignment, Score, Lesson, Notification, Moderation, and private-file flows remain independently usable when Quiz flags are off.
 
