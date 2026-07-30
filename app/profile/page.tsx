@@ -100,10 +100,11 @@ export default async function ProfilePage({
   const offerFallbackSetup =
     identityFoundationMutationsEnabled() && !hasFallbackPassword;
 
-  // An email change is offered only to an account that actually has a verified
-  // email to change (some compatibility-era accounts do not have one).
-  const offerEmailChange =
-    identityFoundationMutationsEnabled() && user.email !== null;
+  // The same verified-link flow both changes an existing email and sets the
+  // first one. A username-only account (the emergency owner, or a
+  // compatibility-era row) otherwise has no way to reach email recovery or
+  // Google linking, since both require an address on the account.
+  const offerEmailChange = identityFoundationMutationsEnabled();
 
   // Linking Google is offered to an account that has an email (required to match
   // the Google address) and no Google identity yet — typically a password-era
@@ -254,8 +255,9 @@ export default async function ProfilePage({
             )}
           </section>
 
-          {/* Verified-email change (Release D), flag-gated. */}
-          {offerEmailChange && user.email && (
+          {/* Verified-email change and first-time email setup (Release D),
+              flag-gated. */}
+          {offerEmailChange && (
             <section className="card p-6">
               <h2
                 className="flex items-center gap-2 text-base font-semibold text-black"
@@ -265,8 +267,9 @@ export default async function ProfilePage({
                 อีเมล
               </h2>
               <p className="mt-1 text-xs text-black/50">
-                เปลี่ยนอีเมลของบัญชี — ต้องยืนยันผ่านลิงก์ที่ส่งไปอีเมลใหม่
-                และอุปกรณ์อื่นจะถูกออกจากระบบ
+                {user.email
+                  ? "เปลี่ยนอีเมลของบัญชี — ต้องยืนยันผ่านลิงก์ที่ส่งไปอีเมลใหม่ และอุปกรณ์อื่นจะถูกออกจากระบบ"
+                  : "บัญชีนี้ยังไม่มีอีเมล — ตั้งอีเมลเพื่อใช้กู้รหัสผ่านและเชื่อมต่อ Google โดยยืนยันผ่านลิงก์ที่ส่งไปอีเมลนั้น"}
               </p>
               <div className="mt-5">
                 <ChangeEmailForm currentEmail={user.email} />
@@ -275,7 +278,7 @@ export default async function ProfilePage({
           )}
 
           {/* Account connection — link Google (E²), flag-gated. */}
-          {identityFoundationMutationsEnabled() && user.email !== null && (
+          {identityFoundationMutationsEnabled() && (
             <section className="card p-6">
               <h2
                 className="flex items-center gap-2 text-base font-semibold text-black"
@@ -302,6 +305,11 @@ export default async function ProfilePage({
                 <p className="mt-3 text-sm text-black/60">
                   บัญชีนี้เชื่อมต่อกับ Google แล้ว — เข้าสู่ระบบได้ทั้ง Google
                   และรหัสผ่าน
+                </p>
+              ) : !user.email ? (
+                <p className="mt-3 text-sm text-black/60">
+                  ต้องตั้งอีเมลของบัญชีก่อน เพราะการเชื่อมต่อต้องใช้บัญชี Google
+                  ที่มีอีเมลตรงกัน — ตั้งได้ที่หัวข้อ &ldquo;อีเมล&rdquo; ด้านบน
                 </p>
               ) : (
                 <>
