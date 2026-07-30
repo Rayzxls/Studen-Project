@@ -346,6 +346,12 @@ model Teacher {
   lastName  String
   email     String @unique
 
+  // When the first-course setup walkthrough was finished or dismissed. Null
+  // means it has not been shown yet. Stored per teacher rather than in the
+  // browser so it survives a device change and does not reappear after a cache
+  // clear.
+  setupGuideSeenAt DateTime?
+
   courses CourseOffering[]
 }
 
