@@ -1,5 +1,32 @@
 # HANDOFF — Beagle Classroom
 
+## POST-RESET OWNER RECOVERY UNBLOCKED — 2026-07-31 (READ FIRST)
+
+- The sole Production Admin is username-only, so Profile hid both the
+  email-change form and Google linking behind a non-null email. That left the
+  account with no route to email recovery and no route to Google sign-in: its
+  password was the only way in, and losing it would have been unrecoverable.
+- Profile now offers the existing verified-link flow as first-time email setup.
+  The service layer already handled a null current email — the token
+  fingerprints the empty string and `updateIdentifier` fires only when the
+  identifier tracked the old address — so the sign-in username survives the
+  change and the account gains recovery. Google linking still requires a
+  matching account email by design; the section explains the prerequisite
+  instead of disappearing.
+- Corrected a label that showed the sign-in username under "email" for an
+  account that has none.
+- Added `docs/release-gates/POST-RESET-RESTART-CHECKLIST.md`: the ordered path
+  from the emptied instance back to service. **Read it before the owner touches
+  the account.** `resolveEmailSender` is fail-closed, so without both
+  `RESEND_API_KEY` and `RESEND_FROM` the verification link is never sent and
+  never logged — the flow looks like it worked and strands the account.
+- `QUIZ_PILOT_COURSE_IDS` is an exact CourseOffering-id allowlist. Every course
+  it named was deleted in the reset, so Quiz is fail-closed everywhere until it
+  is re-pointed at a real course.
+- Verification: TypeScript, ESLint, full unit `95 files / 785 tests`,
+  dependency gate `0 blocker / 137 review / delta +0`, and Production build all
+  pass. No schema, data, flag, or environment change was made.
+
 ## PRODUCTION D0/D1 CUTOVER + SINGLE-ADMIN RESET — 2026-07-29 (READ FIRST)
 
 - The owner explicitly authorized the D1 identity and D0 academic migrations
