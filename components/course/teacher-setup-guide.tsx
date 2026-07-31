@@ -109,15 +109,19 @@ export function TeacherSetupGuide({
     onFinish();
   }, [onFinish]);
 
+  // The decision is made here rather than inside a setIndex updater: React runs
+  // an updater during render, so finishing from inside one set state on the
+  // parent mid-render.
+  // The decision is made here rather than inside a setIndex updater: React runs
+  // an updater during render, so finishing from inside one set state on the
+  // parent mid-render.
   const next = useCallback(() => {
-    setIndex((current) => {
-      if (current + 1 >= steps.length) {
-        finish();
-        return current;
-      }
-      return current + 1;
-    });
-  }, [finish, steps.length]);
+    if (index + 1 >= steps.length) {
+      finish();
+      return;
+    }
+    setIndex(index + 1);
+  }, [finish, index, steps.length]);
 
   useEffect(() => {
     if (steps.length === 0) return;

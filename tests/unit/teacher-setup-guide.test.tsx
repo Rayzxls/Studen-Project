@@ -8,13 +8,21 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { TeacherSetupGuide } from "@/components/course/teacher-setup-guide";
+import { TeacherSetupGuideMount } from "@/components/course/teacher-setup-guide-mount";
 
 // jsdom performs no layout, so every element measures 0×0 and the guide would
 // treat all of its targets as missing. Give elements a size so the geometry
 // paths run.
 const originalRect = Element.prototype.getBoundingClientRect;
 
+// React reports "setState during render" as a console error rather than by
+// throwing, so a behavioural assertion alone passes straight through it. That
+// happened here: finishing from inside a setIndex updater set state on the
+// parent mid-render and every test still went green.
+let consoleError: ReturnType<typeof vi.spyOn>;
+
 beforeEach(() => {
+  consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
   Element.prototype.getBoundingClientRect = function (this: Element) {
     return {
       top: 100,
@@ -43,12 +51,21 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  // Tear down before asserting, so one failure cannot leave stale targets
+  // behind and cascade into the next test.
+  const reactComplaints = consoleError.mock.calls.map((args) =>
+    args.map(String).join(" ")
+  );
+  consoleError.mockRestore();
+
   Element.prototype.getBoundingClientRect = originalRect;
   cleanup();
   // cleanup() unmounts React trees only; these targets are appended by hand.
   document
     .querySelectorAll("[data-guide], [data-guide-tab]")
     .forEach((el) => el.remove());
+
+  expect(reactComplaints).toEqual([]);
 });
 
 function mountTargets(options: { withComposer: boolean }) {
@@ -86,6 +103,25 @@ describe("TeacherSetupGuide", () => {
     // The last step commits rather than advancing into nothing.
     fireEvent.click(screen.getByRole("button", { name: "เริ่มใช้งาน" }));
     expect(onFinish).toHaveBeenCalledOnce();
+  });
+
+  it("finishes through its mount wrapper without setting state during render", async () => {
+    // Rendering the guide alone cannot surface this: the warning only fires
+    // when a render sets state on a *different* component, so the parent that
+    // owns the "done" flag has to be in the tree.
+    mountTargets({ withComposer: true });
+    const markSeen = vi.fn(() => Promise.resolve());
+    render(<TeacherSetupGuideMount markSeen={markSeen} />);
+
+    await waitFor(() =>
+      expect(screen.getByText("ขั้นที่ 1 จาก 3")).toBeInTheDocument()
+    );
+    fireEvent.click(screen.getByRole("button", { name: "ถัดไป" }));
+    fireEvent.click(screen.getByRole("button", { name: "ถัดไป" }));
+    fireEvent.click(screen.getByRole("button", { name: "เริ่มใช้งาน" }));
+
+    await waitFor(() => expect(markSeen).toHaveBeenCalledOnce());
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("skips a step whose control is not on the page", async () => {
