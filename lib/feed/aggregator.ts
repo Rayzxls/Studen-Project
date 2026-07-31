@@ -20,6 +20,10 @@ import { db } from "@/lib/db/client";
 import type { Session } from "@/lib/auth/permissions";
 import { getCourseScopeForUser } from "./scope";
 import {
+  publishedWhere,
+  type PublishAudience,
+} from "@/lib/publishing/visibility";
+import {
   getModerationRestrictions,
   moderationTargetKey,
 } from "@/lib/moderation/queries";
@@ -83,11 +87,15 @@ export async function getUserFeed(
   session: Session,
   cursor?: FeedCursor
 ): Promise<FeedPage> {
-  const { courseIds } = await getCourseScopeForUser(session);
+  const { courseIds, role } = await getCourseScopeForUser(session);
   if (courseIds.length === 0) {
     return { items: [], nextCursor: null };
   }
-  return aggregateFeed(courseIds, cursor);
+  return aggregateFeed(
+    courseIds,
+    role === "TEACHER" ? "AUTHOR" : "STUDENT",
+    cursor
+  );
 }
 
 /**
@@ -103,17 +111,22 @@ export async function getUserFeed(
  */
 export async function getCourseFeed(
   courseId: string,
+  audience: PublishAudience,
   cursor?: FeedCursor,
   kindFilter?: ReadonlySet<FeedKind>
 ): Promise<FeedPage> {
-  return aggregateFeed([courseId], cursor, kindFilter);
+  return aggregateFeed([courseId], audience, cursor, kindFilter);
 }
 
 async function aggregateFeed(
   courseIds: string[],
+  // Required rather than defaulted: a missing audience must be a compile error,
+  // not a silent fall through to showing a class unpublished work (ADR-0046).
+  audience: PublishAudience,
   cursor: FeedCursor | undefined,
   kindFilter?: ReadonlySet<FeedKind>
 ): Promise<FeedPage> {
+  const scheduled = publishedWhere(audience);
   const includeKind = (k: FeedKind) => !kindFilter || kindFilter.has(k);
 
   // The composite cursor: (sortAt, id). For descending order, the next
@@ -138,12 +151,21 @@ async function aggregateFeed(
         ? db.assignment.findMany({
             where: {
               courseOfferingId: courseInFilter,
-              ...(cursor && {
-                OR: [
-                  { createdAt: { lt: cursor.sortAt } },
-                  { createdAt: cursor.sortAt, id: { lt: cursor.id } },
-                ],
-              }),
+              // AND, not sibling spreads: the publish gate and the cursor are
+              // both an OR, and the second would silently replace the first.
+              AND: [
+                ...scheduled,
+                ...(cursor
+                  ? [
+                      {
+                        OR: [
+                          { createdAt: { lt: cursor.sortAt } },
+                          { createdAt: cursor.sortAt, id: { lt: cursor.id } },
+                        ],
+                      },
+                    ]
+                  : []),
+              ],
             },
             orderBy: [{ createdAt: "desc" }, { id: "desc" }],
             take: PAGE_SIZE,
@@ -178,12 +200,19 @@ async function aggregateFeed(
             where: {
               courseOfferingId: courseInFilter,
               deletedAt: null,
-              ...(cursor && {
-                OR: [
-                  { postedAt: { lt: cursor.sortAt } },
-                  { postedAt: cursor.sortAt, id: { lt: cursor.id } },
-                ],
-              }),
+              AND: [
+                ...scheduled,
+                ...(cursor
+                  ? [
+                      {
+                        OR: [
+                          { postedAt: { lt: cursor.sortAt } },
+                          { postedAt: cursor.sortAt, id: { lt: cursor.id } },
+                        ],
+                      },
+                    ]
+                  : []),
+              ],
             },
             orderBy: [{ postedAt: "desc" }, { id: "desc" }],
             take: PAGE_SIZE,
@@ -213,12 +242,19 @@ async function aggregateFeed(
             where: {
               courseOfferingId: courseInFilter,
               deletedAt: null,
-              ...(cursor && {
-                OR: [
-                  { postedAt: { lt: cursor.sortAt } },
-                  { postedAt: cursor.sortAt, id: { lt: cursor.id } },
-                ],
-              }),
+              AND: [
+                ...scheduled,
+                ...(cursor
+                  ? [
+                      {
+                        OR: [
+                          { postedAt: { lt: cursor.sortAt } },
+                          { postedAt: cursor.sortAt, id: { lt: cursor.id } },
+                        ],
+                      },
+                    ]
+                  : []),
+              ],
             },
             orderBy: [{ postedAt: "desc" }, { id: "desc" }],
             take: PAGE_SIZE,

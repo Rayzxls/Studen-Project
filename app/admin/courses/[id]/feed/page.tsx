@@ -27,7 +27,12 @@ export default async function AdminCourseFeedPage({
   const { type } = await searchParams;
   const filter = normalizeFilter(type);
   const kindFilter = feedKindsForFilter(filter);
-  const page = await getCourseFeed(id, undefined, kindFilter ?? undefined);
+  const page = await getCourseFeed(
+    id,
+    "STUDENT",
+    undefined,
+    kindFilter ?? undefined
+  );
 
   return (
     <div className="space-y-4">

@@ -935,6 +935,11 @@ model Assignment {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // Scheduled publishing (ADR-0046). Controls when the brief becomes visible,
+  // not when a mark does — the linked Score Item has its own publication.
+  publishAt  DateTime?
+  notifiedAt DateTime?
+
   submissions Submission[]
 
   @@index([courseOfferingId, createdAt])
@@ -1205,6 +1210,10 @@ model Material {
   postedBy   User     @relation("MaterialAuthor", fields: [postedById], references: [id], onDelete: Restrict)
   postedAt   DateTime @default(now())
 
+  // Scheduled publishing (ADR-0046); null means visible immediately.
+  publishAt  DateTime?
+  notifiedAt DateTime?
+
   // Soft-delete — `MATERIAL_DELETED` Important audit fires here per
   // Q4.2 (edit free + Verbose, delete = Important).
   deletedAt     DateTime?
@@ -1234,6 +1243,12 @@ model Announcement {
   postedById String
   postedBy   User     @relation("AnnouncementAuthor", fields: [postedById], references: [id], onDelete: Restrict)
   postedAt   DateTime @default(now())
+
+  // Scheduled publishing (ADR-0046). Null means visible as soon as it exists,
+  // which is what every row created before this feature means.
+  publishAt  DateTime?
+  // Set once the publish fan-out has run, so a re-run cannot notify twice.
+  notifiedAt DateTime?
 
   deletedAt     DateTime?
   deletedById   String?

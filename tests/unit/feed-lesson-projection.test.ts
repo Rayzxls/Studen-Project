@@ -58,7 +58,7 @@ describe("Course Feed Lesson projection", () => {
       },
     ]);
 
-    const page = await getCourseFeed("course-1");
+    const page = await getCourseFeed("course-1", "AUTHOR");
 
     expect(mocks.findAssignments).toHaveBeenCalledWith(
       expect.objectContaining({
