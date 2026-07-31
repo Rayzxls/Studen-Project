@@ -28,6 +28,21 @@ export async function shouldShowTour(input: {
 }
 
 /**
+ * Forgets every walkthrough this person has finished, so the tours run again
+ * from the start on their next visit to each surface.
+ *
+ * Exists because a tour is otherwise a one-shot: without this, seeing it a
+ * second time — to check a change, or simply because the person wants the
+ * reminder — would mean a new account.
+ */
+export async function resetToursForUser(userId: string): Promise<number> {
+  const { count } = await db.guideTourCompletion.deleteMany({
+    where: { userId },
+  });
+  return count;
+}
+
+/**
  * Records that a walkthrough is done. Idempotent, so finishing it in two open
  * tabs keeps the first timestamp rather than moving it.
  */

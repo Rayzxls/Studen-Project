@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import {
   AtSign,
+  Compass,
   KeyRound,
   Link2,
   Palette,
@@ -19,6 +20,8 @@ import { DeleteAccountForm } from "@/components/profile/delete-account-form";
 import { SetFallbackPasswordForm } from "@/components/profile/set-fallback-password-form";
 import { ChangeEmailForm } from "@/components/profile/change-email-form";
 import { ThemeModeControl } from "@/components/theme/theme-mode-control";
+import { ReplayToursForm } from "@/components/guide/replay-tours-form";
+import { replayGuideToursAction } from "@/app/dashboard/guide-actions";
 import { startGoogleLinkAction } from "./actions";
 
 /** Feedback for the Google-link round-trip, keyed by the `?linked=` status. */
@@ -210,6 +213,22 @@ export default async function ProfilePage({
               ))}
             </div>
             <p className="hidden">เร็ว ๆ นี้ — โหมดมืดกำลังมา</p>
+          </section>
+
+          {/* Walkthroughs — replay the guided tours. */}
+          <section className="card p-6">
+            <h2
+              className="flex items-center gap-2 text-base font-semibold text-black"
+              style={{ letterSpacing: "-0.01em" }}
+            >
+              <Compass className="h-4 w-4 text-black/40" aria-hidden="true" />
+              คำแนะนำการใช้งาน
+            </h2>
+            <p className="mt-1 text-xs text-black/50">
+              คำแนะนำแบบชี้ทีละจุดจะขึ้นครั้งเดียวตอนเริ่มใช้งาน
+              กดปุ่มนี้เพื่อดูใหม่ตั้งแต่ต้น ทั้งบนหน้าแรกและในหน้าวิชา
+            </p>
+            <ReplayToursForm replay={replayGuideToursAction} />
           </section>
 
           {/* Security */}
