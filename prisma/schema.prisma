@@ -112,6 +112,7 @@ model User {
   teacherInvitesCreated   TeacherInvite[]         @relation("TeacherInviteCreator")
   teacherInvitesAccepted  TeacherInvite[]         @relation("TeacherInviteAcceptedBy")
   teacherInvitesRevoked   TeacherInvite[]         @relation("TeacherInviteRevokedBy")
+  guideToursCompleted     GuideTourCompletion[]
 
   @@index([role])
   @@index([accountStatus])
@@ -339,18 +340,30 @@ model Admin {
   lastName  String
 }
 
+/// One row per guided walkthrough a person has finished or dismissed.
+///
+/// Keyed by tour rather than a flag per feature, because the walkthroughs are
+/// per role and per surface (dashboard, inside a course) and more will follow;
+/// a column per tour would mean a migration each time. Stored server-side so a
+/// tour does not return after a cache clear or on another device.
+///
+/// A tour that is removed from the product simply stops being looked up; its
+/// rows are harmless history.
+model GuideTourCompletion {
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tourId String
+  seenAt DateTime @default(now())
+
+  @@id([userId, tourId])
+}
+
 model Teacher {
   userId    String @id
   user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   firstName String
   lastName  String
   email     String @unique
-
-  // When the first-course setup walkthrough was finished or dismissed. Null
-  // means it has not been shown yet. Stored per teacher rather than in the
-  // browser so it survives a device change and does not reappear after a cache
-  // clear.
-  setupGuideSeenAt DateTime?
 
   courses CourseOffering[]
 }
