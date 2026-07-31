@@ -67,11 +67,17 @@ export default async function StudentPastCoursesPage() {
               {enrollments.map((enrollment) => {
                 const { course } = enrollment;
                 const metadata = courseMetadataParts(course);
-                // Leaving is the student's own action; archiving is the
-                // teacher's. Saying which happened saves them asking.
-                const endedByTeacher =
-                  enrollment.removedAt === null && course.archivedAt !== null;
+                // Three different things end an enrolment and they read very
+                // differently: the student left, a teacher removed them, or the
+                // whole course was cancelled. Guessing would be worse than
+                // silence, so each case says exactly what happened.
                 const endedOn = enrollment.removedAt ?? course.archivedAt;
+                const endedLabel =
+                  enrollment.removedAt === null
+                    ? "ครูปิดวิชา"
+                    : enrollment.removedById === session.user.id
+                      ? "คุณออกจากวิชา"
+                      : "ครูนำคุณออกจากห้อง";
 
                 return (
                   <li key={enrollment.id} className="card p-5">
@@ -89,7 +95,7 @@ export default async function StudentPastCoursesPage() {
                       </div>
                       {endedOn && (
                         <span className="shrink-0 text-xs text-ink-mute">
-                          {endedByTeacher ? "ครูปิดวิชา" : "คุณออกจากวิชา"}
+                          {endedLabel}
                           {" · "}
                           {dateFormat.format(endedOn)}
                         </span>
