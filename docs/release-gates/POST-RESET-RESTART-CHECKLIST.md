@@ -1,10 +1,31 @@
 # Post-Reset Restart Checklist
 
-**Status:** Open
+**Status:** Closed 2026-07-31
 **Updated:** 2026-07-31
 **Scope:** bringing the emptied Production instance back into service after the
 2026-07-29 D0/D1 cutover and the separately authorized full application-data
 reset
+
+## Outcome
+
+The owner completed every step and confirmed it on 2026-07-31. Two results were
+also verified externally, without an authenticated session:
+
+- Quiz routes for the restored course moved from `404` to the authentication
+  redirect, and ids that never existed do the same, so the deployment carries
+  the ADR-0045 code and no allowlist remains in force.
+- The Lesson Workspace routes behave the same way, confirming that
+  `LESSON_WORKSPACE_PILOT_COURSE_IDS` is not restricting Production. That gate
+  treats an absent value as "every course", so it never had the failure mode
+  that stranded Quiz.
+
+`RESEND_API_KEY` and `RESEND_FROM` were configured on 2026-07-26, before this
+checklist was written; the note below about them being absent was based on the
+local `.env.local` and did not describe Production. `RESEND_API_KEY` is scoped
+to Production only, so Preview and Development deployments still fall back to
+the log-only sender, which is the intended behavior rather than a gap.
+
+The steps below are kept as the record of what the restart required.
 
 ## Starting state
 

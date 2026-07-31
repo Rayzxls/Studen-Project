@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth/guards";
 import {
   regenerateClassCode,
@@ -310,8 +311,19 @@ export async function archiveCourseAction(
     throw err;
   }
 
+  // Deliberately not revalidateAll: every course-scoped path it lists stops
+  // resolving the moment the course is archived, because the teacher queries
+  // filter on `archivedAt: null`. Revalidating the settings page the teacher is
+  // standing on makes the action response re-render it, and that render calls
+  // notFound() — so archiving from Settings showed a 404 before any
+  // client-side redirect could run.
   revalidatePath("/dashboard");
   revalidatePath("/teacher/courses");
-  revalidateAll(courseId);
-  return { ok: true };
+  revalidatePath("/teacher/timetable");
+  revalidatePath("/student/timetable");
+
+  // Redirecting from the server moves the browser off the archived course
+  // before its pages can be rendered again, which is what makes this safe from
+  // Settings as well as from a course card.
+  redirect("/teacher/courses");
 }

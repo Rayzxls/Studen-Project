@@ -1,8 +1,16 @@
 import { notFound, redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth/guards";
-import { getCourseOfferingForTeacher } from "@/lib/course/queries";
+import {
+  courseHasTimetableSlot,
+  getCourseOfferingForTeacher,
+} from "@/lib/course/queries";
 import { getCourseFeed } from "@/lib/feed/aggregator";
 import { CourseShell } from "@/components/course/course-shell";
+import { TimetableSetupHint } from "@/components/course/timetable-setup-hint";
+import { GuideTourMount } from "@/components/guide/guide-tour-mount";
+import { shouldShowTour } from "@/lib/guide/completion";
+import { tourById } from "@/lib/guide/tours";
+import { markGuideTourSeenAction } from "@/app/dashboard/guide-actions";
 import {
   CourseFeedView,
   feedKindsForFilter,
@@ -42,7 +50,15 @@ export default async function TeacherCourseFeedPage({
 
   const filter = normalizeFilter(type);
   const kindFilter = feedKindsForFilter(filter);
-  const page = await getCourseFeed(id, undefined, kindFilter ?? undefined);
+  const [page, hasTimetable, showSetupGuide] = await Promise.all([
+    getCourseFeed(id, undefined, kindFilter ?? undefined),
+    courseHasTimetableSlot(id),
+    shouldShowTour({
+      userId: session.user.id,
+      tourId: "teacher-course",
+      eligible: true,
+    }),
+  ]);
   const lessonWorkspace = lessonWorkspaceCourseEnabled(id)
     ? await getLessonWorkspaceForViewer({
         courseOfferingId: id,
@@ -63,6 +79,14 @@ export default async function TeacherCourseFeedPage({
       tabs={teacherCourseTabs(id)}
     >
       <div className="space-y-4">
+        {showSetupGuide && (
+          <GuideTourMount
+            tourId="teacher-course"
+            steps={tourById("teacher-course").steps}
+            markSeen={markGuideTourSeenAction}
+          />
+        )}
+        {!hasTimetable && <TimetableSetupHint courseId={id} />}
         <div className="flex items-center justify-end">
           <UnifiedComposer
             courseId={id}

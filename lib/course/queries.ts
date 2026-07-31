@@ -89,3 +89,19 @@ export async function getCourseOfferingForStudent(
     },
   });
 }
+
+/**
+ * Whether a course has any teaching time on the timetable yet. Attendance
+ * sessions hang off a TimetableSlot, so a course without one cannot take a roll
+ * call or appear on anyone's timetable — which is easy to miss right after
+ * creating a course, since nothing else about it looks unfinished.
+ */
+export async function courseHasTimetableSlot(
+  courseOfferingId: string
+): Promise<boolean> {
+  const slot = await db.timetableSlot.findFirst({
+    where: { courseOfferingId },
+    select: { id: true },
+  });
+  return slot !== null;
+}

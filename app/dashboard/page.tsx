@@ -41,6 +41,10 @@ import {
   DashboardSectionHeading,
 } from "@/components/dashboard/operating-shell";
 import { moderationCenterEnabled } from "@/lib/moderation/feature-flags";
+import { GuideTourMount } from "@/components/guide/guide-tour-mount";
+import { shouldShowTour } from "@/lib/guide/completion";
+import { tourById, type TourId } from "@/lib/guide/tours";
+import { markGuideTourSeenAction } from "./guide-actions";
 import {
   courseAcademicPeriod,
   courseLearnerGroup,
@@ -99,6 +103,17 @@ export default async function DashboardPage() {
   });
   const hasAvatar = user.profileImageId !== null;
 
+  // The dashboard tour is the first thing either role should meet, so it is not
+  // gated on having any courses yet — an empty dashboard is exactly when
+  // knowing where things live helps most.
+  const dashboardTour: TourId =
+    user.role === "TEACHER" ? "teacher-dashboard" : "student-dashboard";
+  const showDashboardTour = await shouldShowTour({
+    userId: session.user.id,
+    tourId: dashboardTour,
+    eligible: true,
+  });
+
   return (
     <div className="min-h-screen bg-bg">
       <TopNav
@@ -109,6 +124,14 @@ export default async function DashboardPage() {
       />
 
       <main className="mx-auto max-w-[1480px] animate-fade-in px-4 py-8 sm:px-6 md:py-10">
+        {showDashboardTour && (
+          <GuideTourMount
+            tourId={dashboardTour}
+            steps={tourById(dashboardTour).steps}
+            markSeen={markGuideTourSeenAction}
+          />
+        )}
+
         {user.role === "STUDENT" && (
           <StudentDashboard
             session={session}
@@ -230,6 +253,7 @@ async function StudentDashboard({
             <div className="flex flex-wrap gap-2">
               <Link
                 href="/join"
+                data-guide="student-join"
                 className="inline-flex min-h-9 items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm transition-colors hover:bg-blue-50 hover:no-underline"
               >
                 <Plus className="h-4 w-4" aria-hidden="true" />

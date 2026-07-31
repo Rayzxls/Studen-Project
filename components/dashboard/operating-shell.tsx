@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import {
+  Archive,
   BookOpen,
   CalendarDays,
   ChevronRight,
@@ -24,6 +25,11 @@ function navigationFor(role: DashboardRole, showModeration: boolean) {
     role === "student"
       ? [
           { href: "/student/courses", label: "ห้องเรียน", icon: BookOpen },
+          {
+            href: "/student/courses/archived",
+            label: "วิชาที่จบไป",
+            icon: Archive,
+          },
           { href: "/student/terms", label: "ผลการเรียน", icon: GraduationCap },
           {
             href: "/student/timetable",
@@ -33,6 +39,11 @@ function navigationFor(role: DashboardRole, showModeration: boolean) {
         ]
       : [
           { href: "/teacher/courses", label: "วิชาที่สอน", icon: BookOpen },
+          {
+            href: "/teacher/courses/archived",
+            label: "วิชาที่ยกเลิก",
+            icon: Archive,
+          },
           {
             href: "/teacher/timetable",
             label: "ตารางสอน",
@@ -73,6 +84,7 @@ export function DashboardNavigationRail({
             href={href}
             title={label}
             aria-current={active ? "page" : undefined}
+            data-guide-nav={href}
             className={`group/item flex h-12 min-w-12 items-center gap-3 overflow-hidden rounded-xl px-3 transition-all duration-200 hover:no-underline ${
               active
                 ? "bg-blue-600 text-white shadow-sm"

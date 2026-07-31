@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CalendarDays, ChevronLeft, Plus } from "lucide-react";
+import { Archive, CalendarDays, ChevronLeft, Plus } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
-import { listTeacherCourses } from "@/lib/course/enrollment";
+import {
+  countArchivedTeacherCourses,
+  listTeacherCourses,
+} from "@/lib/course/enrollment";
 import { TopNav } from "@/components/layout/top-nav";
 import { StudentBottomNav } from "@/components/layout/student-bottom-nav";
 import {
@@ -27,8 +30,9 @@ export default async function TeacherCoursesPage() {
     redirect("/dashboard");
   }
 
-  const [courses, me] = await Promise.all([
+  const [courses, archivedCount, me] = await Promise.all([
     listTeacherCourses(session.user.id),
+    countArchivedTeacherCourses(session.user.id),
     db.user.findUnique({
       where: { id: session.user.id },
       select: { profileImageId: true },
@@ -64,6 +68,15 @@ export default async function TeacherCoursesPage() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            {archivedCount > 0 && (
+              <Link
+                href="/teacher/courses/archived"
+                className="btn-secondary btn-sm"
+              >
+                <Archive className="h-4 w-4" aria-hidden="true" />
+                วิชาที่ยกเลิก ({archivedCount})
+              </Link>
+            )}
             <Link href="/teacher/timetable" className="btn-secondary btn-sm">
               <CalendarDays className="h-4 w-4" aria-hidden="true" />
               ตารางสอน

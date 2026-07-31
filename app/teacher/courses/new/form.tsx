@@ -148,8 +148,10 @@ export function CreateCourseForm() {
         )}
       </div>
 
+      {/* red-200 is not in the theme scale, so it stayed Tailwind's default
+          pink in every mode — a bright edge around the dark error box. */}
       {state.error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="rounded-lg border border-red-500/30 bg-red-50 px-3 py-2 text-sm text-red-700">
           {state.error}
         </div>
       )}

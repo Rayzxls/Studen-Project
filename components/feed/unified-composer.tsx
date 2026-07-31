@@ -102,7 +102,12 @@ export function UnifiedComposer({
 
   return (
     <>
-      <button type="button" onClick={open} className="btn-primary btn-sm">
+      <button
+        type="button"
+        onClick={open}
+        data-guide="course-composer"
+        className="btn-primary btn-sm"
+      >
         <Plus className="mr-1 inline h-4 w-4" />
         สร้างใหม่
       </button>

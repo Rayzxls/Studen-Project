@@ -544,6 +544,44 @@ export async function listStudentCourses(studentUserId: string) {
 }
 
 /** List a teacher's CourseOfferings (member count = active members only). */
+/**
+ * Archived courses a teacher owns, newest cancellation first. Archiving hides a
+ * course from every active surface, so without this the work simply disappears;
+ * this is the record of what was cancelled and why, not a workspace — the
+ * course-scoped pages stay closed while `archivedAt` is set.
+ */
+export async function listArchivedTeacherCourses(teacherUserId: string) {
+  return db.courseOffering.findMany({
+    where: { teacherId: teacherUserId, archivedAt: { not: null } },
+    orderBy: { archivedAt: "desc" },
+    select: {
+      id: true,
+      name: true,
+      subjectCode: true,
+      learnerGroupLabel: true,
+      academicPeriodLabel: true,
+      creditHours: true,
+      createdAt: true,
+      archivedAt: true,
+      archivedReason: true,
+      _count: {
+        select: {
+          enrollments: { where: { removedAt: null } },
+          assignments: true,
+        },
+      },
+    },
+  });
+}
+
+export async function countArchivedTeacherCourses(
+  teacherUserId: string
+): Promise<number> {
+  return db.courseOffering.count({
+    where: { teacherId: teacherUserId, archivedAt: { not: null } },
+  });
+}
+
 export async function listTeacherCourses(teacherUserId: string) {
   return db.courseOffering.findMany({
     where: { teacherId: teacherUserId, archivedAt: null },
@@ -572,6 +610,56 @@ export async function listTeacherCourses(teacherUserId: string) {
           assignments: true,
         },
       },
+    },
+  });
+}
+
+/**
+ * Courses a student is no longer in: ones they left, and ones the teacher
+ * cancelled. Both vanish from every active surface, so without this the work a
+ * student did in them has no route back — the same gap teachers had before
+ * the archived-courses page.
+ */
+export async function listPastStudentCourses(studentUserId: string) {
+  return db.enrollment.findMany({
+    where: {
+      studentId: studentUserId,
+      OR: [
+        { removedAt: { not: null } },
+        { course: { archivedAt: { not: null } } },
+      ],
+    },
+    orderBy: { enrolledAt: "desc" },
+    select: {
+      id: true,
+      enrolledAt: true,
+      removedAt: true,
+      course: {
+        select: {
+          id: true,
+          name: true,
+          subjectCode: true,
+          learnerGroupLabel: true,
+          academicPeriodLabel: true,
+          creditHours: true,
+          archivedAt: true,
+          teacher: { select: { firstName: true, lastName: true } },
+        },
+      },
+    },
+  });
+}
+
+export async function countPastStudentCourses(
+  studentUserId: string
+): Promise<number> {
+  return db.enrollment.count({
+    where: {
+      studentId: studentUserId,
+      OR: [
+        { removedAt: { not: null } },
+        { course: { archivedAt: { not: null } } },
+      ],
     },
   });
 }
