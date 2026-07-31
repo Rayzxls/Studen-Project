@@ -140,6 +140,23 @@ describe("GuideTour", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
+  it("advances one step when Enter activates the focused button", async () => {
+    // The advance button is autofocused, so the browser activates it on Enter.
+    // A document-level Enter handler ran alongside that and skipped a step.
+    mountTargets({ withBeta: true });
+    render(<GuideTour steps={STEPS} onFinish={vi.fn()} />);
+
+    await waitFor(() =>
+      expect(screen.getByText("ขั้นที่ 1 จาก 3")).toBeInTheDocument()
+    );
+
+    const advance = screen.getByRole("button", { name: "ถัดไป" });
+    fireEvent.keyDown(advance, { key: "Enter", bubbles: true });
+    fireEvent.click(advance);
+
+    expect(screen.getByText("ขั้นที่ 2 จาก 3")).toBeInTheDocument();
+  });
+
   it("skips a step whose control is not on the page", async () => {
     // The tab bar is built from feature flags, so a step can point at a control
     // that does not exist for this course. It must not show an empty spotlight.

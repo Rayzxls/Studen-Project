@@ -109,9 +109,12 @@ export function GuideTour({
 
   useEffect(() => {
     if (steps.length === 0) return;
+    // Enter is deliberately not handled here. The advance button is focused, so
+    // the browser already activates it on Enter; handling the key here as well
+    // ran `next` twice and skipped a step.
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") finish();
-      if (event.key === "Enter" || event.key === "ArrowRight") next();
+      if (event.key === "ArrowRight") next();
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
