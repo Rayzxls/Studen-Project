@@ -623,7 +623,7 @@ export async function listTeacherCourses(teacherUserId: string) {
 export async function listPastStudentCourses(studentUserId: string) {
   return db.enrollment.findMany({
     where: {
-      studentId: studentUserId,
+      studentId: studentUserId, // dependency-gate-allow(student-id-symbol-review): internal Enrollment foreign key to User.id, not a retired human identifier
       OR: [
         { removedAt: { not: null } },
         { course: { archivedAt: { not: null } } },
@@ -634,6 +634,9 @@ export async function listPastStudentCourses(studentUserId: string) {
       id: true,
       enrolledAt: true,
       removedAt: true,
+      // Who ended the enrolment: the student themselves, or a teacher removing
+      // them. The two read very differently to the person looking at the page.
+      removedById: true,
       course: {
         select: {
           id: true,
@@ -655,7 +658,7 @@ export async function countPastStudentCourses(
 ): Promise<number> {
   return db.enrollment.count({
     where: {
-      studentId: studentUserId,
+      studentId: studentUserId, // dependency-gate-allow(student-id-symbol-review): internal Enrollment foreign key to User.id, not a retired human identifier
       OR: [
         { removedAt: { not: null } },
         { course: { archivedAt: { not: null } } },
