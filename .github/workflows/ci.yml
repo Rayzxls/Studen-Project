@@ -38,6 +38,73 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
 
+  dependency-gate:
+    name: Dependency Gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      # Counts references to retired concepts and fails on any increase. It was
+      # previously local-only, so a change could add new ones and merge clean —
+      # which happened on 2026-07-31.
+      - run: pnpm qa:release:dependencies
+
+  test-integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    # A disposable Postgres in the runner rather than the shared Neon QA branch:
+    # no database credentials in CI, no way to reach Production, and concurrent
+    # pull requests cannot corrupt each other's data.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: beagle
+          POSTGRES_PASSWORD: beagle
+          POSTGRES_DB: beagle_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # The runner's own database is the QA target. DATABASE_URL is a
+      # deliberately unreachable placeholder: the isolation guard refuses to run
+      # unless the two differ, and nothing ever connects to it.
+      QA_DATABASE_URL: postgresql://beagle:beagle@localhost:5432/beagle_ci
+      DATABASE_URL: postgresql://unused:unused@127.0.0.1:5433/no-such-database
+      AUTH_SECRET: ci-only-secret-at-least-32-characters-long
+      IDENTITY_FOUNDATION_ENABLED: "1"
+      IDENTITY_FOUNDATION_MUTATIONS_ENABLED: "1"
+      IDENTITY_TERMS_VERSION: ci-terms-v1
+      IDENTITY_PRIVACY_VERSION: ci-privacy-v1
+      QUIZ_ENABLED: "1"
+      QUIZ_MUTATIONS_ENABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - name: Apply migrations to the runner database
+        run: pnpm exec prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://beagle:beagle@localhost:5432/beagle_ci
+      - run: pnpm test:integration:ci
+
   build:
     name: Build
     runs-on: ubuntu-latest
