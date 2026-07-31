@@ -62,6 +62,7 @@
     "@aws-sdk/client-s3": "^3.1061.0",
     "@aws-sdk/s3-request-presigner": "^3.1061.0",
     "@prisma/client": "^6.19.3",
+    "@sentry/nextjs": "^10.69.0",
     "bcryptjs": "^3.0.3",
     "file-type": "^22.0.1",
     "framer-motion": "^12.40.0",
