@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ChevronLeft, LogIn } from "lucide-react";
+import { Archive, ChevronLeft, LogIn } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
-import { listStudentCourses } from "@/lib/course/enrollment";
+import {
+  countPastStudentCourses,
+  listStudentCourses,
+} from "@/lib/course/enrollment";
 import { getStudentActionCenter } from "@/lib/dashboard/action-center";
 import { TopNav } from "@/components/layout/top-nav";
 import { StudentBottomNav } from "@/components/layout/student-bottom-nav";
@@ -27,9 +30,10 @@ export default async function StudentCoursesPage() {
     redirect("/dashboard");
   }
 
-  const [courses, actionCenter] = await Promise.all([
+  const [courses, actionCenter, pastCount] = await Promise.all([
     listStudentCourses(session.user.id),
     getStudentActionCenter(session.user.id),
+    countPastStudentCourses(session.user.id),
   ]);
   const dueByCourse = countBy(actionCenter.due, (item) => item.courseId);
   const returnedByCourse = countBy(
@@ -67,10 +71,21 @@ export default async function StudentCoursesPage() {
               รวมทุกวิชาที่เข้าร่วม งานที่ต้องจัดการ และทางเข้าแต่ละห้องเรียน
             </p>
           </div>
-          <Link href="/join" className="btn-primary btn-sm">
-            <LogIn className="h-4 w-4" aria-hidden="true" />
-            เข้าร่วมด้วยรหัส
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            {pastCount > 0 && (
+              <Link
+                href="/student/courses/archived"
+                className="btn-secondary btn-sm"
+              >
+                <Archive className="h-4 w-4" aria-hidden="true" />
+                วิชาที่จบไป ({pastCount})
+              </Link>
+            )}
+            <Link href="/join" className="btn-primary btn-sm">
+              <LogIn className="h-4 w-4" aria-hidden="true" />
+              เข้าร่วมด้วยรหัส
+            </Link>
+          </div>
         </div>
 
         <section className="mt-7">

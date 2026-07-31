@@ -613,3 +613,53 @@ export async function listTeacherCourses(teacherUserId: string) {
     },
   });
 }
+
+/**
+ * Courses a student is no longer in: ones they left, and ones the teacher
+ * cancelled. Both vanish from every active surface, so without this the work a
+ * student did in them has no route back — the same gap teachers had before
+ * the archived-courses page.
+ */
+export async function listPastStudentCourses(studentUserId: string) {
+  return db.enrollment.findMany({
+    where: {
+      studentId: studentUserId,
+      OR: [
+        { removedAt: { not: null } },
+        { course: { archivedAt: { not: null } } },
+      ],
+    },
+    orderBy: { enrolledAt: "desc" },
+    select: {
+      id: true,
+      enrolledAt: true,
+      removedAt: true,
+      course: {
+        select: {
+          id: true,
+          name: true,
+          subjectCode: true,
+          learnerGroupLabel: true,
+          academicPeriodLabel: true,
+          creditHours: true,
+          archivedAt: true,
+          teacher: { select: { firstName: true, lastName: true } },
+        },
+      },
+    },
+  });
+}
+
+export async function countPastStudentCourses(
+  studentUserId: string
+): Promise<number> {
+  return db.enrollment.count({
+    where: {
+      studentId: studentUserId,
+      OR: [
+        { removedAt: { not: null } },
+        { course: { archivedAt: { not: null } } },
+      ],
+    },
+  });
+}
