@@ -8,6 +8,10 @@ import {
   feedKindsForFilter,
   type CourseFeedFilter,
 } from "@/components/feed/course-feed-view";
+import { GuideTourMount } from "@/components/guide/guide-tour-mount";
+import { shouldShowTour } from "@/lib/guide/completion";
+import { tourById } from "@/lib/guide/tours";
+import { markGuideTourSeenAction } from "@/app/dashboard/guide-actions";
 import { studentCourseTabs } from "../_tabs";
 
 // Auth-gated DB-fetching page — skip static prerender.
@@ -37,7 +41,14 @@ export default async function StudentCourseFeedPage({
 
   const filter = normalizeFilter(type);
   const kindFilter = feedKindsForFilter(filter);
-  const page = await getCourseFeed(id, undefined, kindFilter ?? undefined);
+  const [page, showTour] = await Promise.all([
+    getCourseFeed(id, undefined, kindFilter ?? undefined),
+    shouldShowTour({
+      userId: guard.session.user.id,
+      tourId: "student-course",
+      eligible: true,
+    }),
+  ]);
 
   return (
     <CourseShell
@@ -47,12 +58,21 @@ export default async function StudentCourseFeedPage({
       backHref="/dashboard"
       tabs={studentCourseTabs(id)}
     >
-      <CourseFeedView
-        items={page.items}
-        courseId={id}
-        role="STUDENT"
-        filter={filter}
-      />
+      <div className="space-y-4">
+        {showTour && (
+          <GuideTourMount
+            tourId="student-course"
+            steps={tourById("student-course").steps}
+            markSeen={markGuideTourSeenAction}
+          />
+        )}
+        <CourseFeedView
+          items={page.items}
+          courseId={id}
+          role="STUDENT"
+          filter={filter}
+        />
+      </div>
     </CourseShell>
   );
 }

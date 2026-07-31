@@ -7,8 +7,18 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { TeacherSetupGuide } from "@/components/course/teacher-setup-guide";
-import { TeacherSetupGuideMount } from "@/components/course/teacher-setup-guide-mount";
+import { GuideTour } from "@/components/guide/guide-tour";
+import { GuideTourMount } from "@/components/guide/guide-tour-mount";
+import type { TourStep } from "@/lib/guide/tours";
+
+// A fixture rather than a real tour: these cover the engine, and coupling them
+// to shipped copy would break every test on a wording change. Real tour content
+// is checked separately in guide-tours.test.ts.
+const STEPS: readonly TourStep[] = [
+  { selector: '[data-guide="alpha"]', title: "หนึ่ง", body: "ขั้นแรก" },
+  { selector: '[data-guide="beta"]', title: "สอง", body: "ขั้นที่สอง" },
+  { selector: '[data-guide-tab="gamma"]', title: "สาม", body: "ขั้นสุดท้าย" },
+];
 
 // jsdom performs no layout, so every element measures 0×0 and the guide would
 // treat all of its targets as missing. Give elements a size so the geometry
@@ -68,32 +78,32 @@ afterEach(() => {
   expect(reactComplaints).toEqual([]);
 });
 
-function mountTargets(options: { withComposer: boolean }) {
-  const tabs = document.createElement("nav");
-  tabs.setAttribute("data-guide", "course-tabs");
-  document.body.append(tabs);
+function mountTargets(options: { withBeta: boolean }) {
+  const alpha = document.createElement("nav");
+  alpha.setAttribute("data-guide", "alpha");
+  document.body.append(alpha);
 
-  if (options.withComposer) {
-    const composer = document.createElement("button");
-    composer.setAttribute("data-guide", "course-composer");
-    document.body.append(composer);
+  if (options.withBeta) {
+    const beta = document.createElement("button");
+    beta.setAttribute("data-guide", "beta");
+    document.body.append(beta);
   }
 
-  const settingsTab = document.createElement("a");
-  settingsTab.setAttribute("data-guide-tab", "settings");
-  document.body.append(settingsTab);
+  const gamma = document.createElement("a");
+  gamma.setAttribute("data-guide-tab", "gamma");
+  document.body.append(gamma);
 }
 
-describe("TeacherSetupGuide", () => {
+describe("GuideTour", () => {
   it("walks every present step and reports completion once", async () => {
-    mountTargets({ withComposer: true });
+    mountTargets({ withBeta: true });
     const onFinish = vi.fn();
-    render(<TeacherSetupGuide onFinish={onFinish} />);
+    render(<GuideTour steps={STEPS} onFinish={onFinish} />);
 
     await waitFor(() =>
       expect(screen.getByText("ขั้นที่ 1 จาก 3")).toBeInTheDocument()
     );
-    expect(screen.getByText("ทุกอย่างของวิชาอยู่ในแถบนี้")).toBeInTheDocument();
+    expect(screen.getByText("หนึ่ง")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "ถัดไป" }));
     expect(screen.getByText("ขั้นที่ 2 จาก 3")).toBeInTheDocument();
 
@@ -109,9 +119,15 @@ describe("TeacherSetupGuide", () => {
     // Rendering the guide alone cannot surface this: the warning only fires
     // when a render sets state on a *different* component, so the parent that
     // owns the "done" flag has to be in the tree.
-    mountTargets({ withComposer: true });
+    mountTargets({ withBeta: true });
     const markSeen = vi.fn(() => Promise.resolve());
-    render(<TeacherSetupGuideMount markSeen={markSeen} />);
+    render(
+      <GuideTourMount
+        tourId="teacher-course"
+        steps={STEPS}
+        markSeen={markSeen}
+      />
+    );
 
     await waitFor(() =>
       expect(screen.getByText("ขั้นที่ 1 จาก 3")).toBeInTheDocument()
@@ -127,22 +143,20 @@ describe("TeacherSetupGuide", () => {
   it("skips a step whose control is not on the page", async () => {
     // The tab bar is built from feature flags, so a step can point at a control
     // that does not exist for this course. It must not show an empty spotlight.
-    mountTargets({ withComposer: false });
-    render(<TeacherSetupGuide onFinish={vi.fn()} />);
+    mountTargets({ withBeta: false });
+    render(<GuideTour steps={STEPS} onFinish={vi.fn()} />);
 
     await waitFor(() =>
       expect(screen.getByText("ขั้นที่ 1 จาก 2")).toBeInTheDocument()
     );
     fireEvent.click(screen.getByRole("button", { name: "ถัดไป" }));
-    expect(
-      screen.getByText("รหัสเข้าห้องและเวลาเรียนอยู่ในตั้งค่า")
-    ).toBeInTheDocument();
+    expect(screen.getByText("สาม")).toBeInTheDocument();
   });
 
   it("lets the teacher leave early", async () => {
-    mountTargets({ withComposer: true });
+    mountTargets({ withBeta: true });
     const onFinish = vi.fn();
-    render(<TeacherSetupGuide onFinish={onFinish} />);
+    render(<GuideTour steps={STEPS} onFinish={onFinish} />);
 
     await waitFor(() =>
       expect(screen.getByText("ขั้นที่ 1 จาก 3")).toBeInTheDocument()

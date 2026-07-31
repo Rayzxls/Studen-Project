@@ -1,18 +1,24 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { TeacherSetupGuide } from "./teacher-setup-guide";
+
+import type { TourId, TourStep } from "@/lib/guide/tours";
+import { GuideTour } from "./guide-tour";
 
 /**
- * Bridges the walkthrough to its Server Action. The overlay closes as soon as
- * the teacher finishes or skips, without waiting for the write — the write only
- * decides whether it returns on a later visit, so making them wait for it would
- * be latency with nothing behind it.
+ * Bridges a walkthrough to its Server Action. The overlay closes as soon as the
+ * person finishes or skips, without waiting for the write — the write only
+ * decides whether the tour returns on a later visit, so making them wait for it
+ * would be latency with nothing behind it.
  */
-export function TeacherSetupGuideMount({
+export function GuideTourMount({
+  tourId,
+  steps,
   markSeen,
 }: {
-  markSeen: () => Promise<void>;
+  tourId: TourId;
+  steps: readonly TourStep[];
+  markSeen: (tourId: TourId) => Promise<void>;
 }) {
   const [done, setDone] = useState(false);
   const [, startTransition] = useTransition();
@@ -20,11 +26,12 @@ export function TeacherSetupGuideMount({
   if (done) return null;
 
   return (
-    <TeacherSetupGuide
+    <GuideTour
+      steps={steps}
       onFinish={() => {
         setDone(true);
         startTransition(() => {
-          void markSeen();
+          void markSeen(tourId);
         });
       }}
     />

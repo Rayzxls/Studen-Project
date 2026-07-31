@@ -9,7 +9,6 @@ import { createAnnouncement } from "@/lib/announcement/announcement";
 import { ZodError } from "zod";
 import { HttpError, ValidationError } from "@/lib/errors";
 import { lessonWorkspaceCourseMutationsEnabled } from "@/lib/lesson";
-import { markTeacherSetupGuideSeen } from "@/lib/course/setup-guide";
 
 /**
  * Unified composer Server Actions — Phase 10C · ADR-0025 § 3.
@@ -251,14 +250,4 @@ export async function composeMaterialAction(
   if (lessonId)
     revalidatePath(`/teacher/courses/${courseId}/lessons/${lessonId}`);
   return { ok: true };
-}
-
-/**
- * Marks the first-course walkthrough as seen for the signed-in teacher. It
- * takes no arguments on purpose: the subject is always the session user, so a
- * caller cannot mark it on somebody else's behalf.
- */
-export async function markSetupGuideSeenAction(): Promise<void> {
-  const session = await requireRole(["TEACHER"]);
-  await markTeacherSetupGuideSeen(session.user.id);
 }

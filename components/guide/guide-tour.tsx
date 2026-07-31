@@ -3,39 +3,18 @@
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
+import type { TourStep } from "@/lib/guide/tours";
+
 /**
- * First-course walkthrough: dims the course page and cuts a hole around one
- * real control at a time, so the teacher learns where things are on the screen
- * they will actually use rather than in a separate tour screen.
+ * Guided walkthrough: dims the page and cuts a hole around one real control at
+ * a time, so a person learns the screen they will actually use rather than a
+ * separate tour screen.
  *
- * A step whose target is missing is skipped rather than pointing at nothing —
- * the tab bar is built from feature flags, so which controls exist varies.
+ * Content comes from `lib/guide/tours`, so this component only renders and
+ * sequences. A step whose target is missing is skipped rather than pointing at
+ * nothing — which controls exist depends on feature flags and on what the
+ * person has created so far.
  */
-
-type Step = {
-  /** Matched against the live DOM; a step with no match is skipped. */
-  selector: string;
-  title: string;
-  body: string;
-};
-
-const STEPS: readonly Step[] = [
-  {
-    selector: '[data-guide="course-tabs"]',
-    title: "ทุกอย่างของวิชาอยู่ในแถบนี้",
-    body: "แต่ละแท็บคือส่วนหนึ่งของการสอน — โพสต์ในฟีด สั่งงาน เช็กชื่อ ให้คะแนน และดูรายชื่อสมาชิก",
-  },
-  {
-    selector: '[data-guide="course-composer"]',
-    title: "โพสต์และสั่งงานจากปุ่มนี้",
-    body: "ใช้ปุ่มเดียวสำหรับประกาศ แจกเอกสาร และสั่งงาน นักเรียนจะเห็นในฟีดของวิชาทันที",
-  },
-  {
-    selector: '[data-guide-tab="settings"]',
-    title: "รหัสเข้าห้องและเวลาเรียนอยู่ในตั้งค่า",
-    body: "แชร์รหัสให้นักเรียนเข้าห้อง และตั้งเวลาเรียนเพื่อให้วิชาขึ้นตารางสอนและเปิดการเช็กชื่อตามคาบ",
-  },
-];
 
 const PADDING = 8;
 const CARD_GAP = 12;
@@ -51,9 +30,11 @@ function readRect(selector: string): Rect | null {
   return { top: r.top, left: r.left, width: r.width, height: r.height };
 }
 
-export function TeacherSetupGuide({
+export function GuideTour({
+  steps: authored,
   onFinish,
 }: {
+  steps: readonly TourStep[];
   /** Persists "seen" so the walkthrough does not return on the next visit. */
   onFinish: () => void;
 }) {
@@ -62,7 +43,7 @@ export function TeacherSetupGuide({
   const [rect, setRect] = useState<Rect | null>(null);
 
   // Steps whose target is actually on this page, resolved once on mount.
-  const [steps, setSteps] = useState<readonly Step[]>([]);
+  const [steps, setSteps] = useState<readonly TourStep[]>([]);
 
   // Deferred a frame so the first paint of the course page is already on
   // screen: the walkthrough points at real controls, so they have to exist and
@@ -70,9 +51,12 @@ export function TeacherSetupGuide({
   useEffect(() => {
     const raf = requestAnimationFrame(() => {
       setMounted(true);
-      setSteps(STEPS.filter((step) => readRect(step.selector) !== null));
+      setSteps(authored.filter((step) => readRect(step.selector) !== null));
     });
     return () => cancelAnimationFrame(raf);
+    // Resolved once: re-filtering mid-tour would renumber the steps under the
+    // person's feet.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const step = steps[index];

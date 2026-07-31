@@ -7,9 +7,10 @@ import {
 import { getCourseFeed } from "@/lib/feed/aggregator";
 import { CourseShell } from "@/components/course/course-shell";
 import { TimetableSetupHint } from "@/components/course/timetable-setup-hint";
-import { TeacherSetupGuideMount } from "@/components/course/teacher-setup-guide-mount";
-import { shouldShowTeacherSetupGuide } from "@/lib/course/setup-guide";
-import { markSetupGuideSeenAction } from "./actions";
+import { GuideTourMount } from "@/components/guide/guide-tour-mount";
+import { shouldShowTour } from "@/lib/guide/completion";
+import { tourById } from "@/lib/guide/tours";
+import { markGuideTourSeenAction } from "@/app/dashboard/guide-actions";
 import {
   CourseFeedView,
   feedKindsForFilter,
@@ -52,7 +53,11 @@ export default async function TeacherCourseFeedPage({
   const [page, hasTimetable, showSetupGuide] = await Promise.all([
     getCourseFeed(id, undefined, kindFilter ?? undefined),
     courseHasTimetableSlot(id),
-    shouldShowTeacherSetupGuide(session.user.id),
+    shouldShowTour({
+      userId: session.user.id,
+      tourId: "teacher-course",
+      eligible: true,
+    }),
   ]);
   const lessonWorkspace = lessonWorkspaceCourseEnabled(id)
     ? await getLessonWorkspaceForViewer({
@@ -75,7 +80,11 @@ export default async function TeacherCourseFeedPage({
     >
       <div className="space-y-4">
         {showSetupGuide && (
-          <TeacherSetupGuideMount markSeen={markSetupGuideSeenAction} />
+          <GuideTourMount
+            tourId="teacher-course"
+            steps={tourById("teacher-course").steps}
+            markSeen={markGuideTourSeenAction}
+          />
         )}
         {!hasTimetable && <TimetableSetupHint courseId={id} />}
         <div className="flex items-center justify-end">

@@ -73,6 +73,7 @@ export function DashboardNavigationRail({
             href={href}
             title={label}
             aria-current={active ? "page" : undefined}
+            data-guide-nav={href}
             className={`group/item flex h-12 min-w-12 items-center gap-3 overflow-hidden rounded-xl px-3 transition-all duration-200 hover:no-underline ${
               active
                 ? "bg-blue-600 text-white shadow-sm"
