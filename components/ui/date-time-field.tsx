@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { CalendarDays, Clock3, X } from "lucide-react";
+
+import { DatePicker } from "@/components/ui/date-picker";
+import { TimePicker } from "@/components/ui/time-picker";
 
 const THAI_MONTHS = [
   "มกราคม",
@@ -26,6 +29,12 @@ type DateTimeParts = {
   minute: string;
 };
 
+type MinimumDateTime = {
+  date: string;
+  time: string;
+  value: string;
+};
+
 const EMPTY_PARTS: DateTimeParts = {
   day: "",
   month: "",
@@ -43,14 +52,17 @@ type DateTimeFieldProps = {
   required?: boolean;
   disabled?: boolean;
   invalid?: boolean;
+  /** Scheduling fields can opt in; historical filters deliberately do not. */
+  futureOnly?: boolean;
   className?: string;
   "aria-label"?: string;
 };
 
 /**
- * A locale-explicit replacement for the browser's combined datetime picker.
- * It keeps the existing `YYYY-MM-DDTHH:mm` form contract while presenting
- * labelled Thai date parts, Buddhist years and an unambiguous 24-hour clock.
+ * Compact Thai date-time control that keeps the existing
+ * `YYYY-MM-DDTHH:mm` form contract. Date and time open separately so the
+ * browser never renders the oversized combined picker. Scheduling contexts
+ * can exclude the past while audit and reporting filters keep historical use.
  */
 export function DateTimeField({
   name,
@@ -61,6 +73,7 @@ export function DateTimeField({
   required = false,
   disabled = false,
   invalid = false,
+  futureOnly = false,
   className = "",
   "aria-label": ariaLabel = "เลือกวันและเวลา",
 }: DateTimeFieldProps) {
@@ -70,6 +83,9 @@ export function DateTimeField({
   const [parts, setParts] = useState<DateTimeParts>(() =>
     parseDateTime(externalValue)
   );
+  const [minimum] = useState<MinimumDateTime | null>(() =>
+    futureOnly ? getBangkokMinimum() : null
+  );
   const lastEmittedValue = useRef(externalValue);
 
   useEffect(() => {
@@ -78,44 +94,25 @@ export function DateTimeField({
     setParts(parseDateTime(value));
   }, [value]);
 
-  const yearOptions = useMemo(() => {
-    const currentYear = Number(
-      new Intl.DateTimeFormat("en", {
-        year: "numeric",
-        timeZone: "Asia/Bangkok",
-      }).format(new Date())
-    );
-    const selectedYear = Number(parts.year);
-    const first = Math.min(
-      currentYear - 10,
-      Number.isInteger(selectedYear) && selectedYear > 0
-        ? selectedYear
-        : currentYear
-    );
-    const last = Math.max(
-      currentYear + 15,
-      Number.isInteger(selectedYear) && selectedYear > 0
-        ? selectedYear
-        : currentYear
-    );
-    return Array.from(
-      { length: last - first + 1 },
-      (_, index) => first + index
-    );
-  }, [parts.year]);
-
-  const maximumDay = daysInMonth(parts.month, parts.year);
   const completedValue = combineDateTime(parts);
+  const selectedDate = combineDate(parts);
+  const selectedTime = combineTime(parts);
   const hasAnyValue = Object.values(parts).some(Boolean);
   const isIncomplete = hasAnyValue && !completedValue;
+  const isPast = Boolean(
+    futureOnly && minimum && completedValue && completedValue < minimum.value
+  );
   const partsRequired = required || hasAnyValue;
+  const ariaInvalid = invalid || isIncomplete || isPast ? true : undefined;
   const summaryId = `${baseId}-summary`;
+  const timeMinimum =
+    futureOnly && minimum && selectedDate === minimum.date
+      ? minimum.time
+      : undefined;
 
   function updateParts(patch: Partial<DateTimeParts>) {
     setParts((current) => {
       const next = { ...current, ...patch };
-      const maxDay = daysInMonth(next.month, next.year);
-      if (Number(next.day) > maxDay) next.day = pad(maxDay);
       const nextValue = combineDateTime(next);
       lastEmittedValue.current = nextValue;
       onValueChange?.(nextValue);
@@ -123,15 +120,38 @@ export function DateTimeField({
     });
   }
 
+  function updateDate(date: string) {
+    if (!date) {
+      updateParts({ day: "", month: "", year: "" });
+      return;
+    }
+
+    const [year = "", month = "", day = ""] = date.split("-");
+    const patch: Partial<DateTimeParts> = { year, month, day };
+    if (
+      futureOnly &&
+      minimum &&
+      selectedTime &&
+      `${date}T${selectedTime}` < minimum.value &&
+      date === minimum.date
+    ) {
+      const [hour = "", minute = ""] = minimum.time.split(":");
+      patch.hour = hour;
+      patch.minute = minute;
+    }
+    updateParts(patch);
+  }
+
+  function updateTime(time: string) {
+    const [hour = "", minute = ""] = time.split(":");
+    updateParts({ hour, minute });
+  }
+
   function clear() {
     setParts(EMPTY_PARTS);
     lastEmittedValue.current = "";
     onValueChange?.("");
   }
-
-  const controlClass =
-    "input h-11 cursor-pointer px-3 text-sm disabled:cursor-not-allowed";
-  const ariaInvalid = invalid || isIncomplete ? true : undefined;
 
   return (
     <div className={className}>
@@ -143,152 +163,82 @@ export function DateTimeField({
         className={`rounded-2xl border p-3 ${
           ariaInvalid
             ? "border-red-300 bg-red-50/40"
-            : "border-hairline bg-black/[0.015]"
+            : "border-hairline bg-surface"
         }`}
       >
-        <div className="space-y-3">
-          <div>
-            <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-ink-soft">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 text-xs font-medium text-ink-soft">
+            <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />
+            วันและเวลา
+          </div>
+          {futureOnly && (
+            <span className="rounded-full bg-blue-50 px-2 py-1 text-[11px] font-medium text-blue-700">
+              ตั้งแต่ปัจจุบัน
+            </span>
+          )}
+        </div>
+
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div className="min-w-0">
+            <label
+              htmlFor={baseId}
+              className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-ink-soft"
+            >
               <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />
               วันที่
-            </div>
-            <div className="grid grid-cols-[0.7fr_1.35fr_0.95fr] gap-2">
-              <label className="min-w-0">
-                <span className="sr-only">วัน</span>
-                <select
-                  id={baseId}
-                  value={parts.day}
-                  onChange={(event) => updateParts({ day: event.target.value })}
-                  required={partsRequired}
-                  disabled={disabled}
-                  aria-invalid={ariaInvalid}
-                  className={controlClass}
-                >
-                  <option value="">วัน</option>
-                  {Array.from(
-                    { length: maximumDay },
-                    (_, index) => index + 1
-                  ).map((day) => (
-                    <option key={day} value={pad(day)}>
-                      {day}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="min-w-0">
-                <span className="sr-only">เดือน</span>
-                <select
-                  id={`${baseId}-month`}
-                  value={parts.month}
-                  onChange={(event) =>
-                    updateParts({ month: event.target.value })
-                  }
-                  required={partsRequired}
-                  disabled={disabled}
-                  aria-invalid={ariaInvalid}
-                  className={controlClass}
-                >
-                  <option value="">เดือน</option>
-                  {THAI_MONTHS.map((month, index) => (
-                    <option key={month} value={pad(index + 1)}>
-                      {month}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="min-w-0">
-                <span className="sr-only">ปี</span>
-                <select
-                  id={`${baseId}-year`}
-                  value={parts.year}
-                  onChange={(event) =>
-                    updateParts({ year: event.target.value })
-                  }
-                  required={partsRequired}
-                  disabled={disabled}
-                  aria-invalid={ariaInvalid}
-                  className={controlClass}
-                >
-                  <option value="">ปี</option>
-                  {yearOptions.map((year) => (
-                    <option key={year} value={year}>
-                      {year + 543}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
+            </label>
+            <DatePicker
+              id={baseId}
+              value={selectedDate}
+              min={futureOnly ? minimum?.date : undefined}
+              onChange={updateDate}
+              disabled={disabled}
+              invalid={ariaInvalid}
+            />
           </div>
 
-          <div>
-            <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-ink-soft">
+          <div className="min-w-0">
+            <label
+              htmlFor={`${baseId}-time`}
+              className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-ink-soft"
+            >
               <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
-              เวลาแบบ 24 ชั่วโมง
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <label className="min-w-0">
-                <span className="sr-only">ชั่วโมง</span>
-                <select
-                  id={`${baseId}-hour`}
-                  value={parts.hour}
-                  onChange={(event) =>
-                    updateParts({ hour: event.target.value })
-                  }
-                  required={partsRequired}
-                  disabled={disabled}
-                  aria-invalid={ariaInvalid}
-                  className={controlClass}
-                >
-                  <option value="">ชั่วโมง</option>
-                  {Array.from({ length: 24 }, (_, hour) => (
-                    <option key={hour} value={pad(hour)}>
-                      {pad(hour)} นาฬิกา
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="min-w-0">
-                <span className="sr-only">นาที</span>
-                <select
-                  id={`${baseId}-minute`}
-                  value={parts.minute}
-                  onChange={(event) =>
-                    updateParts({ minute: event.target.value })
-                  }
-                  required={partsRequired}
-                  disabled={disabled}
-                  aria-invalid={ariaInvalid}
-                  className={controlClass}
-                >
-                  <option value="">นาที</option>
-                  {Array.from({ length: 60 }, (_, minute) => (
-                    <option key={minute} value={pad(minute)}>
-                      {pad(minute)} นาที
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
+              เวลา (24 ชม.)
+            </label>
+            <TimePicker
+              id={`${baseId}-time`}
+              value={selectedTime}
+              onChange={updateTime}
+              required={partsRequired}
+              disabled={disabled}
+              invalid={ariaInvalid}
+              min={timeMinimum}
+              ariaLabel="เวลา"
+            />
           </div>
         </div>
 
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-hairline pt-3">
           <p
             id={summaryId}
-            className={`text-xs ${isIncomplete ? "text-red-700" : "text-ink-mute"}`}
+            className={`text-xs ${
+              isIncomplete || isPast ? "text-red-700" : "text-ink-mute"
+            }`}
             aria-live="polite"
           >
-            {completedValue
-              ? formatThaiSummary(parts)
-              : isIncomplete
-                ? "กรุณาเลือกวันและเวลาให้ครบ"
-                : "ยังไม่ได้ตั้งวันและเวลา"}
+            {isPast
+              ? "กรุณาเลือกเวลาปัจจุบันหรืออนาคต"
+              : completedValue
+                ? formatThaiSummary(parts)
+                : isIncomplete
+                  ? "กรุณาเลือกวันและเวลาให้ครบ"
+                  : "ยังไม่ได้ตั้งวันและเวลา"}
           </p>
           {hasAnyValue && !disabled && (
             <button
               type="button"
               onClick={clear}
-              className="inline-flex min-h-8 cursor-pointer items-center gap-1 rounded-lg px-2 text-xs font-medium text-ink-mute transition-colors duration-200 hover:bg-black/[0.04] hover:text-red-700"
+              className="inline-flex min-h-9 cursor-pointer items-center gap-1 rounded-lg px-2 text-xs font-medium text-ink-mute transition-colors duration-200 hover:bg-bg hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             >
               <X className="h-3.5 w-3.5" aria-hidden="true" />
               ล้าง
@@ -314,24 +264,64 @@ function parseDateTime(value: string): DateTimeParts {
   };
 }
 
-function combineDateTime(parts: DateTimeParts): string {
-  if (Object.values(parts).some((part) => !part)) return "";
-  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
+function combineDate(parts: DateTimeParts): string {
+  if (!parts.year || !parts.month || !parts.day) return "";
+  return `${parts.year}-${parts.month}-${parts.day}`;
 }
 
-function daysInMonth(month: string, year: string): number {
-  const parsedMonth = Number(month);
-  const parsedYear = Number(year);
-  if (!parsedMonth) return 31;
-  // Keep 29 February available until the person chooses a year; selecting a
-  // non-leap year later clamps the day to the valid maximum.
-  const safeYear = parsedYear || 2000;
-  return new Date(safeYear, parsedMonth, 0).getDate();
+function combineTime(parts: DateTimeParts): string {
+  if (!parts.hour || !parts.minute) return "";
+  return `${parts.hour}:${parts.minute}`;
+}
+
+function combineDateTime(parts: DateTimeParts): string {
+  const date = combineDate(parts);
+  const time = combineTime(parts);
+  return date && time ? `${date}T${time}` : "";
 }
 
 function formatThaiSummary(parts: DateTimeParts): string {
   const month = THAI_MONTHS[Number(parts.month) - 1] ?? "";
   return `${Number(parts.day)} ${month} ${Number(parts.year) + 543} เวลา ${parts.hour}:${parts.minute} น.`;
+}
+
+function getBangkokClock(): { date: string; hour: number; minute: number } {
+  const values = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Bangkok",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    })
+      .formatToParts(new Date())
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value])
+  );
+
+  return {
+    date: `${values.year}-${values.month}-${values.day}`,
+    hour: Number(values.hour),
+    minute: Number(values.minute),
+  };
+}
+
+function getBangkokMinimum(): MinimumDateTime {
+  const now = getBangkokClock();
+  const nextFiveMinutes = Math.ceil((now.hour * 60 + now.minute + 1) / 5) * 5;
+  const rollsToTomorrow = nextFiveMinutes >= 24 * 60;
+  const totalMinutes = rollsToTomorrow ? 0 : nextFiveMinutes;
+  const date = rollsToTomorrow ? addDays(now.date, 1) : now.date;
+  const time = `${pad(Math.floor(totalMinutes / 60))}:${pad(totalMinutes % 60)}`;
+  return { date, time, value: `${date}T${time}` };
+}
+
+function addDays(date: string, days: number): string {
+  const [year = 0, month = 1, day = 1] = date.split("-").map(Number);
+  const shifted = new Date(Date.UTC(year, month - 1, day + days));
+  return `${shifted.getUTCFullYear()}-${pad(shifted.getUTCMonth() + 1)}-${pad(shifted.getUTCDate())}`;
 }
 
 function pad(value: number): string {

@@ -789,6 +789,7 @@ export function TeacherQuizBuilder({
               <DateTimeField
                 id={`quiz-opens-at-${data.id}`}
                 value={data.opensAt}
+                futureOnly
                 disabled={locked}
                 onValueChange={(opensAt) =>
                   setData((current) => ({
@@ -809,6 +810,7 @@ export function TeacherQuizBuilder({
               <DateTimeField
                 id={`quiz-closes-at-${data.id}`}
                 value={data.closesAt}
+                futureOnly
                 disabled={locked}
                 onValueChange={(closesAt) =>
                   setData((current) => ({

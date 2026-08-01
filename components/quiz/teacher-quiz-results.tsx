@@ -105,6 +105,7 @@ export function TeacherQuizResults({
                           id={`reopen-quiz-${result.id}`}
                           name="newClosesAt"
                           defaultValue={reopenDefault}
+                          futureOnly
                           required
                           className="mt-1.5"
                           aria-label="เวลาปิด Quiz ใหม่"
@@ -368,6 +369,7 @@ function ExceptionForm({
                 ? toBangkokDateTimeLocal(student.exception.extendedDeadline)
                 : ""
             }
+            futureOnly
             className="mt-1.5"
             aria-label={`ขยายเวลาสำหรับ ${student.name}`}
           />
