@@ -51,11 +51,19 @@ export function EarlyWarningBlock({
         count={summary.total || undefined}
       />
       {summary.total === 0 ? (
-        <EmptyState
-          icon={CheckCircle2}
-          title="ยังไม่พบสัญญาณที่ต้องติดตาม"
-          hint="ระบบจะรวมการเข้าเรียน งานที่ยังไม่ส่ง และแนวโน้มคะแนนให้โดยอัตโนมัติ"
-        />
+        <div className="flex items-start gap-3 rounded-2xl border border-hairline bg-bg/60 px-4 py-3.5">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-green-50 text-green-700">
+            <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-ink">
+              ยังไม่พบสัญญาณที่ต้องติดตาม
+            </p>
+            <p className="mt-0.5 text-xs leading-5 text-ink-mute">
+              ระบบกำลังติดตามการเข้าเรียน งานที่ยังไม่ส่ง และแนวโน้มคะแนน
+            </p>
+          </div>
+        </div>
       ) : (
         <>
           <p className="mb-2 text-xs leading-5 text-black/50">{summaryText}</p>
@@ -71,10 +79,12 @@ export function EarlyWarningBlock({
           )}
         </>
       )}
-      <p className="mt-3 text-[11px] leading-5 text-black/40">
-        เตือนเมื่อเข้าเรียนต่ำกว่า 80% หลังเช็กอย่างน้อย 3 ครั้ง · ค้างส่ง 2
-        งานขึ้นไป · หรือคะแนนช่วงล่าสุดลดอย่างน้อย 10 จุด
-      </p>
+      {summary.total > 0 && (
+        <p className="mt-3 text-[11px] leading-5 text-black/40">
+          เตือนเมื่อเข้าเรียนต่ำกว่า 80% หลังเช็กอย่างน้อย 3 ครั้ง · ค้างส่ง 2
+          งานขึ้นไป · หรือคะแนนช่วงล่าสุดลดอย่างน้อย 10 จุด
+        </p>
+      )}
     </section>
   );
 }
