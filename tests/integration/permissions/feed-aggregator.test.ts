@@ -14,7 +14,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { db } from "@/lib/db/client";
 import { Forbidden } from "@/lib/errors";
-import { getUserFeed } from "@/lib/feed/aggregator";
+import { getCourseFeed, getUserFeed } from "@/lib/feed/aggregator";
 import { getCourseScopeForUser } from "@/lib/feed/scope";
 import { createAssignment } from "@/lib/assignment/assignment";
 import { createMaterial } from "@/lib/material";
@@ -87,6 +87,38 @@ describe("getCourseScopeForUser (P7-4 · ADR-0023 § 4)", () => {
 });
 
 describe("getUserFeed (P7-4 · ADR-0023)", () => {
+  it("shows a scheduled post to its teacher with publish time but hides it from students", async () => {
+    await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
+    const publishAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const announcement = await createAnnouncement(
+      {
+        courseOfferingId: ctx.courseOfferingId,
+        title: "Future announcement",
+        body: "Students must not see this yet",
+        fileAttachmentIds: [],
+        linkUrls: [],
+        publishAt,
+      },
+      { actorUserId: ctx.teacherUserId }
+    );
+
+    const [teacherFeed, studentFeed] = await Promise.all([
+      getCourseFeed(ctx.courseOfferingId, "AUTHOR"),
+      getCourseFeed(ctx.courseOfferingId, "STUDENT"),
+    ]);
+
+    expect(teacherFeed.items).toContainEqual(
+      expect.objectContaining({
+        id: announcement.id,
+        publishAt,
+        notifiedAt: null,
+      })
+    );
+    expect(studentFeed.items.some((item) => item.id === announcement.id)).toBe(
+      false
+    );
+  });
+
   it("returns Assignment + Material + Announcement + Score-published merged DESC by sortAt", async () => {
     await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
     // Seed each kind. Sort order = insertion order is good enough for the

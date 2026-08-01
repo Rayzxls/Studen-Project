@@ -13,8 +13,17 @@ import { quizEnabled } from "@/lib/quiz";
  * prefix matching in TabNav. `icon` is a serializable key (not the
  * component) so this server-built list crosses the RSC boundary safely.
  */
-export const teacherCourseTabs = (courseId: string): CourseTab[] => [
+export const teacherCourseTabs = (
+  courseId: string,
+  scheduledCount?: number
+): CourseTab[] => [
   { label: "ฟีด", href: `/teacher/courses/${courseId}/feed`, icon: "feed" },
+  {
+    label: "กำหนดการ",
+    href: `/teacher/courses/${courseId}/schedule`,
+    icon: "schedule",
+    badge: scheduledCount,
+  },
   ...(lessonWorkspaceCourseEnabled(courseId)
     ? [
         {

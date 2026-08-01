@@ -43,6 +43,10 @@ export interface FeedItem {
   title: string | null;
   /** Optional second-line detail — Assignment.dueAt ISO string, etc. */
   detail?: string | null;
+  /** Teacher-facing scheduled publishing time. */
+  publishAt?: Date | null;
+  /** Notification sweep claim time; not proof that the post was opened. */
+  notifiedAt?: Date | null;
   /** Optional Lesson ownership for Assignment/Material Feed flags. */
   lessonId?: string | null;
   lessonTitle?: string | null;
@@ -177,6 +181,8 @@ async function aggregateFeed(
               fileAttachmentIds: true,
               linkUrls: true,
               dueAt: true,
+              publishAt: true,
+              notifiedAt: true,
               createdAt: true,
               lessonId: true,
               lesson: { select: { title: true } },
@@ -223,6 +229,8 @@ async function aggregateFeed(
               body: true,
               fileAttachmentIds: true,
               linkUrls: true,
+              publishAt: true,
+              notifiedAt: true,
               postedAt: true,
               lessonId: true,
               lesson: { select: { title: true } },
@@ -265,6 +273,8 @@ async function aggregateFeed(
               body: true,
               fileAttachmentIds: true,
               linkUrls: true,
+              publishAt: true,
+              notifiedAt: true,
               postedAt: true,
               postedBy: {
                 select: {
@@ -363,6 +373,8 @@ async function aggregateFeed(
         sortAt: a.createdAt,
         title: a.title,
         detail: a.dueAt ? a.dueAt.toISOString() : null,
+        publishAt: a.publishAt,
+        notifiedAt: a.notifiedAt,
         lessonId: a.lessonId,
         lessonTitle: a.lesson?.title ?? null,
         bodyPreview: truncatePreview(a.description),
@@ -391,6 +403,8 @@ async function aggregateFeed(
         lessonId: m.lessonId,
         lessonTitle: m.lesson?.title ?? null,
         bodyPreview: truncatePreview(m.body),
+        publishAt: m.publishAt,
+        notifiedAt: m.notifiedAt,
         authorName:
           teacherFullName(m.postedBy?.teacher) ??
           adminFullName(m.postedBy?.admin),
@@ -415,6 +429,8 @@ async function aggregateFeed(
         courseOfferingId: an.courseOfferingId,
         sortAt: an.postedAt,
         title: an.title,
+        publishAt: an.publishAt,
+        notifiedAt: an.notifiedAt,
         bodyPreview: truncatePreview(an.body),
         authorName:
           teacherFullName(an.postedBy?.teacher) ??

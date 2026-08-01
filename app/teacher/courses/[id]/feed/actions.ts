@@ -24,6 +24,8 @@ interface BaseState {
   fieldErrors?: Record<string, string>;
   error?: string;
   ok?: boolean;
+  createdId?: string;
+  publishAtIso?: string | null;
 }
 
 /** Newline-separated link textarea → trimmed non-empty list (mirrors the
@@ -88,8 +90,9 @@ export async function composeAnnouncementAction(
   if (body.length === 0) {
     return { fieldErrors: { body: "ระบุเนื้อหาประกาศ" } };
   }
+  let createdId: string;
   try {
-    await createAnnouncement(
+    const created = await createAnnouncement(
       {
         courseOfferingId: courseId,
         id: ownerId.length > 0 ? ownerId : undefined,
@@ -105,6 +108,7 @@ export async function composeAnnouncementAction(
         userAgent: meta.userAgent ?? undefined,
       }
     );
+    createdId = created.id;
   } catch (err) {
     if (err instanceof ValidationError) return { fieldErrors: err.errors };
     if (err instanceof HttpError) return { error: err.message };
@@ -112,7 +116,11 @@ export async function composeAnnouncementAction(
     throw err;
   }
   revalidatePath(`/teacher/courses/${courseId}/feed`);
-  return { ok: true };
+  return {
+    ok: true,
+    createdId,
+    publishAtIso: publishAt?.toISOString() ?? null,
+  };
 }
 
 export type ComposeAssignmentState = BaseState;
@@ -158,8 +166,9 @@ export async function composeAssignmentAction(
       return { fieldErrors: { fullScore: "ระบุคะแนนเต็ม (จำนวนเต็มบวก)" } };
     }
   }
+  let createdId: string;
   try {
-    await createAssignment(
+    const created = await createAssignment(
       {
         courseOfferingId: courseId,
         lessonId: lessonId.length > 0 ? lessonId : null,
@@ -184,6 +193,7 @@ export async function composeAssignmentAction(
         userAgent: meta.userAgent ?? undefined,
       }
     );
+    createdId = created.id;
   } catch (err) {
     if (err instanceof ValidationError) return { fieldErrors: err.errors };
     if (err instanceof HttpError) return { error: err.message };
@@ -193,7 +203,11 @@ export async function composeAssignmentAction(
   revalidatePath(`/teacher/courses/${courseId}/feed`);
   if (lessonId)
     revalidatePath(`/teacher/courses/${courseId}/lessons/${lessonId}`);
-  return { ok: true };
+  return {
+    ok: true,
+    createdId,
+    publishAtIso: publishAt?.toISOString() ?? null,
+  };
 }
 
 export type ComposeMaterialState = BaseState;
@@ -229,8 +243,9 @@ export async function composeMaterialAction(
   if (title.length === 0) {
     return { fieldErrors: { title: "ตั้งชื่อเอกสาร" } };
   }
+  let createdId: string;
   try {
-    await createMaterial(
+    const created = await createMaterial(
       {
         courseOfferingId: courseId,
         lessonId: lessonId.length > 0 ? lessonId : null,
@@ -247,6 +262,7 @@ export async function composeMaterialAction(
         userAgent: meta.userAgent ?? undefined,
       }
     );
+    createdId = created.id;
   } catch (err) {
     if (err instanceof ValidationError) return { fieldErrors: err.errors };
     if (err instanceof HttpError) return { error: err.message };
@@ -256,5 +272,9 @@ export async function composeMaterialAction(
   revalidatePath(`/teacher/courses/${courseId}/feed`);
   if (lessonId)
     revalidatePath(`/teacher/courses/${courseId}/lessons/${lessonId}`);
-  return { ok: true };
+  return {
+    ok: true,
+    createdId,
+    publishAtIso: publishAt?.toISOString() ?? null,
+  };
 }

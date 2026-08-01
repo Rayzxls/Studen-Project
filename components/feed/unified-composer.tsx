@@ -1,10 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useRef, useState } from "react";
+import {
+  useActionState,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useFormStatus } from "react-dom";
 import {
   ClipboardList,
+  CalendarClock,
   FileText,
   Link2,
   Megaphone,
@@ -83,6 +90,9 @@ export function UnifiedComposer({
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [chip, setChip] = useState<ChipKey>("announcement");
+  const [confirmation, setConfirmation] = useState<{
+    publishAtIso: string | null;
+  } | null>(null);
   const [ownerIds, setOwnerIds] = useState<Record<ChipKey, string>>({
     announcement: "",
     assignment: "",
@@ -97,7 +107,10 @@ export function UnifiedComposer({
     });
     dialogRef.current?.showModal();
   };
-  const close = () => dialogRef.current?.close();
+  const close = useCallback(() => dialogRef.current?.close(), []);
+  const handleCompleted = useCallback((publishAtIso: string | null) => {
+    setConfirmation({ publishAtIso });
+  }, []);
 
   const active = CHIPS.find((c) => c.key === chip)!;
 
@@ -112,6 +125,45 @@ export function UnifiedComposer({
         <Plus className="mr-1 inline h-4 w-4" />
         สร้างใหม่
       </button>
+
+      {confirmation && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-4 right-4 z-50 flex w-[calc(100%-2rem)] max-w-md items-start gap-3 rounded-2xl border border-green-200 bg-white p-4 text-ink shadow-lift"
+        >
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-green-50 text-green-700">
+            <CalendarClock className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold">
+              {confirmation.publishAtIso
+                ? "ตั้งเวลาเผยแพร่เรียบร้อย"
+                : "เผยแพร่โพสต์เรียบร้อย"}
+            </p>
+            {confirmation.publishAtIso && (
+              <p className="mt-0.5 text-xs text-ink-mute">
+                นักเรียนจะเข้าถึงได้{" "}
+                {formatConfirmationDate(confirmation.publishAtIso)}
+              </p>
+            )}
+            <Link
+              href={`/teacher/courses/${courseId}/schedule`}
+              className="mt-2 inline-flex min-h-9 cursor-pointer items-center text-xs font-semibold text-blue-700 hover:underline"
+            >
+              ดูกำหนดการเผยแพร่
+            </Link>
+          </div>
+          <button
+            type="button"
+            onClick={() => setConfirmation(null)}
+            aria-label="ปิดข้อความยืนยัน"
+            className="grid h-9 w-9 shrink-0 cursor-pointer place-items-center rounded-full text-ink-mute transition-colors hover:bg-bg hover:text-ink"
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </div>
+      )}
 
       <dialog
         ref={dialogRef}
@@ -189,6 +241,7 @@ export function UnifiedComposer({
                 courseId={courseId}
                 ownerId={ownerIds.announcement}
                 close={close}
+                onCompleted={handleCompleted}
               />
             )}
             {chip === "assignment" && (
@@ -199,6 +252,7 @@ export function UnifiedComposer({
                 defaultLessonId={defaultLessonId}
                 requireLesson={requireLesson}
                 close={close}
+                onCompleted={handleCompleted}
               />
             )}
             {chip === "material" && (
@@ -209,6 +263,7 @@ export function UnifiedComposer({
                 defaultLessonId={defaultLessonId}
                 requireLesson={requireLesson}
                 close={close}
+                onCompleted={handleCompleted}
               />
             )}
           </div>
@@ -226,10 +281,12 @@ function AnnouncementForm({
   courseId,
   ownerId,
   close,
+  onCompleted,
 }: {
   courseId: string;
   ownerId: string;
   close: () => void;
+  onCompleted: (publishAtIso: string | null) => void;
 }) {
   const [state, action] = useActionState(
     composeAnnouncementAction,
@@ -237,7 +294,14 @@ function AnnouncementForm({
   );
   const formRef = useRef<HTMLFormElement>(null);
   const [attachmentBusy, setAttachmentBusy] = useState(false);
-  useDeferredClose(state.ok, close, formRef);
+  useDeferredClose(
+    state.ok,
+    state.createdId,
+    close,
+    formRef,
+    state.publishAtIso,
+    onCompleted
+  );
   return (
     <form ref={formRef} action={action} className="space-y-4">
       <input type="hidden" name="courseId" value={courseId} />
@@ -287,6 +351,7 @@ function AssignmentForm({
   defaultLessonId,
   requireLesson,
   close,
+  onCompleted,
 }: {
   courseId: string;
   ownerId: string;
@@ -294,12 +359,20 @@ function AssignmentForm({
   defaultLessonId?: string;
   requireLesson: boolean;
   close: () => void;
+  onCompleted: (publishAtIso: string | null) => void;
 }) {
   const [state, action] = useActionState(composeAssignmentAction, INITIAL_ASN);
   const [isScored, setIsScored] = useState(false);
   const [attachmentBusy, setAttachmentBusy] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
-  useDeferredClose(state.ok, close, formRef);
+  useDeferredClose(
+    state.ok,
+    state.createdId,
+    close,
+    formRef,
+    state.publishAtIso,
+    onCompleted
+  );
   return (
     <form ref={formRef} action={action} className="space-y-4">
       <input type="hidden" name="courseId" value={courseId} />
@@ -426,6 +499,7 @@ function MaterialForm({
   defaultLessonId,
   requireLesson,
   close,
+  onCompleted,
 }: {
   courseId: string;
   ownerId: string;
@@ -433,11 +507,19 @@ function MaterialForm({
   defaultLessonId?: string;
   requireLesson: boolean;
   close: () => void;
+  onCompleted: (publishAtIso: string | null) => void;
 }) {
   const [state, action] = useActionState(composeMaterialAction, INITIAL_MAT);
   const formRef = useRef<HTMLFormElement>(null);
   const [attachmentBusy, setAttachmentBusy] = useState(false);
-  useDeferredClose(state.ok, close, formRef);
+  useDeferredClose(
+    state.ok,
+    state.createdId,
+    close,
+    formRef,
+    state.publishAtIso,
+    onCompleted
+  );
   return (
     <form ref={formRef} action={action} className="space-y-4">
       <input type="hidden" name="courseId" value={courseId} />
@@ -674,17 +756,35 @@ function SubmitButton({
 
 function useDeferredClose(
   ok: boolean | undefined,
+  createdId: string | undefined,
   close: () => void,
-  formRef: React.RefObject<HTMLFormElement | null>
+  formRef: React.RefObject<HTMLFormElement | null>,
+  publishAtIso: string | null | undefined,
+  onCompleted: (publishAtIso: string | null) => void
 ) {
   useEffect(() => {
-    if (!ok) return;
+    if (!ok || !createdId) return;
     const t = setTimeout(() => {
       formRef.current?.reset();
       close();
+      onCompleted(publishAtIso ?? null);
     }, 0);
     return () => clearTimeout(t);
-  }, [ok, close, formRef]);
+  }, [ok, createdId, close, formRef, onCompleted, publishAtIso]);
+}
+
+function formatConfirmationDate(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "ตามเวลาที่กำหนด";
+  return new Intl.DateTimeFormat("th-TH-u-ca-buddhist", {
+    timeZone: "Asia/Bangkok",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(date);
 }
 
 function createDraftOwnerId(courseId: string): string {
