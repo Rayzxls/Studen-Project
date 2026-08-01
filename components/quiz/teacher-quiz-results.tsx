@@ -17,6 +17,7 @@ import {
   reopenQuizAction,
   setQuizStudentExceptionAction,
 } from "@/app/teacher/courses/[id]/quizzes/actions";
+import { DateTimeField } from "@/components/ui/date-time-field";
 
 type Props = {
   result: TeacherQuizResultsView;
@@ -93,16 +94,22 @@ export function TeacherQuizResults({
                       className="mt-2 w-full space-y-3 rounded-lg border border-hairline bg-surface p-4 shadow-card sm:absolute sm:right-0 sm:z-20 sm:w-80"
                     >
                       <HiddenIds result={result} />
-                      <label className="block text-xs font-medium text-ink">
-                        เวลาปิดใหม่
-                        <input
-                          className="input mt-1.5 text-sm"
-                          type="datetime-local"
+                      <div>
+                        <label
+                          htmlFor={`reopen-quiz-${result.id}`}
+                          className="block text-xs font-medium text-ink"
+                        >
+                          เวลาปิดใหม่
+                        </label>
+                        <DateTimeField
+                          id={`reopen-quiz-${result.id}`}
                           name="newClosesAt"
                           defaultValue={reopenDefault}
                           required
+                          className="mt-1.5"
+                          aria-label="เวลาปิด Quiz ใหม่"
                         />
-                      </label>
+                      </div>
                       <label className="block text-xs font-medium text-ink">
                         เหตุผล
                         <textarea
@@ -346,19 +353,25 @@ function ExceptionForm({
         <HiddenIds result={result} />
         <input type="hidden" name="enrollmentId" value={student.enrollmentId} />
         <p className="text-sm font-semibold text-ink">{student.name}</p>
-        <label className="block text-xs font-medium text-ink">
-          ขยายเวลาถึง
-          <input
-            className="input mt-1.5 text-sm"
-            type="datetime-local"
+        <div>
+          <label
+            htmlFor={`extended-deadline-${student.enrollmentId}`}
+            className="block text-xs font-medium text-ink"
+          >
+            ขยายเวลาถึง
+          </label>
+          <DateTimeField
+            id={`extended-deadline-${student.enrollmentId}`}
             name="extendedDeadline"
             defaultValue={
               student.exception?.extendedDeadline
                 ? toBangkokDateTimeLocal(student.exception.extendedDeadline)
                 : ""
             }
+            className="mt-1.5"
+            aria-label={`ขยายเวลาสำหรับ ${student.name}`}
           />
-        </label>
+        </div>
         {result.mode === "SCORED" && (
           <label className="block text-xs font-medium text-ink">
             เพิ่มจำนวนครั้ง

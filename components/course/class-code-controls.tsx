@@ -10,6 +10,7 @@ import {
   setClassCodeExpiryAction,
   type ClassCodeActionState,
 } from "@/app/teacher/courses/[id]/settings/actions";
+import { DateTimeField } from "@/components/ui/date-time-field";
 
 const INITIAL: ClassCodeActionState = {};
 
@@ -273,13 +274,13 @@ function ExpirySection({
 
       <form action={formAction} className="space-y-3">
         <input type="hidden" name="courseId" value={courseId} />
-        <input
-          type="datetime-local"
+        <DateTimeField
+          id="class-code-expires-at"
           name="expiresAt"
           value={value}
-          onChange={(e) => setValue(e.target.value)}
-          className="input"
-          aria-invalid={state.fieldErrors?.expiresAt ? true : undefined}
+          onValueChange={setValue}
+          invalid={Boolean(state.fieldErrors?.expiresAt)}
+          aria-label="วันหมดอายุรหัสห้อง"
         />
         {state.fieldErrors?.expiresAt && (
           <p className="text-xs text-red-700">{state.fieldErrors.expiresAt}</p>
