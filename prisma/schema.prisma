@@ -113,6 +113,7 @@ model User {
   teacherInvitesAccepted  TeacherInvite[]         @relation("TeacherInviteAcceptedBy")
   teacherInvitesRevoked   TeacherInvite[]         @relation("TeacherInviteRevokedBy")
   guideToursCompleted     GuideTourCompletion[]
+  webPushSubscriptions    WebPushSubscription[]
 
   @@index([role])
   @@index([accountStatus])
@@ -349,6 +350,29 @@ model Admin {
 ///
 /// A tour that is removed from the product simply stops being looked up; its
 /// rows are harmless history.
+/// One Web Push endpoint for one person's browser (ADR-0047).
+///
+/// Keyed by endpoint because that is what the push service issues and what
+/// identifies the subscription to it. Several rows per person is normal — a
+/// phone and a laptop are separate subscriptions — and a row is deleted as soon
+/// as the push service reports it gone, so the table does not accumulate
+/// endpoints for devices that were reset years ago.
+///
+/// Cascades with the User: deleting an account takes its subscriptions too.
+model WebPushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+  lastUsedAt DateTime?
+
+  @@index([userId])
+}
+
 model GuideTourCompletion {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -935,6 +959,11 @@ model Assignment {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // Scheduled publishing (ADR-0046). Controls when the brief becomes visible,
+  // not when a mark does — the linked Score Item has its own publication.
+  publishAt  DateTime?
+  notifiedAt DateTime?
+
   submissions Submission[]
 
   @@index([courseOfferingId, createdAt])
@@ -1205,6 +1234,10 @@ model Material {
   postedBy   User     @relation("MaterialAuthor", fields: [postedById], references: [id], onDelete: Restrict)
   postedAt   DateTime @default(now())
 
+  // Scheduled publishing (ADR-0046); null means visible immediately.
+  publishAt  DateTime?
+  notifiedAt DateTime?
+
   // Soft-delete — `MATERIAL_DELETED` Important audit fires here per
   // Q4.2 (edit free + Verbose, delete = Important).
   deletedAt     DateTime?
@@ -1234,6 +1267,12 @@ model Announcement {
   postedById String
   postedBy   User     @relation("AnnouncementAuthor", fields: [postedById], references: [id], onDelete: Restrict)
   postedAt   DateTime @default(now())
+
+  // Scheduled publishing (ADR-0046). Null means visible as soon as it exists,
+  // which is what every row created before this feature means.
+  publishAt  DateTime?
+  // Set once the publish fan-out has run, so a re-run cannot notify twice.
+  notifiedAt DateTime?
 
   deletedAt     DateTime?
   deletedById   String?

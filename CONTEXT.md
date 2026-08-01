@@ -278,6 +278,19 @@ reusable signed URL.
 
 ---
 
+## Early Warning (สัญญาณเตือนล่วงหน้า)
+
+ภาพรวมแบบ read-only สำหรับ Teacher เพื่อเห็น Active Enrollment ใน Active
+CourseOffering ของตนที่ควรเข้าไปช่วยก่อนปัญหาสะสม โดยคำนวณสดจาก Attendance,
+งานที่เลยกำหนดแต่ยังไม่เคยส่ง และแนวโน้มคะแนนที่ประกาศแล้ว
+
+Early Warning เป็น projection ที่อธิบายเหตุผลทุกข้อ ไม่ใช่สถานะถาวรของ Student
+และไม่เขียนค่า `atRisk` ลงฐานข้อมูล เมื่อข้อมูลต้นทางดีขึ้น สัญญาณที่เกี่ยวข้องจะ
+หายไปเอง Student คนอื่นไม่เห็นข้อมูลนี้ และ Teacher ไม่เห็นสัญญาณจากวิชาของ
+Teacher คนอื่น
+
+---
+
 ## Assignment & Submission ⭐
 
 ### Assignment (การบ้าน)

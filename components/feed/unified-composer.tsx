@@ -258,6 +258,7 @@ function AnnouncementForm({
         />
       </Field>
       <LinksField error={state.fieldErrors?.linkUrls} idPrefix="ann" />
+      <PublishAtField idPrefix="ann" />
       <TeacherAttachmentUploader
         key={ownerId}
         ownerType="ANNOUNCEMENT"
@@ -396,6 +397,7 @@ function AssignmentForm({
         <ClipboardList className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
         นักเรียนส่งงานได้ทั้ง ข้อความ · ไฟล์/รูป · ลิงก์ ในหน้าการบ้าน
       </p>
+      <PublishAtField idPrefix="asn" />
       <TeacherAttachmentUploader
         key={ownerId}
         ownerType="ASSIGNMENT"
@@ -467,6 +469,7 @@ function MaterialForm({
         />
       </Field>
       <LinksField error={state.fieldErrors?.linkUrls} idPrefix="mat" />
+      <PublishAtField idPrefix="mat" />
       <TeacherAttachmentUploader
         key={ownerId}
         ownerType="MATERIAL"
@@ -529,6 +532,30 @@ function LessonSelect({
           </Link>
         </div>
       )}
+    </Field>
+  );
+}
+
+/**
+ * Optional publish time shared by all three composer forms (ADR-0046).
+ *
+ * Empty means post now, which is what leaving it alone has always done, so the
+ * common case needs no interaction. The input is `datetime-local`, so the
+ * teacher picks a time on a clock rather than reasoning about a time zone.
+ */
+function PublishAtField({ idPrefix }: { idPrefix: string }) {
+  return (
+    <Field
+      label="ตั้งเวลาโพสต์"
+      hint="ไม่บังคับ — เว้นว่างคือโพสต์ทันที"
+      htmlFor={`${idPrefix}-publish-at`}
+    >
+      <input
+        id={`${idPrefix}-publish-at`}
+        type="datetime-local"
+        name="publishAt"
+        className="input"
+      />
     </Field>
   );
 }

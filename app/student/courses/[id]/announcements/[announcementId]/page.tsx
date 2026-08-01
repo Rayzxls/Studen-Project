@@ -4,6 +4,7 @@ import { ChevronLeft } from "lucide-react";
 import { assert } from "@/lib/auth/guards";
 import { getCourseOfferingForStudent } from "@/lib/course/queries";
 import { db } from "@/lib/db/client";
+import { publishedWhere } from "@/lib/publishing/visibility";
 import { getOrderedAttachments } from "@/lib/storage/attachments";
 import { getModerationRestriction } from "@/lib/moderation/queries";
 import { CourseShell } from "@/components/course/course-shell";
@@ -45,6 +46,10 @@ export default async function StudentAnnouncementDetailPage({
       id: announcementId,
       courseOfferingId: id,
       deletedAt: null,
+      // Scheduled content does not exist for the class until its moment
+      // (ADR-0046). Filtering in the query means the page simply 404s, so a
+      // guessed URL cannot reveal that something is coming.
+      AND: publishedWhere("STUDENT"),
     },
     select: {
       id: true,

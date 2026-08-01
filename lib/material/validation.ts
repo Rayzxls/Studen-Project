@@ -3,6 +3,7 @@
  */
 
 import { z } from "zod";
+import { PublishAtSchema } from "@/lib/publishing/validation";
 import {
   BODY_MAX,
   LINK_URL_MAX,
@@ -35,6 +36,7 @@ export const CreateMaterialSchema = z.object({
   body: z.string().max(BODY_MAX),
   fileAttachmentIds: z.array(z.string().min(1)).default([]),
   linkUrls: z.array(LinkUrlSchema).max(MAX_LINK_URLS).default([]),
+  publishAt: PublishAtSchema,
   id: z.string().min(1).max(64).optional(),
 });
 export type CreateMaterialInput = z.infer<typeof CreateMaterialSchema>;

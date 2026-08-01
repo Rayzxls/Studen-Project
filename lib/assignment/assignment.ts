@@ -17,6 +17,7 @@ import type { Assignment, Prisma } from "@prisma/client";
 import { db } from "@/lib/db/client";
 import { Conflict, Forbidden, NotFound, ValidationError } from "@/lib/errors";
 import { fanOutBroadcast } from "@/lib/notification";
+import { isPublished } from "@/lib/publishing/visibility";
 import { TX_OPTS } from "./constants";
 import { assertLinkableLesson } from "@/lib/lesson/linking";
 import {
@@ -90,6 +91,9 @@ export async function createAssignment(
       });
     }
 
+    const publishAt = parsed.publishAt ?? null;
+    const liveNow = isPublished({ publishAt });
+
     const assignment = await tx.assignment.create({
       data: {
         ...(assignmentId && { id: assignmentId }),
@@ -107,6 +111,10 @@ export async function createAssignment(
         linkUrls: parsed.linkUrls as Prisma.InputJsonValue,
         fileAttachmentIds: parsed.fileAttachmentIds as Prisma.InputJsonValue,
         createdById: ctx.actorUserId,
+        publishAt,
+        // Stamped now when already live, so a past publish time cannot be
+        // notified here and again by the sweep.
+        notifiedAt: liveNow ? new Date() : null,
       },
     });
 
@@ -126,6 +134,11 @@ export async function createAssignment(
         data: { scoreItemId: scoreItem.id },
       });
     }
+
+    // A scheduled brief notifies when it goes live (ADR-0046). The linked
+    // Score Item is still created above: a draft Score Item is invisible to
+    // students anyway, and publishing it stays a separate teacher action.
+    if (!liveNow) return result;
 
     // P7-2 fan-out — ASSIGNMENT_POSTED broadcast (ADR-0022 § 1).
     const courseRow = await tx.courseOffering.findUniqueOrThrow({

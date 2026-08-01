@@ -42,7 +42,7 @@ export default async function StudentCourseFeedPage({
   const filter = normalizeFilter(type);
   const kindFilter = feedKindsForFilter(filter);
   const [page, showTour] = await Promise.all([
-    getCourseFeed(id, undefined, kindFilter ?? undefined),
+    getCourseFeed(id, "STUDENT", undefined, kindFilter ?? undefined),
     shouldShowTour({
       userId: guard.session.user.id,
       tourId: "student-course",

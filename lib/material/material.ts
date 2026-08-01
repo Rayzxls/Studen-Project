@@ -11,6 +11,8 @@
 
 import type { Material, Prisma } from "@prisma/client";
 import { db } from "@/lib/db/client";
+import { isPublished } from "@/lib/publishing/visibility";
+import { sendCoursePush } from "@/lib/notification/push";
 import { audit } from "@/lib/audit/log";
 import { Forbidden, NotFound, ValidationError } from "@/lib/errors";
 import {
@@ -70,6 +72,9 @@ export async function createMaterial(
       });
     }
 
+    const publishAt = parsed.publishAt ?? null;
+    const liveNow = isPublished({ publishAt });
+
     const material = await tx.material.create({
       data: {
         ...(parsed.id && { id: parsed.id }),
@@ -80,8 +85,15 @@ export async function createMaterial(
         fileAttachmentIds: parsed.fileAttachmentIds as Prisma.InputJsonValue,
         linkUrls: parsed.linkUrls as Prisma.InputJsonValue,
         postedById: ctx.actorUserId,
+        publishAt,
+        // Stamped now when already live, so a past publish time cannot be
+        // notified here and again by the sweep.
+        notifiedAt: liveNow ? new Date() : null,
       },
     });
+
+    // A scheduled material notifies when it goes live (ADR-0046).
+    if (!liveNow) return material;
 
     // P7-3 fan-out — MATERIAL_POSTED broadcast.
     const teacher = await tx.teacher.findUniqueOrThrow({

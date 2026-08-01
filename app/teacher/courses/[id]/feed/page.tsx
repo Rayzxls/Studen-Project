@@ -51,7 +51,7 @@ export default async function TeacherCourseFeedPage({
   const filter = normalizeFilter(type);
   const kindFilter = feedKindsForFilter(filter);
   const [page, hasTimetable, showSetupGuide] = await Promise.all([
-    getCourseFeed(id, undefined, kindFilter ?? undefined),
+    getCourseFeed(id, "AUTHOR", undefined, kindFilter ?? undefined),
     courseHasTimetableSlot(id),
     shouldShowTour({
       userId: session.user.id,

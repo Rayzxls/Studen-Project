@@ -1,6 +1,7 @@
 import type { Role } from "@prisma/client";
 import { can, type Session } from "@/lib/auth/permissions";
 import { db } from "@/lib/db/client";
+import { publishedWhere } from "@/lib/publishing/visibility";
 import { Forbidden, NotFound } from "@/lib/errors";
 import {
   lessonWorkspaceCourseEnabled,
@@ -268,11 +269,14 @@ export async function getStudentLessonWorkspace(input: {
       position: true,
       archivedAt: true,
       materials: {
-        where: { deletedAt: null },
+        // Scheduled content is not in the student's lesson until its moment
+        // (ADR-0046) — the feed is not the only door into it.
+        where: { deletedAt: null, AND: publishedWhere("STUDENT", input.now) },
         orderBy: [{ postedAt: "asc" }, { id: "asc" }],
         select: { id: true, title: true, postedAt: true },
       },
       assignments: {
+        where: { AND: publishedWhere("STUDENT", input.now) },
         orderBy: [{ createdAt: "asc" }, { id: "asc" }],
         select: {
           id: true,

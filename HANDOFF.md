@@ -1,5 +1,85 @@
 # HANDOFF — Beagle Classroom
 
+## SCHEDULED PUBLISHING, WEB PUSH, SENTRY, CI GATES — 2026-08-01 (READ FIRST)
+
+All of this is on `phase-11` in **PR #33, open with all seven checks green**.
+Nothing here is in `main` yet.
+
+### What shipped
+
+- **Error reporting (Sentry).** `SENTRY_DSN` and `SENTRY_AUTH_TOKEN` had been
+  configured for weeks but no SDK was installed and no code referenced them, so
+  Production had no error reporting at all. Server and edge only — the browser
+  SDK would eat into the 250 KB budget CLAUDE.md sets, and the blind spot that
+  mattered was server-side. Every event passes a redactor: credential-bearing
+  query parameters stripped (a signed R2 URL *is* the access grant), bodies and
+  cookies dropped wholesale, user reduced to an id.
+- **Dependency gate and integration tests in CI.** Both were local-only, so a
+  change could add retired-concept references or break a database-backed flow
+  and still merge clean. That was not hypothetical — the gate went to `+2`
+  earlier the same day and nothing caught it.
+- **Scheduled publishing (ADR-0046).** Announcements, assignments and materials
+  take an optional publish time. Empty means post now, which is what every
+  existing row means, so nothing moved. **Visibility is a comparison against
+  the clock, never a status a job flipped** — a late, failed or never-called
+  sweep delays a notification and can never hide coursework. Every student door
+  applies the rule: feed, Due Soon, the dashboard's owed-work list, all three
+  detail pages, the Lesson workspace, and the private file route.
+- **Web Push (ADR-0047).** Service worker, per-browser subscriptions, a Profile
+  toggle, and delivery both on immediate posts and from the sweep. **A payload
+  names the course and the kind of event and stops** — no score, no comment, no
+  other student's name, because a banner lands on a lock screen readable by
+  whoever is near the phone. Push is a courier, never the record: every one
+  corresponds to a Notification row already written, which is what makes
+  best-effort delivery safe.
+
+### Infrastructure debt this uncovered — read before touching the database
+
+- **The migration history cannot build this schema from empty.** It creates 25
+  tables; the schema declares 40. The rest were made with `prisma db push`
+  during development and have no migration, so `migrate deploy` against a fresh
+  database aborts on the first ALTER of a table that was never created. CI
+  therefore uses `db push`. **Disaster recovery and provisioning a new
+  environment are both blocked by this.** Fixing it means a squashed baseline
+  plus `migrate resolve` against the existing databases — it touches Production
+  bookkeeping and deserves its own change.
+- **Raw SQL was applied by hand.** `prisma/raw-sql/0001-notification-partial-unique.sql`
+  creates the partial unique index that stops a class being notified twice.
+  Prisma cannot express a partial index, so neither `db push` nor a migration
+  creates it, and nothing referenced the file — whether a database had the index
+  depended on somebody remembering. Now applied by `pnpm db:raw-sql:apply` and
+  by CI. **Verify Production has it.**
+- **Vercel Hobby caps cron at one run per day.** A five-minute schedule makes
+  the deployment fail outright. `vercel.json` is daily. Scheduled content still
+  appears on time; only the notification trails. Any scheduler that can send an
+  authorised GET to `/api/cron/publish-due` more often closes the gap with no
+  code change.
+
+### Waiting on the owner
+
+1. Merge PR #33.
+2. `prisma migrate deploy` on Production — **two** new migrations
+   (`20260731030000_add_scheduled_publishing`,
+   `20260801010000_add_web_push_subscription`).
+3. Vercel environment: `SENTRY_DSN`, `SENTRY_ORG=nomad-d0`,
+   `SENTRY_PROJECT=javascript-nextjs`, `CRON_SECRET`, and the three VAPID
+   values. Redeploy after — `NEXT_PUBLIC_VAPID_PUBLIC_KEY` is inlined at build
+   time, so setting it without redeploying leaves the toggle reporting
+   "not configured".
+4. Confirm `prisma/raw-sql` has been applied to Production.
+
+### Next
+
+The owner's remaining pick is **early warning for a student falling behind** —
+attendance, missing submissions and falling scores are all stored and nothing
+joins them, so a teacher only finds out at the end of term. Nothing has been
+started on it.
+
+Still unverified across all of this: no screen behind a login has been opened
+in a browser. Signing in needs the owner's password, so the walkthroughs,
+archive pages, scheduling UI and push toggle are proven by tests and by
+anonymous route probes, not by having been looked at.
+
 ## QUIZ PILOT ALLOWLIST RETIRED — 2026-07-31 (READ FIRST)
 
 - The owner accepted the Quiz pilot on the restored ENG course and decided to

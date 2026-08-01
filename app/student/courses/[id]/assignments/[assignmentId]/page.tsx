@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import type { SubmissionStatus } from "@prisma/client";
 import { requireRole } from "@/lib/auth/guards";
+import { isPublished } from "@/lib/publishing/visibility";
 import { db } from "@/lib/db/client";
 import { SubmitVersionForm } from "@/components/assignment/submit-version-form";
 import { WithdrawSubmissionButton } from "@/components/assignment/withdraw-submission-button";
@@ -98,6 +99,7 @@ export default async function StudentAssignmentDetailPage({
       linkUrls: true,
       fileAttachmentIds: true,
       dueAt: true,
+      publishAt: true,
       allowText: true,
       allowFile: true,
       allowLink: true,
@@ -114,6 +116,10 @@ export default async function StudentAssignmentDetailPage({
     },
   });
   if (!assignment || assignment.courseOfferingId !== courseId) notFound();
+  // Scheduled work does not exist for the class until its moment (ADR-0046).
+  // notFound rather than a "not yet" message: a student who guessed the URL
+  // should not learn that something is coming.
+  if (!isPublished(assignment)) notFound();
   if (await getModerationRestriction("ASSIGNMENT", assignment.id)) notFound();
 
   const assignmentFileIds = jsonStringArray(assignment.fileAttachmentIds);

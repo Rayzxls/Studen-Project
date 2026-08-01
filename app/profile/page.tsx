@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import {
   AtSign,
+  BellRing,
   Compass,
   KeyRound,
   Link2,
@@ -21,6 +22,7 @@ import { SetFallbackPasswordForm } from "@/components/profile/set-fallback-passw
 import { ChangeEmailForm } from "@/components/profile/change-email-form";
 import { ThemeModeControl } from "@/components/theme/theme-mode-control";
 import { ReplayToursForm } from "@/components/guide/replay-tours-form";
+import { PushToggle } from "@/components/notification/push-toggle";
 import { replayGuideToursAction } from "@/app/dashboard/guide-actions";
 import { startGoogleLinkAction } from "./actions";
 
@@ -213,6 +215,25 @@ export default async function ProfilePage({
               ))}
             </div>
             <p className="hidden">เร็ว ๆ นี้ — โหมดมืดกำลังมา</p>
+          </section>
+
+          {/* Phone notifications — per browser (ADR-0047). */}
+          <section className="card p-6">
+            <h2
+              className="flex items-center gap-2 text-base font-semibold text-black"
+              style={{ letterSpacing: "-0.01em" }}
+            >
+              <BellRing className="h-4 w-4 text-black/40" aria-hidden="true" />
+              การแจ้งเตือนบนอุปกรณ์
+            </h2>
+            <p className="mt-1 text-xs text-black/50">
+              รับแจ้งเตือนงานใหม่และประกาศแม้ไม่ได้เปิดเว็บไว้ —
+              การแจ้งเตือนจะบอกแค่ชื่อวิชาและประเภท ไม่แสดงคะแนนหรือคำติชม
+              เพราะมันขึ้นบนหน้าจอล็อกที่คนข้าง ๆ เห็นได้
+            </p>
+            <PushToggle
+              publicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""}
+            />
           </section>
 
           {/* Walkthroughs — replay the guided tours. */}
