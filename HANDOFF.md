@@ -25,6 +25,13 @@ The latest Production deployment is healthy.
 - **Production and QA database migrations report up to date.** The Production
   `notification_post_once` partial unique index was queried directly and is
   present. This prevents duplicate class notifications.
+- **Authenticated isolated-QA acceptance is complete.** Teacher, Student, and
+  Admin flows passed on desktop and a `390 x 844` viewport. The Teacher saw all
+  three early-warning signals and the scheduled publishing center; the Student
+  could not see the future post or enter Teacher routes; the Admin remained on
+  observer surfaces; shared date/time controls and themes worked without
+  browser errors. Full evidence is in
+  `docs/release-gates/2026-08-01-AUTHENTICATED-MANUAL-ACCEPTANCE.md`.
 - **`main` is protected.** Changes require a pull request, an up-to-date branch,
   resolved review conversations, all five GitHub Actions jobs, and Vercel.
   Force-push and branch deletion are disabled. Approval count is zero because
@@ -38,10 +45,10 @@ The latest Production deployment is healthy.
    disaster recovery remain unproven. Build and test a squashed baseline against
    a disposable empty database before considering `migrate resolve` on QA or
    Production; do not change Production migration bookkeeping casually.
-2. **Authenticated manual acceptance.** On desktop and a real phone, verify the
-   early-warning panel, the shared date/time field, one scheduled post from
-   creation through publication, Web Push permission/delivery, private R2 file
-   upload/preview, roles, and themes.
+2. **Production and real-device acceptance.** Isolated-QA role, layout,
+   visibility, date/time, and theme checks are complete. A real phone still
+   needs scheduled publication through cron, Web Push permission/delivery, and
+   private R2 upload/preview against Production.
 3. **Deployment observability.** Confirm a controlled server-side error reaches
    the intended Sentry project without leaking request bodies, cookies, signed
    URLs, or user details. VAPID values should also be checked in the deployed
