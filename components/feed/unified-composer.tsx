@@ -116,7 +116,7 @@ export function UnifiedComposer({
       <dialog
         ref={dialogRef}
         aria-labelledby="composer-title"
-        className="fixed inset-0 m-auto h-fit max-h-[88vh] w-[calc(100%-2rem)] max-w-xl overflow-hidden rounded-3xl bg-white p-0 shadow-lift backdrop:bg-black/40 backdrop:backdrop-blur-sm"
+        className="fixed inset-0 m-auto h-fit max-h-[88vh] w-[calc(100%-2rem)] max-w-3xl overflow-hidden rounded-3xl bg-white p-0 shadow-lift backdrop:bg-black/40 backdrop:backdrop-blur-sm"
         onClick={(e) => {
           if (e.target === dialogRef.current) close();
         }}
@@ -180,7 +180,10 @@ export function UnifiedComposer({
           </div>
 
           {/* Scrollable body */}
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-4">
+          <div
+            data-testid="composer-scroll-body"
+            className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-4 pb-6 pt-4 sm:px-6"
+          >
             {chip === "announcement" && (
               <AnnouncementForm
                 courseId={courseId}
