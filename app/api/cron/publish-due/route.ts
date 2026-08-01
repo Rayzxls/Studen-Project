@@ -14,6 +14,14 @@ import { publishDueContent } from "@/lib/publishing/sweep";
  * scheduler, not a person. Without `CRON_SECRET` configured the endpoint
  * refuses every request, so an unconfigured deployment cannot be swept by a
  * stranger who guesses the path.
+ *
+ * `vercel.json` schedules this once a day because the Hobby plan allows no
+ * more — a deployment carrying a five-minute schedule is rejected outright.
+ * Daily is enough to keep the mechanism honest but not enough for "post at
+ * eight, notify at eight": the post appears on time either way, the nudge does
+ * not. Anything that can send an authorised GET on a tighter interval — Vercel
+ * Pro, or an external scheduler holding the same secret — fixes that without a
+ * code change, because this endpoint is safe to call as often as you like.
  */
 
 export const dynamic = "force-dynamic";
