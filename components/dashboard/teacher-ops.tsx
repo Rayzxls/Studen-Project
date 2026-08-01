@@ -1,8 +1,13 @@
+import Link from "next/link";
 import {
+  AlertTriangle,
   CalendarCheck,
   CheckCircle2,
   ClipboardCheck,
+  ClipboardX,
   Gauge,
+  TrendingDown,
+  UserRoundSearch,
 } from "lucide-react";
 import type {
   AttendanceTodayRow,
@@ -10,6 +15,11 @@ import type {
   ReviewQueueItem,
 } from "@/lib/dashboard/action-center";
 import { CourseColorChip } from "@/components/course/course-color-chip";
+import type {
+  EarlyWarningRow,
+  EarlyWarningSignal,
+} from "@/lib/early-warning/evaluate";
+import type { TeacherEarlyWarningSummary } from "@/lib/early-warning/teacher";
 import {
   ActionRow,
   EmptyState,
@@ -22,6 +32,122 @@ import {
  * wins), attendance state for today's slots, then a per-course health
  * scan. Presentational only; the page fetches data once.
  */
+
+export function EarlyWarningBlock({
+  summary,
+}: {
+  summary: TeacherEarlyWarningSummary;
+}) {
+  const summaryText =
+    summary.urgentCount > 0 && summary.watchCount > 0
+      ? `ควรเข้าไปช่วยก่อน ${summary.urgentCount} คน · จับตา ${summary.watchCount} คน`
+      : summary.urgentCount > 0
+        ? `ควรเข้าไปช่วยก่อน ${summary.urgentCount} คน`
+        : `มีนักเรียนที่ควรจับตา ${summary.watchCount} คน`;
+  return (
+    <section className="card p-5">
+      <SectionHeader
+        title="สัญญาณเตือนล่วงหน้า"
+        count={summary.total || undefined}
+      />
+      {summary.total === 0 ? (
+        <EmptyState
+          icon={CheckCircle2}
+          title="ยังไม่พบสัญญาณที่ต้องติดตาม"
+          hint="ระบบจะรวมการเข้าเรียน งานที่ยังไม่ส่ง และแนวโน้มคะแนนให้โดยอัตโนมัติ"
+        />
+      ) : (
+        <>
+          <p className="mb-2 text-xs leading-5 text-black/50">{summaryText}</p>
+          <ul className="divide-y divide-black/[0.05]">
+            {summary.rows.map((row) => (
+              <EarlyWarningListItem key={row.enrollmentId} row={row} />
+            ))}
+          </ul>
+          {summary.total > summary.rows.length && (
+            <p className="mt-3 text-xs text-black/45">
+              แสดง {summary.rows.length} จาก {summary.total} คนที่ควรติดตาม
+            </p>
+          )}
+        </>
+      )}
+      <p className="mt-3 text-[11px] leading-5 text-black/40">
+        เตือนเมื่อเข้าเรียนต่ำกว่า 80% หลังเช็กอย่างน้อย 3 ครั้ง · ค้างส่ง 2
+        งานขึ้นไป · หรือคะแนนช่วงล่าสุดลดอย่างน้อย 10 จุด
+      </p>
+    </section>
+  );
+}
+
+function EarlyWarningListItem({ row }: { row: EarlyWarningRow }) {
+  const urgent = row.severity === "URGENT";
+  return (
+    <li>
+      <Link
+        href={`/teacher/courses/${row.courseId}/overview`}
+        aria-label={`ดูข้อมูล ${row.studentName} ในวิชา ${row.courseName}`}
+        className="group flex min-h-11 flex-col items-start gap-2 rounded-xl px-3 py-3 transition-colors hover:bg-black/[0.03] hover:no-underline sm:flex-row sm:items-center"
+      >
+        <span
+          className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${urgent ? "bg-red-50 text-red-700" : "bg-orange-50 text-orange-700"}`}
+        >
+          {urgent ? (
+            <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+          ) : (
+            <UserRoundSearch className="h-4 w-4" aria-hidden="true" />
+          )}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-medium text-black">
+              {row.studentName}
+            </span>
+            <span className={urgent ? "badge-danger" : "badge-warn"}>
+              {urgent ? "ควรช่วยก่อน" : "จับตา"}
+            </span>
+          </span>
+          <span className="mt-0.5 block text-xs text-black/50">
+            {row.courseName}
+            {row.learnerGroupLabel ? ` · ${row.learnerGroupLabel}` : ""}
+          </span>
+          <span className="mt-2 flex flex-wrap gap-1.5">
+            {row.signals.map((signal) => (
+              <EarlyWarningSignalBadge key={signal.kind} signal={signal} />
+            ))}
+          </span>
+        </span>
+        <span className="text-xs font-medium text-blue-700 sm:shrink-0">
+          ดูวิชา
+        </span>
+      </Link>
+    </li>
+  );
+}
+
+function EarlyWarningSignalBadge({ signal }: { signal: EarlyWarningSignal }) {
+  if (signal.kind === "ATTENDANCE") {
+    return (
+      <span className="badge-warn gap-1">
+        <CalendarCheck className="h-3 w-3" aria-hidden="true" />
+        เข้าเรียน {signal.rate}%
+      </span>
+    );
+  }
+  if (signal.kind === "MISSING_WORK") {
+    return (
+      <span className="badge-warn gap-1">
+        <ClipboardX className="h-3 w-3" aria-hidden="true" />
+        ค้าง {signal.count} งาน
+      </span>
+    );
+  }
+  return (
+    <span className="badge-warn gap-1">
+      <TrendingDown className="h-3 w-3" aria-hidden="true" />
+      คะแนน {signal.previousPercent}% → {signal.recentPercent}%
+    </span>
+  );
+}
 
 export function ReviewQueueBlock({ items }: { items: ReviewQueueItem[] }) {
   return (

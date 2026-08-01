@@ -32,6 +32,7 @@ import {
 } from "@/components/dashboard/student-action-center";
 import {
   ClassHealthBlock,
+  EarlyWarningBlock,
   ReviewQueueBlock,
 } from "@/components/dashboard/teacher-ops";
 import { AmbientBackground } from "@/components/motion/ambient-background";
@@ -50,6 +51,7 @@ import {
   courseLearnerGroup,
   courseVisualKey,
 } from "@/lib/course/display";
+import { getTeacherEarlyWarnings } from "@/lib/early-warning/teacher";
 
 // Auth-gated DB-fetching page — skip static prerender.
 export const dynamic = "force-dynamic";
@@ -396,9 +398,10 @@ async function TeacherDashboard({
   hasAvatar: boolean;
   avatarVersion: string | null;
 }) {
-  const [reviewQueue, classHealth] = await Promise.all([
+  const [reviewQueue, classHealth, earlyWarnings] = await Promise.all([
     getTeacherReviewQueue(teacherUserId),
     getTeacherClassHealth(teacherUserId),
+    getTeacherEarlyWarnings(teacherUserId),
   ]);
 
   return (
@@ -415,6 +418,7 @@ async function TeacherDashboard({
         showModeration={moderationCenterEnabled()}
         main={
           <div className="space-y-5">
+            <EarlyWarningBlock summary={earlyWarnings} />
             <section>
               <DashboardSectionHeading
                 role="teacher"
