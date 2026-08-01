@@ -151,7 +151,7 @@ export function TimePicker({
         <div
           role="dialog"
           aria-label="เลือกเวลา"
-          className="absolute left-0 top-full z-30 mt-1.5 w-[19rem] max-w-[calc(100vw-2rem)] rounded-2xl border border-hairline bg-surface p-3 shadow-lift"
+          className="absolute left-0 top-full z-30 mt-1.5 w-full max-w-xl rounded-2xl border border-hairline bg-surface p-3 shadow-lift"
         >
           <p className="px-1 text-[11px] font-semibold uppercase tracking-wide text-ink-mute">
             ชั่วโมง

@@ -132,7 +132,7 @@ export function DatePicker({
         <div
           role="dialog"
           aria-label="ปฏิทินเลือกวันที่"
-          className="absolute left-0 top-full z-40 mt-1.5 w-[22rem] max-w-[calc(100vw-2rem)] rounded-2xl border border-hairline bg-surface p-3 shadow-lift"
+          className="absolute left-0 top-full z-40 mt-1.5 w-full max-w-xl rounded-2xl border border-hairline bg-surface p-3 shadow-lift"
         >
           <div className="flex items-center justify-between gap-2">
             <button
