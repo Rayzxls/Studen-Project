@@ -3,6 +3,7 @@ import Link from "next/link";
 import {
   BookOpen,
   CalendarClock,
+  CheckCircle2,
   ClipboardList,
   FileText,
   Link2,
@@ -192,6 +193,12 @@ function FeedCard({
   const dueAt =
     item.kind === "ASSIGNMENT" && item.detail ? new Date(item.detail) : null;
   const dueSoon = dueAt !== null && isWithin48h(dueAt);
+  const scheduledForFuture =
+    role === "TEACHER" &&
+    item.publishAt != null &&
+    isFuturePublishTime(item.publishAt);
+  const publishedFromSchedule =
+    role === "TEACHER" && item.publishAt != null && !scheduledForFuture;
 
   if (item.moderationRestriction) {
     return (
@@ -269,6 +276,25 @@ function FeedCard({
           </span>
         </div>
       </header>
+
+      {scheduledForFuture && item.publishAt && (
+        <div className="mx-5 mt-4 flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">
+          <CalendarClock className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <span>
+            <strong className="font-semibold">ตั้งเวลา</strong> · เผยแพร่{" "}
+            {formatPublishingMoment(item.publishAt)} · นักเรียนยังไม่เห็น
+          </span>
+        </div>
+      )}
+      {publishedFromSchedule && item.publishAt && (
+        <div className="mx-5 mt-4 flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-800">
+          <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <span>
+            <strong className="font-semibold">เผยแพร่แล้ว</strong> ·
+            นักเรียนเข้าถึงได้ตั้งแต่ {formatPublishingMoment(item.publishAt)}
+          </span>
+        </div>
+      )}
 
       {/* Body — title + preview */}
       <div className="px-5 pt-4">
@@ -625,6 +651,26 @@ function startOfDay(d: Date): Date {
 // Server Component and the value is intentionally request-time.
 function isWithin48h(d: Date): boolean {
   return d.getTime() - Date.now() < 48 * 60 * 60 * 1000;
+}
+
+function isFuturePublishTime(d: Date): boolean {
+  return d.getTime() > Date.now();
+}
+
+function formatPublishingMoment(d: Date): string {
+  const date = new Intl.DateTimeFormat("th-TH-u-ca-buddhist", {
+    timeZone: "Asia/Bangkok",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(d);
+  const time = new Intl.DateTimeFormat("th-TH", {
+    timeZone: "Asia/Bangkok",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(d);
+  return `${date} เวลา ${time} น.`;
 }
 
 function fmtThaiDateShort(d: Date): string {

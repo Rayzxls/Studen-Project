@@ -17,6 +17,8 @@ import {
   type CourseFeedFilter,
 } from "@/components/feed/course-feed-view";
 import { UnifiedComposer } from "@/components/feed/unified-composer";
+import { PublishingQueueBanner } from "@/components/publishing/teacher-publishing-schedule";
+import { getPublishingQueueSummary } from "@/lib/publishing/teacher-schedule";
 import { teacherCourseTabs } from "../_tabs";
 import {
   getLessonWorkspaceForViewer,
@@ -50,15 +52,17 @@ export default async function TeacherCourseFeedPage({
 
   const filter = normalizeFilter(type);
   const kindFilter = feedKindsForFilter(filter);
-  const [page, hasTimetable, showSetupGuide] = await Promise.all([
-    getCourseFeed(id, "AUTHOR", undefined, kindFilter ?? undefined),
-    courseHasTimetableSlot(id),
-    shouldShowTour({
-      userId: session.user.id,
-      tourId: "teacher-course",
-      eligible: true,
-    }),
-  ]);
+  const [page, hasTimetable, showSetupGuide, publishingQueue] =
+    await Promise.all([
+      getCourseFeed(id, "AUTHOR", undefined, kindFilter ?? undefined),
+      courseHasTimetableSlot(id),
+      shouldShowTour({
+        userId: session.user.id,
+        tourId: "teacher-course",
+        eligible: true,
+      }),
+      getPublishingQueueSummary(id),
+    ]);
   const lessonWorkspace = lessonWorkspaceCourseEnabled(id)
     ? await getLessonWorkspaceForViewer({
         courseOfferingId: id,
@@ -76,7 +80,7 @@ export default async function TeacherCourseFeedPage({
       course={course}
       eyebrow="รายวิชาที่สอน"
       backHref="/teacher/courses"
-      tabs={teacherCourseTabs(id)}
+      tabs={teacherCourseTabs(id, publishingQueue.count)}
     >
       <div className="space-y-4">
         {showSetupGuide && (
@@ -87,6 +91,11 @@ export default async function TeacherCourseFeedPage({
           />
         )}
         {!hasTimetable && <TimetableSetupHint courseId={id} />}
+        <PublishingQueueBanner
+          courseId={id}
+          count={publishingQueue.count}
+          next={publishingQueue.next}
+        />
         <div className="flex items-center justify-end">
           <UnifiedComposer
             courseId={id}

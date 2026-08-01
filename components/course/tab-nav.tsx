@@ -7,6 +7,7 @@ import {
   BarChart3,
   BookOpen,
   CalendarCheck,
+  CalendarClock,
   ClipboardList,
   LayoutGrid,
   ListChecks,
@@ -29,6 +30,7 @@ export type CourseTabIcon =
   | "assignments"
   | "members"
   | "attendance"
+  | "schedule"
   | "scores"
   | "settings"
   | "overview";
@@ -40,6 +42,7 @@ const TAB_ICONS: Record<CourseTabIcon, LucideIcon> = {
   assignments: ClipboardList,
   members: Users,
   attendance: CalendarCheck,
+  schedule: CalendarClock,
   scores: BarChart3,
   settings: Settings,
   overview: LayoutGrid,
