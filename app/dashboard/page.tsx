@@ -418,7 +418,6 @@ async function TeacherDashboard({
         showModeration={moderationCenterEnabled()}
         main={
           <div className="space-y-5">
-            <EarlyWarningBlock summary={earlyWarnings} />
             <section>
               <DashboardSectionHeading
                 role="teacher"
@@ -479,6 +478,7 @@ async function TeacherDashboard({
             </section>
 
             <ReviewQueueBlock items={reviewQueue} />
+            <EarlyWarningBlock summary={earlyWarnings} />
           </div>
         }
         aside={
