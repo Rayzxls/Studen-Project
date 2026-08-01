@@ -6,6 +6,7 @@ import {
   createAssignmentAction,
   type CreateAssignmentState,
 } from "@/app/teacher/courses/[id]/assignments/actions";
+import { DateTimeField } from "@/components/ui/date-time-field";
 
 /**
  * Create Assignment dialog — Pattern 7 (native `<dialog>` with explicit
@@ -48,7 +49,7 @@ export function CreateAssignmentDialog({ courseId }: { courseId: string }) {
 
       <dialog
         ref={dialogRef}
-        className="fixed inset-0 m-auto h-fit w-[calc(100%-2rem)] max-w-lg rounded-2xl border border-black/10 bg-white p-0 shadow-soft backdrop:bg-black/40"
+        className="fixed inset-0 m-auto h-fit max-h-[90svh] w-[calc(100%-2rem)] max-w-lg overflow-y-auto rounded-2xl border border-black/10 bg-white p-0 shadow-soft backdrop:bg-black/40"
       >
         <form action={formAction} className="p-6">
           <input type="hidden" name="courseId" value={courseId} />
@@ -91,13 +92,17 @@ export function CreateAssignmentDialog({ courseId }: { courseId: string }) {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-black/70">
+              <label
+                htmlFor="create-assignment-due-at"
+                className="block text-xs font-medium text-black/70"
+              >
                 กำหนดส่ง (ไม่ใส่ = ส่งเมื่อพร้อม)
               </label>
-              <input
-                type="datetime-local"
+              <DateTimeField
+                id="create-assignment-due-at"
                 name="dueAt"
-                className="input mt-1"
+                className="mt-1"
+                aria-label="กำหนดส่งการบ้าน"
               />
             </div>
 

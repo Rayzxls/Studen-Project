@@ -21,6 +21,7 @@ import {
   type ComposeMaterialState,
 } from "@/app/teacher/courses/[id]/feed/actions";
 import { TeacherAttachmentUploader } from "@/components/attachment/teacher-attachment-uploader";
+import { DateTimeField } from "@/components/ui/date-time-field";
 
 /**
  * Unified Course Feed composer — Phase 10C · ADR-0025 § 3 (redesigned).
@@ -331,12 +332,7 @@ function AssignmentForm({
         />
       </Field>
       <Field label="กำหนดส่ง" hint="ไม่บังคับ" htmlFor="asn-due">
-        <input
-          id="asn-due"
-          type="datetime-local"
-          name="dueAt"
-          className="input"
-        />
+        <DateTimeField id="asn-due" name="dueAt" aria-label="กำหนดส่งการบ้าน" />
       </Field>
 
       {/* Scored toggle — soft tinted panel when on. */}
@@ -540,8 +536,8 @@ function LessonSelect({
  * Optional publish time shared by all three composer forms (ADR-0046).
  *
  * Empty means post now, which is what leaving it alone has always done, so the
- * common case needs no interaction. The input is `datetime-local`, so the
- * teacher picks a time on a clock rather than reasoning about a time zone.
+ * common case needs no interaction. The shared field keeps every composer on
+ * the same explicit Thai date and 24-hour time vocabulary.
  */
 function PublishAtField({ idPrefix }: { idPrefix: string }) {
   return (
@@ -550,11 +546,10 @@ function PublishAtField({ idPrefix }: { idPrefix: string }) {
       hint="ไม่บังคับ — เว้นว่างคือโพสต์ทันที"
       htmlFor={`${idPrefix}-publish-at`}
     >
-      <input
+      <DateTimeField
         id={`${idPrefix}-publish-at`}
-        type="datetime-local"
         name="publishAt"
-        className="input"
+        aria-label="ตั้งเวลาโพสต์"
       />
     </Field>
   );

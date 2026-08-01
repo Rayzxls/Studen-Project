@@ -7,6 +7,7 @@ import {
   updateAssignmentAction,
   type AssignmentMutationState,
 } from "@/app/teacher/courses/[id]/assignments/actions";
+import { DateTimeField } from "@/components/ui/date-time-field";
 
 interface AssignmentRowActionsProps {
   courseId: string;
@@ -71,7 +72,7 @@ function EditAssignmentDialog({
       </button>
       <dialog
         ref={dialogRef}
-        className="fixed inset-0 m-auto h-fit w-[calc(100%-2rem)] max-w-lg rounded-2xl border border-black/10 bg-white p-0 shadow-soft backdrop:bg-black/40"
+        className="fixed inset-0 m-auto h-fit max-h-[90svh] w-[calc(100%-2rem)] max-w-lg overflow-y-auto rounded-2xl border border-black/10 bg-white p-0 shadow-soft backdrop:bg-black/40"
       >
         <form action={formAction} className="p-6">
           <input type="hidden" name="courseId" value={courseId} />
@@ -120,16 +121,20 @@ function EditAssignmentDialog({
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-black/70">
+              <label
+                htmlFor={`edit-assignment-due-at-${assignment.id}`}
+                className="block text-xs font-medium text-black/70"
+              >
                 กำหนดส่ง
               </label>
-              <input
-                type="datetime-local"
+              <DateTimeField
+                id={`edit-assignment-due-at-${assignment.id}`}
                 name="dueAt"
                 defaultValue={
                   assignment.dueAt ? dateTimeInputValue(assignment.dueAt) : ""
                 }
-                className="input mt-1"
+                className="mt-1"
+                aria-label="แก้ไขกำหนดส่งการบ้าน"
               />
             </div>
 

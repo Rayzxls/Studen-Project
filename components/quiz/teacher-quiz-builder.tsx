@@ -26,6 +26,7 @@ import {
   type TeacherUploadedFile,
 } from "@/components/attachment/teacher-attachment-uploader";
 import { QuizAttachmentPreview } from "@/components/quiz/quiz-attachment-preview";
+import { DateTimeField } from "@/components/ui/date-time-field";
 
 type QuestionType = "SINGLE_CHOICE" | "MULTIPLE_SELECT" | "TRUE_FALSE";
 
@@ -778,40 +779,46 @@ export function TeacherQuizBuilder({
                 }
               />
             )}
-            <label className="block">
-              <span className="mb-1.5 flex items-center gap-1 text-xs font-medium text-ink">
+            <div>
+              <label
+                htmlFor={`quiz-opens-at-${data.id}`}
+                className="mb-1.5 flex items-center gap-1 text-xs font-medium text-ink"
+              >
                 <Clock3 className="h-3.5 w-3.5" /> เปิดทำ
-              </span>
-              <input
-                type="datetime-local"
+              </label>
+              <DateTimeField
+                id={`quiz-opens-at-${data.id}`}
                 value={data.opensAt}
                 disabled={locked}
-                onChange={(event) =>
+                onValueChange={(opensAt) =>
                   setData((current) => ({
                     ...current,
-                    opensAt: event.target.value,
+                    opensAt,
                   }))
                 }
-                className="input text-xs"
+                aria-label="เวลาเปิดทำ Quiz"
               />
-            </label>
-            <label className="block">
-              <span className="mb-1.5 block text-xs font-medium text-ink">
+            </div>
+            <div>
+              <label
+                htmlFor={`quiz-closes-at-${data.id}`}
+                className="mb-1.5 block text-xs font-medium text-ink"
+              >
                 ปิดทำ
-              </span>
-              <input
-                type="datetime-local"
+              </label>
+              <DateTimeField
+                id={`quiz-closes-at-${data.id}`}
                 value={data.closesAt}
                 disabled={locked}
-                onChange={(event) =>
+                onValueChange={(closesAt) =>
                   setData((current) => ({
                     ...current,
-                    closesAt: event.target.value,
+                    closesAt,
                   }))
                 }
-                className="input text-xs"
+                aria-label="เวลาปิดทำ Quiz"
               />
-            </label>
+            </div>
             <div>
               <span className="mb-2 block text-xs font-medium text-ink">
                 ไฟล์ประกอบแบบทดสอบ

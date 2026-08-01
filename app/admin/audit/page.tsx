@@ -5,6 +5,7 @@ import { PaginationLinks } from "@/components/pagination";
 import { actionsForTier, tierForRow, type AuditTier } from "@/lib/audit/tier";
 import { actionLabel } from "@/lib/audit/label";
 import { renderAuditLog } from "@/lib/audit/render";
+import { DateTimeField } from "@/components/ui/date-time-field";
 
 /**
  * Admin Audit viewer — Phase 8 · Q1 = A (pure-helper tier dispatch)
@@ -248,25 +249,31 @@ export default async function AdminAuditPage({ searchParams }: PageProps) {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-ink-soft">
+            <label
+              htmlFor="audit-from"
+              className="mb-1 block text-xs font-medium text-ink-soft"
+            >
               ตั้งแต่ (เวลาไทย)
             </label>
-            <input
+            <DateTimeField
+              id="audit-from"
               name="from"
-              type="datetime-local"
               defaultValue={sp.from ?? ""}
-              className="input"
+              aria-label="กรอง Audit ตั้งแต่"
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-ink-soft">
+            <label
+              htmlFor="audit-to"
+              className="mb-1 block text-xs font-medium text-ink-soft"
+            >
               ถึง (เวลาไทย)
             </label>
-            <input
+            <DateTimeField
+              id="audit-to"
               name="to"
-              type="datetime-local"
               defaultValue={sp.to ?? ""}
-              className="input"
+              aria-label="กรอง Audit ถึง"
             />
           </div>
         </div>
