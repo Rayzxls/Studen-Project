@@ -8,6 +8,7 @@
 import type { Announcement, Prisma } from "@prisma/client";
 import { db } from "@/lib/db/client";
 import { isPublished } from "@/lib/publishing/visibility";
+import { sendCoursePush } from "@/lib/notification/push";
 import { audit } from "@/lib/audit/log";
 import { Forbidden, NotFound, ValidationError } from "@/lib/errors";
 import {
@@ -35,12 +36,17 @@ export async function createAnnouncement(
 ): Promise<Announcement> {
   const parsed = CreateAnnouncementSchema.parse(input);
 
-  return db.$transaction(async (tx) => {
+  // Captured inside the transaction so the push, which runs after commit, can
+  // name the course without a second query.
+  let courseName = "";
+
+  const created = await db.$transaction(async (tx) => {
     const course = await tx.courseOffering.findUnique({
       where: { id: parsed.courseOfferingId },
       select: { teacherId: true, name: true },
     });
     if (!course) throw new NotFound("course_not_found");
+    courseName = course.name;
     if (course.teacherId !== ctx.actorUserId) {
       throw new Forbidden("not_course_owner");
     }
@@ -103,6 +109,21 @@ export async function createAnnouncement(
 
     return announcement;
   }, TX_OPTS);
+
+  // After the commit, never inside it: a push is a call to a third party, and
+  // holding the transaction open across one would put their outage on the
+  // critical path of a teacher posting. A scheduled post is pushed by the sweep
+  // instead, when it goes live.
+  if (isPublished({ publishAt: created.publishAt })) {
+    await sendCoursePush(created.courseOfferingId, {
+      title: courseName,
+      body: "มีประกาศใหม่",
+      url: `/student/courses/${created.courseOfferingId}/feed`,
+      tag: `announcement:${created.id}`,
+    });
+  }
+
+  return created;
 }
 
 export async function updateAnnouncement(

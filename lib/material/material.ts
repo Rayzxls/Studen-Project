@@ -12,6 +12,7 @@
 import type { Material, Prisma } from "@prisma/client";
 import { db } from "@/lib/db/client";
 import { isPublished } from "@/lib/publishing/visibility";
+import { sendCoursePush } from "@/lib/notification/push";
 import { audit } from "@/lib/audit/log";
 import { Forbidden, NotFound, ValidationError } from "@/lib/errors";
 import {

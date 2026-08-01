@@ -113,6 +113,7 @@ model User {
   teacherInvitesAccepted  TeacherInvite[]         @relation("TeacherInviteAcceptedBy")
   teacherInvitesRevoked   TeacherInvite[]         @relation("TeacherInviteRevokedBy")
   guideToursCompleted     GuideTourCompletion[]
+  webPushSubscriptions    WebPushSubscription[]
 
   @@index([role])
   @@index([accountStatus])
@@ -349,6 +350,29 @@ model Admin {
 ///
 /// A tour that is removed from the product simply stops being looked up; its
 /// rows are harmless history.
+/// One Web Push endpoint for one person's browser (ADR-0047).
+///
+/// Keyed by endpoint because that is what the push service issues and what
+/// identifies the subscription to it. Several rows per person is normal — a
+/// phone and a laptop are separate subscriptions — and a row is deleted as soon
+/// as the push service reports it gone, so the table does not accumulate
+/// endpoints for devices that were reset years ago.
+///
+/// Cascades with the User: deleting an account takes its subscriptions too.
+model WebPushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+  lastUsedAt DateTime?
+
+  @@index([userId])
+}
+
 model GuideTourCompletion {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)

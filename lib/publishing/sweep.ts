@@ -1,5 +1,6 @@
 import { db } from "@/lib/db/client";
 import { clipExcerpt, fanOutBroadcast } from "@/lib/notification";
+import { sendCoursePush } from "@/lib/notification/push";
 
 /**
  * Notifies for content whose publish time has passed (ADR-0046).
@@ -74,6 +75,12 @@ async function sweepAnnouncements(now: Date): Promise<number> {
         },
       });
     });
+    await sendCoursePush(row.courseOfferingId, {
+      title: row.course.name,
+      body: "มีประกาศใหม่",
+      url: `/student/courses/${row.courseOfferingId}/feed`,
+      tag: `announcement:${row.id}`,
+    });
     sent += 1;
   }
   return sent;
@@ -115,6 +122,12 @@ async function sweepMaterials(now: Date): Promise<number> {
         },
       });
     });
+    await sendCoursePush(row.courseOfferingId, {
+      title: row.course.name,
+      body: "มีเอกสารใหม่",
+      url: `/student/courses/${row.courseOfferingId}/feed`,
+      tag: `material:${row.id}`,
+    });
     sent += 1;
   }
   return sent;
@@ -151,6 +164,12 @@ async function sweepAssignments(now: Date): Promise<number> {
           dueAt: row.dueAt ? row.dueAt.toISOString() : null,
         },
       });
+    });
+    await sendCoursePush(row.courseOfferingId, {
+      title: row.course.name,
+      body: "มีงานใหม่ที่ต้องส่ง",
+      url: `/student/courses/${row.courseOfferingId}/assignments/${row.id}`,
+      tag: `assignment:${row.id}`,
     });
     sent += 1;
   }
