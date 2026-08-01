@@ -99,8 +99,18 @@ jobs:
           node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
-      - name: Apply migrations to the runner database
-        run: pnpm exec prisma migrate deploy
+      # `db push`, not `migrate deploy`: the migration history does not build
+      # this schema from empty. Most tables were created by `prisma db push`
+      # during development and have no migration, so `migrate deploy` against a
+      # fresh database fails on the first ALTER of a table that was never
+      # created. `db push` materialises whatever schema.prisma currently
+      # describes, which is exactly what a disposable test database wants.
+      #
+      # Fixing that properly means a squashed baseline migration plus
+      # `migrate resolve` on the existing databases — worth doing, but it is not
+      # this job's business.
+      - name: Create the runner database schema
+        run: pnpm exec prisma db push --skip-generate
         env:
           DATABASE_URL: postgresql://beagle:beagle@localhost:5432/beagle_ci
       - run: pnpm test:integration:ci
