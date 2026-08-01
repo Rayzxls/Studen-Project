@@ -1,49 +1,58 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { DateTimeField } from "@/components/ui/date-time-field";
 
 describe("DateTimeField", () => {
-  it("shows an existing value with a Thai, 24-hour summary", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("shows an existing value in separate compact date and time controls", () => {
     const { container } = render(
       <DateTimeField name="dueAt" defaultValue="2026-08-01T16:58" />
     );
 
-    expect(screen.getByLabelText("วัน")).toHaveValue("01");
-    expect(screen.getByLabelText("เดือน")).toHaveValue("08");
-    expect(screen.getByLabelText("ปี")).toHaveValue("2026");
-    expect(screen.getByLabelText("ชั่วโมง")).toHaveValue("16");
-    expect(screen.getByLabelText("นาที")).toHaveValue("58");
+    expect(screen.getByRole("button", { name: "วันที่" })).toHaveTextContent(
+      "1 ส.ค. 2569"
+    );
+    expect(screen.getByRole("button", { name: "เวลา" })).toHaveTextContent(
+      "16:58"
+    );
     expect(screen.getByText("1 สิงหาคม 2569 เวลา 16:58 น.")).toBeVisible();
     expect(container.querySelector('input[name="dueAt"]')).toHaveValue(
       "2026-08-01T16:58"
     );
+    expect(container.querySelectorAll("select")).toHaveLength(0);
+    expect(container.querySelector('input[type="date"]')).toBeNull();
     expect(container.querySelector('input[type="datetime-local"]')).toBeNull();
   });
 
-  it("submits the original datetime-local contract after all parts are chosen", () => {
+  it("submits the original datetime-local contract after date and time are chosen", () => {
+    const { container } = render(<DateTimeField name="publishAt" futureOnly />);
+
+    fireEvent.click(screen.getByRole("button", { name: "วันที่" }));
+    fireEvent.click(screen.getByRole("button", { name: "พรุ่งนี้" }));
+    fireEvent.click(screen.getByRole("button", { name: "เวลา" }));
+    fireEvent.click(screen.getByTestId("time-picker-hour-09"));
+    fireEvent.click(screen.getByTestId("time-picker-minute-05"));
+
+    expect(
+      (container.querySelector('input[name="publishAt"]') as HTMLInputElement)
+        .value
+    ).toMatch(/^\d{4}-\d{2}-\d{2}T09:05$/);
+  });
+
+  it("uses a compact five-minute grid instead of a 60-row minute list", () => {
     const { container } = render(<DateTimeField name="publishAt" />);
 
-    fireEvent.change(screen.getByLabelText("วัน"), {
-      target: { value: "15" },
-    });
-    fireEvent.change(screen.getByLabelText("เดือน"), {
-      target: { value: "12" },
-    });
-    fireEvent.change(screen.getByLabelText("ปี"), {
-      target: { value: "2026" },
-    });
-    fireEvent.change(screen.getByLabelText("ชั่วโมง"), {
-      target: { value: "09" },
-    });
-    fireEvent.change(screen.getByLabelText("นาที"), {
-      target: { value: "05" },
-    });
+    fireEvent.click(screen.getByRole("button", { name: "เวลา" }));
 
-    expect(container.querySelector('input[name="publishAt"]')).toHaveValue(
-      "2026-12-15T09:05"
-    );
-    expect(screen.getByText("15 ธันวาคม 2569 เวลา 09:05 น.")).toBeVisible();
+    expect(
+      container.querySelectorAll('[data-testid^="time-picker-minute-"]')
+    ).toHaveLength(12);
+    expect(screen.getByTestId("time-picker-minute-00")).toBeVisible();
+    expect(screen.getByTestId("time-picker-minute-55")).toBeVisible();
   });
 
   it("reports controlled changes and clears every part", () => {
@@ -56,9 +65,8 @@ describe("DateTimeField", () => {
       />
     );
 
-    fireEvent.change(screen.getByLabelText("นาที"), {
-      target: { value: "30" },
-    });
+    fireEvent.click(screen.getByRole("button", { name: "เวลา" }));
+    fireEvent.click(screen.getByTestId("time-picker-minute-30"));
     expect(onValueChange).toHaveBeenLastCalledWith("2026-08-01T16:30");
 
     fireEvent.click(screen.getByRole("button", { name: "ล้าง" }));
@@ -68,13 +76,47 @@ describe("DateTimeField", () => {
   });
 
   it("marks a partially completed optional value as incomplete", () => {
-    render(<DateTimeField name="from" />);
+    render(<DateTimeField name="from" futureOnly />);
 
-    fireEvent.change(screen.getByLabelText("วัน"), {
-      target: { value: "01" },
-    });
+    fireEvent.click(screen.getByRole("button", { name: "วันที่" }));
+    fireEvent.click(screen.getByRole("button", { name: "พรุ่งนี้" }));
 
     expect(screen.getByText("กรุณาเลือกวันและเวลาให้ครบ")).toBeVisible();
-    expect(screen.getByLabelText("เดือน")).toBeRequired();
+  });
+
+  it("uses a custom calendar and hides past dates for scheduling fields", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-15T05:00:00.000Z"));
+    render(<DateTimeField name="publishAt" futureOnly />);
+
+    expect(screen.getByText("ตั้งแต่ปัจจุบัน")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "วันที่" }));
+
+    expect(
+      screen.getByRole("dialog", { name: "ปฏิทินเลือกวันที่" })
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "เดือนก่อนหน้า" })
+    ).toBeDisabled();
+    expect(
+      screen.queryByRole("button", { name: "เลือก 14 สิงหาคม 2569" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "เลือก 15 สิงหาคม 2569" })
+    ).toHaveAttribute("aria-current", "date");
+    expect(screen.getByRole("button", { name: "วันนี้" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "พรุ่งนี้" })).toBeVisible();
+  });
+
+  it("keeps historical filters unrestricted", () => {
+    render(<DateTimeField name="from" defaultValue="2020-01-15T08:00" />);
+
+    expect(screen.queryByText("ตั้งแต่ปัจจุบัน")).not.toBeInTheDocument();
+    expect(screen.getByText("15 มกราคม 2563 เวลา 08:00 น.")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "วันที่" }));
+    expect(screen.getByRole("button", { name: "เดือนก่อนหน้า" })).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "เลือก 1 มกราคม 2563" })
+    ).toBeVisible();
   });
 });

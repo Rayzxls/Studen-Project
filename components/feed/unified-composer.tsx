@@ -332,7 +332,12 @@ function AssignmentForm({
         />
       </Field>
       <Field label="กำหนดส่ง" hint="ไม่บังคับ" htmlFor="asn-due">
-        <DateTimeField id="asn-due" name="dueAt" aria-label="กำหนดส่งการบ้าน" />
+        <DateTimeField
+          id="asn-due"
+          name="dueAt"
+          futureOnly
+          aria-label="กำหนดส่งการบ้าน"
+        />
       </Field>
 
       {/* Scored toggle — soft tinted panel when on. */}
@@ -549,6 +554,7 @@ function PublishAtField({ idPrefix }: { idPrefix: string }) {
       <DateTimeField
         id={`${idPrefix}-publish-at`}
         name="publishAt"
+        futureOnly
         aria-label="ตั้งเวลาโพสต์"
       />
     </Field>

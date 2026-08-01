@@ -101,6 +101,7 @@ export function CreateAssignmentDialog({ courseId }: { courseId: string }) {
               <DateTimeField
                 id="create-assignment-due-at"
                 name="dueAt"
+                futureOnly
                 className="mt-1"
                 aria-label="กำหนดส่งการบ้าน"
               />

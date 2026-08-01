@@ -279,6 +279,7 @@ function ExpirySection({
           name="expiresAt"
           value={value}
           onValueChange={setValue}
+          futureOnly
           invalid={Boolean(state.fieldErrors?.expiresAt)}
           aria-label="วันหมดอายุรหัสห้อง"
         />
