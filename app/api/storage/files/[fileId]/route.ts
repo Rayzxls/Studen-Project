@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { assert, requireAuth } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
+import { isPublished } from "@/lib/publishing/visibility";
 import { Forbidden, NotFound, errorResponse } from "@/lib/errors";
 import { getModerationRestriction } from "@/lib/moderation/queries";
 import { resolveFileDisposition } from "@/lib/storage/delivery";
@@ -92,10 +93,17 @@ async function assertCanReadFile(
       where: { id: ownerId },
       select: {
         courseOfferingId: true,
+        publishAt: true,
         course: { select: { teacherId: true } },
       },
     });
     if (!row) throw new NotFound("assignment_not_found");
+    assertPublishedForReader(
+      row,
+      row.course.teacherId,
+      actor,
+      "assignment_not_found"
+    );
     await assertCanReadCourseFile(
       row.courseOfferingId,
       row.course.teacherId,
@@ -108,10 +116,17 @@ async function assertCanReadFile(
       where: { id: ownerId },
       select: {
         courseOfferingId: true,
+        publishAt: true,
         course: { select: { teacherId: true } },
       },
     });
     if (!row) throw new NotFound("material_not_found");
+    assertPublishedForReader(
+      row,
+      row.course.teacherId,
+      actor,
+      "material_not_found"
+    );
     await assertCanReadCourseFile(
       row.courseOfferingId,
       row.course.teacherId,
@@ -124,10 +139,17 @@ async function assertCanReadFile(
       where: { id: ownerId },
       select: {
         courseOfferingId: true,
+        publishAt: true,
         course: { select: { teacherId: true } },
       },
     });
     if (!row) throw new NotFound("announcement_not_found");
+    assertPublishedForReader(
+      row,
+      row.course.teacherId,
+      actor,
+      "announcement_not_found"
+    );
     await assertCanReadCourseFile(
       row.courseOfferingId,
       row.course.teacherId,
@@ -223,6 +245,25 @@ async function assertCanReadQuizFile(
     quiz.course.teacherId,
     actor
   );
+}
+
+/**
+ * Refuses a file hanging off content that has not published yet (ADR-0046).
+ *
+ * Without this the brief is hidden but its worksheet is not: an attachment id
+ * is enough to fetch the file. Only the owning teacher, who can already see the
+ * scheduled item, is let through — an Admin observer is not, matching how the
+ * feed treats them.
+ */
+function assertPublishedForReader(
+  row: { publishAt: Date | null },
+  teacherId: string,
+  actor: { id: string; role: "ADMIN" | "TEACHER" | "STUDENT" },
+  notFoundCode: string
+): void {
+  if (isPublished(row)) return;
+  if (actor.role === "TEACHER" && actor.id === teacherId) return;
+  throw new NotFound(notFoundCode);
 }
 
 async function assertCanReadCourseFile(

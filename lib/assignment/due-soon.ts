@@ -18,6 +18,7 @@
  */
 
 import { db } from "@/lib/db/client";
+import { publishedWhere } from "@/lib/publishing/visibility";
 
 const HORIZON_MS = 24 * 60 * 60 * 1000;
 const MAX_ITEMS = 5;
@@ -50,23 +51,34 @@ export async function getDueSoonForStudent(
         },
       },
       dueAt: { gte: now, lte: horizon },
-      // Submission.status ∈ {NOT_SUBMITTED, DRAFT}.
-      // NOT_SUBMITTED is the sentinel state (no Submission row);
-      // DRAFT means a row exists but no SubmissionVersion was submitted.
-      // We exclude SUBMITTED / LATE_SUBMITTED / RETURNED / GRADED.
-      OR: [
+      // Two OR conditions live here — the publish gate and the submission
+      // status — so both go under AND. As siblings the second would replace
+      // the first and quietly drop the gate.
+      AND: [
+        // Scheduled work is not the student's problem until it exists for them
+        // (ADR-0046). Otherwise a brief written for next week shows up in Due
+        // Soon days before the class can open it.
+        ...publishedWhere("STUDENT", now),
         {
-          submissions: {
-            none: { enrollment: { studentId: studentUserId } },
-          },
-        },
-        {
-          submissions: {
-            some: {
-              enrollment: { studentId: studentUserId },
-              status: "DRAFT",
+          // Submission.status ∈ {NOT_SUBMITTED, DRAFT}.
+          // NOT_SUBMITTED is the sentinel state (no Submission row);
+          // DRAFT means a row exists but no SubmissionVersion was submitted.
+          // We exclude SUBMITTED / LATE_SUBMITTED / RETURNED / GRADED.
+          OR: [
+            {
+              submissions: {
+                none: { enrollment: { studentId: studentUserId } },
+              },
             },
-          },
+            {
+              submissions: {
+                some: {
+                  enrollment: { studentId: studentUserId },
+                  status: "DRAFT",
+                },
+              },
+            },
+          ],
         },
       ],
     },

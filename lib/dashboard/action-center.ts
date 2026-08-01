@@ -16,6 +16,7 @@
 import { db } from "@/lib/db/client";
 import { SubmissionStatus } from "@prisma/client";
 import { courseLearnerGroup } from "@/lib/course/display";
+import { publishedWhere } from "@/lib/publishing/visibility";
 
 // ─────────────────────────────────────────────────────────────
 // Student — Action Center
@@ -103,17 +104,30 @@ export async function getStudentActionCenter(
       where: {
         courseOfferingId: { in: courseIds },
         submissionClosed: false,
-        OR: [
-          { submissions: { none: { enrollmentId: { in: enrollmentIds } } } },
+        // Both conditions are an OR, so they go under AND — as siblings the
+        // second would replace the first and drop the publish gate.
+        AND: [
+          // A brief scheduled for next week is not owed yet (ADR-0046).
+          ...publishedWhere("STUDENT"),
           {
-            submissions: {
-              some: {
-                enrollmentId: { in: enrollmentIds },
-                status: {
-                  in: [SubmissionStatus.NOT_SUBMITTED, SubmissionStatus.DRAFT],
+            OR: [
+              {
+                submissions: { none: { enrollmentId: { in: enrollmentIds } } },
+              },
+              {
+                submissions: {
+                  some: {
+                    enrollmentId: { in: enrollmentIds },
+                    status: {
+                      in: [
+                        SubmissionStatus.NOT_SUBMITTED,
+                        SubmissionStatus.DRAFT,
+                      ],
+                    },
+                  },
                 },
               },
-            },
+            ],
           },
         ],
       },
