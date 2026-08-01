@@ -115,7 +115,7 @@ export function TimePicker({
   }, [open]);
 
   const gridBtn =
-    "grid h-9 min-w-9 place-items-center rounded-lg text-sm tabular-nums transition-colors";
+    "grid h-11 min-w-0 place-items-center rounded-lg text-sm tabular-nums transition-colors";
 
   return (
     <div
@@ -156,7 +156,10 @@ export function TimePicker({
           <p className="px-1 text-[11px] font-semibold uppercase tracking-wide text-ink-mute">
             ชั่วโมง
           </p>
-          <div className="mt-1.5 grid grid-cols-6 gap-1">
+          <div
+            data-testid="time-picker-hours"
+            className="mt-1.5 grid grid-cols-4 gap-1 sm:grid-cols-6"
+          >
             {HOURS.map((h) => {
               const selected = parsed?.h === h;
               const school = h >= SCHOOL_HOUR_MIN && h <= SCHOOL_HOUR_MAX;
@@ -190,7 +193,10 @@ export function TimePicker({
           <p className="mt-3 px-1 text-[11px] font-semibold uppercase tracking-wide text-ink-mute">
             นาที
           </p>
-          <div className="mt-1.5 grid grid-cols-6 gap-1">
+          <div
+            data-testid="time-picker-minutes"
+            className="mt-1.5 grid grid-cols-4 gap-1 sm:grid-cols-6"
+          >
             {MINUTES.map((m) => {
               const selected = parsed?.m === m;
               const hour = parsed?.h ?? minimum?.h ?? 8;

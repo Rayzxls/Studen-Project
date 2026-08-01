@@ -77,10 +77,17 @@ describe("DateTimeField", () => {
       </div>
     );
     fireEvent.click(screen.getByRole("button", { name: "เวลา" }));
-    expect(screen.getByRole("dialog", { name: "เลือกเวลา" })).toHaveClass(
-      "w-full",
-      "max-w-xl"
+    const timeDialog = screen.getByRole("dialog", { name: "เลือกเวลา" });
+    expect(timeDialog).toHaveClass("w-full", "max-w-xl");
+    expect(screen.getByTestId("time-picker-hours")).toHaveClass(
+      "grid-cols-4",
+      "sm:grid-cols-6"
     );
+    expect(screen.getByTestId("time-picker-minutes")).toHaveClass(
+      "grid-cols-4",
+      "sm:grid-cols-6"
+    );
+    expect(screen.getByTestId("time-picker-hour-08")).toHaveClass("min-w-0");
   });
 
   it("reports controlled changes and clears every part", () => {
