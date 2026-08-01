@@ -55,6 +55,34 @@ describe("DateTimeField", () => {
     expect(screen.getByTestId("time-picker-minute-55")).toBeVisible();
   });
 
+  it("keeps both picker panels inside a narrow form without horizontal overflow", () => {
+    const { container, unmount } = render(
+      <div className="w-72">
+        <DateTimeField name="publishAt" futureOnly />
+      </div>
+    );
+
+    expect(
+      container.querySelector('[data-testid="date-time-controls"]')
+    ).toHaveClass("grid-cols-1");
+    fireEvent.click(screen.getByRole("button", { name: "วันที่" }));
+    expect(
+      screen.getByRole("dialog", { name: "ปฏิทินเลือกวันที่" })
+    ).toHaveClass("w-full", "max-w-xl");
+
+    unmount();
+    render(
+      <div className="w-72">
+        <DateTimeField name="publishAt" futureOnly />
+      </div>
+    );
+    fireEvent.click(screen.getByRole("button", { name: "เวลา" }));
+    expect(screen.getByRole("dialog", { name: "เลือกเวลา" })).toHaveClass(
+      "w-full",
+      "max-w-xl"
+    );
+  });
+
   it("reports controlled changes and clears every part", () => {
     const onValueChange = vi.fn();
     const { container } = render(
