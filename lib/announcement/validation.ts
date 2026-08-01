@@ -3,6 +3,7 @@
  */
 
 import { z } from "zod";
+import { PublishAtSchema } from "@/lib/publishing/validation";
 import { BODY_MAX, LINK_URL_MAX, MAX_LINK_URLS, TITLE_MAX } from "./constants";
 
 const LinkUrlSchema = z
@@ -29,6 +30,7 @@ export const CreateAnnouncementSchema = z
     body: z.string().min(1).max(BODY_MAX),
     fileAttachmentIds: z.array(z.string().min(1)).default([]),
     linkUrls: z.array(LinkUrlSchema).max(MAX_LINK_URLS).default([]),
+    publishAt: PublishAtSchema,
     id: z.string().min(1).max(64).optional(),
   })
   .transform((v) => ({

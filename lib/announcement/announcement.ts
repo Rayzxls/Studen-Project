@@ -7,6 +7,7 @@
 
 import type { Announcement, Prisma } from "@prisma/client";
 import { db } from "@/lib/db/client";
+import { isPublished } from "@/lib/publishing/visibility";
 import { audit } from "@/lib/audit/log";
 import { Forbidden, NotFound, ValidationError } from "@/lib/errors";
 import {
@@ -58,6 +59,9 @@ export async function createAnnouncement(
       });
     }
 
+    const publishAt = parsed.publishAt ?? null;
+    const liveNow = isPublished({ publishAt });
+
     const announcement = await tx.announcement.create({
       data: {
         ...(parsed.id && { id: parsed.id }),
@@ -67,8 +71,17 @@ export async function createAnnouncement(
         fileAttachmentIds: parsed.fileAttachmentIds as Prisma.InputJsonValue,
         linkUrls: parsed.linkUrls as Prisma.InputJsonValue,
         postedById: ctx.actorUserId,
+        publishAt,
+        // Stamped up front when the post is already live, so a publish time in
+        // the past cannot be notified twice: once here and again by the sweep,
+        // which claims rows that are due and unstamped.
+        notifiedAt: liveNow ? new Date() : null,
       },
     });
+
+    // A scheduled post notifies when it goes live, not when it is written
+    // (ADR-0046). The sweep fans out for it later.
+    if (!liveNow) return announcement;
 
     const teacher = await tx.teacher.findUniqueOrThrow({
       where: { userId: ctx.actorUserId },

@@ -20,6 +20,8 @@
     "test:e2e": "dotenv -e .env.local -- tsx scripts/run-isolated-tests.ts e2e",
     "test:smoke": "dotenv -e .env.local -- tsx scripts/run-isolated-tests.ts smoke",
     "qa:safe": "tsx scripts/qa-safe-smoke.ts",
+    "db:raw-sql:apply": "dotenv -e .env.local -- tsx scripts/apply-raw-sql.ts",
+    "db:raw-sql:apply:ci": "tsx scripts/apply-raw-sql.ts",
     "qa:release:dependencies": "tsx scripts/identity-course-dependency-gate.ts",
     "qa:release:dependencies:strict": "tsx scripts/identity-course-dependency-gate.ts --strict",
     "qa:release:dependencies:identity:strict": "tsx scripts/identity-course-dependency-gate.ts --strict --scope=identity",

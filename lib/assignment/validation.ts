@@ -10,6 +10,7 @@
  */
 
 import { z } from "zod";
+import { PublishAtSchema } from "@/lib/publishing/validation";
 import {
   ALLOWED_MIME_TYPES,
   COMMENT_BODY_MAX,
@@ -86,6 +87,7 @@ export const CreateAssignmentSchema = z
       .array(z.string().min(1))
       .max(MAX_LINKS_PER_VERSION)
       .default([]),
+    publishAt: PublishAtSchema,
     id: z.string().min(1).max(64).optional(),
   })
   .refine((v) => v.allowText || v.allowFile || v.allowLink, {

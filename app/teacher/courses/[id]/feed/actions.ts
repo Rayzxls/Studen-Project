@@ -9,6 +9,7 @@ import { createAnnouncement } from "@/lib/announcement/announcement";
 import { ZodError } from "zod";
 import { HttpError, ValidationError } from "@/lib/errors";
 import { lessonWorkspaceCourseMutationsEnabled } from "@/lib/lesson";
+import { readPublishAt } from "@/lib/publishing/validation";
 
 /**
  * Unified composer Server Actions — Phase 10C · ADR-0025 § 3.
@@ -70,6 +71,7 @@ export async function composeAnnouncementAction(
   const session = await requireRole(["TEACHER"]);
   const meta = await getRequestMeta();
   const courseId = String(formData.get("courseId") ?? "");
+  const publishAt = readPublishAt(formData.get("publishAt"));
   const title = String(formData.get("title") ?? "").trim();
   const body = String(formData.get("body") ?? "").trim();
   const linkUrls = parseLinkUrls(String(formData.get("linkUrls") ?? ""));
@@ -95,6 +97,7 @@ export async function composeAnnouncementAction(
         body,
         linkUrls,
         fileAttachmentIds,
+        publishAt,
       },
       {
         actorUserId: session.user.id,
@@ -121,6 +124,7 @@ export async function composeAssignmentAction(
   const session = await requireRole(["TEACHER"]);
   const meta = await getRequestMeta();
   const courseId = String(formData.get("courseId") ?? "");
+  const publishAt = readPublishAt(formData.get("publishAt"));
   const lessonId = String(formData.get("lessonId") ?? "").trim();
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "");
@@ -172,6 +176,7 @@ export async function composeAssignmentAction(
         fullScore,
         linkUrls,
         fileAttachmentIds,
+        publishAt,
       },
       {
         actorUserId: session.user.id,
@@ -200,6 +205,7 @@ export async function composeMaterialAction(
   const session = await requireRole(["TEACHER"]);
   const meta = await getRequestMeta();
   const courseId = String(formData.get("courseId") ?? "");
+  const publishAt = readPublishAt(formData.get("publishAt"));
   const lessonId = String(formData.get("lessonId") ?? "").trim();
   const title = String(formData.get("title") ?? "").trim();
   const body = String(formData.get("body") ?? "").trim();
@@ -233,6 +239,7 @@ export async function composeMaterialAction(
         body,
         linkUrls,
         fileAttachmentIds,
+        publishAt,
       },
       {
         actorUserId: session.user.id,
