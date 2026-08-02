@@ -1,6 +1,7 @@
 /**
- * Adopts, verifies, and can roll back the squashed migration baseline on QA.
- * Production is rejected by normalized database identity before connecting.
+ * Adopts, verifies, and can roll back the squashed migration baseline on QA or
+ * Production. QA is the default target; Production requires an explicit target
+ * flag, a separate current backup, and Production-only confirmation tokens.
  */
 import { createHash } from "node:crypto";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
@@ -18,9 +19,24 @@ import { basename, dirname, join, resolve } from "node:path";
 import { PrismaClient } from "@prisma/client";
 
 import {
+  assertProductionBaselineAdoptionDatabase,
   assertQaBaselineAdoptionDatabase,
+  prepareProductionBaselineAdoptionEnv,
   prepareQaBaselineAdoptionEnv,
 } from "../tests/helpers/database-safety";
+
+type AdoptionTarget = "qa" | "production";
+
+function parseTarget(): AdoptionTarget {
+  const targetArg = process.argv.find((arg) => arg.startsWith("--target="));
+  if (!targetArg || targetArg === "--target=qa") return "qa";
+  if (targetArg === "--target=production") return "production";
+  throw new Error("baseline_adoption_target_must_be_qa_or_production");
+}
+
+const ADOPTION_TARGET = parseTarget();
+const TARGET_DISPLAY = ADOPTION_TARGET === "qa" ? "QA" : "Production";
+const TARGET_ERROR_PREFIX = ADOPTION_TARGET === "qa" ? "qa" : "production";
 
 const PRISMA_CLI = resolve("node_modules/prisma/build/index.js");
 const ACTIVE_SCHEMA_PATH = resolve("prisma/schema.prisma");
@@ -34,13 +50,27 @@ const BASELINE_PATH = resolve(
 const BASELINE_MIGRATION_NAME = "00000000000000_squashed_baseline";
 const BASELINE_SHA256 =
   "e6ae697be28775d536bf613652522b213056f2d7096a4c3add20b551a76f135e";
-const QA_MIGRATION_BACKUP_SCHEMA = "beagle_baseline_qa_backup_20260802";
+const MIGRATION_BACKUP_SCHEMA =
+  ADOPTION_TARGET === "qa"
+    ? "beagle_baseline_qa_backup_20260802"
+    : "beagle_baseline_production_backup_20260803";
 const EXPECTED_LEGACY_MIGRATION_COUNT = 14;
 const EXPECTED_TABLE_COUNT = 41;
-const ADOPTION_CONFIRMATION = "ADOPT_BASELINE_ON_QA_20260802";
-const ROLLBACK_CONFIRMATION = "ROLLBACK_BASELINE_ON_QA_20260802";
-const DEPLOY_CONFIRMATION = "DEPLOY_BASELINE_QA_MIGRATIONS";
-const QA_ADVISORY_LOCK_ID = "68434670120260804";
+const ADOPTION_CONFIRMATION =
+  ADOPTION_TARGET === "qa"
+    ? "ADOPT_BASELINE_ON_QA_20260802"
+    : "ADOPT_BASELINE_ON_PRODUCTION_20260803";
+const ROLLBACK_CONFIRMATION =
+  ADOPTION_TARGET === "qa"
+    ? "ROLLBACK_BASELINE_ON_QA_20260802"
+    : "ROLLBACK_BASELINE_ON_PRODUCTION_20260803";
+const DEPLOY_CONFIRMATION =
+  ADOPTION_TARGET === "qa"
+    ? "DEPLOY_BASELINE_QA_MIGRATIONS"
+    : "DEPLOY_BASELINE_PRODUCTION_MIGRATIONS";
+const ADVISORY_LOCK_ID =
+  ADOPTION_TARGET === "qa" ? "68434670120260804" : "68434670120260805";
+const WORKSPACE_PREFIX = `beagle-${ADOPTION_TARGET}-baseline-adoption-`;
 
 type Mode = "preflight" | "adopt" | "status" | "deploy" | "rollback";
 type CommandResult = SpawnSyncReturns<string>;
@@ -61,7 +91,7 @@ function parseMode(): Mode {
     return mode;
   }
   throw new Error(
-    "usage: adopt-migration-baseline-qa <preflight|adopt|status|deploy|rollback> [--confirm=TOKEN]"
+    "usage: adopt-migration-baseline-qa <preflight|adopt|status|deploy|rollback> [--target=qa|production] [--confirm=TOKEN]"
   );
 }
 
@@ -76,7 +106,9 @@ function assertConfirmation(mode: Mode): void {
           : null;
   if (!expected) return;
   if (!process.argv.includes(`--confirm=${expected}`)) {
-    throw new Error(`qa_baseline_${mode}_confirmation_required`);
+    throw new Error(
+      `${TARGET_ERROR_PREFIX}_baseline_${mode}_confirmation_required`
+    );
   }
 }
 
@@ -159,7 +191,7 @@ async function createProposedMigrationWorkspace(): Promise<{
   root: string;
   schemaPath: string;
 }> {
-  const root = await mkdtemp(join(tmpdir(), "beagle-qa-baseline-adoption-"));
+  const root = await mkdtemp(join(tmpdir(), WORKSPACE_PREFIX));
   try {
     const prismaDir = join(root, "prisma");
     const baselineDir = join(prismaDir, "migrations", BASELINE_MIGRATION_NAME);
@@ -181,13 +213,15 @@ async function removeWorkspace(root: string): Promise<void> {
   const resolvedRoot = resolve(root);
   if (
     dirname(resolvedRoot) !== resolve(tmpdir()) ||
-    !basename(resolvedRoot).startsWith("beagle-qa-baseline-adoption-")
+    !basename(resolvedRoot).startsWith(WORKSPACE_PREFIX)
   ) {
-    throw new Error("unsafe_qa_baseline_workspace_cleanup_target");
+    throw new Error(
+      `unsafe_${TARGET_ERROR_PREFIX}_baseline_workspace_cleanup_target`
+    );
   }
   const stats = await lstat(resolvedRoot);
   if (!stats.isDirectory() || stats.isSymbolicLink()) {
-    throw new Error("unsafe_qa_baseline_workspace_type");
+    throw new Error(`unsafe_${TARGET_ERROR_PREFIX}_baseline_workspace_type`);
   }
   await rm(resolvedRoot, { recursive: true });
 }
@@ -251,7 +285,7 @@ async function assertBaselineHistory(database: PrismaClient): Promise<void> {
   assertNames(
     await readMigrationNames(database),
     [BASELINE_MIGRATION_NAME],
-    "qa_baseline"
+    `${TARGET_ERROR_PREFIX}_baseline`
   );
 }
 
@@ -277,7 +311,7 @@ async function verifyApplicationShape(database: PrismaClient): Promise<void> {
   `;
   if (tables[0]?.count !== EXPECTED_TABLE_COUNT) {
     throw new Error(
-      `qa_table_count_mismatch_expected_${EXPECTED_TABLE_COUNT}_actual_${tables[0]?.count ?? "missing"}`
+      `${TARGET_ERROR_PREFIX}_table_count_mismatch_expected_${EXPECTED_TABLE_COUNT}_actual_${tables[0]?.count ?? "missing"}`
     );
   }
   const indexes = await database.$queryRaw<Array<{ indexdef: string }>>`
@@ -287,7 +321,7 @@ async function verifyApplicationShape(database: PrismaClient): Promise<void> {
   `;
   const definition = indexes[0]?.indexdef ?? "";
   if (!definition.includes("UNIQUE INDEX") || !definition.includes("WHERE")) {
-    throw new Error("qa_partial_unique_index_missing");
+    throw new Error(`${TARGET_ERROR_PREFIX}_partial_unique_index_missing`);
   }
   await Promise.all([
     database.user.count(),
@@ -310,7 +344,7 @@ async function captureDataSnapshot(
     ORDER BY table_name
   `;
   if (names.length !== EXPECTED_TABLE_COUNT) {
-    throw new Error("qa_snapshot_table_count_mismatch");
+    throw new Error(`${TARGET_ERROR_PREFIX}_snapshot_table_count_mismatch`);
   }
   const tables: DataSnapshot["tables"] = [];
   for (const { table_name: tableName } of names) {
@@ -326,7 +360,9 @@ async function captureDataSnapshot(
       ) AS row_hashes
     `);
     const row = rows[0];
-    if (!row) throw new Error(`qa_snapshot_failed_${tableName}`);
+    if (!row) {
+      throw new Error(`${TARGET_ERROR_PREFIX}_snapshot_failed_${tableName}`);
+    }
     tables.push({ tableName, rowCount: row.row_count, digest: row.digest });
   }
   const sequences = await database.$queryRaw<
@@ -376,7 +412,7 @@ function assertSchemaMatches(databaseUrl: string, schemaPath: string): void {
   );
   if (result.status !== 0) {
     throw new Error(
-      `qa_schema_diff_detected\n${redact(result.stdout ?? "", databaseUrl)}`
+      `${TARGET_ERROR_PREFIX}_schema_diff_detected\n${redact(result.stdout ?? "", databaseUrl)}`
     );
   }
 }
@@ -385,17 +421,19 @@ async function assertBackupSchemaAbsent(database: PrismaClient): Promise<void> {
   const rows = await database.$queryRaw<Array<{ count: number }>>`
     SELECT COUNT(*)::int AS count
     FROM information_schema.schemata
-    WHERE schema_name = ${QA_MIGRATION_BACKUP_SCHEMA}
+    WHERE schema_name = ${MIGRATION_BACKUP_SCHEMA}
   `;
   if (rows[0]?.count !== 0) {
-    throw new Error("qa_migration_backup_schema_already_exists");
+    throw new Error(
+      `${TARGET_ERROR_PREFIX}_migration_backup_schema_already_exists`
+    );
   }
 }
 
 async function assertMigrationBackupMatches(
   database: PrismaClient
 ): Promise<void> {
-  const schema = quoteIdentifier(QA_MIGRATION_BACKUP_SCHEMA);
+  const schema = quoteIdentifier(MIGRATION_BACKUP_SCHEMA);
   const rows = await database.$queryRawUnsafe<Array<{ count: number }>>(`
     SELECT COUNT(*)::int AS count
     FROM (
@@ -409,67 +447,77 @@ async function assertMigrationBackupMatches(
     ) AS delta
   `);
   if (rows[0]?.count !== 0) {
-    throw new Error("qa_migration_backup_mismatch");
+    throw new Error(`${TARGET_ERROR_PREFIX}_migration_backup_mismatch`);
   }
 }
 
 async function runPreflight(
-  qa: PrismaClient,
+  target: PrismaClient,
   backup: PrismaClient,
-  qaUrl: string,
+  targetUrl: string,
   backupUrl: string,
   legacyNames: string[],
   proposedSchemaPath: string
 ): Promise<DataSnapshot> {
   await Promise.all([
-    assertPublicSchema(qa, "qa"),
-    assertPublicSchema(backup, "qa_backup"),
-    assertLegacyHistory(qa, legacyNames, "qa_legacy"),
-    assertLegacyHistory(backup, legacyNames, "qa_backup_legacy"),
-    verifyApplicationShape(qa),
+    assertPublicSchema(target, TARGET_ERROR_PREFIX),
+    assertPublicSchema(backup, `${TARGET_ERROR_PREFIX}_backup`),
+    assertLegacyHistory(target, legacyNames, `${TARGET_ERROR_PREFIX}_legacy`),
+    assertLegacyHistory(
+      backup,
+      legacyNames,
+      `${TARGET_ERROR_PREFIX}_backup_legacy`
+    ),
+    verifyApplicationShape(target),
     verifyApplicationShape(backup),
   ]);
-  runPrisma(["migrate", "status", "--schema", ACTIVE_SCHEMA_PATH], qaUrl);
+  runPrisma(["migrate", "status", "--schema", ACTIVE_SCHEMA_PATH], targetUrl);
   runPrisma(["migrate", "status", "--schema", ACTIVE_SCHEMA_PATH], backupUrl);
-  assertSchemaMatches(qaUrl, ACTIVE_SCHEMA_PATH);
+  assertSchemaMatches(targetUrl, ACTIVE_SCHEMA_PATH);
   assertSchemaMatches(backupUrl, ACTIVE_SCHEMA_PATH);
 
   const proposed = runPrisma(
     ["migrate", "status", "--schema", proposedSchemaPath],
-    qaUrl,
+    targetUrl,
     [0, 1]
   );
   if (proposed.status === 0) {
-    throw new Error("qa_proposed_history_unexpectedly_clean_before_adoption");
+    throw new Error(
+      `${TARGET_ERROR_PREFIX}_proposed_history_unexpectedly_clean_before_adoption`
+    );
   }
 
-  const [qaSnapshot, backupSnapshot, qaMigrations, backupMigrations] =
+  const [targetSnapshot, backupSnapshot, targetMigrations, backupMigrations] =
     await Promise.all([
-      captureDataSnapshot(qa),
+      captureDataSnapshot(target),
       captureDataSnapshot(backup),
-      readMigrationRecords(qa),
+      readMigrationRecords(target),
       readMigrationRecords(backup),
     ]);
-  assertSameSnapshot(qaSnapshot, backupSnapshot, "qa_backup");
-  if (JSON.stringify(qaMigrations) !== JSON.stringify(backupMigrations)) {
-    throw new Error("qa_backup_migration_records_differ");
+  assertSameSnapshot(
+    targetSnapshot,
+    backupSnapshot,
+    `${TARGET_ERROR_PREFIX}_backup`
+  );
+  if (JSON.stringify(targetMigrations) !== JSON.stringify(backupMigrations)) {
+    throw new Error(`${TARGET_ERROR_PREFIX}_backup_migration_records_differ`);
   }
   console.log(
-    `QA baseline preflight passed: restorable backup matches ${legacyNames.length} migrations, ${qaSnapshot.tables.length} tables, and ${totalRows(qaSnapshot)} application rows.`
+    `${TARGET_DISPLAY} baseline preflight passed: restorable backup matches ${legacyNames.length} migrations, ${targetSnapshot.tables.length} tables, and ${totalRows(targetSnapshot)} application rows.`
   );
-  return qaSnapshot;
+  return targetSnapshot;
 }
 
 async function restoreLegacyHistory(
-  qa: PrismaClient,
-  qaUrl: string,
+  target: PrismaClient,
+  targetUrl: string,
   legacyNames: string[],
   before: DataSnapshot,
   dropBackupAfter: boolean
 ): Promise<void> {
-  const schema = quoteIdentifier(QA_MIGRATION_BACKUP_SCHEMA);
-  await qa.$executeRawUnsafe(`TRUNCATE TABLE public."_prisma_migrations"`);
-  const restored = await qa.$executeRawUnsafe(`
+  const schema = quoteIdentifier(MIGRATION_BACKUP_SCHEMA);
+  await target.$executeRawUnsafe(`TRUNCATE TABLE public."_prisma_migrations"`);
+  const restored = await target.$executeRawUnsafe(`
     INSERT INTO public."_prisma_migrations"
       ("id", "checksum", "finished_at", "migration_name", "logs", "rolled_back_at", "started_at", "applied_steps_count")
     SELECT
@@ -478,37 +526,45 @@ async function restoreLegacyHistory(
   `);
   if (restored !== EXPECTED_LEGACY_MIGRATION_COUNT) {
     throw new Error(
-      `qa_legacy_restore_count_expected_${EXPECTED_LEGACY_MIGRATION_COUNT}_actual_${restored}`
+      `${TARGET_ERROR_PREFIX}_legacy_restore_count_expected_${EXPECTED_LEGACY_MIGRATION_COUNT}_actual_${restored}`
     );
   }
-  await assertMigrationBackupMatches(qa);
-  await assertLegacyHistory(qa, legacyNames, "qa_restored_legacy");
-  runPrisma(["migrate", "status", "--schema", ACTIVE_SCHEMA_PATH], qaUrl);
-  assertSchemaMatches(qaUrl, ACTIVE_SCHEMA_PATH);
-  await verifyApplicationShape(qa);
-  assertSameSnapshot(await captureDataSnapshot(qa), before, "qa_rollback");
+  await assertMigrationBackupMatches(target);
+  await assertLegacyHistory(
+    target,
+    legacyNames,
+    `${TARGET_ERROR_PREFIX}_restored_legacy`
+  );
+  runPrisma(["migrate", "status", "--schema", ACTIVE_SCHEMA_PATH], targetUrl);
+  assertSchemaMatches(targetUrl, ACTIVE_SCHEMA_PATH);
+  await verifyApplicationShape(target);
+  assertSameSnapshot(
+    await captureDataSnapshot(target),
+    before,
+    `${TARGET_ERROR_PREFIX}_rollback`
+  );
   if (dropBackupAfter) {
-    await qa.$executeRawUnsafe(`DROP SCHEMA ${schema} CASCADE`);
+    await target.$executeRawUnsafe(`DROP SCHEMA ${schema} CASCADE`);
   }
 }
 
 async function adoptBaseline(
-  qa: PrismaClient,
-  qaUrl: string,
+  target: PrismaClient,
+  targetUrl: string,
   legacyNames: string[],
   proposedSchemaPath: string,
   before: DataSnapshot
 ): Promise<void> {
-  await assertBackupSchemaAbsent(qa);
-  const schema = quoteIdentifier(QA_MIGRATION_BACKUP_SCHEMA);
+  await assertBackupSchemaAbsent(target);
+  const schema = quoteIdentifier(MIGRATION_BACKUP_SCHEMA);
   let backupCreated = false;
   try {
-    await qa.$executeRawUnsafe(`CREATE SCHEMA ${schema}`);
+    await target.$executeRawUnsafe(`CREATE SCHEMA ${schema}`);
     backupCreated = true;
-    await qa.$executeRawUnsafe(
+    await target.$executeRawUnsafe(
       `CREATE TABLE ${schema}."_prisma_migrations" AS TABLE public."_prisma_migrations"`
     );
-    await assertMigrationBackupMatches(qa);
+    await assertMigrationBackupMatches(target);
 
     runPrisma(
       [
@@ -519,97 +575,116 @@ async function adoptBaseline(
         "--schema",
         proposedSchemaPath,
       ],
-      qaUrl
+      targetUrl
     );
     assertNames(
-      await readMigrationNames(qa),
+      await readMigrationNames(target),
       [...legacyNames, BASELINE_MIGRATION_NAME],
-      "qa_transition"
+      `${TARGET_ERROR_PREFIX}_transition`
     );
-    const deleted = await qa.$executeRaw`
+    const deleted = await target.$executeRaw`
       DELETE FROM public."_prisma_migrations"
       WHERE migration_name <> ${BASELINE_MIGRATION_NAME}
     `;
     if (deleted !== EXPECTED_LEGACY_MIGRATION_COUNT) {
       throw new Error(
-        `qa_legacy_delete_count_expected_${EXPECTED_LEGACY_MIGRATION_COUNT}_actual_${deleted}`
+        `${TARGET_ERROR_PREFIX}_legacy_delete_count_expected_${EXPECTED_LEGACY_MIGRATION_COUNT}_actual_${deleted}`
       );
     }
-    await assertBaselineHistory(qa);
-    runPrisma(["migrate", "status", "--schema", proposedSchemaPath], qaUrl);
-    runPrisma(["migrate", "deploy", "--schema", proposedSchemaPath], qaUrl);
-    assertSchemaMatches(qaUrl, proposedSchemaPath);
-    await verifyApplicationShape(qa);
-    assertSameSnapshot(await captureDataSnapshot(qa), before, "qa_adoption");
-    console.log(
-      `QA baseline adoption passed: ${legacyNames.length} legacy rows -> 1 baseline row; schema and application data unchanged.`
+    await assertBaselineHistory(target);
+    runPrisma(["migrate", "status", "--schema", proposedSchemaPath], targetUrl);
+    runPrisma(["migrate", "deploy", "--schema", proposedSchemaPath], targetUrl);
+    assertSchemaMatches(targetUrl, proposedSchemaPath);
+    await verifyApplicationShape(target);
+    assertSameSnapshot(
+      await captureDataSnapshot(target),
+      before,
+      `${TARGET_ERROR_PREFIX}_adoption`
     );
     console.log(
-      `Rollback bookkeeping retained in schema ${QA_MIGRATION_BACKUP_SCHEMA}.`
+      `${TARGET_DISPLAY} baseline adoption passed: ${legacyNames.length} legacy rows -> 1 baseline row; schema and application data unchanged.`
+    );
+    console.log(
+      `Rollback bookkeeping retained in schema ${MIGRATION_BACKUP_SCHEMA}.`
     );
   } catch (error) {
     if (backupCreated) {
-      await restoreLegacyHistory(qa, qaUrl, legacyNames, before, true);
-      console.error("QA adoption failed; legacy bookkeeping restored exactly.");
+      await restoreLegacyHistory(target, targetUrl, legacyNames, before, true);
+      console.error(
+        `${TARGET_DISPLAY} adoption failed; legacy bookkeeping restored exactly.`
+      );
     }
     throw error;
   }
 }
 
 async function verifyAdoptedState(
-  qa: PrismaClient,
-  qaUrl: string,
+  target: PrismaClient,
+  targetUrl: string,
   proposedSchemaPath: string,
   deploy: boolean
 ): Promise<void> {
-  await assertPublicSchema(qa, "qa");
-  await assertBaselineHistory(qa);
-  runPrisma(["migrate", "status", "--schema", proposedSchemaPath], qaUrl);
+  await assertPublicSchema(target, TARGET_ERROR_PREFIX);
+  await assertBaselineHistory(target);
+  runPrisma(["migrate", "status", "--schema", proposedSchemaPath], targetUrl);
   if (deploy) {
-    runPrisma(["migrate", "deploy", "--schema", proposedSchemaPath], qaUrl);
+    runPrisma(["migrate", "deploy", "--schema", proposedSchemaPath], targetUrl);
   }
-  assertSchemaMatches(qaUrl, proposedSchemaPath);
-  await verifyApplicationShape(qa);
+  assertSchemaMatches(targetUrl, proposedSchemaPath);
+  await verifyApplicationShape(target);
   console.log(
-    `QA baseline ${deploy ? "deploy" : "status"} verification passed.`
+    `${TARGET_DISPLAY} baseline ${deploy ? "deploy" : "status"} verification passed.`
   );
 }
 
 async function main(): Promise<void> {
   const mode = parseMode();
   assertConfirmation(mode);
-  const adoptionEnv = prepareQaBaselineAdoptionEnv(process.env);
-  assertQaBaselineAdoptionDatabase(adoptionEnv);
-  const qaUrl = withoutNeonPooler(adoptionEnv.DATABASE_URL ?? "");
-  const backupUrl = adoptionEnv.QA_BASELINE_BACKUP_DATABASE_URL ?? "";
-  if (!qaUrl || !backupUrl)
-    throw new Error("qa_or_backup_database_url_missing");
+  const adoptionEnv =
+    ADOPTION_TARGET === "qa"
+      ? prepareQaBaselineAdoptionEnv(process.env)
+      : prepareProductionBaselineAdoptionEnv(process.env);
+  if (ADOPTION_TARGET === "qa") {
+    assertQaBaselineAdoptionDatabase(adoptionEnv);
+  } else {
+    assertProductionBaselineAdoptionDatabase(adoptionEnv);
+  }
+  const targetUrl = withoutNeonPooler(adoptionEnv.DATABASE_URL ?? "");
+  const backupUrl =
+    adoptionEnv[
+      ADOPTION_TARGET === "qa"
+        ? "QA_BASELINE_BACKUP_DATABASE_URL"
+        : "PRODUCTION_BASELINE_BACKUP_DATABASE_URL"
+    ] ?? "";
+  if (!targetUrl || !backupUrl) {
+    throw new Error(`${TARGET_ERROR_PREFIX}_or_backup_database_url_missing`);
+  }
 
   await assertCandidateHash();
   const legacyNames = await listLegacyMigrationNames();
   const workspace = await createProposedMigrationWorkspace();
-  const qa = new PrismaClient({ datasourceUrl: qaUrl });
+  const target = new PrismaClient({ datasourceUrl: targetUrl });
   const backup = new PrismaClient({ datasourceUrl: backupUrl });
 
   try {
-    await qa.$transaction(
+    await target.$transaction(
       async (lock) => {
         await lock.$queryRawUnsafe(
-          `SELECT pg_advisory_xact_lock(${QA_ADVISORY_LOCK_ID})::text AS lock`
+          `SELECT pg_advisory_xact_lock(${ADVISORY_LOCK_ID})::text AS lock`
         );
         if (mode === "preflight" || mode === "adopt") {
           const before = await runPreflight(
-            qa,
+            target,
             backup,
-            qaUrl,
+            targetUrl,
             backupUrl,
             legacyNames,
             workspace.schemaPath
           );
           if (mode === "adopt") {
             await adoptBaseline(
-              qa,
-              qaUrl,
+              target,
+              targetUrl,
               legacyNames,
               workspace.schemaPath,
               before
@@ -619,27 +694,33 @@ async function main(): Promise<void> {
         }
         if (mode === "status" || mode === "deploy") {
           await verifyAdoptedState(
-            qa,
-            qaUrl,
+            target,
+            targetUrl,
             workspace.schemaPath,
             mode === "deploy"
           );
           return;
         }
 
-        await assertBaselineHistory(qa);
-        const before = await captureDataSnapshot(qa);
-        await restoreLegacyHistory(qa, qaUrl, legacyNames, before, true);
+        await assertBaselineHistory(target);
+        const before = await captureDataSnapshot(target);
+        await restoreLegacyHistory(
+          target,
+          targetUrl,
+          legacyNames,
+          before,
+          true
+        );
         console.log(
-          `QA baseline rollback passed: original ${legacyNames.length} migration rows restored byte-for-byte; application data unchanged.`
+          `${TARGET_DISPLAY} baseline rollback passed: original ${legacyNames.length} migration rows restored byte-for-byte; application data unchanged.`
         );
       },
       { maxWait: 600_000, timeout: 600_000 }
     );
   } finally {
-    await Promise.all([qa.$disconnect(), backup.$disconnect()]);
+    await Promise.all([target.$disconnect(), backup.$disconnect()]);
     await removeWorkspace(workspace.root);
-    console.log("Temporary QA baseline workspace removed.");
+    console.log(`Temporary ${TARGET_DISPLAY} baseline workspace removed.`);
   }
 }
 
