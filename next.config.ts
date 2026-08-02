@@ -17,7 +17,11 @@ export default withSentryConfig(nextConfig, {
   authToken: process.env.SENTRY_AUTH_TOKEN,
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
-  disableLogger: true,
+  webpack: {
+    treeshake: {
+      removeDebugLogging: true,
+    },
+  },
   // The browser SDK is intentionally not initialised (see
   // sentry.server.config.ts for why), so client bundles stay untouched.
   widenClientFileUpload: false,
