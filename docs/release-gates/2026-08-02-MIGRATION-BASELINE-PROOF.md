@@ -110,6 +110,36 @@ This proves the mechanics and rollback against an empty shape-equivalent
 clone. It does **not** prove data preservation, copy the deployed database, or
 authorize a bookkeeping change on QA or Production.
 
+## Deployment-clone rehearsal
+
+The remaining data-preservation proof completed on 2026-08-02 against the
+dedicated Neon child branch `baseline-rehearsal-2026-08-02`, created from the
+current `production` parent with data and schema. The reusable runner is:
+
+```powershell
+npm run db:migration-baseline:clone:preflight
+npm run db:migration-baseline:clone:rehearse -- --confirm=REHEARSE_BASELINE_ON_DEPLOYMENT_CLONE
+```
+
+The runner requires `BASELINE_REHEARSAL_DATABASE_URL`, rejects a pooled Neon
+connection, rejects any database identity matching `DATABASE_URL` or
+`QA_DATABASE_URL`, requires `public`, verifies the reviewed baseline checksum,
+and demands an exact confirmation token before mutation. The read-only
+preflight found 14 complete legacy migrations, 41 application tables, and 92
+application rows.
+
+The rehearsal backed up all eight migration-bookkeeping columns inside a
+random recovery schema, recorded the proposed baseline, deleted exactly 14
+legacy rows, and proved baseline-only `migrate status` and `migrate deploy`.
+It fingerprinted every application table and captured public sequence state
+before and after the transition. It then restored all 14 original migration
+rows, compared them byte-for-byte, re-ran the active-history and schema checks,
+and confirmed the application fingerprints and sequences were unchanged. The
+temporary database backup schema and filesystem workspace were both removed.
+
+Full evidence and the remaining approval boundary are recorded in
+`docs/release-gates/2026-08-02-MIGRATION-BASELINE-CLONE-REHEARSAL.md`.
+
 ## Adoption boundary — not approved
 
 Do not move the candidate into `prisma/migrations`, edit existing migration
@@ -118,18 +148,14 @@ already contain 14 applied migration records. Simply adding or replacing a
 baseline would make the filesystem and `_prisma_migrations` histories disagree
 and could attempt to create tables that already contain live data.
 
-Before adoption, a separate operational rehearsal must still:
+The deployment-clone rehearsal is now complete, but it does not authorize an
+environment adoption. Before touching QA, take and verify a current restorable
+QA backup, freeze schema changes, obtain an explicit owner approval for QA, and
+retain the exact rollback path proven here. Verify QA independently after the
+transition. Production then requires a new backup, another freeze, and a
+second explicit owner approval; QA approval must never be treated as Production
+approval.
 
-1. freeze schema changes for the duration of the rehearsal;
-2. take and verify a restorable database backup;
-3. clone the deployed schema, data, and `_prisma_migrations` rows into a
-   disposable database;
-4. run the now-automated bookkeeping reconciliation and rollback on that clone;
-5. prove `migrate status` and `migrate deploy` are clean after reconciliation;
-6. prove application queries and the partial index still work; and
-7. document rollback commands and decision owners before touching QA, followed
-   by a second explicit approval before Production.
-
-Until that rehearsal succeeds, CI continues using `prisma db push` for its
-disposable integration database. Production and QA migration bookkeeping stays
-unchanged.
+Until those approvals occur, CI continues using `prisma db push` for its
+disposable integration database. Production and QA migration bookkeeping
+remains unchanged.
