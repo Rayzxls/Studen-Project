@@ -17,6 +17,7 @@ import type { Assignment, Prisma } from "@prisma/client";
 import { db } from "@/lib/db/client";
 import { Conflict, Forbidden, NotFound, ValidationError } from "@/lib/errors";
 import { fanOutBroadcast } from "@/lib/notification";
+import { sendCoursePush } from "@/lib/notification/push";
 import { isPublished } from "@/lib/publishing/visibility";
 import { TX_OPTS } from "./constants";
 import { assertLinkableLesson } from "@/lib/lesson/linking";
@@ -61,12 +62,17 @@ export async function createAssignment(
   //   - when isScored=true: fullScore ≥ 1
   const parsed = CreateAssignmentSchema.parse(input);
 
-  return db.$transaction(async (tx) => {
+  // Captured inside the transaction so the push, which runs after commit, can
+  // name the course without a second query.
+  let courseName = "";
+
+  const created = await db.$transaction(async (tx) => {
     const course = await tx.courseOffering.findUnique({
       where: { id: parsed.courseOfferingId },
-      select: { teacherId: true },
+      select: { teacherId: true, name: true },
     });
     if (!course) throw new NotFound("course_not_found");
+    courseName = course.name;
     if (course.teacherId !== ctx.actorUserId) {
       throw new Forbidden("not_course_owner");
     }
@@ -161,6 +167,19 @@ export async function createAssignment(
 
     return result;
   }, TX_OPTS);
+
+  // Keep third-party delivery outside the database transaction. Scheduled
+  // assignments are pushed by the sweep only when they become visible.
+  if (isPublished({ publishAt: created.publishAt })) {
+    await sendCoursePush(created.courseOfferingId, {
+      title: courseName,
+      body: "มีงานใหม่ที่ต้องส่ง",
+      url: `/student/courses/${created.courseOfferingId}/assignments/${created.id}`,
+      tag: `assignment:${created.id}`,
+    });
+  }
+
+  return created;
 }
 
 // ─────────────────────────────────────────────────────────────

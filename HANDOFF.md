@@ -13,6 +13,11 @@ The latest Production deployment is healthy.
   database-backed integration tests are shipped.** ADR-0046 and ADR-0047 hold
   the privacy and visibility contracts. The external cron at cron-job.org has
   returned `200 OK`; the endpoint returns `401` without its secret.
+- **Immediate Web Push now matches scheduled publishing.** Live Materials and
+  Assignments send privacy-safe course notifications only after their database
+  transaction commits; scheduled records remain owned by the publishing sweep
+  so recipients are not notified twice. CI actions use their Node 24 runtime
+  releases, and the Sentry build config no longer uses `disableLogger`.
 - **Early warning is shipped, not pending.** ADR-0048 defines a live,
   explainable Teacher-only projection joining attendance below 80%, at least
   two overdue missing submissions, and a score drop of at least 10 percentage
