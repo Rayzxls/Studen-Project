@@ -182,6 +182,91 @@ export function assertQaBaselineAdoptionDatabase(
   }
 }
 
+export function prepareProductionBaselineAdoptionEnv(
+  env: DatabaseEnvironment
+): NodeJS.ProcessEnv {
+  const primaryUrl = required(env, "DATABASE_URL");
+  const qaUrl = required(env, "QA_DATABASE_URL");
+  const backupUrl = required(env, "PRODUCTION_BASELINE_BACKUP_DATABASE_URL");
+  const qaBackupUrl = env.QA_BASELINE_BACKUP_DATABASE_URL?.trim();
+  const primaryIdentity = databaseIdentity(primaryUrl);
+  const qaIdentity = databaseIdentity(qaUrl);
+  const backupIdentity = databaseIdentity(backupUrl);
+
+  if (primaryIdentity === qaIdentity) {
+    throw new Error("production_database_matches_qa");
+  }
+  if (backupIdentity === primaryIdentity) {
+    throw new Error("production_baseline_backup_matches_production");
+  }
+  if (backupIdentity === qaIdentity) {
+    throw new Error("production_baseline_backup_matches_qa");
+  }
+  if (qaBackupUrl && backupIdentity === databaseIdentity(qaBackupUrl)) {
+    throw new Error("production_baseline_backup_matches_qa_backup");
+  }
+
+  for (const [label, rawUrl] of [
+    ["production", primaryUrl],
+    ["production_baseline_backup", backupUrl],
+  ] as const) {
+    const parsed = new URL(rawUrl);
+    const schema = parsed.searchParams.get("schema");
+    if (schema && schema !== "public") {
+      throw new Error(`${label}_database_must_use_public_schema`);
+    }
+  }
+
+  const backup = new URL(backupUrl);
+  if (
+    backup.hostname.toLowerCase().endsWith(".neon.tech") &&
+    backup.hostname.toLowerCase().includes("-pooler.")
+  ) {
+    throw new Error("production_baseline_backup_must_use_direct_connection");
+  }
+
+  return {
+    ...env,
+    NODE_ENV: "production",
+    DATABASE_URL: primaryUrl,
+    BEAGLE_PRIMARY_DATABASE_URL: primaryUrl,
+    BEAGLE_QA_DATABASE_URL: qaUrl,
+    PRODUCTION_BASELINE_BACKUP_DATABASE_URL: backupUrl,
+    BEAGLE_PRODUCTION_BASELINE_ADOPTION: "1",
+  };
+}
+
+export function assertProductionBaselineAdoptionDatabase(
+  env: DatabaseEnvironment = process.env
+): void {
+  if (env.BEAGLE_PRODUCTION_BASELINE_ADOPTION !== "1") {
+    throw new Error("production_baseline_adoption_gate_not_enabled");
+  }
+
+  const activeUrl = required(env, "DATABASE_URL");
+  const primaryUrl = required(env, "BEAGLE_PRIMARY_DATABASE_URL");
+  const qaUrl = required(env, "BEAGLE_QA_DATABASE_URL");
+  const backupUrl = required(env, "PRODUCTION_BASELINE_BACKUP_DATABASE_URL");
+  const qaBackupUrl = env.QA_BASELINE_BACKUP_DATABASE_URL?.trim();
+  const activeIdentity = databaseIdentity(activeUrl);
+
+  if (activeIdentity !== databaseIdentity(primaryUrl)) {
+    throw new Error("active_database_is_not_production_database");
+  }
+  if (activeIdentity === databaseIdentity(qaUrl)) {
+    throw new Error("production_database_matches_qa");
+  }
+  if (activeIdentity === databaseIdentity(backupUrl)) {
+    throw new Error("production_database_matches_baseline_backup");
+  }
+  if (
+    qaBackupUrl &&
+    databaseIdentity(backupUrl) === databaseIdentity(qaBackupUrl)
+  ) {
+    throw new Error("production_baseline_backup_matches_qa_backup");
+  }
+}
+
 export function assertIsolatedTestDatabase(
   env: DatabaseEnvironment = process.env
 ): void {

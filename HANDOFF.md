@@ -57,6 +57,16 @@ The latest Production deployment is healthy.
   retained for seven days. Production was rejected by the identity guard and
   was not modified. See
   `docs/release-gates/2026-08-02-MIGRATION-BASELINE-QA-ADOPTION.md`.
+- **Production baseline backup preflight is complete; adoption is not.** A new
+  owner-created Neon child of `production` is configured only in ignored local
+  environment state. The direct-endpoint, fail-closed preflight proved that
+  Production and its backup match across all eight columns of 14 migration
+  records, 41 application tables, 92 application rows, public sequences,
+  schema diff, partial index, and representative Prisma reads. Production still
+  has the original 14-row history and no bookkeeping was changed. The prepared
+  runner requires a Production-only target flag and exact adoption, deploy, and
+  rollback tokens. See
+  `docs/release-gates/2026-08-03-MIGRATION-BASELINE-PRODUCTION-PREFLIGHT.md`.
 - **Authenticated isolated-QA acceptance is complete.** Teacher, Student, and
   Admin flows passed on desktop and a `390 x 844` viewport. The Teacher saw all
   three early-warning signals and the scheduled publishing center; the Student
@@ -71,12 +81,14 @@ The latest Production deployment is healthy.
 
 ### Remaining work
 
-1. **Production migration baseline adoption — still not approved.** QA adoption
-   passed, but Production remains on its exact 14-row legacy bookkeeping. Keep
-   schema changes frozen. Production requires a new current restorable backup,
-   an explicit owner approval that names Production, the guarded transition,
-   and post-adoption verification. Never infer Production approval from the QA
-   approval. Keep both QA recovery layers until that decision is complete.
+1. **Production migration baseline adoption — prepared but still not
+   approved.** The current restorable backup and exact read-only preflight now
+   pass, but Production remains on its exact 14-row legacy bookkeeping. Keep
+   schema changes frozen. Adoption still requires an explicit owner approval
+   that names Production, followed by the exact guarded transition and fresh
+   post-adoption verification. Never infer Production approval from the QA
+   approval or from permission to configure or test the backup. Keep both QA
+   recovery layers and the Production backup until that decision is complete.
 2. **Production and real-device acceptance.** Isolated-QA role, layout,
    visibility, date/time, and theme checks are complete. A real phone still
    needs scheduled publication through cron, Web Push permission/delivery, and
@@ -87,10 +99,10 @@ The latest Production deployment is healthy.
    environment if phone subscription fails; never copy secret values into this
    file.
 
-The deployment-clone rehearsal tooling is a dedicated recovery-hardening
-change. Review and publish it separately before asking for an explicit QA
-adoption decision; otherwise continue the Production acceptance and
-observability work above.
+The Production adoption runner is a dedicated recovery-hardening change. Review
+and publish it separately before asking for the explicit Production mutation
+approval; otherwise continue the Production acceptance and observability work
+above.
 
 ## QUIZ PILOT ALLOWLIST RETIRED — 2026-07-31 (READ FIRST)
 

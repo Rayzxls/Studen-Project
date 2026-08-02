@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   assertBaselineRehearsalDatabase,
   assertIsolatedTestDatabase,
+  assertProductionBaselineAdoptionDatabase,
   assertQaBaselineAdoptionDatabase,
   databaseIdentity,
   prepareBaselineRehearsalEnv,
   prepareIsolatedDatabaseEnv,
+  prepareProductionBaselineAdoptionEnv,
   prepareQaBaselineAdoptionEnv,
 } from "@/tests/helpers/database-safety";
 
@@ -17,6 +19,8 @@ const REHEARSAL =
   "postgresql://beagle:secret@ep-rehearsal.ap-southeast-1.aws.neon.tech/beagle?sslmode=require";
 const QA_BACKUP =
   "postgresql://beagle:secret@ep-qa-backup.ap-southeast-1.aws.neon.tech/beagle?sslmode=require";
+const PRODUCTION_BACKUP =
+  "postgresql://beagle:secret@ep-production-backup.ap-southeast-1.aws.neon.tech/beagle?sslmode=require";
 
 describe("databaseIdentity", () => {
   it("treats pooled and direct Neon URLs for one branch as identical", () => {
@@ -173,5 +177,82 @@ describe("prepareQaBaselineAdoptionEnv", () => {
         ),
       })
     ).toThrow("qa_baseline_backup_must_use_direct_connection");
+  });
+});
+
+describe("prepareProductionBaselineAdoptionEnv", () => {
+  it("targets Production only when its direct backup is a third identity", () => {
+    const env = prepareProductionBaselineAdoptionEnv({
+      DATABASE_URL: PRIMARY,
+      QA_DATABASE_URL: QA,
+      QA_BASELINE_BACKUP_DATABASE_URL: QA_BACKUP,
+      PRODUCTION_BASELINE_BACKUP_DATABASE_URL: PRODUCTION_BACKUP,
+    });
+
+    expect(env.DATABASE_URL).toBe(PRIMARY);
+    expect(env.BEAGLE_PRODUCTION_BASELINE_ADOPTION).toBe("1");
+    expect(() => assertProductionBaselineAdoptionDatabase(env)).not.toThrow();
+  });
+
+  it("blocks Production or QA from masquerading as the backup", () => {
+    expect(() =>
+      prepareProductionBaselineAdoptionEnv({
+        DATABASE_URL: PRIMARY,
+        QA_DATABASE_URL: QA,
+        PRODUCTION_BASELINE_BACKUP_DATABASE_URL: PRIMARY.replace("-pooler", ""),
+      })
+    ).toThrow("production_baseline_backup_matches_production");
+
+    expect(() =>
+      prepareProductionBaselineAdoptionEnv({
+        DATABASE_URL: PRIMARY,
+        QA_DATABASE_URL: QA,
+        QA_BASELINE_BACKUP_DATABASE_URL: QA_BACKUP,
+        PRODUCTION_BASELINE_BACKUP_DATABASE_URL: QA.replace("-pooler", ""),
+      })
+    ).toThrow("production_baseline_backup_matches_qa");
+
+    expect(() =>
+      prepareProductionBaselineAdoptionEnv({
+        DATABASE_URL: PRIMARY,
+        QA_DATABASE_URL: QA,
+        QA_BASELINE_BACKUP_DATABASE_URL: QA_BACKUP,
+        PRODUCTION_BASELINE_BACKUP_DATABASE_URL: QA_BACKUP,
+      })
+    ).toThrow("production_baseline_backup_matches_qa_backup");
+  });
+
+  it("blocks a pooled Neon backup URL", () => {
+    expect(() =>
+      prepareProductionBaselineAdoptionEnv({
+        DATABASE_URL: PRIMARY,
+        QA_DATABASE_URL: QA,
+        PRODUCTION_BASELINE_BACKUP_DATABASE_URL: PRODUCTION_BACKUP.replace(
+          "ep-production-backup.",
+          "ep-production-backup-pooler."
+        ),
+      })
+    ).toThrow("production_baseline_backup_must_use_direct_connection");
+  });
+
+  it("blocks commands that bypass or retarget the guarded runner", () => {
+    expect(() =>
+      assertProductionBaselineAdoptionDatabase({
+        DATABASE_URL: PRIMARY,
+        BEAGLE_PRIMARY_DATABASE_URL: PRIMARY,
+        BEAGLE_QA_DATABASE_URL: QA,
+        PRODUCTION_BASELINE_BACKUP_DATABASE_URL: PRODUCTION_BACKUP,
+      })
+    ).toThrow("production_baseline_adoption_gate_not_enabled");
+
+    expect(() =>
+      assertProductionBaselineAdoptionDatabase({
+        DATABASE_URL: QA,
+        BEAGLE_PRIMARY_DATABASE_URL: PRIMARY,
+        BEAGLE_QA_DATABASE_URL: QA,
+        PRODUCTION_BASELINE_BACKUP_DATABASE_URL: PRODUCTION_BACKUP,
+        BEAGLE_PRODUCTION_BASELINE_ADOPTION: "1",
+      })
+    ).toThrow("active_database_is_not_production_database");
   });
 });
