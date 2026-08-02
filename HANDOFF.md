@@ -29,14 +29,12 @@ The latest Production deployment is healthy.
   assignments, quizzes, class-code expiry, audit filters, and result filters.
   Every 24-hour clock option is now equally visible and selectable; scheduling
   fields still hide past calendar dates and flag a completed past datetime.
-- **Production and QA database migrations report up to date.** The Production
-  `notification_post_once` partial unique index was queried directly and is
-  present. This prevents duplicate class notifications.
-- **A squashed migration baseline candidate is proven, but not adopted.** It
-  lives outside `prisma/migrations`, builds all 41 application tables in a
-  disposable schema, produces an empty Prisma schema diff, includes the partial
-  notification index, and is re-verified in CI. QA and Production migration
-  bookkeeping remains unchanged.
+- **Production remains on 14 legacy migrations; QA has adopted the squashed
+  baseline.** The baseline still lives outside `prisma/migrations`, builds all
+  41 application tables, produces an empty Prisma schema diff, and includes the
+  `notification_post_once` partial unique index. Production bookkeeping remains
+  unchanged. QA's baseline-aware status/deploy commands use a temporary
+  migration workspace until a separately approved Production adoption.
 - **The baseline bookkeeping transition and rollback are proven synthetically.**
   A fail-closed rehearsal converts 14 legacy migration rows to one baseline row,
   verifies status/deploy/schema/index/application queries, then restores the 14
@@ -50,6 +48,15 @@ The latest Production deployment is healthy.
   byte-for-byte. Production and QA were rejected by identity guards and were not
   modified. See
   `docs/release-gates/2026-08-02-MIGRATION-BASELINE-CLONE-REHEARSAL.md`.
+- **QA baseline adoption is complete and independently recoverable.** The
+  `qa-baseline-backup-2026-08-02` Neon branch matched QA byte-for-byte at 14
+  migrations, 41 application tables, 96 application rows, and all public
+  sequences before adoption. QA now has the single baseline row; schema and
+  application fingerprints are unchanged. The exact 14-row bookkeeping backup
+  remains in `beagle_baseline_qa_backup_20260802`, and the full Neon backup is
+  retained for seven days. Production was rejected by the identity guard and
+  was not modified. See
+  `docs/release-gates/2026-08-02-MIGRATION-BASELINE-QA-ADOPTION.md`.
 - **Authenticated isolated-QA acceptance is complete.** Teacher, Student, and
   Admin flows passed on desktop and a `390 x 844` viewport. The Teacher saw all
   three early-warning signals and the scheduled publishing center; the Student
@@ -64,12 +71,12 @@ The latest Production deployment is healthy.
 
 ### Remaining work
 
-1. **Migration baseline adoption — still not approved.** Empty-schema,
-   synthetic-bookkeeping, and deployment-clone proofs now pass. The next change
-   must document a current restorable QA backup, adopt and verify the baseline
-   on QA only after an explicit owner approval, and prove rollback there. A
-   second, separate explicit approval is still required before Production.
-   Never infer either approval from the successful clone rehearsal.
+1. **Production migration baseline adoption — still not approved.** QA adoption
+   passed, but Production remains on its exact 14-row legacy bookkeeping. Keep
+   schema changes frozen. Production requires a new current restorable backup,
+   an explicit owner approval that names Production, the guarded transition,
+   and post-adoption verification. Never infer Production approval from the QA
+   approval. Keep both QA recovery layers until that decision is complete.
 2. **Production and real-device acceptance.** Isolated-QA role, layout,
    visibility, date/time, and theme checks are complete. A real phone still
    needs scheduled publication through cron, Web Push permission/delivery, and

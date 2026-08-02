@@ -140,22 +140,33 @@ temporary database backup schema and filesystem workspace were both removed.
 Full evidence and the remaining approval boundary are recorded in
 `docs/release-gates/2026-08-02-MIGRATION-BASELINE-CLONE-REHEARSAL.md`.
 
-## Adoption boundary — not approved
+## QA adoption
+
+QA adopted the baseline on 2026-08-02 after an explicit owner approval and a
+verified Neon backup. The fail-closed runner confirmed the backup matched QA at
+14 migration records, 41 tables, 96 application rows, and all public sequence
+values. It then transitioned QA to the single baseline record and repeated the
+schema, index, Prisma-query, data-fingerprint, and status checks.
+
+The exact original QA bookkeeping remains in
+`beagle_baseline_qa_backup_20260802`; the full Neon branch
+`qa-baseline-backup-2026-08-02` remains the restorable database backup. Details
+and rollback commands are in
+`docs/release-gates/2026-08-02-MIGRATION-BASELINE-QA-ADOPTION.md`.
+
+## Production adoption boundary — not approved
 
 Do not move the candidate into `prisma/migrations`, edit existing migration
-files, or run `prisma migrate resolve` on QA or Production yet. Those databases
-already contain 14 applied migration records. Simply adding or replacing a
-baseline would make the filesystem and `_prisma_migrations` histories disagree
-and could attempt to create tables that already contain live data.
+files, or run `prisma migrate resolve` on Production. Production still contains
+the 14 applied legacy migration records. Simply replacing the active migration
+directory would make the filesystem and Production bookkeeping disagree.
 
-The deployment-clone rehearsal is now complete, but it does not authorize an
-environment adoption. Before touching QA, take and verify a current restorable
-QA backup, freeze schema changes, obtain an explicit owner approval for QA, and
-retain the exact rollback path proven here. Verify QA independently after the
-transition. Production then requires a new backup, another freeze, and a
-second explicit owner approval; QA approval must never be treated as Production
-approval.
+The deployment-clone rehearsal and QA adoption are complete, but neither
+authorizes Production. Before touching Production, take and verify a current
+restorable Production backup, maintain the schema-change freeze, obtain a new
+explicit owner approval that names Production, and retain a separate exact
+rollback path. QA approval must never be treated as Production approval.
 
-Until those approvals occur, CI continues using `prisma db push` for its
-disposable integration database. Production and QA migration bookkeeping
-remains unchanged.
+Until Production approval occurs, CI continues using `prisma db push` for its
+disposable integration database. The candidate remains outside the active
+migration directory; Production bookkeeping remains unchanged.
