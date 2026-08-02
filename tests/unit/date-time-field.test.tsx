@@ -55,6 +55,31 @@ describe("DateTimeField", () => {
     expect(screen.getByTestId("time-picker-minute-55")).toBeVisible();
   });
 
+  it("keeps every hour and minute available when scheduling for today", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-15T05:25:00.000Z"));
+    const { container } = render(<DateTimeField name="publishAt" futureOnly />);
+
+    fireEvent.click(screen.getByRole("button", { name: "วันที่" }));
+    fireEvent.click(screen.getByRole("button", { name: "วันนี้" }));
+    fireEvent.click(screen.getByRole("button", { name: "เวลา" }));
+
+    const hours = screen.getAllByTestId(/^time-picker-hour-/);
+    const minutes = screen.getAllByTestId(/^time-picker-minute-/);
+    expect(hours).toHaveLength(24);
+    expect(minutes).toHaveLength(12);
+    hours.forEach((option) => expect(option).toBeEnabled());
+    minutes.forEach((option) => expect(option).toBeEnabled());
+
+    fireEvent.click(screen.getByTestId("time-picker-hour-00"));
+    fireEvent.click(screen.getByTestId("time-picker-minute-00"));
+
+    expect(container.querySelector('input[name="publishAt"]')).toHaveValue(
+      "2026-08-15T00:00"
+    );
+    expect(screen.getByText("กรุณาเลือกเวลาปัจจุบันหรืออนาคต")).toBeVisible();
+  });
+
   it("keeps both picker panels inside a narrow form without horizontal overflow", () => {
     const { container, unmount } = render(
       <div className="w-72">

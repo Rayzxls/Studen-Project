@@ -31,7 +31,6 @@ type DateTimeParts = {
 
 type MinimumDateTime = {
   date: string;
-  time: string;
   value: string;
 };
 
@@ -62,7 +61,8 @@ type DateTimeFieldProps = {
  * Compact Thai date-time control that keeps the existing
  * `YYYY-MM-DDTHH:mm` form contract. Date and time open separately so the
  * browser never renders the oversized combined picker. Scheduling contexts
- * can exclude the past while audit and reporting filters keep historical use.
+ * can exclude past dates while keeping every clock option available; audit
+ * and reporting filters keep historical use.
  */
 export function DateTimeField({
   name,
@@ -105,11 +105,6 @@ export function DateTimeField({
   const partsRequired = required || hasAnyValue;
   const ariaInvalid = invalid || isIncomplete || isPast ? true : undefined;
   const summaryId = `${baseId}-summary`;
-  const timeMinimum =
-    futureOnly && minimum && selectedDate === minimum.date
-      ? minimum.time
-      : undefined;
-
   function updateParts(patch: Partial<DateTimeParts>) {
     setParts((current) => {
       const next = { ...current, ...patch };
@@ -127,19 +122,7 @@ export function DateTimeField({
     }
 
     const [year = "", month = "", day = ""] = date.split("-");
-    const patch: Partial<DateTimeParts> = { year, month, day };
-    if (
-      futureOnly &&
-      minimum &&
-      selectedTime &&
-      `${date}T${selectedTime}` < minimum.value &&
-      date === minimum.date
-    ) {
-      const [hour = "", minute = ""] = minimum.time.split(":");
-      patch.hour = hour;
-      patch.minute = minute;
-    }
-    updateParts(patch);
+    updateParts({ year, month, day });
   }
 
   function updateTime(time: string) {
@@ -215,7 +198,6 @@ export function DateTimeField({
               required={partsRequired}
               disabled={disabled}
               invalid={ariaInvalid}
-              min={timeMinimum}
               ariaLabel="เวลา"
             />
           </div>
@@ -318,7 +300,7 @@ function getBangkokMinimum(): MinimumDateTime {
   const totalMinutes = rollsToTomorrow ? 0 : nextFiveMinutes;
   const date = rollsToTomorrow ? addDays(now.date, 1) : now.date;
   const time = `${pad(Math.floor(totalMinutes / 60))}:${pad(totalMinutes % 60)}`;
-  return { date, time, value: `${date}T${time}` };
+  return { date, value: `${date}T${time}` };
 }
 
 function addDays(date: string, days: number): string {

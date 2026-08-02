@@ -9,7 +9,7 @@ import { Clock } from "lucide-react";
  * AM/PM toggle that fights Thai school time).
  *
  * Interaction: a pill trigger shows the current HH:mm; tapping opens a
- * panel with an hour grid (00–23, school hours emphasized) and a
+ * panel with an hour grid (00–23) and a
  * 5-minute-step minute grid. Picking a minute closes the panel. A hidden
  * input carries the value so plain form posts keep working; both
  * controlled (value/onChange) and uncontrolled (defaultValue) usages are
@@ -18,10 +18,6 @@ import { Clock } from "lucide-react";
 
 const HOURS = Array.from({ length: 24 }, (_, h) => h);
 const MINUTES = Array.from({ length: 12 }, (_, i) => i * 5);
-
-/** Typical Thai school day — rendered brighter so the eye lands there. */
-const SCHOOL_HOUR_MIN = 7;
-const SCHOOL_HOUR_MAX = 17;
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -44,7 +40,6 @@ export function TimePicker({
   required,
   disabled = false,
   invalid = false,
-  min,
   ariaLabel,
 }: {
   name?: string;
@@ -56,8 +51,6 @@ export function TimePicker({
   required?: boolean;
   disabled?: boolean;
   invalid?: boolean;
-  /** Earliest selectable time, inclusive ("HH:mm"). */
-  min?: string;
   ariaLabel?: string;
 }) {
   const reactId = useId();
@@ -67,7 +60,6 @@ export function TimePicker({
   const [inner, setInner] = useState(defaultValue ?? "");
   const current = isControlled ? value : inner;
   const parsed = parseHHmm(current);
-  const minimum = parseHHmm(min);
 
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -79,18 +71,11 @@ export function TimePicker({
 
   function pickHour(h: number) {
     const preferredMinute = parsed?.m ?? 0;
-    const nextMinute = MINUTES.find(
-      (minute) => !isBeforeMinimum(h, minute, minimum)
-    );
-    if (nextMinute === undefined) return;
-    commit(
-      `${pad(h)}:${pad(isBeforeMinimum(h, preferredMinute, minimum) ? nextMinute : preferredMinute)}`
-    );
+    commit(`${pad(h)}:${pad(preferredMinute)}`);
   }
 
   function pickMinute(m: number) {
-    const hour = parsed?.h ?? minimum?.h ?? 8;
-    if (isBeforeMinimum(hour, m, minimum)) return;
+    const hour = parsed?.h ?? 8;
     commit(`${pad(hour)}:${pad(m)}`);
     setOpen(false);
   }
@@ -162,10 +147,6 @@ export function TimePicker({
           >
             {HOURS.map((h) => {
               const selected = parsed?.h === h;
-              const school = h >= SCHOOL_HOUR_MIN && h <= SCHOOL_HOUR_MAX;
-              const unavailable = MINUTES.every((minute) =>
-                isBeforeMinimum(h, minute, minimum)
-              );
               return (
                 <button
                   key={h}
@@ -173,15 +154,10 @@ export function TimePicker({
                   data-testid={`time-picker-hour-${pad(h)}`}
                   onClick={() => pickHour(h)}
                   aria-pressed={selected}
-                  disabled={unavailable}
                   className={`${gridBtn} ${
                     selected
                       ? "bg-blue-600 font-semibold text-white"
-                      : unavailable
-                        ? "cursor-not-allowed text-ink-faint opacity-35"
-                        : school
-                          ? "cursor-pointer text-ink hover:bg-blue-50"
-                          : "cursor-pointer text-ink-faint hover:bg-bg"
+                      : "cursor-pointer text-ink hover:bg-blue-50"
                   }`}
                 >
                   {pad(h)}
@@ -199,8 +175,6 @@ export function TimePicker({
           >
             {MINUTES.map((m) => {
               const selected = parsed?.m === m;
-              const hour = parsed?.h ?? minimum?.h ?? 8;
-              const unavailable = isBeforeMinimum(hour, m, minimum);
               return (
                 <button
                   key={m}
@@ -208,13 +182,10 @@ export function TimePicker({
                   data-testid={`time-picker-minute-${pad(m)}`}
                   onClick={() => pickMinute(m)}
                   aria-pressed={selected}
-                  disabled={unavailable}
                   className={`${gridBtn} ${
                     selected
                       ? "bg-blue-600 font-semibold text-white"
-                      : unavailable
-                        ? "cursor-not-allowed text-ink-faint opacity-35"
-                        : "cursor-pointer text-ink hover:bg-blue-50"
+                      : "cursor-pointer text-ink hover:bg-blue-50"
                   }`}
                 >
                   {pad(m)}
@@ -230,13 +201,4 @@ export function TimePicker({
       )}
     </div>
   );
-}
-
-function isBeforeMinimum(
-  hour: number,
-  minute: number,
-  minimum: { h: number; m: number } | null
-): boolean {
-  if (!minimum) return false;
-  return hour * 60 + minute < minimum.h * 60 + minimum.m;
 }
