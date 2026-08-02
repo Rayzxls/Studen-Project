@@ -76,14 +76,29 @@ function redact(value: string, databaseUrl: string): string {
 function withSchema(databaseUrl: string, schemaName: string): string {
   const parsed = new URL(databaseUrl);
   parsed.searchParams.set("schema", schemaName);
+  parsed.searchParams.set("options", `-c search_path=${schemaName}`);
+  return parsed.toString();
+}
+
+function withoutNeonPooler(databaseUrl: string): string {
+  const parsed = new URL(databaseUrl);
+  if (parsed.hostname.endsWith(".neon.tech")) {
+    parsed.hostname = parsed.hostname.replace(/-pooler(?=\.)/, "");
+  }
   return parsed.toString();
 }
 
 async function main(): Promise<void> {
   const mode = parseMode(process.argv[2]);
   const isolatedEnv = prepareIsolatedDatabaseEnv(process.env);
-  const qaUrl = isolatedEnv.QA_DATABASE_URL;
-  if (!qaUrl) throw new Error("qa_database_url_required");
+  const isolatedQaUrl = isolatedEnv.QA_DATABASE_URL;
+  if (!isolatedQaUrl) throw new Error("qa_database_url_required");
+
+  // Transaction poolers may reuse a backend session whose search_path was set
+  // by another disposable-schema process. Use Neon's direct endpoint after the
+  // QA-vs-primary identity guard has passed; withSchema also pins search_path
+  // as a connection startup option. Non-Neon hosts are unchanged.
+  const qaUrl = withoutNeonPooler(isolatedQaUrl);
 
   const schemaName = `beagle_baseline_${randomBytes(8).toString("hex")}`;
   if (!/^beagle_baseline_[a-f0-9]{16}$/.test(schemaName)) {

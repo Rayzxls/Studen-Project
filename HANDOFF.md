@@ -37,6 +37,11 @@ The latest Production deployment is healthy.
   disposable schema, produces an empty Prisma schema diff, includes the partial
   notification index, and is re-verified in CI. QA and Production migration
   bookkeeping remains unchanged.
+- **The baseline bookkeeping transition and rollback are proven synthetically.**
+  A fail-closed rehearsal converts 14 legacy migration rows to one baseline row,
+  verifies status/deploy/schema/index/application queries, then restores the 14
+  rows byte-for-byte. It uses random schemas only and is now a CI gate; it does
+  not copy deployed data or authorize QA/Production adoption.
 - **Authenticated isolated-QA acceptance is complete.** Teacher, Student, and
   Admin flows passed on desktop and a `390 x 844` viewport. The Teacher saw all
   three early-warning signals and the scheduled publishing center; the Student
@@ -51,13 +56,15 @@ The latest Production deployment is healthy.
 
 ### Remaining work
 
-1. **Migration baseline adoption rehearsal — high risk, separate change.** The
+1. **Migration baseline deployment-clone rehearsal — high risk, separate
+   change.** The
    active history creates only 26 of 41 current application tables because part
    of the schema was historically created with `prisma db push`. The candidate
-   baseline itself is now proven against an empty disposable schema. Before any
-   `migrate resolve` or history replacement, clone the deployed schema plus
-   `_prisma_migrations`, rehearse the exact reconciliation and rollback there,
-   then require a separate explicit approval for QA and again for Production.
+   baseline and synthetic bookkeeping rollback are now proven against empty
+   disposable schemas. Before any `migrate resolve` or history replacement,
+   clone the deployed schema, data, and `_prisma_migrations`, run the automated
+   reconciliation and rollback there, then require a separate explicit approval
+   for QA and again for Production.
    See `docs/release-gates/2026-08-02-MIGRATION-BASELINE-PROOF.md`.
 2. **Production and real-device acceptance.** Isolated-QA role, layout,
    visibility, date/time, and theme checks are complete. A real phone still
