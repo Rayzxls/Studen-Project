@@ -30,6 +30,8 @@
     "qa:release:dependencies:baseline": "tsx scripts/identity-course-dependency-gate.ts --write-baseline",
     "qa:migration-baseline:verify": "dotenv -e .env.local -- tsx scripts/verify-migration-baseline.ts candidate",
     "qa:migration-baseline:verify:ci": "tsx scripts/verify-migration-baseline.ts candidate",
+    "qa:migration-baseline:rehearse": "dotenv -e .env.local -- tsx scripts/rehearse-migration-baseline.ts",
+    "qa:migration-baseline:rehearse:ci": "tsx scripts/rehearse-migration-baseline.ts",
     "qa:migration-history:prove-gap": "dotenv -e .env.local -- tsx scripts/verify-migration-baseline.ts current-history",
     "db:generate": "prisma generate",
     "db:migrate": "dotenv -e .env.local -- prisma migrate dev",

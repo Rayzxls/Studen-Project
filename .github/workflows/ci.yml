@@ -103,6 +103,8 @@ jobs:
       # This does not replace the active migration history or touch `public`.
       - name: Verify candidate migration baseline
         run: pnpm qa:migration-baseline:verify:ci
+      - name: Rehearse baseline bookkeeping and rollback
+        run: pnpm qa:migration-baseline:rehearse:ci
       # `db push`, not `migrate deploy`: the migration history does not build
       # this schema from empty. Most tables were created by `prisma db push`
       # during development and have no migration, so `migrate deploy` against a

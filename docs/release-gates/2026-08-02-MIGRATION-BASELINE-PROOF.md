@@ -68,6 +68,48 @@ Acceptance requires all of the following:
 CI runs the same proof inside its disposable PostgreSQL service with
 `npm run qa:migration-baseline:verify:ci`.
 
+## Synthetic bookkeeping rehearsal
+
+The repository also has a fail-closed rehearsal for the migration-history
+transition proposed by Prisma 6's
+[baselining workflow](https://www.prisma.io/docs/orm/v6/prisma-migrate/workflows/baselining):
+
+```powershell
+npm run qa:migration-baseline:rehearse
+```
+
+The rehearsal never moves the candidate into the active migration directory.
+Instead, it creates a temporary Prisma workspace and two random QA schemas. It
+then:
+
+1. builds a shape-equivalent empty clone from the candidate baseline;
+2. asks Prisma to record the 14 legacy migrations as applied;
+3. confirms the current migration history is clean;
+4. backs up all eight `_prisma_migrations` columns into the second schema;
+5. records the squashed baseline, verifies the exact 15-row transition set,
+   and deletes exactly the 14 legacy rows;
+6. proves baseline-only `migrate status` and `migrate deploy` are clean;
+7. proves the schema, partial index, and representative Prisma queries work;
+8. removes the baseline row and restores the original 14 rows;
+9. compares the restored bookkeeping byte-for-byte with the backup; and
+10. proves the legacy history is clean again before deleting both schemas and
+    the temporary filesystem workspace.
+
+Both local and CI rehearsals serialize through a transaction-scoped PostgreSQL
+advisory lock. Prisma's session advisory lock is disabled only inside this
+already-serialized disposable workflow because a pooled connection can retain
+session lock state after the client exits. When `QA_DATABASE_URL` is a Neon
+pooled URL, disposable-schema tools switch to the equivalent direct Neon
+endpoint after the QA-vs-primary identity guard passes. Every temporary URL
+also pins its random schema through PostgreSQL's connection-startup `options`
+instead of relying on a reusable session's prior `search_path`. Non-Neon hosts,
+including CI's local PostgreSQL service, are unchanged apart from that explicit
+per-connection schema pin.
+
+This proves the mechanics and rollback against an empty shape-equivalent
+clone. It does **not** prove data preservation, copy the deployed database, or
+authorize a bookkeeping change on QA or Production.
+
 ## Adoption boundary — not approved
 
 Do not move the candidate into `prisma/migrations`, edit existing migration
@@ -76,13 +118,13 @@ already contain 14 applied migration records. Simply adding or replacing a
 baseline would make the filesystem and `_prisma_migrations` histories disagree
 and could attempt to create tables that already contain live data.
 
-Before adoption, a separate change must:
+Before adoption, a separate operational rehearsal must still:
 
 1. freeze schema changes for the duration of the rehearsal;
 2. take and verify a restorable database backup;
-3. clone the deployed schema and `_prisma_migrations` rows into a disposable
-   database;
-4. rehearse the exact bookkeeping reconciliation on that clone;
+3. clone the deployed schema, data, and `_prisma_migrations` rows into a
+   disposable database;
+4. run the now-automated bookkeeping reconciliation and rollback on that clone;
 5. prove `migrate status` and `migrate deploy` are clean after reconciliation;
 6. prove application queries and the partial index still work; and
 7. document rollback commands and decision owners before touching QA, followed
