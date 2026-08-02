@@ -27,6 +27,8 @@ The latest Production deployment is healthy.
 - **Date and time entry is consolidated.** PR #35 replaced the difficult native
   date-time picker with the shared `DateTimeField` across scheduled posts,
   assignments, quizzes, class-code expiry, audit filters, and result filters.
+  Every 24-hour clock option is now equally visible and selectable; scheduling
+  fields still hide past calendar dates and flag a completed past datetime.
 - **Production and QA database migrations report up to date.** The Production
   `notification_post_once` partial unique index was queried directly and is
   present. This prevents duplicate class notifications.
