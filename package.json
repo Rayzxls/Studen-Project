@@ -32,6 +32,8 @@
     "qa:migration-baseline:verify:ci": "tsx scripts/verify-migration-baseline.ts candidate",
     "qa:migration-baseline:rehearse": "dotenv -e .env.local -- tsx scripts/rehearse-migration-baseline.ts",
     "qa:migration-baseline:rehearse:ci": "tsx scripts/rehearse-migration-baseline.ts",
+    "db:migration-baseline:clone:preflight": "dotenv -e .env.local -- tsx scripts/rehearse-migration-baseline-clone.ts preflight",
+    "db:migration-baseline:clone:rehearse": "dotenv -e .env.local -- tsx scripts/rehearse-migration-baseline-clone.ts rehearse",
     "qa:migration-history:prove-gap": "dotenv -e .env.local -- tsx scripts/verify-migration-baseline.ts current-history",
     "db:generate": "prisma generate",
     "db:migrate": "dotenv -e .env.local -- prisma migrate dev",

@@ -42,6 +42,14 @@ The latest Production deployment is healthy.
   verifies status/deploy/schema/index/application queries, then restores the 14
   rows byte-for-byte. It uses random schemas only and is now a CI gate; it does
   not copy deployed data or authorize QA/Production adoption.
+- **The deployment-clone baseline rehearsal is complete.** A Neon child branch
+  copied from `production` passed a read-only preflight with 14 legacy migration
+  rows, 41 application tables, and 92 application rows. The guarded rehearsal
+  converted the clone to one baseline row, proved status/deploy/schema and every
+  application-table fingerprint, then restored all 14 original migration rows
+  byte-for-byte. Production and QA were rejected by identity guards and were not
+  modified. See
+  `docs/release-gates/2026-08-02-MIGRATION-BASELINE-CLONE-REHEARSAL.md`.
 - **Authenticated isolated-QA acceptance is complete.** Teacher, Student, and
   Admin flows passed on desktop and a `390 x 844` viewport. The Teacher saw all
   three early-warning signals and the scheduled publishing center; the Student
@@ -56,16 +64,12 @@ The latest Production deployment is healthy.
 
 ### Remaining work
 
-1. **Migration baseline deployment-clone rehearsal — high risk, separate
-   change.** The
-   active history creates only 26 of 41 current application tables because part
-   of the schema was historically created with `prisma db push`. The candidate
-   baseline and synthetic bookkeeping rollback are now proven against empty
-   disposable schemas. Before any `migrate resolve` or history replacement,
-   clone the deployed schema, data, and `_prisma_migrations`, run the automated
-   reconciliation and rollback there, then require a separate explicit approval
-   for QA and again for Production.
-   See `docs/release-gates/2026-08-02-MIGRATION-BASELINE-PROOF.md`.
+1. **Migration baseline adoption — still not approved.** Empty-schema,
+   synthetic-bookkeeping, and deployment-clone proofs now pass. The next change
+   must document a current restorable QA backup, adopt and verify the baseline
+   on QA only after an explicit owner approval, and prove rollback there. A
+   second, separate explicit approval is still required before Production.
+   Never infer either approval from the successful clone rehearsal.
 2. **Production and real-device acceptance.** Isolated-QA role, layout,
    visibility, date/time, and theme checks are complete. A real phone still
    needs scheduled publication through cron, Web Push permission/delivery, and
@@ -76,9 +80,10 @@ The latest Production deployment is healthy.
    environment if phone subscription fails; never copy secret values into this
    file.
 
-No feature implementation is currently in progress. Start with the migration
-baseline only as a dedicated, reversible recovery-hardening change; otherwise
-the next useful step is the authenticated manual acceptance pass above.
+The deployment-clone rehearsal tooling is a dedicated recovery-hardening
+change. Review and publish it separately before asking for an explicit QA
+adoption decision; otherwise continue the Production acceptance and
+observability work above.
 
 ## QUIZ PILOT ALLOWLIST RETIRED — 2026-07-31 (READ FIRST)
 
