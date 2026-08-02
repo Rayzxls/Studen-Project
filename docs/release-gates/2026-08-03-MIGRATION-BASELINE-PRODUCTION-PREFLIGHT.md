@@ -58,8 +58,7 @@ created restores the legacy bookkeeping automatically.
 
 ## Approval boundary
 
-This preparation and read-only preflight do not authorize Production mutation.
-Do not run adoption until the owner explicitly approves baseline adoption on
-Production after reviewing this evidence. Keep schema migrations frozen and
-retain the new Production backup throughout the decision and verification
-window.
+This preparation did not itself authorize Production mutation. The owner later
+gave explicit Production approval, and the guarded adoption passed. See
+`2026-08-03-MIGRATION-BASELINE-PRODUCTION-ADOPTION.md` for the final state and
+recovery evidence.

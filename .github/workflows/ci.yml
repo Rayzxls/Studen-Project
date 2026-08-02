@@ -99,32 +99,14 @@ jobs:
           node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
-      # Prove the candidate squashed baseline in a random disposable schema.
-      # This does not replace the active migration history or touch `public`.
-      - name: Verify candidate migration baseline
+      # Prove the active squashed baseline in a random disposable schema.
+      # This never touches the deployed `public` schema.
+      - name: Verify active migration baseline
         run: pnpm qa:migration-baseline:verify:ci
-      - name: Rehearse baseline bookkeeping and rollback
-        run: pnpm qa:migration-baseline:rehearse:ci
-      # `db push`, not `migrate deploy`: the migration history does not build
-      # this schema from empty. Most tables were created by `prisma db push`
-      # during development and have no migration, so `migrate deploy` against a
-      # fresh database fails on the first ALTER of a table that was never
-      # created. `db push` materialises whatever schema.prisma currently
-      # describes, which is exactly what a disposable test database wants.
-      #
-      # The candidate baseline above proves clean recovery. Adopting it into the
-      # active migration path still requires a separately approved bookkeeping
-      # rehearsal against a clone of the deployed database.
-      - name: Create the runner database schema
-        run: pnpm exec prisma db push --skip-generate
-        env:
-          DATABASE_URL: postgresql://beagle:beagle@localhost:5432/beagle_ci
-      # `db push` only creates what schema.prisma can express. The notification
-      # post-once index is a partial unique index, which Prisma has no syntax
-      # for, so without this the fan-out silently loses its de-duplication and
-      # a class can be notified twice.
-      - name: Apply raw SQL the schema language cannot express
-        run: pnpm db:raw-sql:apply:ci
+      # The active baseline now builds the complete application schema,
+      # including the notification partial unique index, from an empty database.
+      - name: Apply active migration baseline
+        run: pnpm exec prisma migrate deploy
         env:
           DATABASE_URL: postgresql://beagle:beagle@localhost:5432/beagle_ci
       - run: pnpm test:integration:ci
