@@ -99,6 +99,10 @@ jobs:
           node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
+      # Prove the candidate squashed baseline in a random disposable schema.
+      # This does not replace the active migration history or touch `public`.
+      - name: Verify candidate migration baseline
+        run: pnpm qa:migration-baseline:verify:ci
       # `db push`, not `migrate deploy`: the migration history does not build
       # this schema from empty. Most tables were created by `prisma db push`
       # during development and have no migration, so `migrate deploy` against a
@@ -106,9 +110,9 @@ jobs:
       # created. `db push` materialises whatever schema.prisma currently
       # describes, which is exactly what a disposable test database wants.
       #
-      # Fixing that properly means a squashed baseline migration plus
-      # `migrate resolve` on the existing databases — worth doing, but it is not
-      # this job's business.
+      # The candidate baseline above proves clean recovery. Adopting it into the
+      # active migration path still requires a separately approved bookkeeping
+      # rehearsal against a clone of the deployed database.
       - name: Create the runner database schema
         run: pnpm exec prisma db push --skip-generate
         env:

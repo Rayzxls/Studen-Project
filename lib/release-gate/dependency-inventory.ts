@@ -35,7 +35,7 @@ export type DependencyComparison = {
   unchanged: DependencyFinding[];
 };
 
-export const DEPENDENCY_RULES_VERSION = "2026-07-24.3";
+export const DEPENDENCY_RULES_VERSION = "2026-08-02.1";
 
 const SOURCE_ROOTS = ["app", "components", "lib", "prisma", "scripts", "tests"];
 
@@ -61,6 +61,10 @@ const SOURCE_EXTENSIONS = new Set([
 
 const EXCLUDED_PATHS = [
   /^prisma\/migrations\//,
+  // Generated from schema.prisma and checked for exact schema equivalence by
+  // the migration-baseline verifier. Scanning it would count the same domain
+  // symbols twice and report generated SQL as a new source dependency.
+  /^prisma\/baseline\//,
   /^lib\/release-gate\//,
   /^scripts\/identity-course-dependency-gate\.ts$/,
   /^tests\/unit\/identity-course-dependency-gate\.test\.ts$/,
