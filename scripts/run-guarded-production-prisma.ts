@@ -3,8 +3,15 @@ import { resolve } from "node:path";
 
 import { databaseIdentity } from "../tests/helpers/database-safety";
 
+const mode = process.argv[2];
+if (mode !== "deploy") {
+  throw new Error(
+    "usage: run-guarded-production-prisma deploy --confirm=TOKEN"
+  );
+}
+
 const confirmation = process.argv.find((arg) => arg.startsWith("--confirm="));
-if (confirmation !== "--confirm=APPLY_PRODUCTION_MIGRATIONS_20260729") {
+if (confirmation !== "--confirm=DEPLOY_PRODUCTION_MIGRATIONS") {
   throw new Error("production_migration_confirmation_required");
 }
 

@@ -1,13 +1,10 @@
 /**
- * Proves the candidate squashed baseline against an isolated PostgreSQL schema.
+ * Proves the active squashed baseline against an isolated PostgreSQL schema.
  *
  * This script never touches the active `public` schema. It requires the same
  * DATABASE_URL/QA_DATABASE_URL isolation guard as mutating integration tests,
  * creates a random QA schema, and drops that exact schema in `finally`.
  *
- * Modes:
- *   candidate          Apply and verify prisma/baseline (default)
- *   current-history    Confirm the active migration history fails from empty
  */
 import { randomBytes } from "node:crypto";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
@@ -19,7 +16,7 @@ import { prepareIsolatedDatabaseEnv } from "../tests/helpers/database-safety";
 const PRISMA_CLI = resolve("node_modules/prisma/build/index.js");
 const SCHEMA_PATH = resolve("prisma/schema.prisma");
 const BASELINE_PATH = resolve(
-  "prisma/baseline/20260802010000_squashed_baseline/migration.sql"
+  "prisma/migrations/00000000000000_squashed_baseline/migration.sql"
 );
 const RAW_SQL_PATH = resolve(
   "prisma/raw-sql/0001-notification-partial-unique.sql"
@@ -27,16 +24,7 @@ const RAW_SQL_PATH = resolve(
 const EXPECTED_TABLE_COUNT = 41;
 const VERIFIER_ADVISORY_LOCK_ID = "68434670120260802";
 
-type Mode = "candidate" | "current-history";
 type CommandResult = SpawnSyncReturns<string>;
-
-function parseMode(raw: string | undefined): Mode {
-  if (!raw || raw === "candidate") return "candidate";
-  if (raw === "current-history") return raw;
-  throw new Error(
-    "usage: verify-migration-baseline [candidate|current-history]"
-  );
-}
 
 function runPrisma(
   args: string[],
@@ -89,7 +77,6 @@ function withoutNeonPooler(databaseUrl: string): string {
 }
 
 async function main(): Promise<void> {
-  const mode = parseMode(process.argv[2]);
   const isolatedEnv = prepareIsolatedDatabaseEnv(process.env);
   const isolatedQaUrl = isolatedEnv.QA_DATABASE_URL;
   if (!isolatedQaUrl) throw new Error("qa_database_url_required");
@@ -128,35 +115,6 @@ async function main(): Promise<void> {
           `SELECT pg_advisory_xact_lock(${VERIFIER_ADVISORY_LOCK_ID})::text AS lock`
         );
 
-        if (mode === "current-history") {
-          const result = runPrisma(
-            ["migrate", "deploy", "--schema", SCHEMA_PATH],
-            temporaryUrl,
-            [0, 1],
-            // The outer transaction-scoped verifier lock already serializes
-            // this disposable proof. Prisma's session lock is unsafe through
-            // transaction poolers and can outlive the client connection.
-            { PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK: "1" }
-          );
-          const output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
-          if (result.status === 0) {
-            throw new Error("active_history_unexpectedly_succeeded_from_empty");
-          }
-          if (!/does not exist|P3018/i.test(output)) {
-            throw new Error(
-              `active_history_failed_for_unexpected_reason\n${redact(output, temporaryUrl)}`
-            );
-          }
-          const missingRelation =
-            /relation [`"]?([^`"\r\n]+)[`"]? does not exist/i.exec(
-              output
-            )?.[1] ?? "unknown";
-          console.log(
-            `Confirmed: active migration history cannot build from empty (first missing relation: ${missingRelation}).`
-          );
-          return;
-        }
-
         runPrisma(
           ["db", "execute", "--file", BASELINE_PATH, "--schema", SCHEMA_PATH],
           temporaryUrl
@@ -177,7 +135,7 @@ async function main(): Promise<void> {
         );
         if (diff.status !== 0) {
           throw new Error(
-            `candidate_baseline_does_not_match_schema\n${redact(diff.stdout ?? "", temporaryUrl)}`
+            `active_baseline_does_not_match_schema\n${redact(diff.stdout ?? "", temporaryUrl)}`
           );
         }
 
@@ -191,7 +149,7 @@ async function main(): Promise<void> {
           `;
           if (tables[0]?.count !== EXPECTED_TABLE_COUNT) {
             throw new Error(
-              `candidate_table_count_mismatch_expected_${EXPECTED_TABLE_COUNT}_actual_${tables[0]?.count ?? "missing"}`
+              `active_baseline_table_count_mismatch_expected_${EXPECTED_TABLE_COUNT}_actual_${tables[0]?.count ?? "missing"}`
             );
           }
 
@@ -233,12 +191,12 @@ async function main(): Promise<void> {
             normalizeSql(definition)
           ) {
             throw new Error(
-              "candidate_partial_index_differs_from_raw_sql_source"
+              "active_baseline_partial_index_differs_from_raw_sql_source"
             );
           }
 
           console.log(
-            `Candidate baseline verified: ${EXPECTED_TABLE_COUNT} tables, schema diff empty, partial index matches raw SQL.`
+            `Active baseline verified: ${EXPECTED_TABLE_COUNT} tables, schema diff empty, partial index matches raw SQL.`
           );
         } finally {
           await temporary.$disconnect();
