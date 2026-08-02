@@ -116,6 +116,72 @@ export function assertBaselineRehearsalDatabase(
   }
 }
 
+export function prepareQaBaselineAdoptionEnv(
+  env: DatabaseEnvironment
+): NodeJS.ProcessEnv {
+  const isolated = prepareIsolatedDatabaseEnv(env);
+  const primaryUrl = required(env, "DATABASE_URL");
+  const qaUrl = required(env, "QA_DATABASE_URL");
+  const backupUrl = required(env, "QA_BASELINE_BACKUP_DATABASE_URL");
+  const backupIdentity = databaseIdentity(backupUrl);
+
+  if (backupIdentity === databaseIdentity(primaryUrl)) {
+    throw new Error("qa_baseline_backup_matches_primary");
+  }
+  if (backupIdentity === databaseIdentity(qaUrl)) {
+    throw new Error("qa_baseline_backup_matches_qa");
+  }
+
+  for (const [label, rawUrl] of [
+    ["qa", qaUrl],
+    ["qa_baseline_backup", backupUrl],
+  ] as const) {
+    const parsed = new URL(rawUrl);
+    const schema = parsed.searchParams.get("schema");
+    if (schema && schema !== "public") {
+      throw new Error(`${label}_database_must_use_public_schema`);
+    }
+  }
+
+  const backup = new URL(backupUrl);
+  if (
+    backup.hostname.toLowerCase().endsWith(".neon.tech") &&
+    backup.hostname.toLowerCase().includes("-pooler.")
+  ) {
+    throw new Error("qa_baseline_backup_must_use_direct_connection");
+  }
+
+  return {
+    ...isolated,
+    QA_BASELINE_BACKUP_DATABASE_URL: backupUrl,
+    BEAGLE_QA_BASELINE_ADOPTION: "1",
+  };
+}
+
+export function assertQaBaselineAdoptionDatabase(
+  env: DatabaseEnvironment = process.env
+): void {
+  if (env.BEAGLE_QA_BASELINE_ADOPTION !== "1") {
+    throw new Error("qa_baseline_adoption_gate_not_enabled");
+  }
+
+  const activeUrl = required(env, "DATABASE_URL");
+  const qaUrl = required(env, "QA_DATABASE_URL");
+  const primaryUrl = required(env, "BEAGLE_PRIMARY_DATABASE_URL");
+  const backupUrl = required(env, "QA_BASELINE_BACKUP_DATABASE_URL");
+  const activeIdentity = databaseIdentity(activeUrl);
+
+  if (activeIdentity !== databaseIdentity(qaUrl)) {
+    throw new Error("active_database_is_not_qa_database");
+  }
+  if (activeIdentity === databaseIdentity(primaryUrl)) {
+    throw new Error("qa_database_matches_primary");
+  }
+  if (activeIdentity === databaseIdentity(backupUrl)) {
+    throw new Error("qa_database_matches_baseline_backup");
+  }
+}
+
 export function assertIsolatedTestDatabase(
   env: DatabaseEnvironment = process.env
 ): void {
