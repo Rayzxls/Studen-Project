@@ -32,6 +32,11 @@ The latest Production deployment is healthy.
 - **Production and QA database migrations report up to date.** The Production
   `notification_post_once` partial unique index was queried directly and is
   present. This prevents duplicate class notifications.
+- **A squashed migration baseline candidate is proven, but not adopted.** It
+  lives outside `prisma/migrations`, builds all 41 application tables in a
+  disposable schema, produces an empty Prisma schema diff, includes the partial
+  notification index, and is re-verified in CI. QA and Production migration
+  bookkeeping remains unchanged.
 - **Authenticated isolated-QA acceptance is complete.** Teacher, Student, and
   Admin flows passed on desktop and a `390 x 844` viewport. The Teacher saw all
   three early-warning signals and the scheduled publishing center; the Student
@@ -46,12 +51,14 @@ The latest Production deployment is healthy.
 
 ### Remaining work
 
-1. **Migration baseline — high risk, separate change.** Migration history can
-   create 25 tables while `schema.prisma` declares 40 because part of the schema
-   was historically created with `prisma db push`. A clean environment and
-   disaster recovery remain unproven. Build and test a squashed baseline against
-   a disposable empty database before considering `migrate resolve` on QA or
-   Production; do not change Production migration bookkeeping casually.
+1. **Migration baseline adoption rehearsal — high risk, separate change.** The
+   active history creates only 26 of 41 current application tables because part
+   of the schema was historically created with `prisma db push`. The candidate
+   baseline itself is now proven against an empty disposable schema. Before any
+   `migrate resolve` or history replacement, clone the deployed schema plus
+   `_prisma_migrations`, rehearse the exact reconciliation and rollback there,
+   then require a separate explicit approval for QA and again for Production.
+   See `docs/release-gates/2026-08-02-MIGRATION-BASELINE-PROOF.md`.
 2. **Production and real-device acceptance.** Isolated-QA role, layout,
    visibility, date/time, and theme checks are complete. A real phone still
    needs scheduled publication through cron, Web Push permission/delivery, and

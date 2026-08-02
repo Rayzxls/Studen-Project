@@ -79,6 +79,26 @@ describe("identity and course dependency gate", () => {
     expect(scanDependencyInventory(fixture)).toEqual([]);
   });
 
+  it("ignores generated baseline SQL while continuing to scan schema sources", () => {
+    const fixture = createFixture();
+    const baselineDir = path.join(fixture, "prisma", "baseline", "candidate");
+    mkdirSync(baselineDir, { recursive: true });
+    writeFileSync(
+      path.join(baselineDir, "migration.sql"),
+      'CREATE TABLE "Enrollment" ("studentId" TEXT NOT NULL);\n'
+    );
+    writeFileSync(
+      path.join(fixture, "prisma", "schema.prisma"),
+      "model Enrollment {\n  studentId String\n}\n"
+    );
+
+    const findings = scanDependencyInventory(fixture);
+
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.path).toBe("prisma/schema.prisma");
+    expect(findings[0]?.ruleId).toBe("student-id-symbol-review");
+  });
+
   it("allows one reviewed rule suppression without masking other rules", () => {
     const fixture = createFixture();
     writeFileSync(
