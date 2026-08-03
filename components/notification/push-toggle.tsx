@@ -39,7 +39,22 @@ function urlBase64ToBytes(base64: string): ArrayBuffer {
   return bytes.buffer;
 }
 
-export function PushToggle({ publicKey }: { publicKey: string }) {
+export function PushToggle({
+  publicKey,
+  serverReady,
+}: {
+  publicKey: string;
+  /**
+   * Whether the server holds the key pair it needs to actually send.
+   *
+   * Subscribing needs only the public half, so a deployment missing the
+   * private half lets someone switch notifications on, tells them it worked,
+   * and then never sends anything. Reported here because the person looking at
+   * this switch is the one who would otherwise sit waiting for a phone that
+   * cannot buzz.
+   */
+  serverReady: boolean;
+}) {
   const [state, setState] = useState<State>("checking");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -158,6 +173,12 @@ export function PushToggle({ publicKey }: { publicKey: string }) {
 
   return (
     <div className="mt-4 flex flex-wrap items-center gap-3">
+      {!serverReady && (
+        <p className="w-full rounded-lg bg-orange-50 px-3 py-2 text-sm text-orange-700">
+          เปิดสวิตช์นี้ได้ แต่ตอนนี้เซิร์ฟเวอร์ยังส่งแจ้งเตือนออกไม่ได้ —
+          ผู้ดูแลระบบต้องตั้งค่ากุญแจฝั่งเซิร์ฟเวอร์ให้ครบก่อน
+        </p>
+      )}
       <button
         type="button"
         disabled={pending}
