@@ -44,3 +44,25 @@ A publish time in the past is accepted and simply means visible now, which keeps
 the edit path honest — a teacher who reschedules something that already went out
 cannot un-send it, and pretending otherwise would be a lie about what students
 have already seen.
+
+## Amendment — moving a post before it goes live (2026-08-03)
+
+The publishing schedule page lets a teacher move a post they scheduled, because
+otherwise a wrong hour could only be fixed by deleting the post and writing it
+again. Two things bound that.
+
+**The window closes the moment the post is visible.** A post may be moved only
+while `publishAt` is still in the future and `notifiedAt` is unstamped. Pulling
+a live post back would be the unpublish ADR-0018 refuses, and it would be silent
+as well: the sweep claims a row once, so the second arrival would never be
+announced. The control is therefore absent on a live card rather than failing
+when submitted, and the write repeats the window in its own filter, where the
+check is atomic against a sweep running at the same moment.
+
+**Publishing early notifies inline.** "Publish now" writes the current time and
+then fans out immediately rather than leaving the row for the next sweep, which
+on the current deployment may be a day away. That is an optimisation of
+timeliness only, and it holds the rule above: if the fan-out fails the row stays
+unclaimed and the sweep still gets it. A past time is refused by this surface
+even though the schema accepts one, so that "publish now" — which notifies — is
+never reached by accident through the date field.
