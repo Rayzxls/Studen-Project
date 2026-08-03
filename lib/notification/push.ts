@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import webpush from "web-push";
 
 import { db } from "@/lib/db/client";
@@ -44,7 +45,18 @@ function ensureConfigured(): boolean {
     return false;
   }
 
-  webpush.setVapidDetails(subject, publicKey, privateKey);
+  try {
+    webpush.setVapidDetails(subject, publicKey, privateKey);
+  } catch (error) {
+    // A malformed subject throws here. Left unhandled it would surface as a
+    // failed publish sweep rather than as what it is — a settings problem.
+    configured = false;
+    Sentry.captureException(error, {
+      level: "warning",
+      tags: { area: "web_push", reason: "vapid_details_rejected" },
+    });
+    return false;
+  }
   configured = true;
   return true;
 }
@@ -63,19 +75,24 @@ export function pushConfigured(): boolean {
 export async function sendPushToUsers(
   userIds: readonly string[],
   message: PushMessage
-): Promise<{ sent: number; removed: number }> {
-  if (userIds.length === 0 || !ensureConfigured()) {
-    return { sent: 0, removed: 0 };
+): Promise<PushOutcome> {
+  if (userIds.length === 0) return { ...EMPTY_OUTCOME, configured: true };
+  if (!ensureConfigured()) {
+    reportUnconfigured();
+    return EMPTY_OUTCOME;
   }
 
   const subscriptions = await db.webPushSubscription.findMany({
     where: { userId: { in: [...userIds] } },
     select: { id: true, endpoint: true, p256dh: true, auth: true },
   });
-  if (subscriptions.length === 0) return { sent: 0, removed: 0 };
+  if (subscriptions.length === 0) {
+    return { ...EMPTY_OUTCOME, configured: true };
+  }
 
   const payload = JSON.stringify(message);
   const gone: string[] = [];
+  const failures: number[] = [];
   let sent = 0;
 
   await Promise.all(
@@ -95,6 +112,7 @@ export async function sendPushToUsers(
             ? Number((error as { statusCode: unknown }).statusCode)
             : 0;
         if (status === 404 || status === 410) gone.push(subscription.id);
+        else failures.push(status);
         // Any other failure is transient from here: the Notification row still
         // exists and the app still shows it, so there is nothing to recover.
       }
@@ -104,8 +122,73 @@ export async function sendPushToUsers(
   if (gone.length > 0) {
     await db.webPushSubscription.deleteMany({ where: { id: { in: gone } } });
   }
+  if (failures.length > 0) reportFailures(failures, sent);
 
-  return { sent, removed: gone.length };
+  return {
+    sent,
+    removed: gone.length,
+    failed: failures.length,
+    configured: true,
+  };
+}
+
+/**
+ * What one send attempt did.
+ *
+ * `configured: false` is the case that used to be indistinguishable from
+ * "nobody was subscribed": a deployment missing its VAPID pair sends nothing
+ * and says nothing, and the only visible symptom is a phone that stays quiet
+ * while the in-app notification arrives normally.
+ */
+export type PushOutcome = {
+  sent: number;
+  /** Subscriptions the push service reported as gone, and we deleted. */
+  removed: number;
+  /** Sends that failed for another reason — a wrong key pair, most likely. */
+  failed: number;
+  configured: boolean;
+};
+
+const EMPTY_OUTCOME: PushOutcome = {
+  sent: 0,
+  removed: 0,
+  failed: 0,
+  configured: false,
+};
+
+let unconfiguredReported = false;
+
+/**
+ * Says once per instance that push is switched off while something wanted to
+ * send. Once, because a deployment without keys would otherwise report this on
+ * every post, and the fact does not change between them.
+ */
+function reportUnconfigured(): void {
+  if (unconfiguredReported) return;
+  unconfiguredReported = true;
+  Sentry.captureMessage("web_push_not_configured", {
+    level: "warning",
+    tags: { area: "web_push", reason: "missing_vapid_env" },
+  });
+}
+
+/**
+ * Reports failed sends by status code only.
+ *
+ * Never the endpoint: a push endpoint is a capability URL — anyone holding it
+ * can deliver to that device — so it belongs in the same box as a signed URL
+ * and stays out of logs.
+ */
+function reportFailures(statuses: readonly number[], sent: number): void {
+  Sentry.captureMessage("web_push_send_failed", {
+    level: "warning",
+    tags: { area: "web_push", first_status: String(statuses[0] ?? 0) },
+    extra: {
+      failed: statuses.length,
+      sent,
+      statusCodes: [...new Set(statuses)],
+    },
+  });
 }
 
 /**
@@ -119,20 +202,21 @@ export async function sendPushToUsers(
 export async function sendCoursePush(
   courseOfferingId: string,
   message: PushMessage
-): Promise<void> {
-  if (!ensureConfigured()) return;
-
+): Promise<PushOutcome> {
   const enrollments = await db.enrollment.findMany({
     where: { courseOfferingId, removedAt: null },
     select: { studentId: true }, // dependency-gate-allow(student-id-symbol-review): internal Enrollment foreign key to User.id
   });
   const recipients = enrollments.map((e) => e.studentId); // dependency-gate-allow(student-id-symbol-review): internal Enrollment foreign key to User.id
-  if (recipients.length === 0) return;
+  if (recipients.length === 0) {
+    return { ...EMPTY_OUTCOME, configured: pushConfigured() };
+  }
 
   try {
-    await sendPushToUsers(recipients, message);
+    return await sendPushToUsers(recipients, message);
   } catch {
     // Best-effort by design (ADR-0047): the Notification rows are already
     // written, so the class loses a nudge and no information.
+    return { ...EMPTY_OUTCOME, configured: pushConfigured() };
   }
 }

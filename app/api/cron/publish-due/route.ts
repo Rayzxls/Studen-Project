@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { pushConfigured } from "@/lib/notification/push";
 import { publishDueContent } from "@/lib/publishing/sweep";
 
 /**
@@ -38,5 +39,12 @@ export async function GET(request: Request): Promise<NextResponse> {
   }
 
   const result = await publishDueContent();
-  return NextResponse.json({ ok: true, ...result });
+  // Reported alongside the counts because a deployment missing its VAPID pair
+  // fans out in-app notifications exactly as normal and sends no phone push at
+  // all, which from the outside looks like nothing being wrong.
+  return NextResponse.json({
+    ok: true,
+    ...result,
+    pushConfigured: pushConfigured(),
+  });
 }
