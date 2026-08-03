@@ -11,7 +11,7 @@ vi.mock("@sentry/nextjs", () => sentry);
 
 import { POST } from "@/app/api/cron/sentry-probe/route";
 
-const originalCronSecret = process.env.CRON_SECRET;
+const originalProbeSecret = process.env.SENTRY_PROBE_SECRET;
 const originalSentryDsn = process.env.SENTRY_DSN;
 
 function request(authorization?: string): Request {
@@ -23,7 +23,7 @@ function request(authorization?: string): Request {
 
 describe("Sentry production probe", () => {
   beforeEach(() => {
-    process.env.CRON_SECRET = "probe-secret";
+    process.env.SENTRY_PROBE_SECRET = "probe-secret";
     process.env.SENTRY_DSN = "https://public@example.ingest.sentry.io/1";
     sentry.captureException.mockClear();
     sentry.flush.mockReset();
@@ -31,20 +31,23 @@ describe("Sentry production probe", () => {
   });
 
   afterEach(() => {
-    if (originalCronSecret === undefined) delete process.env.CRON_SECRET;
-    else process.env.CRON_SECRET = originalCronSecret;
+    if (originalProbeSecret === undefined)
+      delete process.env.SENTRY_PROBE_SECRET;
+    else process.env.SENTRY_PROBE_SECRET = originalProbeSecret;
 
     if (originalSentryDsn === undefined) delete process.env.SENTRY_DSN;
     else process.env.SENTRY_DSN = originalSentryDsn;
   });
 
   it("fails closed when the scheduler secret is missing", async () => {
-    delete process.env.CRON_SECRET;
+    delete process.env.SENTRY_PROBE_SECRET;
 
     const response = await POST(request());
 
     expect(response.status).toBe(503);
-    expect(await response.json()).toEqual({ error: "cron_not_configured" });
+    expect(await response.json()).toEqual({
+      error: "sentry_probe_not_configured",
+    });
     expect(sentry.captureException).not.toHaveBeenCalled();
   });
 
