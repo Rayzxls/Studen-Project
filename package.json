@@ -19,6 +19,7 @@
     "test:ui": "vitest --ui",
     "test:e2e": "dotenv -e .env.local -- tsx scripts/run-isolated-tests.ts e2e",
     "test:smoke": "dotenv -e .env.local -- tsx scripts/run-isolated-tests.ts smoke",
+    "qa:sentry:probe": "tsx scripts/probe-production-sentry.ts",
     "qa:safe": "tsx scripts/qa-safe-smoke.ts",
     "push:vapid:generate": "tsx scripts/generate-vapid-keys.ts",
     "db:raw-sql:apply": "dotenv -e .env.local -- tsx scripts/apply-raw-sql.ts",
