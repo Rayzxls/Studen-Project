@@ -31,8 +31,13 @@ describe("teacher publishing schedule", () => {
       },
     });
 
-    const now = new Date("2026-08-01T12:29:27.064Z");
-    const publishAt = new Date("2026-08-03T07:05:00.000Z");
+    // Anchored to the real clock, not to fixed dates. `createAnnouncement`
+    // decides whether a post is already live by comparing with the actual now,
+    // so a hardcoded "future" turns into a published — and already notified —
+    // post the moment that date passes, and this test starts failing on every
+    // branch for reasons that have nothing to do with the branch.
+    const now = new Date();
+    const publishAt = new Date(now.getTime() + 60 * 60_000);
     const announcement = await createAnnouncement(
       {
         courseOfferingId: ctx.courseOfferingId,
@@ -67,7 +72,7 @@ describe("teacher publishing schedule", () => {
       }),
     ]);
 
-    const deliveredAt = new Date("2026-08-03T07:05:30.000Z");
+    const deliveredAt = new Date(publishAt.getTime() + 30_000);
     await db.announcement.update({
       where: { id: announcement.id },
       data: { notifiedAt: deliveredAt },

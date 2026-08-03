@@ -14,6 +14,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import type { FeedAttachment, FeedItem, FeedKind } from "@/lib/feed/aggregator";
+import { feedMomentOf } from "@/lib/feed/moment";
 import { resolveCourseFeedHref } from "@/lib/feed/navigation";
 import { EntryStagger } from "@/components/motion/entry-stagger";
 import { UserAvatar } from "@/components/profile/user-avatar";
@@ -199,6 +200,7 @@ function FeedCard({
     isFuturePublishTime(item.publishAt);
   const publishedFromSchedule =
     role === "TEACHER" && item.publishAt != null && !scheduledForFuture;
+  const shownAt = feedMomentOf(item);
 
   if (item.moderationRestriction) {
     return (
@@ -253,7 +255,7 @@ function FeedCard({
             {authorName}
           </p>
           <p className="mt-0.5 text-[11px] text-black/45">
-            {fmtRelative(item.sortAt)}
+            {fmtRelative(shownAt)}
           </p>
         </div>
         {/* Type chip — tinted by kind */}
@@ -278,7 +280,7 @@ function FeedCard({
       </header>
 
       {scheduledForFuture && item.publishAt && (
-        <div className="mx-5 mt-4 flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">
+        <div className="mx-5 mt-4 flex items-center gap-2 rounded-xl border border-hairline bg-blue-50 px-3 py-2 text-xs text-blue-700">
           <CalendarClock className="h-4 w-4 shrink-0" aria-hidden="true" />
           <span>
             <strong className="font-semibold">ตั้งเวลา</strong> · เผยแพร่{" "}
@@ -287,7 +289,7 @@ function FeedCard({
         </div>
       )}
       {publishedFromSchedule && item.publishAt && (
-        <div className="mx-5 mt-4 flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-800">
+        <div className="mx-5 mt-4 flex items-center gap-2 rounded-xl border border-hairline bg-green-50 px-3 py-2 text-xs text-green-700">
           <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
           <span>
             <strong className="font-semibold">เผยแพร่แล้ว</strong> ·
