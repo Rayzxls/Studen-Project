@@ -75,6 +75,15 @@ The latest Production deployment is healthy.
   observer surfaces; shared date/time controls and themes worked without
   browser errors. Full evidence is in
   `docs/release-gates/2026-08-01-AUTHENTICATED-MANUAL-ACCEPTANCE.md`.
+- **Production server observability acceptance is complete.** A dedicated,
+  sensitive `SENTRY_PROBE_SECRET` protects the POST-only probe without sharing
+  authority with scheduled publishing. Production redeployed successfully and
+  the controlled server event flushed to Sentry with event id
+  `1d98b7ff244f4ed98867c03a99176562`. The deployed VAPID triplet and all four R2
+  variables are present. Request bodies, cookies, authorization, signed URL
+  credentials, and user details remain covered by the scrub gate and its unit
+  tests. See
+  `docs/release-gates/2026-08-03-PRODUCTION-OBSERVABILITY-ACCEPTANCE.md`.
 - **`main` is protected.** Changes require a pull request, an up-to-date branch,
   resolved review conversations, all five GitHub Actions jobs, and Vercel.
   Force-push and branch deletion are disabled. Approval count is zero because
@@ -86,11 +95,11 @@ The latest Production deployment is healthy.
    visibility, date/time, and theme checks are complete. A real phone still
    needs scheduled publication through cron, Web Push permission/delivery, and
    private R2 upload/preview against Production.
-2. **Deployment observability.** Confirm a controlled server-side error reaches
-   the intended Sentry project without leaking request bodies, cookies, signed
-   URLs, or user details. VAPID values should also be checked in the deployed
-   environment if phone subscription fails; never copy secret values into this
-   file.
+2. **Source-map upload polish.** Runtime Sentry delivery is proven, but Vercel
+   does not currently have `SENTRY_AUTH_TOKEN`. Add a least-privilege token only
+   if readable Production stack traces require uploaded source maps; the DSN,
+   org, project, probe secret, VAPID, and R2 runtime values are already present.
+   Never copy secret values into this file.
 
 Migration baseline adoption is closed. Keep the QA and Production recovery
 branches and the two in-database bookkeeping schemas through their acceptance
