@@ -32,8 +32,10 @@ self.addEventListener("push", (event) => {
   const title = payload.title || "Beagle Classroom";
   const options = {
     body: payload.body || "",
-    icon: "/icon-192.png",
-    badge: "/icon-192.png",
+    // Both live under /icons; the bare filenames these once pointed at have
+    // never existed, so every banner rendered without artwork.
+    icon: "/icons/icon-192.png",
+    badge: "/icons/icon-192.png",
     // Collapses repeats of the same thing rather than stacking a pile of
     // banners for one event.
     tag: payload.tag || undefined,
