@@ -44,14 +44,15 @@ describe("reading a publish time from a form", () => {
     expect(readPublishAt("not-a-date")).toBeNull();
   });
 
-  it("keeps the wall-clock time the teacher picked", () => {
-    // datetime-local submits no zone; the value is the time on their clock.
-    const parsed = readPublishAt("2026-08-02T08:00");
-    expect(parsed).not.toBeNull();
-    expect(parsed?.getFullYear()).toBe(2026);
-    expect(parsed?.getMonth()).toBe(7);
-    expect(parsed?.getDate()).toBe(2);
-    expect(parsed?.getHours()).toBe(8);
-    expect(parsed?.getMinutes()).toBe(0);
+  it("interprets the teacher's wall-clock choice in Bangkok on every server", () => {
+    // Scheduling is a Bangkok wall-clock contract. The stored instant must not
+    // depend on whether Node happens to run in Bangkok locally or UTC on Vercel.
+    const parsed = readPublishAt("2026-08-03T08:30");
+    expect(parsed?.toISOString()).toBe("2026-08-03T01:30:00.000Z");
+  });
+
+  it("does not shift an explicitly-zoned instant a second time", () => {
+    const parsed = readPublishAt("2026-08-03T01:30:00.000Z");
+    expect(parsed?.toISOString()).toBe("2026-08-03T01:30:00.000Z");
   });
 });

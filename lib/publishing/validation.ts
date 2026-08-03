@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+const BANGKOK_UTC_OFFSET = "+07:00";
+const WALL_CLOCK_DATE_TIME =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/;
+
 /**
  * Optional publish time shared by Announcement, Material and Assignment
  * (ADR-0046).
@@ -17,15 +21,19 @@ export const PublishAtSchema = z.coerce.date().nullish();
 /**
  * Reads a publish time out of form data.
  *
- * `datetime-local` submits wall-clock text with no zone, which the Date
- * constructor reads in the server's zone. That is what the teacher meant — they
- * picked a time on a clock, not an instant in UTC — so it is parsed as-is
- * rather than being reinterpreted.
+ * `datetime-local` submits wall-clock text with no zone. Scheduling in Beagle
+ * Classroom is a Bangkok wall-clock contract, so attach Bangkok's UTC offset
+ * before constructing the instant. Leaving this to the server timezone makes
+ * 08:30 become 15:30 when Vercel parses the value in UTC and the UI formats it
+ * back in Asia/Bangkok. Explicitly-zoned ISO values remain unchanged.
  */
 export function readPublishAt(raw: FormDataEntryValue | null): Date | null {
   if (typeof raw !== "string") return null;
   const trimmed = raw.trim();
   if (trimmed.length === 0) return null;
-  const parsed = new Date(trimmed);
+  const instant = WALL_CLOCK_DATE_TIME.test(trimmed)
+    ? `${trimmed}${BANGKOK_UTC_OFFSET}`
+    : trimmed;
+  const parsed = new Date(instant);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
