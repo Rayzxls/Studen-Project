@@ -59,6 +59,11 @@ describe("teacher publishing schedule", () => {
         publishAt,
         status: "SCHEDULED",
         notificationCount: 0,
+        editable: {
+          title: null,
+          body: "Scheduled test announcement",
+          linkUrls: [],
+        },
       }),
     ]);
 

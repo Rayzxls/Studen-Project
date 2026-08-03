@@ -3,21 +3,57 @@ import {
   derivePublishingStatus,
   summarizePublishingQueue,
   type PublishingStatus,
-  type ScheduledContentKind,
 } from "@/lib/publishing/schedule";
 
-export interface TeacherPublishingItem {
-  kind: ScheduledContentKind;
+interface TeacherPublishingItemBase {
   id: string;
   title: string;
   createdAt: Date;
   publishAt: Date;
   notifiedAt: Date | null;
-  status: PublishingStatus;
-  notificationTargetCount: number;
-  notificationCount: number;
-  notificationReadCount: number;
 }
+
+type TeacherPublishingContent =
+  | {
+      kind: "ANNOUNCEMENT";
+      editable: {
+        title: string | null;
+        body: string;
+        linkUrls: string[];
+      };
+    }
+  | {
+      kind: "MATERIAL";
+      editable: {
+        title: string;
+        body: string;
+        linkUrls: string[];
+      };
+    }
+  | {
+      kind: "ASSIGNMENT";
+      editable: {
+        id: string;
+        title: string;
+        description: string;
+        dueAt: Date | null;
+        allowText: boolean;
+        allowFile: boolean;
+        allowLink: boolean;
+        submissionClosed: boolean;
+        autoCloseAtDue: boolean;
+        isScored: boolean;
+        scoreItem: { publishedAt: Date | null } | null;
+      };
+    };
+
+export type TeacherPublishingItem = TeacherPublishingItemBase &
+  TeacherPublishingContent & {
+    status: PublishingStatus;
+    notificationTargetCount: number;
+    notificationCount: number;
+    notificationReadCount: number;
+  };
 
 export interface TeacherPublishingSchedule {
   upcoming: TeacherPublishingItem[];
@@ -26,13 +62,7 @@ export interface TeacherPublishingSchedule {
   studentsWithPushCount: number;
 }
 
-type RawPublishingItem = Omit<
-  TeacherPublishingItem,
-  | "status"
-  | "notificationTargetCount"
-  | "notificationCount"
-  | "notificationReadCount"
->;
+type RawPublishingItem = TeacherPublishingItemBase & TeacherPublishingContent;
 
 export async function getTeacherPublishingSchedule(
   courseOfferingId: string,
@@ -58,6 +88,8 @@ export async function getTeacherPublishingSchedule(
       select: {
         id: true,
         title: true,
+        body: true,
+        linkUrls: true,
         postedAt: true,
         publishAt: true,
         notifiedAt: true,
@@ -74,6 +106,8 @@ export async function getTeacherPublishingSchedule(
       select: {
         id: true,
         title: true,
+        body: true,
+        linkUrls: true,
         postedAt: true,
         publishAt: true,
         notifiedAt: true,
@@ -90,6 +124,8 @@ export async function getTeacherPublishingSchedule(
       select: {
         id: true,
         title: true,
+        body: true,
+        linkUrls: true,
         postedAt: true,
         publishAt: true,
         notifiedAt: true,
@@ -106,6 +142,8 @@ export async function getTeacherPublishingSchedule(
       select: {
         id: true,
         title: true,
+        body: true,
+        linkUrls: true,
         postedAt: true,
         publishAt: true,
         notifiedAt: true,
@@ -118,6 +156,15 @@ export async function getTeacherPublishingSchedule(
       select: {
         id: true,
         title: true,
+        description: true,
+        dueAt: true,
+        allowText: true,
+        allowFile: true,
+        allowLink: true,
+        submissionClosed: true,
+        autoCloseAtDue: true,
+        isScored: true,
+        scoreItem: { select: { publishedAt: true } },
         createdAt: true,
         publishAt: true,
         notifiedAt: true,
@@ -130,6 +177,15 @@ export async function getTeacherPublishingSchedule(
       select: {
         id: true,
         title: true,
+        description: true,
+        dueAt: true,
+        allowText: true,
+        allowFile: true,
+        allowLink: true,
+        submissionClosed: true,
+        autoCloseAtDue: true,
+        isScored: true,
+        scoreItem: { select: { publishedAt: true } },
         createdAt: true,
         publishAt: true,
         notifiedAt: true,
@@ -164,6 +220,11 @@ export async function getTeacherPublishingSchedule(
       createdAt: item.postedAt,
       publishAt: item.publishAt!,
       notifiedAt: item.notifiedAt,
+      editable: {
+        title: item.title,
+        body: item.body,
+        linkUrls: stringList(item.linkUrls),
+      },
     })),
     ...materials.map((item) => ({
       kind: "MATERIAL" as const,
@@ -172,6 +233,11 @@ export async function getTeacherPublishingSchedule(
       createdAt: item.postedAt,
       publishAt: item.publishAt!,
       notifiedAt: item.notifiedAt,
+      editable: {
+        title: item.title,
+        body: item.body,
+        linkUrls: stringList(item.linkUrls),
+      },
     })),
     ...assignments.map((item) => ({
       kind: "ASSIGNMENT" as const,
@@ -180,6 +246,19 @@ export async function getTeacherPublishingSchedule(
       createdAt: item.createdAt,
       publishAt: item.publishAt!,
       notifiedAt: item.notifiedAt,
+      editable: {
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        dueAt: item.dueAt,
+        allowText: item.allowText,
+        allowFile: item.allowFile,
+        allowLink: item.allowLink,
+        submissionClosed: item.submissionClosed,
+        autoCloseAtDue: item.autoCloseAtDue,
+        isScored: item.isScored,
+        scoreItem: item.scoreItem,
+      },
     })),
   ];
 
@@ -257,6 +336,12 @@ export async function getTeacherPublishingSchedule(
     activeStudentCount,
     studentsWithPushCount,
   };
+}
+
+function stringList(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
 }
 
 export async function getPublishingQueueSummary(

@@ -154,6 +154,8 @@ export async function updateAssignmentAction(
 
   revalidatePath(`/teacher/courses/${courseId}/assignments`);
   revalidatePath(`/teacher/courses/${courseId}/assignments/${assignmentId}`);
+  revalidatePath(`/teacher/courses/${courseId}/feed`);
+  revalidatePath(`/teacher/courses/${courseId}/schedule`);
   return { ok: true };
 }
 
@@ -181,5 +183,7 @@ export async function deleteAssignmentAction(
   }
 
   revalidatePath(`/teacher/courses/${courseId}/assignments`);
+  revalidatePath(`/teacher/courses/${courseId}/feed`);
+  revalidatePath(`/teacher/courses/${courseId}/schedule`);
   return { ok: true };
 }

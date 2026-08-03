@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { Pencil } from "lucide-react";
 import {
   updateMaterialAction,
@@ -21,6 +22,7 @@ export function EditMaterialDialog({
   initialLinkUrls: string[];
 }) {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
+  const router = useRouter();
   const [state, formAction, isPending] = useActionState<
     UpdateMaterialState,
     FormData
@@ -33,8 +35,9 @@ export function EditMaterialDialog({
       if (!d) return;
       d.close();
       d.removeAttribute("open");
+      router.refresh();
     }, 0);
-  }, [state.ok]);
+  }, [state.ok, router]);
 
   return (
     <>
@@ -42,6 +45,7 @@ export function EditMaterialDialog({
         type="button"
         className="btn-ghost btn-sm"
         onClick={() => dialogRef.current?.showModal()}
+        aria-label="แก้ไขเอกสาร"
       >
         <Pencil className="h-3.5 w-3.5" /> แก้ไข
       </button>

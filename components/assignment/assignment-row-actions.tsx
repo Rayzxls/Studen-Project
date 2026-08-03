@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Pencil, Trash2 } from "lucide-react";
 import {
   deleteAssignmentAction,
@@ -11,6 +12,7 @@ import { DateTimeField } from "@/components/ui/date-time-field";
 
 interface AssignmentRowActionsProps {
   courseId: string;
+  showLabels?: boolean;
   assignment: {
     id: string;
     title: string;
@@ -31,11 +33,20 @@ const INITIAL: AssignmentMutationState = {};
 export function AssignmentRowActions({
   courseId,
   assignment,
+  showLabels = false,
 }: AssignmentRowActionsProps) {
   return (
     <div className="flex shrink-0 items-center gap-1 px-2">
-      <EditAssignmentDialog courseId={courseId} assignment={assignment} />
-      <DeleteAssignmentDialog courseId={courseId} assignment={assignment} />
+      <EditAssignmentDialog
+        courseId={courseId}
+        assignment={assignment}
+        showLabels={showLabels}
+      />
+      <DeleteAssignmentDialog
+        courseId={courseId}
+        assignment={assignment}
+        showLabels={showLabels}
+      />
     </div>
   );
 }
@@ -43,8 +54,10 @@ export function AssignmentRowActions({
 function EditAssignmentDialog({
   courseId,
   assignment,
+  showLabels = false,
 }: AssignmentRowActionsProps) {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
+  const router = useRouter();
   const [state, formAction, isPending] = useActionState<
     AssignmentMutationState,
     FormData
@@ -57,18 +70,25 @@ function EditAssignmentDialog({
       const dialog = dialogRef.current;
       dialog?.close();
       dialog?.removeAttribute("open");
+      router.refresh();
     }, 0);
-  }, [state.ok]);
+  }, [state.ok, router]);
 
   return (
     <>
       <button
         type="button"
         onClick={() => dialogRef.current?.showModal()}
-        className="rounded-lg p-2 text-black/40 hover:bg-blue-50 hover:text-blue-700"
+        className={
+          showLabels
+            ? "btn-ghost btn-sm"
+            : "cursor-pointer rounded-lg p-2 text-black/40 transition-colors duration-200 hover:bg-blue-50 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        }
         title="แก้ไขการบ้าน"
+        aria-label="แก้ไขการบ้าน"
       >
-        <Pencil className="h-4 w-4" />
+        <Pencil className="h-4 w-4" aria-hidden="true" />
+        {showLabels && "แก้ไข"}
       </button>
       <dialog
         ref={dialogRef}
@@ -269,8 +289,10 @@ function EditAssignmentDialog({
 function DeleteAssignmentDialog({
   courseId,
   assignment,
+  showLabels = false,
 }: AssignmentRowActionsProps) {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
+  const router = useRouter();
   const [state, formAction, isPending] = useActionState<
     AssignmentMutationState,
     FormData
@@ -282,18 +304,25 @@ function DeleteAssignmentDialog({
       const dialog = dialogRef.current;
       dialog?.close();
       dialog?.removeAttribute("open");
+      router.refresh();
     }, 0);
-  }, [state.ok]);
+  }, [state.ok, router]);
 
   return (
     <>
       <button
         type="button"
         onClick={() => dialogRef.current?.showModal()}
-        className="rounded-lg p-2 text-black/40 hover:bg-red-50 hover:text-red-700"
+        className={
+          showLabels
+            ? "btn-ghost btn-sm text-red-700 hover:bg-red-50"
+            : "cursor-pointer rounded-lg p-2 text-black/40 transition-colors duration-200 hover:bg-red-50 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+        }
         title="ลบการบ้าน"
+        aria-label="ลบการบ้าน"
       >
-        <Trash2 className="h-4 w-4" />
+        <Trash2 className="h-4 w-4" aria-hidden="true" />
+        {showLabels && "ลบ"}
       </button>
       <dialog
         ref={dialogRef}
