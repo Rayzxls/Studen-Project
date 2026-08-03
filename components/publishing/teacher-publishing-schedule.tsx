@@ -21,6 +21,7 @@ import { DeleteAnnouncementDialog } from "@/components/announcement/delete-annou
 import { EditMaterialDialog } from "@/components/material/edit-material-dialog";
 import { DeleteMaterialDialog } from "@/components/material/delete-material-dialog";
 import { AssignmentRowActions } from "@/components/assignment/assignment-row-actions";
+import { ReschedulePublishingDialog } from "@/components/publishing/reschedule-dialog";
 import {
   formatBangkokTime,
   formatThaiDateShort,
@@ -219,6 +220,14 @@ function PublishingItemCard({
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-1 self-start">
+          {item.status === "SCHEDULED" && (
+            <ReschedulePublishingDialog
+              courseId={courseId}
+              kind={item.kind}
+              itemId={item.id}
+              publishAt={item.publishAt.toISOString()}
+            />
+          )}
           <PublishingItemActions courseId={courseId} item={item} />
           <Link href={href} className="btn-ghost btn-sm cursor-pointer">
             ดูโพสต์
