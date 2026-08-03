@@ -126,6 +126,7 @@ DATABASE_URL="<prod-neon-url>" pnpm prisma db push
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` | ⬜ | เฉพาะถ้าเปิด signup สาธารณะ (CAPTCHA) |
 | `SENTRY_DSN` | ⬜ | server/edge error delivery (optional) |
 | `SENTRY_ORG` / `SENTRY_PROJECT` / `SENTRY_AUTH_TOKEN` | ⬜ | source-map upload during the Vercel build (optional; keep the token secret) |
+| `SENTRY_PROBE_SECRET` | ⬜ | least-privilege bearer secret for the controlled Production Sentry probe |
 | `NODE_ENV` | auto | Vercel ตั้ง `production` ให้เอง |
 
 หลัง deploy สามารถส่ง controlled server event โดยไม่ดึง Production secrets ลงไฟล์:
@@ -134,8 +135,8 @@ DATABASE_URL="<prod-neon-url>" pnpm prisma db push
 npx vercel@latest env run -e production -- npm run qa:sentry:probe
 ```
 
-คำสั่งนี้เรียก `POST /api/cron/sentry-probe` ด้วย `CRON_SECRET`; endpoint จะ
-รอ Sentry flush และคืนเฉพาะ event id. ทุก request body, cookie,
+คำสั่งนี้เรียก `POST /api/cron/sentry-probe` ด้วย `SENTRY_PROBE_SECRET`;
+endpoint จะรอ Sentry flush และคืนเฉพาะ event id. ทุก request body, cookie,
 Authorization header, signed URL credential และข้อมูลผู้ใช้ยังผ่านตัว scrub
 ก่อนออกจาก process.
 

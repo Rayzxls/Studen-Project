@@ -6,18 +6,21 @@ const FLUSH_TIMEOUT_MS = 2_000;
 /**
  * Sends a controlled, secret-protected server event to Sentry.
  *
- * This is intentionally a POST and reuses the scheduler credential so it can
- * be called from an operator process without creating another Production
- * secret. The global Sentry beforeSend hook removes the Authorization header,
- * cookies, request body, signed URL credentials, and user details before any
- * event leaves the process.
+ * This is intentionally a POST and uses its own least-privilege credential so
+ * rotating or testing observability can never interrupt scheduled publishing.
+ * The global Sentry beforeSend hook removes the Authorization header, cookies,
+ * request body, signed URL credentials, and user details before any event
+ * leaves the process.
  */
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request): Promise<NextResponse> {
-  const secret = process.env.CRON_SECRET?.trim();
+  const secret = process.env.SENTRY_PROBE_SECRET?.trim();
   if (!secret) {
-    return NextResponse.json({ error: "cron_not_configured" }, { status: 503 });
+    return NextResponse.json(
+      { error: "sentry_probe_not_configured" },
+      { status: 503 }
+    );
   }
 
   if (request.headers.get("authorization") !== `Bearer ${secret}`) {

@@ -8,8 +8,8 @@ type ProbeResponse = {
 };
 
 async function main(): Promise<void> {
-  const secret = process.env.CRON_SECRET?.trim();
-  if (!secret) throw new Error("cron_secret_required");
+  const secret = process.env.SENTRY_PROBE_SECRET?.trim();
+  if (!secret) throw new Error("sentry_probe_secret_required");
 
   const response = await fetch(PRODUCTION_PROBE_URL, {
     method: "POST",
