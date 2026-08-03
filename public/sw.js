@@ -35,7 +35,11 @@ self.addEventListener("push", (event) => {
     // Both live under /icons; the bare filenames these once pointed at have
     // never existed, so every banner rendered without artwork.
     icon: "/icons/icon-192.png",
-    badge: "/icons/icon-192.png",
+    // Android throws a badge's colours away and keeps its alpha, so a solid
+    // square icon renders as a solid white square in the status bar. This one
+    // is the mark's line art on transparency, which survives being reduced to
+    // a silhouette.
+    badge: "/icons/badge-96.png",
     // Collapses repeats of the same thing rather than stacking a pile of
     // banners for one event.
     tag: payload.tag || undefined,

@@ -13,6 +13,10 @@ export default function manifest(): MetadataRoute.Manifest {
     description:
       "ระบบจัดการห้องเรียน — คะแนน เช็คชื่อ การบ้าน และข่าวสารในที่เดียว",
     lang: "th",
+    // A stable identity, so a reinstall updates the installed app instead of
+    // creating a second one beside it.
+    id: "/",
+    scope: "/",
     start_url: "/dashboard",
     display: "standalone",
     background_color: "#F5F5F5",
