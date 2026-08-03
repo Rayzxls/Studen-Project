@@ -37,3 +37,30 @@ export function readPublishAt(raw: FormDataEntryValue | null): Date | null {
   const parsed = new Date(instant);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
+
+/**
+ * The inverse of `readPublishAt`: a stored instant as the `YYYY-MM-DDTHH:mm`
+ * Bangkok wall clock the date-time field speaks.
+ *
+ * Needed to prefill a reschedule form with the time already on the post.
+ * Formatting through the same Bangkok zone the reader assumes keeps a round
+ * trip that changes nothing from moving the post by seven hours.
+ */
+export function formatPublishAtInput(instant: Date): string {
+  if (Number.isNaN(instant.getTime())) return "";
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Bangkok",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    })
+      .formatToParts(instant)
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value])
+  );
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
+}

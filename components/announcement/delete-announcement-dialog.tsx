@@ -11,9 +11,11 @@ import {
 export function DeleteAnnouncementDialog({
   courseId,
   announcementId,
+  redirectTo,
 }: {
   courseId: string;
   announcementId: string;
+  redirectTo?: string;
 }) {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const router = useRouter();
@@ -29,9 +31,10 @@ export function DeleteAnnouncementDialog({
       if (!d) return;
       d.close();
       d.removeAttribute("open");
-      router.push(`/teacher/courses/${courseId}/announcements`);
+      router.push(redirectTo ?? `/teacher/courses/${courseId}/announcements`);
+      router.refresh();
     }, 0);
-  }, [state.ok, router, courseId]);
+  }, [state.ok, router, courseId, redirectTo]);
 
   return (
     <>
@@ -39,6 +42,7 @@ export function DeleteAnnouncementDialog({
         type="button"
         className="btn-ghost btn-sm text-red-700 hover:bg-red-50"
         onClick={() => dialogRef.current?.showModal()}
+        aria-label="ลบประกาศ"
       >
         <Trash2 className="h-3.5 w-3.5" /> ลบ
       </button>

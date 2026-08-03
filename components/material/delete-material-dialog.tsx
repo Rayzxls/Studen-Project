@@ -16,9 +16,11 @@ import {
 export function DeleteMaterialDialog({
   courseId,
   materialId,
+  redirectTo,
 }: {
   courseId: string;
   materialId: string;
+  redirectTo?: string;
 }) {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const router = useRouter();
@@ -34,9 +36,10 @@ export function DeleteMaterialDialog({
       if (!d) return;
       d.close();
       d.removeAttribute("open");
-      router.push(`/teacher/courses/${courseId}/materials`);
+      router.push(redirectTo ?? `/teacher/courses/${courseId}/materials`);
+      router.refresh();
     }, 0);
-  }, [state.ok, router, courseId]);
+  }, [state.ok, router, courseId, redirectTo]);
 
   return (
     <>
@@ -44,6 +47,7 @@ export function DeleteMaterialDialog({
         type="button"
         className="btn-ghost btn-sm text-red-700 hover:bg-red-50"
         onClick={() => dialogRef.current?.showModal()}
+        aria-label="ลบเอกสาร"
       >
         <Trash2 className="h-3.5 w-3.5" /> ลบ
       </button>

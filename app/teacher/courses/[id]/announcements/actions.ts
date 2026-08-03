@@ -110,6 +110,8 @@ export async function updateAnnouncementAction(
   revalidatePath(
     `/teacher/courses/${courseId}/announcements/${announcementId}`
   );
+  revalidatePath(`/teacher/courses/${courseId}/feed`);
+  revalidatePath(`/teacher/courses/${courseId}/schedule`);
   return { ok: true };
 }
 
@@ -141,5 +143,7 @@ export async function deleteAnnouncementAction(
   }
 
   revalidatePath(`/teacher/courses/${courseId}/announcements`);
+  revalidatePath(`/teacher/courses/${courseId}/feed`);
+  revalidatePath(`/teacher/courses/${courseId}/schedule`);
   return { ok: true };
 }

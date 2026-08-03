@@ -16,6 +16,12 @@ import {
 } from "lucide-react";
 
 import { MetricTile, SectionHeader } from "@/components/dashboard/primitives";
+import { EditAnnouncementDialog } from "@/components/announcement/edit-announcement-dialog";
+import { DeleteAnnouncementDialog } from "@/components/announcement/delete-announcement-dialog";
+import { EditMaterialDialog } from "@/components/material/edit-material-dialog";
+import { DeleteMaterialDialog } from "@/components/material/delete-material-dialog";
+import { AssignmentRowActions } from "@/components/assignment/assignment-row-actions";
+import { ReschedulePublishingDialog } from "@/components/publishing/reschedule-dialog";
 import {
   formatBangkokTime,
   formatThaiDateShort,
@@ -213,15 +219,79 @@ function PublishingItemCard({
             {status.description}
           </p>
         </div>
-        <Link
-          href={href}
-          className="btn-ghost btn-sm shrink-0 cursor-pointer self-start"
-        >
-          ดูโพสต์
-          <ArrowRight className="h-4 w-4" aria-hidden="true" />
-        </Link>
+        <div className="flex shrink-0 flex-wrap items-center gap-1 self-start">
+          {item.status === "SCHEDULED" && (
+            <ReschedulePublishingDialog
+              courseId={courseId}
+              kind={item.kind}
+              itemId={item.id}
+              publishAt={item.publishAt.toISOString()}
+            />
+          )}
+          <PublishingItemActions courseId={courseId} item={item} />
+          <Link href={href} className="btn-ghost btn-sm cursor-pointer">
+            ดูโพสต์
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
+        </div>
       </div>
     </article>
+  );
+}
+
+function PublishingItemActions({
+  courseId,
+  item,
+}: {
+  courseId: string;
+  item: TeacherPublishingItem;
+}) {
+  const schedulePath = `/teacher/courses/${courseId}/schedule`;
+
+  if (item.kind === "ANNOUNCEMENT") {
+    return (
+      <>
+        <EditAnnouncementDialog
+          courseId={courseId}
+          announcementId={item.id}
+          initialTitle={item.editable.title}
+          initialBody={item.editable.body}
+          initialLinkUrls={item.editable.linkUrls}
+        />
+        <DeleteAnnouncementDialog
+          courseId={courseId}
+          announcementId={item.id}
+          redirectTo={schedulePath}
+        />
+      </>
+    );
+  }
+
+  if (item.kind === "MATERIAL") {
+    return (
+      <>
+        <EditMaterialDialog
+          courseId={courseId}
+          materialId={item.id}
+          initialTitle={item.editable.title}
+          initialBody={item.editable.body}
+          initialLinkUrls={item.editable.linkUrls}
+        />
+        <DeleteMaterialDialog
+          courseId={courseId}
+          materialId={item.id}
+          redirectTo={schedulePath}
+        />
+      </>
+    );
+  }
+
+  return (
+    <AssignmentRowActions
+      courseId={courseId}
+      assignment={item.editable}
+      showLabels
+    />
   );
 }
 

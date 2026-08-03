@@ -53,3 +53,18 @@ export function isScheduled(
 ): boolean {
   return item.publishAt !== null && item.publishAt.getTime() > now.getTime();
 }
+
+/**
+ * True while the author may still move the post's publish time.
+ *
+ * The window closes the moment the class can see it: pushing a live post back
+ * into the future would take content away from students who already have it —
+ * the unpublish this system does not have — and the sweep, having stamped
+ * `notifiedAt` already, would never announce the second arrival.
+ */
+export function canReschedule(
+  item: { publishAt: Date | null; notifiedAt: Date | null },
+  now: Date = new Date()
+): boolean {
+  return item.notifiedAt === null && isScheduled(item, now);
+}
