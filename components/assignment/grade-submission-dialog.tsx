@@ -81,7 +81,7 @@ export function GradeSubmissionDialog({
             <p className="mt-0.5 text-xs text-black/50">
               คะแนนเต็ม {fullScore}
               {isScoreItemPublished && (
-                <span className="ml-2 rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-medium text-orange-700">
+                <span className="ml-2 rounded bg-orange-50 px-1.5 py-0.5 text-[10px] font-medium text-orange-700">
                   รายการคะแนนเผยแพร่แล้ว — ต้องใส่เหตุผล
                 </span>
               )}

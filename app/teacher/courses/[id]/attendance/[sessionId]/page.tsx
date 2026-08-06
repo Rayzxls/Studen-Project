@@ -100,7 +100,7 @@ export default async function AttendanceGridPage({ params }: PageProps) {
                   grid.session.scheduledEnd
                 )}
                 {cancelled && (
-                  <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-700">
+                  <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-700">
                     <Ban className="h-3 w-3" />
                     ยกเลิก
                   </span>

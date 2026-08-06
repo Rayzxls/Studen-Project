@@ -150,7 +150,7 @@ export function PublishingQueueBanner({
   return (
     <Link
       href={`/teacher/courses/${courseId}/schedule`}
-      className="group flex items-center gap-3 rounded-2xl border border-blue-200 bg-blue-50/80 px-4 py-3 text-blue-950 transition-colors duration-200 hover:border-blue-300 hover:bg-blue-50 hover:no-underline"
+      className="group flex items-center gap-3 rounded-2xl border border-blue-200 bg-blue-50/80 px-4 py-3 text-blue-700 transition-colors duration-200 hover:border-blue-300 hover:bg-blue-50 hover:no-underline"
     >
       <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-blue-700 shadow-sm">
         <CalendarClock className="h-5 w-5" aria-hidden="true" />
@@ -159,7 +159,7 @@ export function PublishingQueueBanner({
         <span className="block text-sm font-semibold">
           รอเผยแพร่ {count} รายการ
         </span>
-        <span className="mt-0.5 block truncate text-xs text-blue-800/75">
+        <span className="mt-0.5 block truncate text-xs text-blue-700/75">
           ถัดไป: {next.title} · {formatPublishingDate(next.publishAt)}
         </span>
       </span>
@@ -358,7 +358,7 @@ function statusPresentation(
         description: `นักเรียนยังไม่เห็น · เมื่อถึงเวลาจะเปิดให้ ${activeStudentCount} คนเข้าถึงได้`,
         icon: CalendarClock,
         badgeClass: "badge-info",
-        textClass: "text-blue-800",
+        textClass: "text-blue-700",
       };
     case "LIVE_NOTIFYING":
       return {
@@ -366,7 +366,7 @@ function statusPresentation(
         description: `นักเรียน ${activeStudentCount} คนเข้าถึงได้แล้ว · กำลังสร้างการแจ้งเตือน`,
         icon: Radio,
         badgeClass: "badge-success",
-        textClass: "text-green-800",
+        textClass: "text-green-700",
       };
     case "LIVE_NOTIFIED":
       return {
@@ -374,7 +374,7 @@ function statusPresentation(
         description: `นักเรียน ${activeStudentCount} คนเข้าถึงได้ · สร้างการแจ้งเตือนแล้ว ${item.notificationCount}/${item.notificationTargetCount} · อ่านแจ้งเตือน ${item.notificationReadCount}/${item.notificationCount}`,
         icon: CheckCircle2,
         badgeClass: "badge-success",
-        textClass: "text-green-800",
+        textClass: "text-green-700",
       };
     case "LIVE_NOTIFICATION_INCOMPLETE":
       return {
@@ -382,7 +382,7 @@ function statusPresentation(
         description: `โพสต์เข้าถึงได้แล้ว แต่พบการแจ้งเตือน ${item.notificationCount}/${item.notificationTargetCount} รายการ`,
         icon: TriangleAlert,
         badgeClass: "badge-warn",
-        textClass: "text-orange-800",
+        textClass: "text-orange-700",
       };
     case "LIVE_NO_STUDENTS":
       return {

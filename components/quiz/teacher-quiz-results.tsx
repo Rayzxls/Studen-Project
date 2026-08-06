@@ -38,7 +38,7 @@ export function TeacherQuizResults({
   return (
     <div className="space-y-5 pb-12">
       {notice && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-800">
+        <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-700">
           {notice}
         </div>
       )}
@@ -189,7 +189,7 @@ export function TeacherQuizResults({
               <form action={publishQuizResultsAction} className="space-y-3">
                 <HiddenIds result={result} />
                 {missingCount > 0 && (
-                  <label className="flex max-w-md items-start gap-2 rounded-lg border border-orange-200 bg-orange-50 p-3 text-xs text-orange-900">
+                  <label className="flex max-w-md items-start gap-2 rounded-lg border border-orange-200 bg-orange-50 p-3 text-xs text-orange-700">
                     <input
                       type="checkbox"
                       name="missingStudentsConfirmed"

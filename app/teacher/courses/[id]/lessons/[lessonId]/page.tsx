@@ -107,7 +107,7 @@ export default async function TeacherLessonDetailPage({
         </Link>
         {notice && (
           <p
-            className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800"
+            className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700"
             role="status"
           >
             {notice}
@@ -216,7 +216,7 @@ export default async function TeacherLessonDetailPage({
                         </span>
                       )}
                       {assignment.lateCount > 0 && (
-                        <span className="rounded-full bg-orange-50 px-2.5 py-1 text-orange-800">
+                        <span className="rounded-full bg-orange-50 px-2.5 py-1 text-orange-700">
                           ส่งสาย {assignment.lateCount}
                         </span>
                       )}

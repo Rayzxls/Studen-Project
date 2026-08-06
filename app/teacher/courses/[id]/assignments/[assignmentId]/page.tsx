@@ -550,7 +550,7 @@ export default async function AssignmentReviewWorkspacePage({
                             <p className="text-[10px] text-black/40">
                               {dateFmt.format(v.submittedAt)}
                               {v.isLate && (
-                                <span className="ml-2 rounded bg-orange-100 px-1 text-[9px] text-orange-700">
+                                <span className="ml-2 rounded bg-orange-50 px-1 text-[9px] text-orange-700">
                                   ส่งสาย
                                 </span>
                               )}

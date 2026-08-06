@@ -66,7 +66,7 @@ export function SubmissionFilePreview({
             <button
               type="button"
               onClick={() => setActiveIndex(index)}
-              className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-blue-100 bg-blue-50 px-2 py-1 text-[11px] font-medium text-blue-700 transition hover:border-blue-200 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30"
+              className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-blue-100 bg-blue-50 px-2 py-1 text-[11px] font-medium text-blue-700 transition hover:border-blue-200 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30"
               title={file.originalFilename}
             >
               <Paperclip className="h-3 w-3 shrink-0" aria-hidden="true" />

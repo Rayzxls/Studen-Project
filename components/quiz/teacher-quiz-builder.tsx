@@ -340,7 +340,7 @@ export function TeacherQuizBuilder({
       {notice && (
         <p
           role="status"
-          className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800"
+          className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700"
         >
           {notice}
         </p>
