@@ -38,7 +38,7 @@ export function TeacherQuizResults({
   return (
     <div className="space-y-5 pb-12">
       {notice && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-800">
+        <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-700">
           {notice}
         </div>
       )}
@@ -181,7 +181,7 @@ export function TeacherQuizResults({
                 {result.publishedAt
                   ? `เผยแพร่เมื่อ ${formatDateTime(result.publishedAt)} และย้อนกลับไม่ได้`
                   : missingCount > 0
-                    ? `มีนักเรียน ${missingCount} คนที่ไม่มี attempt ระบบจะนับเป็น 0 เมื่อเผยแพร่`
+                    ? `มีนักเรียน ${missingCount} คนที่ยังไม่ได้ทำข้อสอบ ระบบจะนับเป็น 0 เมื่อเผยแพร่`
                     : "นักเรียนส่งครบแล้ว พร้อมเผยแพร่คะแนน"}
               </p>
             </div>
@@ -189,7 +189,7 @@ export function TeacherQuizResults({
               <form action={publishQuizResultsAction} className="space-y-3">
                 <HiddenIds result={result} />
                 {missingCount > 0 && (
-                  <label className="flex max-w-md items-start gap-2 rounded-lg border border-orange-200 bg-orange-50 p-3 text-xs text-orange-900">
+                  <label className="flex max-w-md items-start gap-2 rounded-lg border border-orange-200 bg-orange-50 p-3 text-xs text-orange-700">
                     <input
                       type="checkbox"
                       name="missingStudentsConfirmed"
@@ -212,7 +212,7 @@ export function TeacherQuizResults({
         <div className="border-b border-hairline px-5 py-4">
           <h2 className="font-semibold text-ink">ผลรายคน</h2>
           <p className="mt-1 text-sm text-ink-mute">
-            คะแนนที่แสดงเป็น attempt ที่ดีที่สุดของนักเรียนแต่ละคน
+            คะแนนที่แสดงเป็นครั้งที่ทำได้ดีที่สุดของนักเรียนแต่ละคน
           </p>
         </div>
         <div className="divide-y divide-hairline">
@@ -286,7 +286,7 @@ export function TeacherQuizResults({
           <div>
             <h2 className="font-semibold text-ink">วิเคราะห์รายข้อ</h2>
             <p className="mt-1 text-sm text-ink-mute">
-              คำนวณจาก attempt ที่ดีที่สุดของผู้ส่งแต่ละคน
+              คำนวณจากครั้งที่ทำได้ดีที่สุดของผู้ส่งแต่ละคน
             </p>
           </div>
           <p className="text-sm text-ink-soft">

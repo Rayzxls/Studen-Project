@@ -39,7 +39,7 @@ export const adminCourseTabs = (courseId: string): CourseTab[] => [
     icon: "scores",
   },
   {
-    label: "งาน",
+    label: "การบ้าน",
     href: `/admin/courses/${courseId}/assignments`,
     icon: "assignments",
   },

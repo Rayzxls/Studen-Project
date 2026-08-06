@@ -371,7 +371,7 @@ function StudentCard({
           <p className="truncate text-sm font-medium text-black">
             {row.studentName}
             {row.removed && (
-              <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-[10px] text-red-700">
+              <span className="ml-2 rounded-full bg-red-50 px-2 py-0.5 text-[10px] text-red-700">
                 ถูกนำออกแล้ว
               </span>
             )}
@@ -427,7 +427,7 @@ function StudentRow({
         <p className="text-sm font-medium text-black">
           {row.studentName}
           {row.removed && (
-            <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-[10px] text-red-700">
+            <span className="ml-2 rounded-full bg-red-50 px-2 py-0.5 text-[10px] text-red-700">
               ถูกนำออกแล้ว
             </span>
           )}

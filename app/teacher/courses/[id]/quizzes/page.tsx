@@ -41,7 +41,9 @@ export default async function TeacherQuizzesPage({ params }: PageProps) {
       <div className="space-y-6 pb-10">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-medium text-blue-700">ศูนย์แบบทดสอบ</p>
+            <p className="text-sm font-medium text-blue-700">
+              แบบทดสอบในวิชานี้
+            </p>
             <h1 className="mt-1 text-3xl font-semibold text-ink">
               แบบทดสอบทั้งหมด
             </h1>

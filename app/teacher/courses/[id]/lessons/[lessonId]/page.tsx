@@ -107,7 +107,7 @@ export default async function TeacherLessonDetailPage({
         </Link>
         {notice && (
           <p
-            className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800"
+            className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700"
             role="status"
           >
             {notice}
@@ -122,7 +122,7 @@ export default async function TeacherLessonDetailPage({
                 {lesson.position + 1}
                 {lesson.state === "ARCHIVED" && (
                   <span className="rounded-full bg-black/[0.06] px-2 py-0.5 text-xs text-ink-mute">
-                    เก็บในคลังแล้ว
+                    เก็บถาวรแล้ว
                   </span>
                 )}
               </div>
@@ -216,7 +216,7 @@ export default async function TeacherLessonDetailPage({
                         </span>
                       )}
                       {assignment.lateCount > 0 && (
-                        <span className="rounded-full bg-orange-50 px-2.5 py-1 text-orange-800">
+                        <span className="rounded-full bg-orange-50 px-2.5 py-1 text-orange-700">
                           ส่งสาย {assignment.lateCount}
                         </span>
                       )}
@@ -388,7 +388,7 @@ export default async function TeacherLessonDetailPage({
                     maxLength={500}
                     rows={3}
                     className="input"
-                    placeholder="เหตุผลสำหรับ Audit Log"
+                    placeholder="เหตุผล — บันทึกไว้ตรวจสอบย้อนหลัง"
                   />
                   <button type="submit" className="btn-secondary btn-sm w-full">
                     <Archive className="h-4 w-4" /> เก็บบทเรียน
@@ -412,7 +412,7 @@ export default async function TeacherLessonDetailPage({
                     maxLength={500}
                     rows={3}
                     className="input"
-                    placeholder="เหตุผลสำหรับ Audit Log"
+                    placeholder="เหตุผล — บันทึกไว้ตรวจสอบย้อนหลัง"
                   />
                   <button type="submit" className="btn-danger btn-sm w-full">
                     ยืนยันการลบ

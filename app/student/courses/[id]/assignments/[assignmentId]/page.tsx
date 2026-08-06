@@ -352,7 +352,7 @@ export default async function StudentAssignmentDetailPage({
             {showGrade && grade && (
               <div className="mb-4 rounded-2xl bg-blue-50 px-4 py-3 text-sm text-blue-700">
                 คะแนนของคุณ:{" "}
-                <span className="font-semibold text-blue-900">
+                <span className="font-semibold text-blue-700">
                   {grade.value}/{assignment.scoreItem?.fullScore}
                 </span>
               </div>

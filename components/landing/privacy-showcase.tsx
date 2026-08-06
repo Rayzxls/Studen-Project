@@ -40,8 +40,8 @@ const ROLE_OPTIONS: Array<{
   {
     id: "admin",
     label: "ผู้ดูแล",
-    title: "Admin Observer",
-    caption: "ตรวจภาพรวมและ audit แบบ read-only",
+    title: "ผู้ดูแลระบบ · ดูอย่างเดียว",
+    caption: "ตรวจภาพรวมและบันทึกการตรวจสอบ แบบดูอย่างเดียว",
     icon: <UserCog className="h-4 w-4" />,
   },
 ];
@@ -64,7 +64,7 @@ const VISIBILITY_ROWS: Record<
     {
       label: "งานที่ฉันส่งและประวัติส่งงาน",
       allowed: true,
-      note: "แนบไฟล์ผ่าน signed URL",
+      note: "แนบไฟล์ผ่านลิงก์ที่มีอายุจำกัด",
     },
     {
       label: "คะแนนของเพื่อนร่วมห้อง",
@@ -101,17 +101,17 @@ const VISIBILITY_ROWS: Record<
     {
       label: "เครื่องมือจัดการผู้ใช้ระดับระบบ",
       allowed: false,
-      note: "สงวนให้ Admin",
+      note: "สงวนให้ผู้ดูแลระบบ",
     },
   ],
   admin: [
     {
-      label: "ภาพรวมผู้ใช้ ห้องเรียน และ activity",
+      label: "ภาพรวมผู้ใช้ ห้องเรียน และการใช้งาน",
       allowed: true,
       note: "สำหรับตรวจสอบระบบ",
     },
     {
-      label: "Audit log การแก้คะแนนและไฟล์",
+      label: "บันทึกการแก้คะแนนและไฟล์",
       allowed: true,
       note: "บันทึกย้อนหลัง",
     },
@@ -123,12 +123,12 @@ const VISIBILITY_ROWS: Record<
     {
       label: "แก้คะแนนแทนครู",
       allowed: false,
-      note: "read-only observer",
+      note: "ดูได้อย่างเดียว",
     },
     {
-      label: "เข้าถึงไฟล์แบบ public URL",
+      label: "เข้าถึงไฟล์แบบเปิดสาธารณะ",
       allowed: false,
-      note: "ใช้ signed URL เท่านั้น",
+      note: "ใช้ลิงก์ที่มีอายุจำกัดเท่านั้น",
     },
   ],
 };
@@ -136,11 +136,11 @@ const VISIBILITY_ROWS: Record<
 const TRUST_POINTS = [
   {
     icon: <ScrollText className="h-3.5 w-3.5" />,
-    label: "Audit log ทุกการแก้ไข",
+    label: "บันทึกทุกการแก้ไข",
   },
   {
     icon: <FileLock2 className="h-3.5 w-3.5" />,
-    label: "ไฟล์ผ่าน Signed URL",
+    label: "ไฟล์ผ่านลิงก์ที่มีอายุจำกัด",
   },
   {
     icon: <ShieldCheck className="h-3.5 w-3.5" />,
@@ -185,8 +185,8 @@ export function PrivacyShowcase() {
 
             <p className="mt-5 max-w-lg text-base leading-8 privacy-copy">
               นักเรียนเห็นข้อมูลของตัวเอง ครูเห็นเฉพาะห้องที่สอน และผู้ดูแลดู
-              audit ได้โดยไม่แก้ข้อมูลแทนครู ทุกไฟล์เข้าถึงผ่านลิงก์ที่มีอายุ
-              และทุกการแก้ไขถูกบันทึกไว้เสมอ
+              บันทึกการใช้งานได้โดยไม่แก้ข้อมูลแทนครู
+              ทุกไฟล์เข้าถึงผ่านลิงก์ที่มีอายุ และทุกการแก้ไขถูกบันทึกไว้เสมอ
             </p>
 
             <div className="mt-8 flex flex-wrap gap-2.5">

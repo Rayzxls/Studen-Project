@@ -190,8 +190,8 @@ export function LessonWorkspacePrototype({
           <Segmented
             value={role}
             options={[
-              { value: "teacher", label: "มุมครู" },
-              { value: "student", label: "มุมนักเรียน" },
+              { value: "teacher", label: "มุมมองครู" },
+              { value: "student", label: "มุมมองนักเรียน" },
             ]}
             onChange={(value) => {
               setRole(value);
@@ -342,7 +342,7 @@ function SplitWorkspace({
   return (
     <div className="space-y-2">
       <p className="text-xs font-medium text-ink-mute">
-        มุมครู · เลือกหัวข้อทางซ้าย แล้วจัดการเนื้อหาในพื้นที่เดียว
+        มุมมองครู · เลือกหัวข้อทางซ้าย แล้วจัดการเนื้อหาในพื้นที่เดียว
       </p>
       <div className="grid overflow-hidden rounded-lg border border-hairline bg-surface shadow-sm md:grid-cols-[260px_minmax(0,1fr)]">
         <aside className="border-b border-hairline bg-bg/60 p-3 md:border-b-0 md:border-r">

@@ -62,7 +62,7 @@ export function DeleteMaterialDialog({
 
           <h3 className="text-lg font-medium text-black">ลบเอกสาร?</h3>
           <p className="mt-1 text-xs text-black/60">
-            เอกสารจะถูกซ่อนจากนักเรียน · audit ระดับสำคัญ
+            เอกสารจะถูกซ่อนจากนักเรียน · บันทึกไว้ตรวจสอบย้อนหลัง
           </p>
 
           <div className="mt-4">

@@ -188,7 +188,7 @@ export default async function AttendanceListPage({ params }: PageProps) {
                       <p className="truncate text-sm font-medium text-black">
                         {formatSessionHeader(s.scheduledStart, s.scheduledEnd)}
                         {s.cancelledAt && (
-                          <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] text-red-700">
+                          <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] text-red-700">
                             <Ban className="h-3 w-3" />
                             ยกเลิก
                           </span>

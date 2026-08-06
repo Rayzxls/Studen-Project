@@ -88,7 +88,7 @@ export default async function AdminQuizDetailPage({ params }: PageProps) {
           <div>
             <h3 className="font-semibold text-ink">วิเคราะห์รายข้อ</h3>
             <p className="mt-1 text-sm text-ink-mute">
-              แสดงเฉพาะจำนวนและอัตราตอบถูกจาก attempt ที่ดีที่สุด
+              แสดงเฉพาะจำนวนและอัตราตอบถูกจากครั้งที่ทำได้ดีที่สุด
             </p>
           </div>
           <p className="text-sm text-ink-soft">

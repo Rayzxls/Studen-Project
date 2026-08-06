@@ -63,7 +63,7 @@ export function TeacherLessonWorkspace({
     <section className="space-y-5 pb-16">
       {notice && (
         <p
-          className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800"
+          className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700"
           role="status"
         >
           {notice}
@@ -112,7 +112,7 @@ export function TeacherLessonWorkspace({
           transition={{ duration: reduceMotion ? 0 : 0.22 }}
         >
           <p className="text-xs font-medium text-ink-mute">
-            มุมครู · เลือกหัวข้อทางซ้าย แล้วเปิดพื้นที่เพื่อจัดการรายละเอียด
+            มุมมองครู · เลือกหัวข้อทางซ้าย แล้วเปิดพื้นที่เพื่อจัดการรายละเอียด
           </p>
           <div className="grid overflow-hidden rounded-lg border border-hairline bg-surface shadow-card md:grid-cols-[270px_minmax(0,1fr)]">
             <aside className="border-b border-hairline bg-bg/60 p-3 md:border-b-0 md:border-r">
@@ -143,7 +143,7 @@ export function TeacherLessonWorkspace({
                         </span>
                         <span className="mt-1 block text-xs opacity-70">
                           {lesson.materialCount} เอกสาร ·{" "}
-                          {lesson.assignmentCount} งาน
+                          {lesson.assignmentCount} การบ้าน
                         </span>
                       </span>
                     </button>
@@ -277,7 +277,7 @@ export function TeacherLessonWorkspace({
                     </span>
                     <span className="mt-0.5 block text-xs text-ink-mute">
                       {lesson.materialCount} เอกสาร · {lesson.assignmentCount}{" "}
-                      งาน
+                      การบ้าน
                     </span>
                   </span>
                   <ArrowRight className="h-4 w-4 shrink-0 text-ink-mute" />

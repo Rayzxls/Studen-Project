@@ -57,7 +57,7 @@ export function DeleteAnnouncementDialog({
 
           <h3 className="text-lg font-medium text-black">ลบประกาศ?</h3>
           <p className="mt-1 text-xs text-black/60">
-            ประกาศจะถูกซ่อนจากนักเรียน · audit ระดับสำคัญ
+            ประกาศจะถูกซ่อนจากนักเรียน · บันทึกไว้ตรวจสอบย้อนหลัง
           </p>
 
           <div className="mt-4">
