@@ -192,7 +192,8 @@ export function AttendanceGrid({
           <div>
             <p className="font-medium">คาบนี้ผ่านมาเกิน 24 ชั่วโมงแล้ว</p>
             <p className="mt-0.5">
-              การแก้ไขสถานะใด ๆ จะถูกบันทึก audit พร้อมเหตุผลที่ระบุด้านล่าง
+              การแก้ไขสถานะใด ๆ จะถูกบันทึกไว้ตรวจสอบย้อนหลัง
+              พร้อมเหตุผลที่ระบุด้านล่าง
             </p>
           </div>
         </div>
@@ -267,7 +268,7 @@ export function AttendanceGrid({
             >
               {reasonLen > 0 && reasonLen < REASON_MIN
                 ? `ขั้นต่ำ ${REASON_MIN} ตัวอักษร`
-                : `${REASON_MIN}–${REASON_MAX} ตัวอักษร · จะบันทึก audit`}
+                : `${REASON_MIN}–${REASON_MAX} ตัวอักษร · บันทึกไว้ตรวจสอบย้อนหลัง`}
             </span>
             <span
               className={
@@ -302,7 +303,7 @@ export function AttendanceGrid({
       {state.ok && (
         <p className="mt-3 rounded-xl bg-green-50 px-3 py-2 text-xs text-green-700">
           บันทึกแล้ว ({state.marked} คน
-          {state.audited ? " · บันทึก audit" : ""})
+          {state.audited ? " · บันทึกไว้ตรวจสอบย้อนหลัง" : ""})
         </p>
       )}
 

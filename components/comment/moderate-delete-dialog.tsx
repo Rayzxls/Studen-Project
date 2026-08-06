@@ -56,7 +56,7 @@ export function ModerateDeleteCommentDialog({
             ลบความคิดเห็น (โดยผู้ดูแล)
           </h3>
           <p className="mt-1 text-xs text-black/60">
-            ความคิดเห็นจะถูกซ่อน · บันทึก audit ระดับสำคัญ
+            ความคิดเห็นจะถูกซ่อน · บันทึกไว้ตรวจสอบย้อนหลัง
           </p>
           <div className="mt-3">
             <label className="block text-xs font-medium text-black/70">

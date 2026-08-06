@@ -101,7 +101,7 @@ export default async function TeacherArchivedCoursesPage() {
                         </dd>
                       </div>
                       <div className="flex items-baseline gap-1.5">
-                        <dt className="text-ink-mute">งาน</dt>
+                        <dt className="text-ink-mute">การบ้าน</dt>
                         <dd className="font-medium text-ink">
                           {course._count.assignments}
                         </dd>

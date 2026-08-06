@@ -40,7 +40,7 @@ export default async function StudentQuizzesPage({ params }: PageProps) {
     >
       <div className="space-y-6 pb-10">
         <header>
-          <p className="text-sm font-medium text-blue-700">ศูนย์แบบทดสอบ</p>
+          <p className="text-sm font-medium text-blue-700">แบบทดสอบในวิชานี้</p>
           <h1 className="mt-1 text-3xl font-semibold text-ink">
             แบบทดสอบของฉัน
           </h1>

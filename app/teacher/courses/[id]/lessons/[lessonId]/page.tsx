@@ -122,7 +122,7 @@ export default async function TeacherLessonDetailPage({
                 {lesson.position + 1}
                 {lesson.state === "ARCHIVED" && (
                   <span className="rounded-full bg-black/[0.06] px-2 py-0.5 text-xs text-ink-mute">
-                    เก็บในคลังแล้ว
+                    เก็บถาวรแล้ว
                   </span>
                 )}
               </div>
@@ -388,7 +388,7 @@ export default async function TeacherLessonDetailPage({
                     maxLength={500}
                     rows={3}
                     className="input"
-                    placeholder="เหตุผลสำหรับ Audit Log"
+                    placeholder="เหตุผล — บันทึกไว้ตรวจสอบย้อนหลัง"
                   />
                   <button type="submit" className="btn-secondary btn-sm w-full">
                     <Archive className="h-4 w-4" /> เก็บบทเรียน
@@ -412,7 +412,7 @@ export default async function TeacherLessonDetailPage({
                     maxLength={500}
                     rows={3}
                     className="input"
-                    placeholder="เหตุผลสำหรับ Audit Log"
+                    placeholder="เหตุผล — บันทึกไว้ตรวจสอบย้อนหลัง"
                   />
                   <button type="submit" className="btn-danger btn-sm w-full">
                     ยืนยันการลบ

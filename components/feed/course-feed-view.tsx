@@ -529,7 +529,7 @@ function EmptyState({ filter }: { filter: CourseFeedFilter }) {
       />
       <p>{label}</p>
       <p className="mt-1 text-xs text-black/30">
-        น้องบีเกิ้ลเฝ้าฟีดอยู่ — มีอะไรใหม่จะเห็นที่นี่ก่อนใคร
+        เมื่อครูโพสต์ รายการใหม่จะขึ้นที่นี่
       </p>
     </div>
   );

@@ -41,7 +41,7 @@ const ROLE_OPTIONS: Array<{
     id: "admin",
     label: "ผู้ดูแล",
     title: "Admin Observer",
-    caption: "ตรวจภาพรวมและ audit แบบ read-only",
+    caption: "ตรวจภาพรวมและบันทึกการตรวจสอบ แบบดูอย่างเดียว",
     icon: <UserCog className="h-4 w-4" />,
   },
 ];
@@ -111,7 +111,7 @@ const VISIBILITY_ROWS: Record<
       note: "สำหรับตรวจสอบระบบ",
     },
     {
-      label: "Audit log การแก้คะแนนและไฟล์",
+      label: "บันทึกการแก้คะแนนและไฟล์",
       allowed: true,
       note: "บันทึกย้อนหลัง",
     },
@@ -136,7 +136,7 @@ const VISIBILITY_ROWS: Record<
 const TRUST_POINTS = [
   {
     icon: <ScrollText className="h-3.5 w-3.5" />,
-    label: "Audit log ทุกการแก้ไข",
+    label: "บันทึกทุกการแก้ไข",
   },
   {
     icon: <FileLock2 className="h-3.5 w-3.5" />,
@@ -185,8 +185,8 @@ export function PrivacyShowcase() {
 
             <p className="mt-5 max-w-lg text-base leading-8 privacy-copy">
               นักเรียนเห็นข้อมูลของตัวเอง ครูเห็นเฉพาะห้องที่สอน และผู้ดูแลดู
-              audit ได้โดยไม่แก้ข้อมูลแทนครู ทุกไฟล์เข้าถึงผ่านลิงก์ที่มีอายุ
-              และทุกการแก้ไขถูกบันทึกไว้เสมอ
+              บันทึกการใช้งานได้โดยไม่แก้ข้อมูลแทนครู
+              ทุกไฟล์เข้าถึงผ่านลิงก์ที่มีอายุ และทุกการแก้ไขถูกบันทึกไว้เสมอ
             </p>
 
             <div className="mt-8 flex flex-wrap gap-2.5">

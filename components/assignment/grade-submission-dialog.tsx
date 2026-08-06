@@ -135,7 +135,7 @@ export function GradeSubmissionDialog({
                       maxLength={500}
                       required
                       className="input mt-1"
-                      placeholder="≥ 5 ตัวอักษร · จะถูกบันทึก audit"
+                      placeholder="อย่างน้อย 5 ตัวอักษร · บันทึกไว้ตรวจสอบย้อนหลัง"
                     />
                     {state.fieldErrors?.reason && (
                       <p className="mt-1 text-xs text-red-700">

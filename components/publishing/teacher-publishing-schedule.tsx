@@ -45,7 +45,7 @@ export function TeacherPublishingScheduleView({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-blue-700">
-              ศูนย์เผยแพร่
+              โพสต์ที่ตั้งเวลาไว้
             </p>
             <h2 className="mt-1 text-2xl font-semibold text-ink">
               กำหนดการโพสต์

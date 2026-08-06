@@ -6,9 +6,9 @@ import { quizEnabled } from "@/lib/quiz";
  * Student CourseOffering tab list — Phase 10C reshape per ADR-0025.
  *
  * Feed remains the default landing, but assignment submission is a primary
- * student workflow, so "งาน" stays in the tab bar for direct access.
+ * student workflow, so "การบ้าน" stays in the tab bar for direct access.
  *
- * Detail routes (assignments/[assignmentId]) inherit the active "งาน" tab
+ * Detail routes (assignments/[assignmentId]) inherit the active "การบ้าน" tab
  * via prefix matching in TabNav. `icon` is a serializable key (not the
  * component) so this server-built list crosses the RSC boundary safely.
  */
@@ -33,7 +33,7 @@ export const studentCourseTabs = (courseId: string): CourseTab[] => [
       ]
     : []),
   {
-    label: "งาน",
+    label: "การบ้าน",
     href: `/student/courses/${courseId}/assignments`,
     icon: "assignments",
   },

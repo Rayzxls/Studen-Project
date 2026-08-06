@@ -932,7 +932,7 @@ function StudentPreview({
               {data.title || "แบบทดสอบไม่มีชื่อ"}
             </h2>
             <p className="mt-1 text-sm text-ink-mute">
-              {data.lessonTitle} · ตัวอย่างนี้ไม่สร้าง Attempt
+              {data.lessonTitle} · ตัวอย่างนี้ไม่บันทึกผลการทำข้อสอบ
             </p>
           </div>
           <div className="flex items-center gap-2">
