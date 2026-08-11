@@ -64,7 +64,7 @@ System design ของระบบ Beagle Classroom
 | Framework | **Next.js 16** (App Router) | SSR + RSC + Server Actions/API routes ในที่เดียว |
 | Language | **TypeScript** (strict) | data model ซับซ้อน, ต้อง type-safe |
 | Styling | **Tailwind CSS v4** + semantic CSS tokens | รองรับ System/Light/Dark/Cream โดยไม่ hardcode สีต่อหน้า |
-| Font | **Anuphan** (`next/font/google`) | Thai + Latin family เดียวตาม Calm Ledger |
+| Font | **Anuphan** (self-hosted `public/fonts/`) | Thai + Latin family เดียวตาม Calm Ledger · `@font-face` อยู่ใน `globals.css` · build ไม่ต่อเน็ต |
 | Design system | **Calm Ledger v2** | ADR-0014 + ADR-0028 + ADR-0029 |
 | Component primitives | **shadcn/ui** (where compatible) | accessibility baseline |
 | Icons | **lucide-react** | unified icon set |
@@ -644,7 +644,8 @@ prisma/
 ### Source of truth
 
 - `app/globals.css` — semantic theme tokens, shared component classes, motion tokens และ print styles
-- `app/layout.tsx` — Anuphan ผ่าน `--font-anuphan`
+- `app/globals.css` — `@font-face` ของ Anuphan (variable, thai + latin) และ `--font-anuphan`
+- `app/layout.tsx` — preload ไฟล์ฟอนต์ทั้งสอง
 - `DESIGN.md` — component/material/motion guidance
 - `lib/theme/course-color.ts` — course identity palette 8 slots
 
