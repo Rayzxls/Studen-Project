@@ -481,6 +481,8 @@ Edit เสรี (Verbose, ไม่ log) · soft-delete = audit `MATERIAL_DELE
 ## Chat (Release F design contract — ยังไม่ implement)
 
 ภาษาส่วนนี้เป็นสัญญาการออกแบบที่ตกลงกันไว้ ยังไม่มีโค้ด schema หรือ route ใดรองรับ
+เหตุผลเบื้องหลังอยู่ใน [ADR-0050](./docs/adr/0050-chat-lives-inside-the-classroom.md)
+ส่วนเรื่อง push ที่มีเนื้อหาอยู่ใน [ADR-0049](./docs/adr/0049-push-may-carry-a-message-and-only-a-message.md)
 
 ### Channel (ห้องคุยในวิชา)
 ห้องข้อความถาวรที่อยู่ใต้ CourseOffering หนึ่ง ครูสร้างได้หลายห้องต่อวิชา

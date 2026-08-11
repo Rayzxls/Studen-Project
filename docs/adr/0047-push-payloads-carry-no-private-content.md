@@ -1,5 +1,11 @@
 # Push payloads carry no private content
 
+> **Amended by [ADR-0049](./0049-push-may-carry-a-message-and-only-a-message.md)
+> — 2026-08-06.** A push for a conversation message (Direct Message or course
+> Channel) may name the sender and show the body. Everything below still governs
+> every other kind of push: no score, no mark, no grade, no teacher comment, no
+> submission content.
+
 Beagle Classroom sends Web Push so a student learns there is work without
 having to open the app. Notifications that only exist inside the app are seen
 by the students who were already looking, which is not the ones who needed
