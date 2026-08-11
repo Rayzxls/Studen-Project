@@ -144,7 +144,7 @@ describe("who may join, and what they get", () => {
     await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
     await db.enrollment.updateMany({
       where: {
-        studentId: ctx.studentUserId,
+        studentId: ctx.studentUserId, // dependency-gate-allow(student-id-symbol-review): internal Enrollment foreign key to User.id
         courseOfferingId: ctx.courseOfferingId,
       },
       data: { removedAt: new Date() },
@@ -294,5 +294,82 @@ describe("the reminder that a room is still open", () => {
     await expect(
       openRoomsForTeacher({ teacherUserId: ctx.teacherUserId })
     ).resolves.toHaveLength(0);
+  });
+});
+
+describe("telling the class the room is open", () => {
+  it("notifies every active member once, and not the teacher", async () => {
+    const sessionId = await withLink();
+    await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
+    await openRoom({ sessionId, actorUserId: ctx.teacherUserId });
+
+    const rows = await db.notification.findMany({
+      where: { kind: "MEETING_ROOM_OPENED", sourceEntityId: sessionId },
+      select: { recipientId: true, courseOfferingId: true, payloadJson: true },
+    });
+
+    expect(rows.map((r) => r.recipientId)).toEqual([ctx.studentUserId]);
+    expect(rows[0]?.courseOfferingId).toBe(ctx.courseOfferingId);
+  });
+
+  it("carries no meeting link in the payload", async () => {
+    // A bell row is read over a shoulder as readily as a lock screen, and the
+    // link is the room. ADR-0047 allows the course name and the kind of event.
+    const sessionId = await withLink();
+    await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
+    await openRoom({ sessionId, actorUserId: ctx.teacherUserId });
+
+    const row = await db.notification.findFirstOrThrow({
+      where: { kind: "MEETING_ROOM_OPENED", sourceEntityId: sessionId },
+      select: { payloadJson: true },
+    });
+    expect(JSON.stringify(row.payloadJson)).not.toContain("meet.google.com");
+    expect(JSON.stringify(row.payloadJson)).not.toContain("meetingUrl");
+  });
+
+  it("does not tell the class twice when the teacher double-clicks", async () => {
+    const sessionId = await withLink();
+    await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
+    await openRoom({ sessionId, actorUserId: ctx.teacherUserId });
+    await openRoom({ sessionId, actorUserId: ctx.teacherUserId });
+
+    await expect(
+      db.notification.count({
+        where: { kind: "MEETING_ROOM_OPENED", sourceEntityId: sessionId },
+      })
+    ).resolves.toBe(1);
+  });
+
+  it("tells them again when a room is genuinely reopened after closing", async () => {
+    const sessionId = await withLink();
+    await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
+    await openRoom({ sessionId, actorUserId: ctx.teacherUserId });
+    await closeRoom({ sessionId, actorUserId: ctx.teacherUserId });
+    await openRoom({ sessionId, actorUserId: ctx.teacherUserId });
+
+    await expect(
+      db.notification.count({
+        where: { kind: "MEETING_ROOM_OPENED", sourceEntityId: sessionId },
+      })
+    ).resolves.toBe(2);
+  });
+
+  it("does not notify a student who was removed from the course", async () => {
+    const sessionId = await withLink();
+    await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
+    await db.enrollment.updateMany({
+      where: {
+        studentId: ctx.studentUserId, // dependency-gate-allow(student-id-symbol-review): internal Enrollment foreign key to User.id
+        courseOfferingId: ctx.courseOfferingId,
+      },
+      data: { removedAt: new Date() },
+    });
+    await openRoom({ sessionId, actorUserId: ctx.teacherUserId });
+
+    await expect(
+      db.notification.count({
+        where: { kind: "MEETING_ROOM_OPENED", sourceEntityId: sessionId },
+      })
+    ).resolves.toBe(0);
   });
 });

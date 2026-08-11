@@ -2,6 +2,8 @@ import { db } from "@/lib/db/client";
 import { Forbidden, NotFound, ValidationError } from "@/lib/errors";
 import { derivePresenceState, presentInRoom } from "@/lib/meeting/presence";
 import { resolveMeetingLink } from "@/lib/meeting/resolve";
+import { fanOutBroadcast } from "@/lib/notification";
+import { sendCoursePush } from "@/lib/notification/push";
 
 /**
  * Opening, closing and occupying the live online room (ADR-0053).
@@ -63,18 +65,44 @@ export async function openRoom(params: {
     });
   }
 
+  // Already open: say when, and tell nobody. A second click is a slip, and a
+  // class does not need telling twice about the same room.
   if (session.roomOpenedAt !== null && session.roomClosedAt === null) {
     return { sessionId: session.id, openedAt: session.roomOpenedAt };
   }
 
-  const updated = await db.session.update({
-    where: { id: session.id },
-    // Reopening clears the previous close, so the pair always describes the
-    // current interval rather than a mix of two.
-    data: { roomOpenedAt: now, roomClosedAt: null },
-    select: { id: true, roomOpenedAt: true },
+  const opened = await db.$transaction(async (tx) => {
+    const updated = await tx.session.update({
+      where: { id: session.id },
+      // Reopening clears the previous close, so the pair always describes the
+      // current interval rather than a mix of two.
+      data: { roomOpenedAt: now, roomClosedAt: null },
+      select: { id: true, roomOpenedAt: true },
+    });
+
+    await fanOutBroadcast(tx, {
+      kind: "MEETING_ROOM_OPENED",
+      sourceEntityType: "SESSION",
+      sourceEntityId: updated.id,
+      courseOfferingId: session.course.id,
+      // No meetingUrl in the payload. The bell is read over a shoulder as
+      // readily as a lock screen, and the link is the room itself.
+      payload: { courseId: session.course.id, courseName: session.course.name },
+    });
+
+    return updated;
   });
-  return { sessionId: updated.id, openedAt: updated.roomOpenedAt ?? now };
+
+  // Third-party delivery stays outside the transaction, matching Materials and
+  // Assignments: a push that fails must not roll back an opened room.
+  await sendCoursePush(session.course.id, {
+    title: session.course.name,
+    body: "ครูเปิดห้องเรียนออนไลน์แล้ว",
+    url: `/student/courses/${session.course.id}`,
+    tag: `meeting-room:${opened.id}`,
+  });
+
+  return { sessionId: opened.id, openedAt: opened.roomOpenedAt ?? now };
 }
 
 /**
@@ -309,6 +337,7 @@ async function loadSessionForTeacher(sessionId: string, actorUserId: string) {
       course: {
         select: {
           id: true,
+          name: true,
           teacherId: true,
           meetingUrl: true,
           archivedAt: true,
@@ -338,6 +367,7 @@ async function loadSessionForMember(sessionId: string, actorUserId: string) {
       course: {
         select: {
           id: true,
+          name: true,
           teacherId: true,
           meetingUrl: true,
           archivedAt: true,
@@ -365,7 +395,7 @@ async function requireActiveEnrolment(
 ): Promise<void> {
   const enrolment = await db.enrollment.findUnique({
     where: {
-      studentId_courseOfferingId: { studentId: userId, courseOfferingId },
+      studentId_courseOfferingId: { studentId: userId, courseOfferingId }, // dependency-gate-allow(student-id-symbol-review): internal Enrollment foreign key to User.id; the compound unique key is spelled this way
     },
     select: { removedAt: true },
   });
