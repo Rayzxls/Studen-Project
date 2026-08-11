@@ -46,7 +46,7 @@ export function PresenceRail({
                 (person.state === "ACTIVE" ? "text-ink" : "text-ink-mute")
               }
             >
-              {displayName(person)}
+              {fullName(person)}
               {person.isTeacher ? (
                 <span className="ml-1.5 text-xs text-ink-mute">ครู</span>
               ) : null}
@@ -59,7 +59,7 @@ export function PresenceRail({
 }
 
 function PresenceAvatar({ person }: { person: RoomParticipant }) {
-  const label = `${displayName(person)} — ${presenceLabel(person.state)}`;
+  const label = `${fullName(person)} — ${presenceLabel(person.state)}`;
 
   return (
     <span className="relative shrink-0" title={label}>
@@ -101,7 +101,7 @@ function PresenceBadge({ state }: { state: ShownState }) {
   );
 }
 
-function displayName(person: RoomParticipant): string {
+function fullName(person: RoomParticipant): string {
   const name = [person.firstName, person.lastName]
     .filter((part): part is string => Boolean(part && part.trim()))
     .join(" ")
