@@ -140,7 +140,7 @@ export function FloatingCards() {
       {/* Feed post — bottom-left, mid */}
       <FloatCard depth={50} className="bottom-[12%] left-[6%]">
         <div className="flex items-center gap-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-100 text-[10px] font-semibold text-blue-700">
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-50 text-[10px] font-semibold text-blue-700">
             สใ
           </span>
           <div>

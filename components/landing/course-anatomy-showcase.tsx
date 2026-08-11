@@ -39,7 +39,7 @@ const CALLOUTS: Array<{
   {
     id: "feed",
     title: "ฟีดห้องเรียน",
-    body: "ประกาศ เอกสาร และโพสต์จากครูอยู่ในจังหวะเดียว",
+    body: "ประกาศ เอกสาร และโพสต์จากครูอยู่ในที่เดียวกัน",
     icon: <Megaphone className="h-4 w-4" />,
     tab: "ฟีด",
     position: "left-top",
@@ -49,7 +49,7 @@ const CALLOUTS: Array<{
     title: "งานและการส่ง",
     body: "ส่งงาน แก้ไขงาน และตรวจงานต่อจากหน้าเดียวกัน",
     icon: <ClipboardCheck className="h-4 w-4" />,
-    tab: "งาน",
+    tab: "การบ้าน",
     position: "left-mid",
   },
   {
@@ -85,7 +85,7 @@ const CALLOUTS: Array<{
   },
 ];
 
-const TABS = ["ฟีด", "งาน", "สมาชิก", "เช็คชื่อ", "คะแนน", "ภาพรวม"];
+const TABS = ["ฟีด", "การบ้าน", "สมาชิก", "เช็คชื่อ", "คะแนน", "ภาพรวม"];
 
 export function CourseAnatomyShowcase() {
   const [active, setActive] = useState<AnatomyKey>("feed");
@@ -274,7 +274,7 @@ function CourseMockup({
           </div>
           <div className="grid max-w-xs grid-cols-3 overflow-hidden rounded-2xl border">
             <Metric label="นักเรียน" value="32" />
-            <Metric label="งาน" value="6" />
+            <Metric label="การบ้าน" value="6" />
             <Metric label="เข้าเรียน" value="92%" />
           </div>
         </div>

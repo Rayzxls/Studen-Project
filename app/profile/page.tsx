@@ -265,7 +265,7 @@ export default async function ProfilePage({
             </h2>
             {offerFallbackSetup ? (
               <>
-                <div className="mt-4 flex gap-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-orange-900">
+                <div className="mt-4 flex gap-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-orange-700">
                   <TriangleAlert
                     className="mt-0.5 h-5 w-5 shrink-0 text-orange-600"
                     aria-hidden="true"
@@ -274,7 +274,7 @@ export default async function ProfilePage({
                     <p className="text-sm font-semibold">
                       เพิ่มช่องทางสำรองสำหรับบัญชี
                     </p>
-                    <p className="mt-1 text-xs leading-relaxed text-orange-800">
+                    <p className="mt-1 text-xs leading-relaxed text-orange-700">
                       บัญชีนี้เข้าสู่ระบบด้วย Google และยังไม่มีรหัสผ่านสำรอง
                       ระบบกู้บัญชีพร้อมใช้งานแล้ว
                       แต่จะส่งลิงก์กู้รหัสผ่านให้บัญชีที่ตั้งรหัสผ่านสำรองไว้เท่านั้น

@@ -79,7 +79,7 @@ export function StudentQuizAttempt({
     const score = result?.score ?? initial.finalScore ?? initial.autoScore ?? 0;
     return (
       <section className="mx-auto max-w-3xl py-12 text-center">
-        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-green-700">
+        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-50 text-green-700">
           <CheckCircle2 className="h-7 w-7" />
         </span>
         <p className="mt-5 text-sm font-medium text-green-700">ส่งคำตอบแล้ว</p>
@@ -283,7 +283,7 @@ export function StudentQuizAttempt({
                   key={option.id}
                   className={`rounded-lg border transition-colors ${
                     selected
-                      ? "border-blue-500 bg-blue-50 text-blue-900"
+                      ? "border-blue-500 bg-blue-50 text-blue-700"
                       : "border-hairline bg-surface text-ink"
                   }`}
                 >

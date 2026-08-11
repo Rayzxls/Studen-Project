@@ -134,7 +134,7 @@ function kindDecor(kind: FeedItem["kind"]) {
   }
   if (kind === "ASSIGNMENT") {
     return {
-      label: "งาน",
+      label: "การบ้าน",
       fallback: "งานไม่มีหัวข้อ",
       icon: <ClipboardList className="h-3.5 w-3.5" />,
       chip: "inline-flex shrink-0 items-center gap-1 rounded-full bg-orange-50 px-2.5 py-1 text-[11px] font-medium text-orange-700",

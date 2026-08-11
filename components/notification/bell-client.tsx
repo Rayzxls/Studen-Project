@@ -219,7 +219,7 @@ export function BellClient({
                           </span>
                         </span>
                       </span>
-                      <span className="ml-1 inline-flex shrink-0 self-center items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-[10px] font-medium text-blue-700 transition-colors group-hover:bg-blue-100">
+                      <span className="ml-1 inline-flex shrink-0 self-center items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-[10px] font-medium text-blue-700 transition-colors group-hover:bg-blue-50">
                         {item.destinationLabel}
                         <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
                       </span>

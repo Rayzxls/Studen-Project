@@ -100,9 +100,17 @@ System design ของระบบ Beagle Classroom
 
 ## 3. Data Model
 
-ดู [CONTEXT.md](./CONTEXT.md) สำหรับคำนิยาม — ตรงนี้คือ schema
+> **🔴 ส่วนนี้เป็นบันทึกประวัติ ไม่ใช่ schema ปัจจุบัน**
+> สแนปช็อตข้างล่างถูกพิมพ์ตามมือและไม่ได้อัปเดตตามโค้ดมานาน — ยังมี `mustResetPwd`
+> ที่ถูกถอดออกไปแล้ว และยังเขียนว่า `identifier` เป็น student number ทั้งที่ ADR-0039
+> เลิกใช้ไปแล้ว
+>
+> **โครงสร้างปัจจุบัน แผนภาพความสัมพันธ์ และวิธีเปิดดูฐานข้อมูล อยู่ที่
+> [docs/DATA-MODEL.md](./docs/DATA-MODEL.md)** ซึ่งสร้างจาก
+> [`prisma/schema.prisma`](./prisma/schema.prisma) โดยตรง
+> คำนิยามของแต่ละคำอยู่ที่ [CONTEXT.md](./CONTEXT.md)
 
-### Core entities
+### Core entities (ประวัติ — ดู DATA-MODEL.md แทน)
 
 ```prisma
 // ───── Identity ─────

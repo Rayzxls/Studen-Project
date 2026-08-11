@@ -96,7 +96,7 @@ export function CancelSessionDialog({ courseId, sessionId }: Props) {
           </div>
 
           <div className="rounded-xl bg-black/[0.04] p-3 text-xs text-black/70">
-            จะบันทึก audit event{" "}
+            จะบันทึกไว้ตรวจสอบย้อนหลัง{" "}
             <code className="rounded bg-white px-1 py-0.5 font-mono text-[11px]">
               SESSION_CANCELLED
             </code>{" "}

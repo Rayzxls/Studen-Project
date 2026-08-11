@@ -183,7 +183,7 @@ export function DashboardSectionHeading({
             <UsersRound className="h-5 w-5 text-blue-600" aria-hidden="true" />
           )}
           <h2 className="text-xl font-semibold text-ink">
-            {role === "student" ? "ห้องเรียนของฉัน" : "ศูนย์จัดการชั้นเรียน"}
+            {role === "student" ? "ห้องเรียนของฉัน" : "ชั้นเรียนที่สอน"}
           </h2>
           <span className="text-sm text-ink-mute">{count}</span>
         </div>

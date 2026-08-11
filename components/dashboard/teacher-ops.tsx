@@ -258,7 +258,7 @@ function AttendanceStatusBadge({ row }: { row: AttendanceTodayRow }) {
 export function ClassHealthBlock({ rows }: { rows: ClassHealthRow[] }) {
   return (
     <section className="card p-5">
-      <SectionHeader title="สุขภาพรายวิชา" />
+      <SectionHeader title="ภาพรวมรายวิชา" />
       {rows.length === 0 ? (
         <EmptyState
           icon={Gauge}

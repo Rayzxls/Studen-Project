@@ -63,8 +63,8 @@ export function ReturnSubmissionDialog({
             ส่งคืนงาน — {studentName}
           </h3>
           <p className="mt-0.5 text-xs text-black/50">
-            ข้อความนี้จะเป็น private comment ใต้ submission + บันทึก audit
-            (SUBMISSION_RETURNED · reason = comment ≥ 5 ตัวอักษร)
+            ข้อความนี้จะเป็นความคิดเห็นส่วนตัวใต้งานที่ส่ง — นักเรียนเห็นคนเดียว
+            · บันทึกไว้ตรวจสอบย้อนหลัง · อย่างน้อย 5 ตัวอักษร
           </p>
 
           <div className="mt-5">

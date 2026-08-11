@@ -529,7 +529,7 @@ function EmptyState({ filter }: { filter: CourseFeedFilter }) {
       />
       <p>{label}</p>
       <p className="mt-1 text-xs text-black/30">
-        น้องบีเกิ้ลเฝ้าฟีดอยู่ — มีอะไรใหม่จะเห็นที่นี่ก่อนใคร
+        เมื่อครูโพสต์ รายการใหม่จะขึ้นที่นี่
       </p>
     </div>
   );
@@ -554,7 +554,7 @@ function kindDecor(kind: FeedKind): KindDecor {
         icon: <Megaphone className="h-3 w-3" />,
         kindLabel: "ประกาศ",
         chip: "bg-orange-50 text-orange-700 ring-1 ring-orange-200/60",
-        avatarBg: "bg-orange-100",
+        avatarBg: "bg-orange-50",
         avatarText: "text-orange-700",
       };
     case "ASSIGNMENT":
@@ -562,7 +562,7 @@ function kindDecor(kind: FeedKind): KindDecor {
         icon: <ClipboardList className="h-3 w-3" />,
         kindLabel: "การบ้าน",
         chip: "bg-blue-50 text-blue-700 ring-1 ring-blue-200/60",
-        avatarBg: "bg-blue-100",
+        avatarBg: "bg-blue-50",
         avatarText: "text-blue-700",
       };
     case "MATERIAL":
@@ -570,7 +570,7 @@ function kindDecor(kind: FeedKind): KindDecor {
         icon: <FileText className="h-3 w-3" />,
         kindLabel: "เอกสาร",
         chip: "bg-green-50 text-green-700 ring-1 ring-green-200/60",
-        avatarBg: "bg-green-100",
+        avatarBg: "bg-green-50",
         avatarText: "text-green-700",
       };
     case "SCORE_PUBLISHED":
@@ -578,7 +578,7 @@ function kindDecor(kind: FeedKind): KindDecor {
         icon: <Sparkles className="h-3 w-3" />,
         kindLabel: "คะแนนเผยแพร่",
         chip: "bg-blue-50 text-blue-700 ring-1 ring-blue-200/60",
-        avatarBg: "bg-blue-100",
+        avatarBg: "bg-blue-50",
         avatarText: "text-blue-700",
       };
   }

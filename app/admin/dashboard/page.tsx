@@ -67,7 +67,7 @@ export default async function AdminDashboardPage() {
                 key={a.key}
                 className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5"
               >
-                <span className="inline-flex items-center gap-2 text-sm text-red-900">
+                <span className="inline-flex items-center gap-2 text-sm text-red-700">
                   <AlertTriangle
                     className="h-4 w-4 shrink-0 text-red-500"
                     aria-hidden="true"

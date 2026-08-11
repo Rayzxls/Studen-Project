@@ -6,10 +6,10 @@ import { quizEnabled } from "@/lib/quiz";
  * Teacher CourseOffering tab list — Phase 10C reshape per ADR-0025.
  *
  * Feed remains the default landing, but assignments are a primary workflow
- * for teachers, so "งาน" stays in the tab bar for direct access to create,
+ * for teachers, so "การบ้าน" stays in the tab bar for direct access to create,
  * edit, delete, and grade assignment work.
  *
- * Detail routes (assignments/[aid]) inherit the active "งาน" tab via
+ * Detail routes (assignments/[aid]) inherit the active "การบ้าน" tab via
  * prefix matching in TabNav. `icon` is a serializable key (not the
  * component) so this server-built list crosses the RSC boundary safely.
  */
@@ -43,7 +43,7 @@ export const teacherCourseTabs = (
       ]
     : []),
   {
-    label: "งาน",
+    label: "การบ้าน",
     href: `/teacher/courses/${courseId}/assignments`,
     icon: "assignments",
   },

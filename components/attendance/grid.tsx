@@ -21,10 +21,10 @@ const STATUS_LABEL: Record<AttendanceStatus, string> = {
   ABSENT: "ขาด",
 };
 const STATUS_ACTIVE: Record<AttendanceStatus, string> = {
-  PRESENT: "bg-green-100 text-green-700 ring-1 ring-green-300",
-  LATE: "bg-orange-100 text-orange-700 ring-1 ring-orange-300",
-  EXCUSED: "bg-blue-100 text-blue-700 ring-1 ring-blue-300",
-  ABSENT: "bg-red-100 text-red-700 ring-1 ring-red-300",
+  PRESENT: "bg-green-50 text-green-700 ring-1 ring-green-300",
+  LATE: "bg-orange-50 text-orange-700 ring-1 ring-orange-300",
+  EXCUSED: "bg-blue-50 text-blue-700 ring-1 ring-blue-300",
+  ABSENT: "bg-red-50 text-red-700 ring-1 ring-red-300",
 };
 const REASON_MIN = 5;
 const REASON_MAX = 500;
@@ -192,7 +192,8 @@ export function AttendanceGrid({
           <div>
             <p className="font-medium">คาบนี้ผ่านมาเกิน 24 ชั่วโมงแล้ว</p>
             <p className="mt-0.5">
-              การแก้ไขสถานะใด ๆ จะถูกบันทึก audit พร้อมเหตุผลที่ระบุด้านล่าง
+              การแก้ไขสถานะใด ๆ จะถูกบันทึกไว้ตรวจสอบย้อนหลัง
+              พร้อมเหตุผลที่ระบุด้านล่าง
             </p>
           </div>
         </div>
@@ -267,7 +268,7 @@ export function AttendanceGrid({
             >
               {reasonLen > 0 && reasonLen < REASON_MIN
                 ? `ขั้นต่ำ ${REASON_MIN} ตัวอักษร`
-                : `${REASON_MIN}–${REASON_MAX} ตัวอักษร · จะบันทึก audit`}
+                : `${REASON_MIN}–${REASON_MAX} ตัวอักษร · บันทึกไว้ตรวจสอบย้อนหลัง`}
             </span>
             <span
               className={
@@ -302,7 +303,7 @@ export function AttendanceGrid({
       {state.ok && (
         <p className="mt-3 rounded-xl bg-green-50 px-3 py-2 text-xs text-green-700">
           บันทึกแล้ว ({state.marked} คน
-          {state.audited ? " · บันทึก audit" : ""})
+          {state.audited ? " · บันทึกไว้ตรวจสอบย้อนหลัง" : ""})
         </p>
       )}
 
@@ -377,7 +378,7 @@ function StudentCard({
           <p className="truncate text-sm font-medium text-black">
             {row.studentName}
             {row.removed && (
-              <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-[10px] text-red-700">
+              <span className="ml-2 rounded-full bg-red-50 px-2 py-0.5 text-[10px] text-red-700">
                 ถูกนำออกแล้ว
               </span>
             )}
@@ -425,7 +426,7 @@ function StudentRow({
         <p className="text-sm font-medium text-black">
           {row.studentName}
           {row.removed && (
-            <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-[10px] text-red-700">
+            <span className="ml-2 rounded-full bg-red-50 px-2 py-0.5 text-[10px] text-red-700">
               ถูกนำออกแล้ว
             </span>
           )}

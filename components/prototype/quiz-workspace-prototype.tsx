@@ -390,7 +390,7 @@ function AttemptView() {
                   key={option}
                   type="button"
                   onClick={() => setAnswers({ ...answers, 1: option })}
-                  className={`min-h-14 rounded-lg border px-4 text-left text-base font-medium transition-colors ${answers[1] === option ? "border-blue-500 bg-blue-50 text-blue-900" : "border-hairline text-ink hover:border-blue-300"}`}
+                  className={`min-h-14 rounded-lg border px-4 text-left text-base font-medium transition-colors ${answers[1] === option ? "border-blue-500 bg-blue-50 text-blue-700" : "border-hairline text-ink hover:border-blue-300"}`}
                 >
                   <span className="mr-3 inline-grid h-7 w-7 place-items-center rounded-full border border-current text-xs">
                     {String.fromCharCode(65 + options.indexOf(option))}

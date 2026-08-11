@@ -113,7 +113,7 @@ export function ReviewPanel({
                   minLength={5}
                   maxLength={500}
                   className="input mt-1"
-                  placeholder="≥ 5 ตัวอักษร · บันทึก audit"
+                  placeholder="อย่างน้อย 5 ตัวอักษร · บันทึกไว้ตรวจสอบย้อนหลัง"
                 />
                 {gradeState.fieldErrors?.reason && (
                   <p className="mt-1 text-xs text-red-700">

@@ -24,13 +24,13 @@ const KIND: Record<
     label: "ประกาศ",
     icon: Megaphone,
     chip: "bg-orange-50 text-orange-700 ring-1 ring-orange-200/60",
-    avatar: "bg-orange-100 text-orange-700",
+    avatar: "bg-orange-50 text-orange-700",
   },
   MATERIAL: {
     label: "เอกสาร",
     icon: FileText,
     chip: "bg-green-50 text-green-700 ring-1 ring-green-200/60",
-    avatar: "bg-green-100 text-green-700",
+    avatar: "bg-green-50 text-green-700",
   },
 };
 

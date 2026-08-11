@@ -51,7 +51,7 @@ export default function SignupPage() {
           )}
         </>
       ) : (
-        <div className="mt-6 rounded-xl bg-orange-50 px-3 py-3 text-sm text-orange-800">
+        <div className="mt-6 rounded-xl bg-orange-50 px-3 py-3 text-sm text-orange-700">
           การสมัครสมาชิกยังไม่เปิดใช้งาน กรุณาติดต่อผู้ดูแลระบบ
         </div>
       )}

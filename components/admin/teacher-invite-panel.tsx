@@ -248,7 +248,7 @@ function BulkInviteResult({
     <div className="mt-4 space-y-3">
       {result.issued.length > 0 && (
         <div>
-          <p className="text-sm font-medium text-green-800">
+          <p className="text-sm font-medium text-green-700">
             สร้างคำเชิญสำเร็จ {result.issued.length.toLocaleString("th-TH")}{" "}
             รายการ
           </p>
@@ -268,10 +268,10 @@ function BulkInviteResult({
       )}
       {result.failed.length > 0 && (
         <div className="rounded-xl border border-orange-200 bg-orange-50 p-4">
-          <p className="text-sm font-medium text-orange-900">
+          <p className="text-sm font-medium text-orange-700">
             ไม่ได้สร้าง {result.failed.length.toLocaleString("th-TH")} รายการ
           </p>
-          <ul className="mt-2 space-y-1 text-xs text-orange-800">
+          <ul className="mt-2 space-y-1 text-xs text-orange-700">
             {result.failed.map((failure) => (
               <li key={failure.email}>
                 {failure.email}: {failure.error}
@@ -320,7 +320,7 @@ function IssuedInvite({
     <div
       className={`${compact ? "" : "mt-4"} rounded-xl border border-green-200 bg-green-50 p-4`}
     >
-      <p className="text-sm font-medium text-green-800">
+      <p className="text-sm font-medium text-green-700">
         สร้างคำเชิญให้ {email} แล้ว
         {replaced > 0 && ` (แทนที่คำเชิญเดิม ${replaced} รายการ)`}
       </p>

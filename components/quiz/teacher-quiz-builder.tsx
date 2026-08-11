@@ -340,7 +340,7 @@ export function TeacherQuizBuilder({
       {notice && (
         <p
           role="status"
-          className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800"
+          className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700"
         >
           {notice}
         </p>
@@ -932,7 +932,7 @@ function StudentPreview({
               {data.title || "แบบทดสอบไม่มีชื่อ"}
             </h2>
             <p className="mt-1 text-sm text-ink-mute">
-              {data.lessonTitle} · ตัวอย่างนี้ไม่สร้าง Attempt
+              {data.lessonTitle} · ตัวอย่างนี้ไม่บันทึกผลการทำข้อสอบ
             </p>
           </div>
           <div className="flex items-center gap-2">

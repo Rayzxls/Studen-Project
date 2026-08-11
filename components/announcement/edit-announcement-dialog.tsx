@@ -60,7 +60,7 @@ export function EditAnnouncementDialog({
 
           <h3 className="text-lg font-medium text-black">แก้ไขประกาศ</h3>
           <p className="mt-0.5 text-xs text-black/50">
-            แก้เนื้อหาได้ตลอด · ไม่มี audit
+            แก้เนื้อหาได้ตลอด · ไม่บันทึกประวัติการแก้
           </p>
 
           <div className="mt-5 space-y-4">

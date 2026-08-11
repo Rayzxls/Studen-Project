@@ -115,7 +115,7 @@ export default async function TeacherCoursesPage() {
                   noticeTone={c.codeActive ? "success" : "muted"}
                   stats={[
                     { value: c._count.enrollments, label: "นักเรียน" },
-                    { value: c._count.assignments, label: "งาน" },
+                    { value: c._count.assignments, label: "การบ้าน" },
                     { value: c.codeActive ? "เปิด" : "ปิด", label: "รับเข้า" },
                   ]}
                   actionLabel="ดูข้อมูล"

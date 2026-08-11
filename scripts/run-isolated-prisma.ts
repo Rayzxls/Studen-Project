@@ -2,11 +2,11 @@ import { spawn } from "node:child_process";
 import { resolve } from "node:path";
 import { prepareIsolatedDatabaseEnv } from "../tests/helpers/database-safety";
 
-type Mode = "status" | "deploy";
+type Mode = "status" | "deploy" | "studio";
 
 const mode = process.argv[2] as Mode | undefined;
-if (mode !== "status" && mode !== "deploy") {
-  throw new Error("usage: run-isolated-prisma <status|deploy>");
+if (mode !== "status" && mode !== "deploy" && mode !== "studio") {
+  throw new Error("usage: run-isolated-prisma <status|deploy|studio>");
 }
 
 let isolatedEnv: NodeJS.ProcessEnv;
@@ -22,13 +22,18 @@ try {
   process.exit(1);
 }
 
+// Studio is a browser over the data, not a migration, so it takes no
+// `migrate` verb. It is offered here — pointed at the isolated QA database —
+// because the primary DATABASE_URL is Production, and Studio can edit every
+// row it shows.
+const args =
+  mode === "studio"
+    ? ["studio"]
+    : ["migrate", mode === "deploy" ? "deploy" : "status"];
+
 const child = spawn(
   process.execPath,
-  [
-    resolve("node_modules/prisma/build/index.js"),
-    "migrate",
-    mode === "deploy" ? "deploy" : "status",
-  ],
+  [resolve("node_modules/prisma/build/index.js"), ...args],
   {
     cwd: process.cwd(),
     env: isolatedEnv,

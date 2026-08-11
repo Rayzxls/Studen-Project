@@ -116,7 +116,8 @@ export default async function AdminLessonsPage({ params }: PageProps) {
                     {lesson.title}
                   </span>
                   <span className="mt-0.5 block text-xs text-ink-mute">
-                    {lesson.assignmentCount} งาน · {lesson.materialCount} เอกสาร
+                    {lesson.assignmentCount} การบ้าน · {lesson.materialCount}{" "}
+                    เอกสาร
                   </span>
                 </span>
                 <ArrowRight className="h-4 w-4 shrink-0 text-ink-mute" />
@@ -180,7 +181,7 @@ function LessonList({
               </div>
 
               <div className="mt-4 grid grid-cols-3 gap-2 border-t border-hairline pt-4 text-center">
-                <LessonMetric label="งาน" value={lesson.assignmentCount} />
+                <LessonMetric label="การบ้าน" value={lesson.assignmentCount} />
                 <LessonMetric label="เอกสาร" value={lesson.materialCount} />
                 <LessonMetric
                   label="รอตรวจ"
