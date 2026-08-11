@@ -114,13 +114,28 @@ show, to a room of children. Self-service sharing makes that a matter of luck.
 A grant the teacher makes and can revoke in one press does not prevent it, but
 it puts an adult on both ends of it.
 
-**A student on a phone cannot do this at all.** `getDisplayMedia` does not exist
-on iOS Safari and is barely usable on Android browsers, so screen sharing is a
-laptop capability in a product whose student surfaces are otherwise mobile-first.
-Presentations therefore cannot be assigned as though every student can give one.
-The mobile path for the same need is to put a file on the stage — the product
-already stores and permission-gates files — which is a different feature and not
-decided here.
+**A student on a phone cannot share a screen.** Capturing a screen on a phone is
+an operating-system privilege — ReplayKit on iOS, MediaProjection on Android —
+granted to native applications and not exposed to the browser. Discord's mobile
+apps have it because they are native apps; Discord opened in mobile Safari
+cannot share a screen either, which is the proof that this follows the platform
+rather than the vendor. Installing this product to a home screen does not change
+it, because a PWA is still the browser engine. Having it would mean shipping two
+native applications, which is a different product, not a feature.
+
+So screen sharing is a laptop capability in a product whose student surfaces are
+otherwise mobile-first, and presentations cannot be assigned as though every
+student can give one.
+
+**A phone can still share its camera.** `getUserMedia` works on iOS Safari; only
+screen capture is withheld. A student presenting work that exists on paper or as
+a physical object can point the phone at it, which for that kind of work is
+better than a screen share rather than a lesser substitute. Putting a file on
+the stage covers slides. Both are worth building before anyone considers a
+native app, and neither is decided here.
+
+Browser support moves. Re-check this before building the stage rather than
+trusting this paragraph.
 
 Until the stage exists, this requirement is already met: students can share their
 screens in Meet if the teacher allows it there.
@@ -156,6 +171,6 @@ hue.
 - The stage is a hole in the middle of the screen until someone decides to pay
   for bandwidth. The layout is designed so the hole is fillable, not so it is
   hidden.
-- Presenting is a laptop capability. A student with only a phone can join, watch,
-  chat and be counted present, but cannot take the stage, and no amount of work
-  on our side changes that while iOS Safari has no screen capture.
+- Sharing a screen is a laptop capability. A student with only a phone can join,
+  watch, chat, be counted present and show their camera, but cannot share their
+  screen, and nothing built here changes that without shipping native apps.
