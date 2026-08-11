@@ -6,6 +6,7 @@ import { db } from "@/lib/db/client";
 import { TopNav } from "@/components/layout/top-nav";
 import { StudentBottomNav } from "@/components/layout/student-bottom-nav";
 import { TimetableManager } from "@/components/timetable/timetable-manager";
+import { resolveMeetingLink } from "@/lib/meeting/resolve";
 import type { TimetableDisplaySlot } from "@/lib/timetable/view-model";
 import { courseLearnerGroup, courseVisualKey } from "@/lib/course/display";
 
@@ -27,6 +28,7 @@ export default async function TeacherTimetablePage() {
       name: true,
       subjectCode: true,
       learnerGroupLabel: true,
+      meetingUrl: true,
       timetableSlots: {
         select: {
           id: true,
@@ -34,6 +36,7 @@ export default async function TeacherTimetablePage() {
           startTime: true,
           endTime: true,
           location: true,
+          meetingUrl: true,
         },
       },
     },
@@ -47,6 +50,12 @@ export default async function TeacherTimetablePage() {
       subjectCode: course.subjectCode,
       className: courseLearnerGroup(course) ?? "",
       courseVisualKey: courseVisualKey(course),
+      slotMeetingUrl: slot.meetingUrl,
+      meetingUrl:
+        resolveMeetingLink({
+          slotMeetingUrl: slot.meetingUrl,
+          courseMeetingUrl: course.meetingUrl,
+        })?.url ?? null,
       href: `/teacher/courses/${course.id}/settings`,
     }))
   );

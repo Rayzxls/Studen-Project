@@ -9,6 +9,7 @@ import {
   setClassCodeExpiry,
 } from "@/lib/course/class-code";
 import { archiveCourseOffering } from "@/lib/course/archive";
+import { setCourseMeetingUrl } from "@/lib/meeting/meeting-link";
 import {
   createTimetableSlot,
   deleteTimetableSlot,
@@ -24,6 +25,12 @@ export type ClassCodeActionState = {
 };
 
 export type TimetableSlotActionState = {
+  fieldErrors?: Record<string, string>;
+  error?: string;
+  ok?: boolean;
+};
+
+export type MeetingUrlActionState = {
   fieldErrors?: Record<string, string>;
   error?: string;
   ok?: boolean;
@@ -179,6 +186,7 @@ export async function createSlotAction(
   const startTime = String(formData.get("startTime") ?? "");
   const endTime = String(formData.get("endTime") ?? "");
   const location = String(formData.get("location") ?? "").trim();
+  const meetingUrl = String(formData.get("meetingUrl") ?? "").trim();
 
   const dayOfWeek = Number.parseInt(dowRaw, 10);
   if (!Number.isInteger(dayOfWeek)) {
@@ -192,6 +200,7 @@ export async function createSlotAction(
       startTime,
       endTime,
       location: location || null,
+      meetingUrl,
       actorUserId: session.user.id,
     });
   } catch (err) {
@@ -229,6 +238,7 @@ export async function updateSlotAction(
   const startTime = String(formData.get("startTime") ?? "");
   const endTime = String(formData.get("endTime") ?? "");
   const location = String(formData.get("location") ?? "").trim();
+  const meetingUrl = String(formData.get("meetingUrl") ?? "").trim();
 
   if (!Number.isInteger(dayOfWeek)) {
     return { fieldErrors: { dayOfWeek: "เลือกวัน" } };
@@ -241,6 +251,7 @@ export async function updateSlotAction(
       startTime,
       endTime,
       location: location || null,
+      meetingUrl,
       actorUserId: session.user.id,
     });
   } catch (err) {
@@ -326,4 +337,38 @@ export async function archiveCourseAction(
   // before its pages can be rendered again, which is what makes this safe from
   // Settings as well as from a course card.
   redirect("/teacher/courses");
+}
+
+/**
+ * Sets or clears the course's standing online room (ADR-0052).
+ *
+ * Unaudited, like the rest of course configuration: a meeting link says where
+ * a class happens, not what a student did.
+ */
+export async function setMeetingUrlAction(
+  _prev: MeetingUrlActionState,
+  formData: FormData
+): Promise<MeetingUrlActionState> {
+  const session = await requireRole(["TEACHER"]);
+
+  const courseId = readCourseId(formData);
+  if (!courseId) return { error: "missing_course_id" };
+
+  const meetingUrl = String(formData.get("meetingUrl") ?? "").trim();
+
+  try {
+    await setCourseMeetingUrl({
+      courseOfferingId: courseId,
+      meetingUrl: meetingUrl.length > 0 ? meetingUrl : null,
+      actorUserId: session.user.id,
+    });
+  } catch (err) {
+    if (err instanceof ValidationError) return { fieldErrors: err.errors };
+    if (err instanceof HttpError) return { error: err.message };
+    throw err;
+  }
+
+  revalidateAll(courseId);
+  revalidatePath(`/student/courses/${courseId}/overview`);
+  return { ok: true };
 }

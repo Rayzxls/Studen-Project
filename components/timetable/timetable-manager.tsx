@@ -282,6 +282,31 @@ export function TimetableSlotDialog({
           </div>
         </div>
 
+        <div>
+          <label htmlFor="timetable-meeting-url" className="label">
+            ลิงก์ห้องเรียนออนไลน์ของคาบนี้{" "}
+            <span className="font-normal text-ink-faint">(ไม่บังคับ)</span>
+          </label>
+          <input
+            id="timetable-meeting-url"
+            name="meetingUrl"
+            type="url"
+            className="input mt-1.5"
+            maxLength={500}
+            defaultValue={slot?.slotMeetingUrl ?? ""}
+            placeholder="https://meet.google.com/..."
+            aria-invalid={saveState.fieldErrors?.meetingUrl ? true : undefined}
+          />
+          <p className="mt-1 text-xs text-ink-mute">
+            เว้นว่างไว้เพื่อใช้ลิงก์ประจำวิชา
+          </p>
+          {saveState.fieldErrors?.meetingUrl && (
+            <p className="mt-1 text-xs text-red-700">
+              {saveState.fieldErrors.meetingUrl}
+            </p>
+          )}
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="label">เริ่ม</label>

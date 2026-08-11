@@ -18,6 +18,7 @@ import {
   TIMETABLE_DAY_LABELS,
   type TimetableDisplaySlot,
 } from "@/lib/timetable/view-model";
+import { resolveMeetingLink } from "@/lib/meeting/resolve";
 
 export type TimetableSlotRow = {
   id: string;
@@ -25,6 +26,7 @@ export type TimetableSlotRow = {
   startTime: string;
   endTime: string;
   location: string | null;
+  meetingUrl: string | null;
 };
 
 type Props = {
@@ -33,6 +35,8 @@ type Props = {
   subjectCode: string | null;
   courseVisualKey: string;
   className: string;
+  /** Standing online room for the course, overridable per slot (ADR-0052). */
+  courseMeetingUrl: string | null;
   slots: TimetableSlotRow[];
 };
 
@@ -42,6 +46,7 @@ export function TimetableEditor({
   subjectCode,
   courseVisualKey,
   className,
+  courseMeetingUrl,
   slots,
 }: Props) {
   const [dialog, setDialog] = useState<TimetableDisplaySlot | "create" | null>(
@@ -55,6 +60,12 @@ export function TimetableEditor({
   };
   const displaySlots: TimetableDisplaySlot[] = slots.map((slot) => ({
     ...slot,
+    slotMeetingUrl: slot.meetingUrl,
+    meetingUrl:
+      resolveMeetingLink({
+        slotMeetingUrl: slot.meetingUrl,
+        courseMeetingUrl,
+      })?.url ?? null,
     courseId,
     courseName,
     subjectCode,
