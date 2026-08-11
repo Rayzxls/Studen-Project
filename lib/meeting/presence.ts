@@ -16,8 +16,16 @@
 /** A tab reports in on this cadence, so anything fresher than a couple of beats is live. */
 export const ACTIVE_WITHIN_MS = 10_000;
 
-/** Missed beats for this long and the tab is gone — closed, asleep, or offline. */
-export const LEFT_AFTER_MS = 45_000;
+/**
+ * Missed beats for this long and the tab is gone — closed, asleep, or offline.
+ *
+ * Comfortably longer than a minute on purpose. Browsers throttle timers in a
+ * hidden tab to roughly one per minute, and a hidden tab is exactly the "idle"
+ * case: someone who switched to another tab is still in the room. A window
+ * shorter than the throttle would turn every one of them into "left" and empty
+ * the rail of the people it is most useful to show.
+ */
+export const LEFT_AFTER_MS = 90_000;
 
 /** The owner's threshold: still connected, but nobody has touched it. */
 export const AWAY_AFTER_MS = 15 * 60_000;

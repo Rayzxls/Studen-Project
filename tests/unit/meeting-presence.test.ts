@@ -127,3 +127,18 @@ describe("the badge says its state in words as well as colour", () => {
     expect(presenceLabel("AWAY")).toBe("ไม่ได้ใช้งานนานแล้ว");
   });
 });
+
+describe("the window survives a throttled background tab", () => {
+  it("keeps a tab beating once a minute in the room, as idle", () => {
+    // Browsers throttle timers in a hidden tab to about one per minute, and a
+    // hidden tab is precisely the idle case. A shorter window would empty the
+    // rail of everyone who switched tabs.
+    expect(LEFT_AFTER_MS).toBeGreaterThan(60_000);
+    expect(
+      derivePresenceState(
+        { lastSeenAt: ago(61_000), lastActiveAt: ago(120_000) },
+        NOW
+      )
+    ).toBe("IDLE");
+  });
+});
