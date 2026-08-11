@@ -45,6 +45,15 @@ export interface AnnouncementPostedPayload extends BasePayload {
   postedByName: string;
 }
 
+/**
+ * The teacher opened the period's online room (ADR-0053).
+ *
+ * Carries nothing but the course. Deliberately no meetingUrl: a bell row is
+ * read over a shoulder as readily as a lock screen, and the link is the room.
+ * The join control fetches it behind a permission check instead.
+ */
+export type MeetingRoomOpenedPayload = BasePayload;
+
 // ─── Targeted kinds (1 recipient) ────────────────────────────
 
 export interface ScoreEntryEditedPayload extends BasePayload {
@@ -113,7 +122,8 @@ export type NotificationPayload =
   | { kind: "COMMENT_REPLIED"; data: CommentRepliedPayload }
   | { kind: "CLASS_CODE_JOINED"; data: ClassCodeJoinedPayload }
   | { kind: "QUIZ_REOPENED"; data: QuizReopenedPayload }
-  | { kind: "QUIZ_EXCEPTION_GRANTED"; data: QuizExceptionGrantedPayload };
+  | { kind: "QUIZ_EXCEPTION_GRANTED"; data: QuizExceptionGrantedPayload }
+  | { kind: "MEETING_ROOM_OPENED"; data: MeetingRoomOpenedPayload };
 
 /** Compile-time check that the discriminator covers every NotificationKind. */
 type _AssertKindCoverage = NotificationPayload["kind"] extends NotificationKind

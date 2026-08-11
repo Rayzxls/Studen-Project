@@ -1205,6 +1205,8 @@ enum NotificationKind {
   // Quiz lifecycle (Release C)
   QUIZ_REOPENED
   QUIZ_EXCEPTION_GRANTED
+  // The teacher opened the period's online room (ADR-0053). Broadcast.
+  MEETING_ROOM_OPENED
 }
 
 enum NotifEntityType {
@@ -1216,6 +1218,7 @@ enum NotifEntityType {
   COMMENT
   ENROLLMENT // for CLASS_CODE_JOINED
   QUIZ
+  SESSION // for MEETING_ROOM_OPENED — the period whose room was opened
 }
 
 model Notification {

@@ -233,5 +233,15 @@ export function buildNotificationPreview(args: {
         meta: buildMeta(courseName, grants.join(" · ")),
       };
     }
+
+    case "MEETING_ROOM_OPENED": {
+      // Says a room opened, never where it is. The bell is read over a
+      // shoulder as readily as a lock screen, and the link is the room.
+      return {
+        iconKey: "Video",
+        bold: "ครูเปิดห้องเรียนออนไลน์แล้ว",
+        meta: buildMeta(courseName),
+      };
+    }
   }
 }
