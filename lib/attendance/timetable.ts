@@ -1,6 +1,22 @@
 import { db } from "@/lib/db/client";
 import { Conflict, Forbidden, NotFound, ValidationError } from "@/lib/errors";
+import { OptionalMeetingUrlSchema } from "@/lib/meeting/validation";
 import { NOTE_MAX, TX_OPTS } from "./constants";
+
+/**
+ * A per-period override of the course's standing online room (ADR-0052).
+ * Blank clears it, which is how a period goes back to using the course link.
+ */
+function readSlotMeetingUrl(value: string | null | undefined): string | null {
+  const parsed = OptionalMeetingUrlSchema.safeParse(value ?? "");
+  if (!parsed.success) {
+    throw new ValidationError({
+      meetingUrl:
+        parsed.error.issues[0]?.message ?? "ลิงก์ต้องขึ้นต้นด้วย https://",
+    });
+  }
+  return parsed.data;
+}
 
 /**
  * TimetableSlot CRUD — Phase 4
@@ -84,6 +100,7 @@ export async function createTimetableSlot(params: {
   startTime: string;
   endTime: string;
   location?: string | null;
+  meetingUrl?: string | null;
   actorUserId: string;
 }): Promise<{
   id: string;
@@ -91,9 +108,11 @@ export async function createTimetableSlot(params: {
   startTime: string;
   endTime: string;
   location: string | null;
+  meetingUrl: string | null;
 }> {
   validateSlotInput(params);
   const location = params.location?.trim() || null;
+  const meetingUrl = readSlotMeetingUrl(params.meetingUrl);
 
   return db.$transaction(async (tx) => {
     const course = await tx.courseOffering.findUnique({
@@ -123,6 +142,7 @@ export async function createTimetableSlot(params: {
         startTime: params.startTime,
         endTime: params.endTime,
         location,
+        meetingUrl,
       },
       select: {
         id: true,
@@ -130,6 +150,7 @@ export async function createTimetableSlot(params: {
         startTime: true,
         endTime: true,
         location: true,
+        meetingUrl: true,
       },
     });
   }, TX_OPTS);
@@ -141,6 +162,7 @@ export async function updateTimetableSlot(params: {
   startTime: string;
   endTime: string;
   location?: string | null;
+  meetingUrl?: string | null;
   actorUserId: string;
 }): Promise<{
   id: string;
@@ -148,9 +170,11 @@ export async function updateTimetableSlot(params: {
   startTime: string;
   endTime: string;
   location: string | null;
+  meetingUrl: string | null;
 }> {
   validateSlotInput(params);
   const location = params.location?.trim() || null;
+  const meetingUrl = readSlotMeetingUrl(params.meetingUrl);
 
   return db.$transaction(async (tx) => {
     const slot = await tx.timetableSlot.findUnique({
@@ -188,6 +212,7 @@ export async function updateTimetableSlot(params: {
         startTime: params.startTime,
         endTime: params.endTime,
         location,
+        meetingUrl,
       },
       select: {
         id: true,
@@ -195,6 +220,7 @@ export async function updateTimetableSlot(params: {
         startTime: true,
         endTime: true,
         location: true,
+        meetingUrl: true,
       },
     });
   }, TX_OPTS);
@@ -228,6 +254,7 @@ export async function listTimetableSlots(courseOfferingId: string) {
       startTime: true,
       endTime: true,
       location: true,
+      meetingUrl: true,
     },
   });
 }

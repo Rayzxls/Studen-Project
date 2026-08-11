@@ -68,6 +68,28 @@ Acceptance requires all of the following:
 CI runs the same proof inside its disposable PostgreSQL service with
 `npm run qa:migration-baseline:verify:ci`.
 
+### Amendment — 2026-08-12
+
+Acceptance criterion 1 above described the gate as it stood while the baseline
+was the only migration. It applied that one file with `prisma db execute`, which
+assumed the baseline alone reproduces the current schema. That assumption ended
+with `20260811000000_add_meeting_url`, the first migration recorded after the
+baseline; the gate reported a schema difference for a branch that was correct.
+
+The gate now applies the whole `prisma/migrations` folder with
+`prisma migrate deploy` into the disposable schema, so criterion 1 reads: *the
+recorded migration history applies in order to a random empty schema*. What the
+gate proves is unchanged — a database built only from migrations must match
+`prisma/schema.prisma` — and it now holds for every migration added after the
+baseline. Two criteria were added: every migration directory must be recorded as
+applied and not rolled back, and the 41-table count excludes the
+`_prisma_migrations` bookkeeping table that `migrate deploy` creates.
+
+The baseline file was not edited. QA and Production have both recorded it as
+applied, so changing it would put the deployed databases at odds with their own
+migration history. Future schema changes are added as migrations after the
+baseline and proven this way.
+
 ## Synthetic bookkeeping rehearsal
 
 The repository also has a fail-closed rehearsal for the migration-history

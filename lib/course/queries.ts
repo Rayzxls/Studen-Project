@@ -21,6 +21,7 @@ export async function getCourseOfferingForTeacher(
       classCode: true,
       codeActive: true,
       codeExpiresAt: true,
+      meetingUrl: true,
       createdAt: true,
       teacher: {
         select: {

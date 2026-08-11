@@ -9,6 +9,7 @@ import {
   MapPin,
   Plus,
   Settings2,
+  Video,
 } from "lucide-react";
 import { getCourseSlotColors } from "@/lib/theme/course-color";
 import {
@@ -573,6 +574,19 @@ function MobileTimetable({
                       )}
                     </div>
                   </Link>
+                  {/* Outside the card's Link: an anchor cannot nest in an
+                      anchor, and this one leaves the app entirely. */}
+                  {slot.meetingUrl && (
+                    <a
+                      href={slot.meetingUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1.5 inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-xs font-semibold text-blue-700 hover:bg-blue-50"
+                    >
+                      <Video className="h-3.5 w-3.5" aria-hidden="true" />
+                      เข้าห้องเรียนออนไลน์
+                    </a>
+                  )}
                 </li>
               );
             })}

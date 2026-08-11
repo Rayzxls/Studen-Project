@@ -1,6 +1,91 @@
 # HANDOFF — Beagle Classroom
 
-## RELEASE HARDENING AND EARLY WARNING — 2026-08-01 (READ FIRST)
+## RELEASE F DESIGN CONTRACTS AND THE MEETING LINK — 2026-08-11 (READ FIRST)
+
+Sections below this one are older. Where they disagree with this one, this one
+is current.
+
+### Resolved 2026-08-12: the migration gate now applies the whole folder
+
+`scripts/verify-migration-baseline.ts` used to apply **only** the single squashed
+baseline file into a temporary schema and diff it against
+`prisma/schema.prisma`. That encoded an assumption nobody had to state before:
+*the baseline alone reproduces the current schema*. It held only while no
+migration was added after the baseline, and `20260811000000_add_meeting_url` was
+the first one, so the gate failed a branch that was correct.
+
+The gate now runs `prisma migrate deploy` over the whole `prisma/migrations`
+folder into the disposable schema. What it proves is unchanged — a database
+built only from migrations must match the schema — and it now tolerates
+migrations after the baseline. **Every future schema change goes in as a
+migration after the baseline and is proven this way.** Two checks were added:
+every migration directory must be recorded as applied and not rolled back, and
+the 41-table count now excludes `_prisma_migrations`.
+
+The baseline file was **not** edited and must never be: QA and Production have
+both recorded it as applied. Verified by drift test — adding a stray column to
+`schema.prisma` still fails the gate and names that column, so it did not become
+a rubber stamp. See the 2026-08-12 amendment in
+`docs/release-gates/2026-08-02-MIGRATION-BASELINE-PROOF.md`.
+
+### The Production migration is applied
+
+`20260811000000_add_meeting_url` adds two nullable text columns. Purely
+additive — no backfill, no default, no constraint on existing rows. Applied to
+Production on 2026-08-11 and re-verified read-only on 2026-08-12: `meetingUrl`
+exists as nullable `text` on both `CourseOffering` and `TimetableSlot`,
+`_prisma_migrations` holds exactly the two expected rows, and neither is rolled
+back.
+
+### Merged today
+
+| PR | What |
+| --- | --- |
+| #54 | Edit/delete controls on the publishing schedule, plus reschedule and publish-now |
+| #55 | Web Push observability, and the service-worker icon that had always 404'd |
+| #56 | Dark-theme contrast (47 pairs), plain-Thai copy pass, feed timestamp fix |
+| #57 | Status-bar badge built from the mark, PWA install identity |
+| #58 | Contrast sweep across 25 files, `docs/DATA-MODEL.md`, `pnpm db:studio` |
+| #59 | ADR-0049 (push may carry a message) + ADR-0050 (chat) |
+| #60 | ADR-0051 (rewards) |
+| #61 | ADR-0052 (online class is a link) |
+
+### Release F is designed but unbuilt
+
+A grill on 2026-08-06 turned four names in a backlog table into recorded
+decisions. **None of it is implemented** apart from the meeting link in PR #62.
+The domain language lives in `CONTEXT.md` under three sections explicitly
+marked as design contracts; the reasoning lives in ADR-0049 through ADR-0052.
+
+Where the owner chose against the recommendation, both the decision and its
+cost are recorded rather than smoothed over — school-wide DMs, a stored point
+ledger instead of a derived status, random point payouts, and push payloads
+that carry message content.
+
+**Two reward questions were left open on purpose** and want answering before
+anyone builds it: what happens to a balance when a course is archived, and what
+happens to it when an account is anonymized.
+
+### Standing constraint on verification
+
+An agent in this project cannot enter a password, so **nothing behind the login
+has ever been checked visually**. Everything is verified through tests, builds,
+route status codes, and read-only queries against the databases. The publishing
+schedule page, the reschedule dialog, the meeting-link card and the join control
+have all shipped or been written without a human seeing them render.
+
+### Smaller things still open
+
+- The `"งาน"` ambiguity in dashboard and moderation copy — group A of the copy
+  review, which the owner did not select. `"งานที่ต้องตรวจ"` in moderation
+  still collides with grading.
+- Amber and emerald have no themed steps, so they stay light in a dark theme.
+  Fixing means adding tokens to the design system, which is a decision.
+- `next/font/google` fetches Anuphan at build time, so a Google hiccup fails
+  CI. Moving to `next/font/local` removes the network from the build.
+- `QUIZ_PILOT_COURSE_IDS` lingers in `.env.local` although ADR-0045 retired it.
+
+## RELEASE HARDENING AND EARLY WARNING — 2026-08-01
 
 PRs [#33](https://github.com/Rayzxls/Studen-Project/pull/33),
 [#34](https://github.com/Rayzxls/Studen-Project/pull/34), and

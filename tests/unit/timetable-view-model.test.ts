@@ -19,6 +19,8 @@ function slot(
     courseName: `Course ${id}`,
     subjectCode: null,
     className: "ม.4/1",
+    meetingUrl: null,
+    slotMeetingUrl: null,
     courseVisualKey: `course-${id}`,
     dayOfWeek,
     startTime,

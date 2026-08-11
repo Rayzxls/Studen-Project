@@ -33,6 +33,22 @@ export interface TimetableDisplaySlot {
   startTime: string;
   endTime: string;
   location: string | null;
+  /**
+   * Where this period meets online, already resolved from the slot's own link
+   * and the course's standing one (ADR-0052). Null when the class has no
+   * online room, which is the normal state for a period in a physical room.
+   *
+   * For display and for the join control. Never for an edit form.
+   */
+  meetingUrl: string | null;
+  /**
+   * The period's own override, before the course link is applied.
+   *
+   * The edit form must use this one: prefilling it with the resolved value
+   * would turn the course's standing link into a per-period override the first
+   * time a teacher opened any period and saved it.
+   */
+  slotMeetingUrl: string | null;
   href: string;
 }
 

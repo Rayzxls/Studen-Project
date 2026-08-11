@@ -461,6 +461,12 @@ model CourseOffering {
   academicPeriodLabel String? // free text, e.g. "ภาคเรียน 1 ปี 2569"
   creditHours         Float? // optional display/report metadata
 
+  // Standing online room for the course (ADR-0052). A teacher's Meet room is
+  // usually the same all term, exactly as a physical classroom is, so the link
+  // lives here and a TimetableSlot may override it. Never on Session: those
+  // rows are materialised lazily, and a student needs the link before class.
+  meetingUrl String?
+
   classCode      String    @unique
   codeActive     Boolean   @default(true)
   codeExpiresAt  DateTime?
@@ -523,6 +529,9 @@ model TimetableSlot {
   startTime        String // "HH:mm" 24h, local Bangkok time
   endTime          String // "HH:mm" 24h, local Bangkok time
   location         String? // "อาคาร 3 ห้อง 305"
+  // Overrides CourseOffering.meetingUrl for this period — the online twin of
+  // `location`, for a course whose lecture and lab meet in different places.
+  meetingUrl       String?
   createdAt        DateTime       @default(now())
 
   sessions Session[]
