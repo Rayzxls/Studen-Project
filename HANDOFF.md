@@ -5,43 +5,37 @@
 Sections below this one are older. Where they disagree with this one, this one
 is current.
 
-### Blocked right now: PR #62 cannot go green as written
+### Resolved 2026-08-12: the migration gate now applies the whole folder
 
-[PR #62](https://github.com/Rayzxls/Studen-Project/pull/62) implements the
-meeting link (ADR-0052). Unit, lint, typecheck, build, dependency gate and
-Vercel all pass. **Integration Tests fail, and the cause is structural rather
-than a bug in the branch.**
+`scripts/verify-migration-baseline.ts` used to apply **only** the single squashed
+baseline file into a temporary schema and diff it against
+`prisma/schema.prisma`. That encoded an assumption nobody had to state before:
+*the baseline alone reproduces the current schema*. It held only while no
+migration was added after the baseline, and `20260811000000_add_meeting_url` was
+the first one, so the gate failed a branch that was correct.
 
-`scripts/verify-migration-baseline.ts` applies **only** the single squashed
-baseline file into a temporary schema and then diffs it against
-`prisma/schema.prisma`. That encodes an assumption nobody had to state before:
-*the baseline alone reproduces the current schema*. It holds only while no
-migration is added after the baseline, and `20260811000000_add_meeting_url` is
-the first one. The gate reports `active_baseline_does_not_match_schema` and
-lists the two new `meetingUrl` columns as the difference.
+The gate now runs `prisma migrate deploy` over the whole `prisma/migrations`
+folder into the disposable schema. What it proves is unchanged — a database
+built only from migrations must match the schema — and it now tolerates
+migrations after the baseline. **Every future schema change goes in as a
+migration after the baseline and is proven this way.** Two checks were added:
+every migration directory must be recorded as applied and not rolled back, and
+the 41-table count now excludes `_prisma_migrations`.
 
-Two ways out. The first is almost certainly right, but it edits a release gate
-with a runbook and evidence documents behind it, so it wants the owner's
-decision rather than a quiet rewrite:
+The baseline file was **not** edited and must never be: QA and Production have
+both recorded it as applied. Verified by drift test — adding a stray column to
+`schema.prisma` still fails the gate and names that column, so it did not become
+a rubber stamp. See the 2026-08-12 amendment in
+`docs/release-gates/2026-08-02-MIGRATION-BASELINE-PROOF.md`.
 
-1. **Teach the gate to apply the whole `prisma/migrations` folder** — replace
-   the `db execute --file BASELINE_PATH` step with a `migrate deploy` into the
-   temporary schema. That keeps exactly what the gate is for, which is proving
-   a database built from migrations matches the schema, while allowing
-   migrations after the baseline. Every future schema change needs this.
-2. Fold the columns into the baseline file. **Do not do this.** QA and
-   Production have already recorded that baseline as applied; editing it makes
-   the deployed databases disagree with the recorded migration.
-
-### Also waiting on the owner: the Production migration
+### The Production migration is applied
 
 `20260811000000_add_meeting_url` adds two nullable text columns. Purely
-additive — no backfill, no default, no constraint on existing rows. Applied and
-verified on isolated QA; **Production is not migrated.** An agent cannot run it:
-
-```bash
-pnpm dotenv -e .env.local -- prisma migrate deploy
-```
+additive — no backfill, no default, no constraint on existing rows. Applied to
+Production on 2026-08-11 and re-verified read-only on 2026-08-12: `meetingUrl`
+exists as nullable `text` on both `CourseOffering` and `TimetableSlot`,
+`_prisma_migrations` holds exactly the two expected rows, and neither is rolled
+back.
 
 ### Merged today
 
