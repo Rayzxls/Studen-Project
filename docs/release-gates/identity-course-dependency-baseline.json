@@ -1,6 +1,6 @@
 {
   "rulesVersion": "2026-08-02.1",
-  "generatedAt": "2026-08-11T22:36:30.452Z",
+  "generatedAt": "2026-08-02T05:51:05.119Z",
   "findings": [
     {
       "fingerprint": "3ec5322f2f86ea915d4f",
@@ -108,7 +108,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "app/student/timetable/page.tsx",
-      "line": 26,
+      "line": 25,
       "excerpt": "studentId: session.user.id,",
       "occurrence": 1
     },
@@ -648,7 +648,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/course/queries.ts",
-      "line": 71,
+      "line": 70,
       "excerpt": "some: { studentId: studentUserId, removedAt: null },",
       "occurrence": 1
     },
@@ -750,16 +750,6 @@
       "path": "lib/lesson/queries.ts",
       "line": 252,
       "excerpt": "where: { studentId: input.studentId, removedAt: null },",
-      "occurrence": 1
-    },
-    {
-      "fingerprint": "d650c71b6239df313cbf",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "lib/meeting/room.ts",
-      "line": 368,
-      "excerpt": "studentId_courseOfferingId: { studentId: userId, courseOfferingId },",
       "occurrence": 1
     },
     {
@@ -1008,7 +998,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "prisma/schema.prisma",
-      "line": 497,
+      "line": 490,
       "excerpt": "studentId String",
       "occurrence": 1
     },
@@ -1018,7 +1008,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "prisma/schema.prisma",
-      "line": 498,
+      "line": 491,
       "excerpt": "student Student @relation(fields: [studentId], references: [userId], onDelete: Cascade)",
       "occurrence": 1
     },
@@ -1028,7 +1018,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "prisma/schema.prisma",
-      "line": 514,
+      "line": 507,
       "excerpt": "@@unique([studentId, courseOfferingId])",
       "occurrence": 1
     },
@@ -1151,16 +1141,6 @@
       "line": 140,
       "excerpt": "studentId: ctx.studentUserId,",
       "occurrence": 3
-    },
-    {
-      "fingerprint": "5e7d2cc53b18023f4743",
-      "ruleId": "student-id-symbol-review",
-      "severity": "review",
-      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
-      "path": "tests/integration/permissions/meeting-room.test.ts",
-      "line": 147,
-      "excerpt": "studentId: ctx.studentUserId,",
-      "occurrence": 1
     },
     {
       "fingerprint": "1647c5cc9bb4a64c55b1",
