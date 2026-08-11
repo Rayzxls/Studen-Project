@@ -78,7 +78,7 @@ export default async function StudentQuizOverviewPage({
         </Link>
 
         {notice && (
-          <p className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p className="rounded-lg border border-orange-500/25 bg-orange-50 px-4 py-3 text-sm text-orange-700">
             {notice}
           </p>
         )}

@@ -99,7 +99,7 @@ export function TeacherLessonWorkspace({
       </header>
 
       {!canMutate && (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-lg border border-orange-500/25 bg-orange-50 px-4 py-3 text-sm text-orange-700">
           โหมดอ่านอย่างเดียว การแก้ไขบทเรียนยังไม่เปิดใช้งานในสภาพแวดล้อมนี้
         </p>
       )}
