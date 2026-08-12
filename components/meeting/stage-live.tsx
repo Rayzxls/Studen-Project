@@ -5,11 +5,12 @@ import {
   LiveKitRoom,
   RoomAudioRenderer,
   useLocalParticipant,
-  useSpeakingParticipants,
+  useParticipants,
+  useRoomContext,
   useTracks,
   VideoTrack,
 } from "@livekit/components-react";
-import { Track } from "livekit-client";
+import { RoomEvent, Track } from "livekit-client";
 import {
   Maximize2,
   Mic,
@@ -22,6 +23,7 @@ import {
 } from "lucide-react";
 
 import { StateToggle } from "@/components/meeting/state-toggle";
+import type { RoomMediaState } from "@/components/meeting/room-media";
 
 import "@livekit/components-styles";
 
@@ -39,17 +41,16 @@ import "@livekit/components-styles";
 export function StageLive({
   sessionId,
   onUnavailable,
-  onSpeakingChange,
+  onMediaChange,
 }: {
   sessionId: string;
   onUnavailable: () => void;
   /**
-   * Who is speaking, by our own user id — the token sets LiveKit's identity to
-   * it, so no mapping is needed. Reported upward because the roster and the
-   * self panel live outside this context and would otherwise have no way to
-   * know a microphone is actually producing sound.
+   * What the roster needs, by our own user id — the token sets LiveKit's
+   * identity to it, so no mapping is needed. Reported upward because the
+   * roster and the self panel live outside this context.
    */
-  onSpeakingChange?: (userIds: string[]) => void;
+  onMediaChange?: (state: RoomMediaState) => void;
 }) {
   const [auth, setAuth] = useState<{
     token: string;
@@ -106,20 +107,27 @@ export function StageLive({
       onError={onUnavailable}
       className="contents"
     >
-      <StageSurface canPresent={auth.canPresent} />
-      {onSpeakingChange ? (
-        <SpeakingReporter onChange={onSpeakingChange} />
-      ) : null}
+      <StageSurface
+        canPresent={auth.canPresent}
+        onMediaChange={onMediaChange}
+      />
     </LiveKitRoom>
   );
 }
 
-function StageSurface({ canPresent }: { canPresent: boolean }) {
+function StageSurface({
+  canPresent,
+  onMediaChange,
+}: {
+  canPresent: boolean;
+  onMediaChange?: (state: RoomMediaState) => void;
+}) {
   const screenShares = useTracks([Track.Source.ScreenShare], {
     onlySubscribed: true,
   });
   const shown = screenShares[0];
   const [full, setFull] = useState(false);
+  const [deafened, setDeafened] = useState(false);
 
   return (
     <div
@@ -162,7 +170,14 @@ function StageSurface({ canPresent }: { canPresent: boolean }) {
         </button>
       </div>
 
-      <RoomControls canPresent={canPresent} />
+      <RoomControls
+        canPresent={canPresent}
+        deafened={deafened}
+        setDeafened={setDeafened}
+      />
+      {onMediaChange ? (
+        <MediaReporter deafened={deafened} onChange={onMediaChange} />
+      ) : null}
     </div>
   );
 }
@@ -175,11 +190,18 @@ function StageSurface({ canPresent }: { canPresent: boolean }) {
  * answer is not a class, and the token grants everyone a microphone; only the
  * stage is the teacher's.
  */
-function RoomControls({ canPresent }: { canPresent: boolean }) {
+function RoomControls({
+  canPresent,
+  deafened,
+  setDeafened,
+}: {
+  canPresent: boolean;
+  deafened: boolean;
+  setDeafened: (next: (v: boolean) => boolean) => void;
+}) {
   const { localParticipant } = useLocalParticipant();
   const [micPending, setMicPending] = useState(false);
   const [micDenied, setMicDenied] = useState(false);
-  const [deafened, setDeafened] = useState(false);
   const micOn = localParticipant.isMicrophoneEnabled;
 
   const toggleMic = useCallback(async () => {
@@ -244,26 +266,82 @@ function RoomControls({ canPresent }: { canPresent: boolean }) {
 }
 
 /**
- * Carries "who is talking" out of the LiveKit context to the rest of the room.
+ * Carries what the roster needs out of the LiveKit context, and publishes the
+ * one piece of it that only this browser knows.
  *
- * Renders nothing. The set is compared as a joined string before reporting, so
- * the ordinary case — the same person still talking — does not re-render the
- * whole room several times a second.
+ * Speaking and a muted microphone are LiveKit's own facts — every participant
+ * learns them without anyone announcing anything. **Deafening is not.** Muting
+ * playback happens entirely inside one browser, so unless it is published as a
+ * participant attribute the rest of the class has no way to know somebody
+ * cannot hear them. That is the whole reason this component writes as well as
+ * reads.
+ *
+ * Renders nothing. Each set is compared as a joined string before reporting,
+ * or the ordinary case of one person still talking would re-render the room
+ * several times a second.
  */
-function SpeakingReporter({
+function MediaReporter({
+  deafened,
   onChange,
 }: {
-  onChange: (userIds: string[]) => void;
+  deafened: boolean;
+  onChange: (state: RoomMediaState) => void;
 }) {
-  const speaking = useSpeakingParticipants();
-  const ids = speaking
+  const participants = useParticipants();
+  const { localParticipant } = useLocalParticipant();
+  const room = useRoomContext();
+  const [, bump] = useState(0);
+
+  useEffect(() => {
+    // Best-effort: failing to announce it only costs the icon, never the call.
+    void localParticipant
+      .setAttributes({ deafened: deafened ? "1" : "" })
+      .catch(() => {});
+  }, [localParticipant, deafened]);
+
+  // useParticipants does not re-render on an attribute change, so a remote
+  // person going deaf would otherwise never reach the roster. Nudge on the
+  // event that carries it.
+  useEffect(() => {
+    const onChanged = () => bump((n) => n + 1);
+    room.on(RoomEvent.ParticipantAttributesChanged, onChanged);
+    return () => {
+      room.off(RoomEvent.ParticipantAttributesChanged, onChanged);
+    };
+  }, [room]);
+
+  const speaking = participants
+    .filter((p) => p.isSpeaking)
+    .map((p) => p.identity)
+    .sort()
+    .join(",");
+  const micOff = participants
+    .filter((p) => !p.isMicrophoneEnabled)
+    .map((p) => p.identity)
+    .sort()
+    .join(",");
+  // Our own state is read straight from React rather than from the attribute
+  // we just published. A round trip through the server to learn something this
+  // browser already knows would make the icon lag its own button, or miss it
+  // entirely if the publish failed.
+  const deaf = participants
+    .filter((p) =>
+      p.identity === localParticipant.identity
+        ? deafened
+        : p.attributes?.deafened === "1"
+    )
     .map((p) => p.identity)
     .sort()
     .join(",");
 
   useEffect(() => {
-    onChange(ids.length > 0 ? ids.split(",") : []);
-  }, [ids, onChange]);
+    const split = (value: string) => (value.length > 0 ? value.split(",") : []);
+    onChange({
+      speaking: split(speaking),
+      micOff: split(micOff),
+      deafened: split(deaf),
+    });
+  }, [speaking, micOff, deaf, onChange]);
 
   return null;
 }

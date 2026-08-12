@@ -1,5 +1,9 @@
-import { Moon } from "lucide-react";
+import { MicOff, Moon, VolumeX } from "lucide-react";
 
+import {
+  NO_MEDIA_STATE,
+  type RoomMediaState,
+} from "@/components/meeting/room-media";
 import { SpeakingAvatar } from "@/components/meeting/speaking-avatar";
 import { presenceLabel, type PresenceState } from "@/lib/meeting/presence";
 import type { RoomParticipant } from "@/lib/meeting/room";
@@ -25,11 +29,11 @@ type ShownState = Exclude<PresenceState, "LEFT">;
  */
 export function PresenceRail({
   participants,
-  speakingUserIds = [],
+  media = NO_MEDIA_STATE,
 }: {
   participants: readonly RoomParticipant[];
-  /** Who is producing sound right now, from the stage. Empty without one. */
-  speakingUserIds?: readonly string[];
+  /** Audio state from the stage. All empty when there is no media server. */
+  media?: RoomMediaState;
 }) {
   return (
     <div>
@@ -44,7 +48,7 @@ export function PresenceRail({
           <li key={person.userId} className="flex items-center gap-2.5">
             <PresenceAvatar
               person={person}
-              speaking={speakingUserIds.includes(person.userId)}
+              speaking={media.speaking.includes(person.userId)}
             />
             <span
               className={
@@ -57,10 +61,52 @@ export function PresenceRail({
                 <span className="ml-1.5 text-xs text-ink-mute">ครู</span>
               ) : null}
             </span>
+
+            <AudioFlags
+              name={fullName(person)}
+              micOff={media.micOff.includes(person.userId)}
+              deafened={media.deafened.includes(person.userId)}
+            />
           </li>
         ))}
       </ul>
     </div>
+  );
+}
+
+/**
+ * The two things worth knowing about someone's audio at a glance.
+ *
+ * Shown only when true: a row of icons that is nearly always lit is a row
+ * nobody reads. Red, because both mean a channel is closed, and each carries
+ * its own words for anyone who cannot use the colour.
+ */
+function AudioFlags({
+  name,
+  micOff,
+  deafened,
+}: {
+  name: string;
+  micOff: boolean;
+  deafened: boolean;
+}) {
+  if (!micOff && !deafened) return null;
+
+  return (
+    <span className="ml-auto flex shrink-0 items-center gap-1 text-red-700">
+      {micOff ? (
+        <span title={`${name} — ปิดไมค์`}>
+          <MicOff className="h-3.5 w-3.5" aria-hidden="true" />
+          <span className="sr-only">{name} ปิดไมค์</span>
+        </span>
+      ) : null}
+      {deafened ? (
+        <span title={`${name} — ปิดเสียง ไม่ได้ยินห้อง`}>
+          <VolumeX className="h-3.5 w-3.5" aria-hidden="true" />
+          <span className="sr-only">{name} ปิดเสียง ไม่ได้ยินห้อง</span>
+        </span>
+      ) : null}
+    </span>
   );
 }
 

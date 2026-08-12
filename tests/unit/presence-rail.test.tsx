@@ -81,7 +81,7 @@ describe("who is talking right now", () => {
     const { container } = render(
       <PresenceRail
         participants={[person({ userId: "talker" })]}
-        speakingUserIds={["talker"]}
+        media={{ speaking: ["talker"], micOff: [], deafened: [] }}
       />
     );
     expect(container.innerHTML).toContain("ring-green-500");
@@ -91,7 +91,7 @@ describe("who is talking right now", () => {
     const { container } = render(
       <PresenceRail
         participants={[person({ userId: "quiet" })]}
-        speakingUserIds={["someone-else"]}
+        media={{ speaking: ["someone-else"], micOff: [], deafened: [] }}
       />
     );
     expect(container.innerHTML).not.toContain("ring-green-500");
@@ -101,7 +101,7 @@ describe("who is talking right now", () => {
     render(
       <PresenceRail
         participants={[person({ userId: "talker", firstName: "มานี" })]}
-        speakingUserIds={["talker"]}
+        media={{ speaking: ["talker"], micOff: [], deafened: [] }}
       />
     );
     expect(screen.getByText(/มานี ใจดี .* · กำลังพูด/)).toBeDefined();
@@ -113,5 +113,51 @@ describe("who is talking right now", () => {
       <PresenceRail participants={[person({ userId: "a" })]} />
     );
     expect(container.innerHTML).not.toContain("ring-green-500");
+  });
+});
+
+describe("who cannot speak and who cannot hear", () => {
+  it("flags a muted microphone", () => {
+    render(
+      <PresenceRail
+        participants={[person({ userId: "m", firstName: "มานี" })]}
+        media={{ speaking: [], micOff: ["m"], deafened: [] }}
+      />
+    );
+    expect(screen.getByText("มานี ใจดี ปิดไมค์")).toBeDefined();
+  });
+
+  it("flags someone who cannot hear the room", () => {
+    // Deafening is local to one browser; the roster only knows because the
+    // stage publishes it as an attribute.
+    render(
+      <PresenceRail
+        participants={[person({ userId: "d", firstName: "ปิติ" })]}
+        media={{ speaking: [], micOff: [], deafened: ["d"] }}
+      />
+    );
+    expect(screen.getByText("ปิติ ใจดี ปิดเสียง ไม่ได้ยินห้อง")).toBeDefined();
+  });
+
+  it("shows nothing for someone whose audio is entirely normal", () => {
+    // A row of icons that is nearly always lit is a row nobody reads.
+    render(
+      <PresenceRail
+        participants={[person({ userId: "ok", firstName: "ชูใจ" })]}
+        media={{ speaking: [], micOff: [], deafened: [] }}
+      />
+    );
+    expect(screen.queryByText(/ปิดไมค์|ปิดเสียง/)).toBeNull();
+  });
+
+  it("shows both when someone has closed both channels", () => {
+    render(
+      <PresenceRail
+        participants={[person({ userId: "x", firstName: "วีระ" })]}
+        media={{ speaking: [], micOff: ["x"], deafened: ["x"] }}
+      />
+    );
+    expect(screen.getByText("วีระ ใจดี ปิดไมค์")).toBeDefined();
+    expect(screen.getByText("วีระ ใจดี ปิดเสียง ไม่ได้ยินห้อง")).toBeDefined();
   });
 });

@@ -4,6 +4,10 @@ import { useCallback, useState } from "react";
 import { DoorOpen, Video } from "lucide-react";
 
 import { PresenceRail } from "@/components/meeting/presence-rail";
+import {
+  NO_MEDIA_STATE,
+  type RoomMediaState,
+} from "@/components/meeting/room-media";
 import { SpeakingAvatar } from "@/components/meeting/speaking-avatar";
 import { Stage } from "@/components/meeting/stage";
 import { useLiveRoom } from "@/components/meeting/use-live-room";
@@ -39,9 +43,12 @@ export function RoomWorkspace({
   };
 }) {
   const { room, busy, error, blockedUrl, open, join } = useLiveRoom(courseId);
-  const [speaking, setSpeaking] = useState<readonly string[]>([]);
+  const [media, setMedia] = useState<RoomMediaState>(NO_MEDIA_STATE);
   // Stable so the reporter's effect fires on a real change, not every render.
-  const onSpeakingChange = useCallback((ids: string[]) => setSpeaking(ids), []);
+  const onMediaChange = useCallback(
+    (next: RoomMediaState) => setMedia(next),
+    []
+  );
 
   if (!room) {
     return (
@@ -70,12 +77,12 @@ export function RoomWorkspace({
         <Stage
           sessionId={room.sessionId}
           enabled={stageEnabled}
-          onSpeakingChange={onSpeakingChange}
+          onMediaChange={onMediaChange}
         />
         <SelfPanel
           self={self}
           inRoom={room.participants.some((p) => p.userId === self.userId)}
-          speaking={speaking.includes(self.userId)}
+          speaking={media.speaking.includes(self.userId)}
           busy={busy}
           onEnter={join}
         />
@@ -100,10 +107,7 @@ export function RoomWorkspace({
       </div>
 
       <aside className="card p-4 lg:sticky lg:top-24 lg:h-fit">
-        <PresenceRail
-          participants={room.participants}
-          speakingUserIds={speaking}
-        />
+        <PresenceRail participants={room.participants} media={media} />
       </aside>
     </div>
   );

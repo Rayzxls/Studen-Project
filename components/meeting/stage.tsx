@@ -4,6 +4,8 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import { MonitorUp } from "lucide-react";
 
+import type { RoomMediaState } from "@/components/meeting/room-media";
+
 /**
  * The stage, or the hole where it will be (ADR-0053).
  *
@@ -32,11 +34,11 @@ const StageLive = dynamic(
 export function Stage({
   sessionId,
   enabled,
-  onSpeakingChange,
+  onMediaChange,
 }: {
   sessionId: string | null;
   enabled: boolean;
-  onSpeakingChange?: (userIds: string[]) => void;
+  onMediaChange?: (state: RoomMediaState) => void;
 }) {
   const [unavailable, setUnavailable] = useState(false);
 
@@ -45,7 +47,7 @@ export function Stage({
       <StageLive
         sessionId={sessionId}
         onUnavailable={() => setUnavailable(true)}
-        onSpeakingChange={onSpeakingChange}
+        onMediaChange={onMediaChange}
       />
     );
   }
