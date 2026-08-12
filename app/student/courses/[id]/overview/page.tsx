@@ -14,6 +14,7 @@ import { getCourseOfferingForStudent } from "@/lib/course/queries";
 import { db } from "@/lib/db/client";
 import { CourseShell } from "@/components/course/course-shell";
 import { LeaveCourseDialog } from "@/components/course/leave-course-dialog";
+import { LiveRoomCard } from "@/components/meeting/live-room-card";
 import { studentCourseTabs } from "../_tabs";
 import { getAttendanceStatsForStudent } from "@/lib/attendance/queries";
 import { listTimetableSlots } from "@/lib/attendance/timetable";
@@ -214,6 +215,11 @@ export default async function StudentCourseOverviewPage({ params }: PageProps) {
       tabs={studentCourseTabs(id)}
     >
       <div className="space-y-6">
+        {/* 0) The live room. Renders nothing unless a teacher has one open, so
+            it costs a student nothing on an ordinary day and is the first
+            thing on the page when a class is actually running. */}
+        <LiveRoomCard courseId={id} isTeacher={false} />
+
         {/* 1) Class info card — weekly timetable with the current / next
             slot highlighted so the card answers "เรียนคาบต่อไปเมื่อไหร่"
             at a glance. */}

@@ -1,10 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useActionState,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { DoorOpen, Video } from "lucide-react";
 
 import { PresenceRail } from "@/components/meeting/presence-rail";
+import type { RoomActionState } from "@/app/teacher/courses/[id]/meeting/actions";
 import type { RoomState } from "@/lib/meeting/room";
+
+/** The shape both teacher controls share. Absent for a student. */
+export type RoomAction = (
+  prev: RoomActionState,
+  formData: FormData
+) => Promise<RoomActionState>;
+
+const NO_STATE: RoomActionState = {};
 
 /** Matches the cadence the room was designed around (ADR-0053). */
 const POLL_MS = 3_000;
@@ -27,13 +42,13 @@ interface WireRoomState extends Omit<RoomState, "openedAt"> {
 export function LiveRoomCard({
   courseId,
   isTeacher,
-  onOpenRoom,
-  onCloseRoom,
+  openAction,
+  closeAction,
 }: {
   courseId: string;
   isTeacher: boolean;
-  onOpenRoom?: () => void;
-  onCloseRoom?: () => void;
+  openAction?: RoomAction;
+  closeAction?: RoomAction;
 }) {
   const [room, setRoom] = useState<RoomState | null>(null);
   const [joining, setJoining] = useState(false);
@@ -144,19 +159,18 @@ export function LiveRoomCard({
   if (!room) return null;
 
   if (!room.isOpen) {
-    return isTeacher ? (
+    return isTeacher && openAction ? (
       <section className="card p-5 sm:p-6">
         <Header subtitle="ยังไม่ได้เปิดห้อง นักเรียนจะได้รับแจ้งเตือนเมื่อคุณกดเปิด" />
-        {onOpenRoom ? (
-          <button
-            type="button"
-            onClick={onOpenRoom}
-            className="btn-primary mt-4"
-          >
-            <DoorOpen className="h-4 w-4" aria-hidden="true" />
-            เปิดห้องเรียนออนไลน์
-          </button>
-        ) : null}
+        <RoomControl
+          action={openAction}
+          courseId={courseId}
+          sessionId={null}
+          className="btn-primary mt-4 min-h-11"
+          label="เปิดห้องเรียนออนไลน์"
+          pendingLabel="กำลังเปิดห้อง…"
+          icon={<DoorOpen className="h-4 w-4" aria-hidden="true" />}
+        />
       </section>
     ) : null;
   }
@@ -178,14 +192,15 @@ export function LiveRoomCard({
               {joining ? "กำลังเข้าห้อง…" : "เข้าห้องเรียน"}
             </button>
 
-            {isTeacher && onCloseRoom ? (
-              <button
-                type="button"
-                onClick={onCloseRoom}
+            {isTeacher && closeAction ? (
+              <RoomControl
+                action={closeAction}
+                courseId={courseId}
+                sessionId={sessionId}
                 className="btn-secondary min-h-11"
-              >
-                ปิดห้อง
-              </button>
+                label="ปิดห้อง"
+                pendingLabel="กำลังปิด…"
+              />
             ) : null}
           </div>
 
@@ -201,6 +216,49 @@ export function LiveRoomCard({
         </div>
       </div>
     </section>
+  );
+}
+
+/**
+ * A teacher control as a real form, so it still works before hydration and a
+ * failed action can say why.
+ */
+function RoomControl({
+  action,
+  courseId,
+  sessionId,
+  className,
+  label,
+  pendingLabel,
+  icon,
+}: {
+  action: RoomAction;
+  courseId: string;
+  sessionId: string | null;
+  className: string;
+  label: string;
+  pendingLabel: string;
+  icon?: React.ReactNode;
+}) {
+  const [state, formAction, pending] = useActionState(action, NO_STATE);
+  const message = state.fieldErrors?.room ?? state.error ?? null;
+
+  return (
+    <form action={formAction} className="contents">
+      <input type="hidden" name="courseId" value={courseId} />
+      {sessionId ? (
+        <input type="hidden" name="sessionId" value={sessionId} />
+      ) : null}
+      <button type="submit" disabled={pending} className={className}>
+        {icon}
+        {pending ? pendingLabel : label}
+      </button>
+      {message ? (
+        <p className="mt-2 w-full text-sm text-red-700" role="alert">
+          {message}
+        </p>
+      ) : null}
+    </form>
   );
 }
 
