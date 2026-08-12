@@ -71,6 +71,10 @@ export function resolveNotificationDestinationLabel(
     case "QUIZ_REOPENED":
     case "QUIZ_EXCEPTION_GRANTED":
       return "เปิดแบบทดสอบ";
+    case "MEETING_ROOM_OPENED":
+      // Into the course, not out to Meet: the room may already be closed by
+      // the time this is tapped, and the join control is what knows.
+      return "เข้าห้องเรียน";
     case "COMMENT_REPLIED": {
       switch (payloadString(args.payload, "entityKind")) {
         case "ASSIGNMENT":
@@ -209,6 +213,12 @@ export function resolveNotificationHref(
 
     case "ANNOUNCEMENT_POSTED": {
       return `/student/courses/${courseOfferingId}/announcements/${sourceEntityId}`;
+    }
+
+    case "MEETING_ROOM_OPENED": {
+      // The course page, not the Meet link. By the time this is tapped the
+      // room may be shut, and the join control is the thing that knows.
+      return `/student/courses/${courseOfferingId}`;
     }
 
     case "COMMENT_REPLIED": {

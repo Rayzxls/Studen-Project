@@ -114,6 +114,7 @@ model User {
   teacherInvitesRevoked   TeacherInvite[]         @relation("TeacherInviteRevokedBy")
   guideToursCompleted     GuideTourCompletion[]
   webPushSubscriptions    WebPushSubscription[]
+  meetingPresences        MeetingPresence[]
 
   @@index([role])
   @@index([accountStatus])
@@ -566,13 +567,54 @@ model Session {
   createdAt   DateTime @default(now())
   createdById String // Teacher who opened the session (Restrict via Teacher FK enforced at lib layer)
 
-  records AttendanceRecord[]
+  // The live online room (ADR-0053). Distinct from opening the session itself:
+  // a class that meets in a physical room opens a Session for attendance and
+  // never opens an online room. Both null = never opened; opened non-null with
+  // closed null = open right now. Reopening overwrites, so these describe the
+  // latest interval rather than every one.
+  roomOpenedAt DateTime?
+  roomClosedAt DateTime?
+
+  records  AttendanceRecord[]
+  presence MeetingPresence[]
 
   // Prevents race-condition double-create from concurrent "เปิดคาบ" clicks.
   @@unique([courseOfferingId, scheduledStart])
   // Grid list query: "Sessions of this course, newest first"
   @@index([courseOfferingId, scheduledStart])
   @@index([timetableSlotId])
+  // "Does this course have a room open right now?" — asked by every student
+  // poll, so it must not scan the course's whole session history.
+  @@index([courseOfferingId, roomOpenedAt])
+}
+
+/// Who is in the online room, and how present they are (ADR-0053).
+///
+/// Deliberately not named for attendance. A row here says a person pressed
+/// Join and their tab has reported in since; it is not evidence they attended,
+/// and ADR-0052's rule that only a teacher writes an AttendanceRecord is
+/// unaffected by anything in this table.
+///
+/// The three states the rail shows are derived from the two timestamps rather
+/// than stored, so a stale row decays into "away" on its own instead of
+/// needing a sweeper to correct it.
+model MeetingPresence {
+  id        String  @id @default(cuid())
+  sessionId String
+  session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  joinedAt DateTime @default(now())
+  /// Any heartbeat, focused or not. Silence here means the tab is gone.
+  lastSeenAt DateTime
+  /// Heartbeat while the tab was frontmost. Drives the away/moon threshold.
+  lastActiveAt DateTime
+
+  // One row per person per session; rejoining updates rather than stacks.
+  @@unique([sessionId, userId])
+  // Rendering the rail: everyone in this session, most recently seen first.
+  @@index([sessionId, lastSeenAt])
 }
 
 enum AttendanceStatus {
@@ -1163,6 +1205,8 @@ enum NotificationKind {
   // Quiz lifecycle (Release C)
   QUIZ_REOPENED
   QUIZ_EXCEPTION_GRANTED
+  // The teacher opened the period's online room (ADR-0053). Broadcast.
+  MEETING_ROOM_OPENED
 }
 
 enum NotifEntityType {
@@ -1174,6 +1218,7 @@ enum NotifEntityType {
   COMMENT
   ENROLLMENT // for CLASS_CODE_JOINED
   QUIZ
+  SESSION // for MEETING_ROOM_OPENED — the period whose room was opened
 }
 
 model Notification {

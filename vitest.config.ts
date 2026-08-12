@@ -18,6 +18,10 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": resolve(__dirname, "./"),
+      // The real package throws unless React is resolving it inside a Server
+      // Component. The guard still holds where it matters — a client bundle
+      // importing a server-only module fails the build.
+      "server-only": resolve(__dirname, "./tests/helpers/server-only-stub.ts"),
     },
   },
 });

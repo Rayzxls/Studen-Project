@@ -38,6 +38,14 @@ export const studentCourseTabs = (courseId: string): CourseTab[] => [
     icon: "assignments",
   },
   {
+    // Always present, even between classes. A tab that appears only while a
+    // room is open is a tab nobody learns the position of, and the page says
+    // plainly when there is nothing to join.
+    label: "ห้องออนไลน์",
+    href: `/student/courses/${courseId}/meeting`,
+    icon: "meeting",
+  },
+  {
     label: "เพื่อนร่วมห้อง",
     href: `/student/courses/${courseId}/members`,
     icon: "members",
