@@ -41,6 +41,7 @@ export function Stage({
   onMediaChange,
   onConnected,
   selfPanel,
+  chatContainer,
 }: {
   sessionId: string | null;
   enabled: boolean;
@@ -48,6 +49,7 @@ export function Stage({
   onConnected?: () => void;
   /** Rendered inside the connection, so the device controls can reach it. */
   selfPanel: SelfPanelProps;
+  chatContainer?: HTMLElement | null;
 }) {
   const [unavailable, setUnavailable] = useState(false);
 
@@ -59,6 +61,7 @@ export function Stage({
         onMediaChange={onMediaChange}
         onConnected={onConnected}
         selfPanel={selfPanel}
+        chatContainer={chatContainer}
       />
     );
   }

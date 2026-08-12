@@ -45,6 +45,9 @@ export function RoomWorkspace({
   const { room, busy, error, blockedUrl, open, join, markPresent } =
     useLiveRoom(courseId);
   const [media, setMedia] = useState<RoomMediaState>(NO_MEDIA_STATE);
+  // The chat lives in the rail but needs the stage's connection, so the rail
+  // lends it a node to draw into rather than moving into the stage.
+  const [chatSlot, setChatSlot] = useState<HTMLDivElement | null>(null);
   // Stable so the reporter's effect fires on a real change, not every render.
   const onMediaChange = useCallback(
     (next: RoomMediaState) => setMedia(next),
@@ -97,6 +100,7 @@ export function RoomWorkspace({
              absent. */
           onConnected={markPresent}
           selfPanel={selfPanel}
+          chatContainer={chatSlot}
         />
 
         {/* Without a stage nothing else renders the panel, so it lives here. */}
@@ -124,6 +128,7 @@ export function RoomWorkspace({
 
       <aside className="card p-4 lg:sticky lg:top-24 lg:h-fit">
         <PresenceRail participants={room.participants} media={media} />
+        <div ref={setChatSlot} />
       </aside>
     </div>
   );

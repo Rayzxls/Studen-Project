@@ -24,6 +24,7 @@ import {
 
 import { StateToggle } from "@/components/meeting/state-toggle";
 import type { RoomMediaState } from "@/components/meeting/room-media";
+import { RoomChat } from "@/components/meeting/room-chat";
 import { SelfPanel } from "@/components/meeting/self-panel";
 import type { ComponentProps } from "react";
 
@@ -46,6 +47,7 @@ export function StageLive({
   onMediaChange,
   onConnected,
   selfPanel,
+  chatContainer,
 }: {
   sessionId: string;
   onUnavailable: () => void;
@@ -58,6 +60,8 @@ export function StageLive({
   /** Fired once the stage is live — connecting is how you enter the room. */
   onConnected?: () => void;
   selfPanel: ComponentProps<typeof SelfPanel>;
+  /** Where the chat panel should appear — a node in the right rail. */
+  chatContainer?: HTMLElement | null;
 }) {
   const [auth, setAuth] = useState<{
     token: string;
@@ -120,6 +124,9 @@ export function StageLive({
         onMediaChange={onMediaChange}
         selfPanel={selfPanel}
       />
+      {/* Rendered here for the connection, drawn in the rail through a portal
+          (ADR-0055). */}
+      <RoomChat container={chatContainer ?? null} />
     </LiveKitRoom>
   );
 }
