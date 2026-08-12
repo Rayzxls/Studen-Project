@@ -61,6 +61,8 @@ export function LiveRoomCard({
   const [room, setRoom] = useState<RoomState | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Set only when the popup was blocked, so the link becomes the way in. */
+  const [blockedUrl, setBlockedUrl] = useState<string | null>(null);
   const hasJoined = useRef(false);
 
   const poll = useCallback(async () => {
@@ -145,9 +147,16 @@ export function LiveRoomCard({
     setBusy(true);
     setError(null);
 
-    // Opened synchronously on the click. A tab opened after the await is a
-    // popup as far as the browser is concerned, and gets blocked.
-    const tab = window.open("", "_blank", "noopener,noreferrer");
+    // Opened synchronously on the click, because a tab opened after the await
+    // is a popup as far as the browser is concerned and gets blocked.
+    //
+    // No "noopener" here, deliberately: that feature makes window.open return
+    // null by design, which loses the handle this whole approach depends on.
+    // Passing it left a stray about:blank behind on every press and sent the
+    // current tab to Meet instead. The opener link is severed on the child
+    // below, which is the property noopener was wanted for.
+    const tab = window.open("", "_blank");
+    if (tab) tab.opener = null;
 
     try {
       const res = await fetch(endpoint, { method: "POST" });
@@ -158,8 +167,14 @@ export function LiveRoomCard({
       }
       const { meetingUrl } = (await res.json()) as { meetingUrl: string };
       hasJoined.current = true;
-      if (tab) tab.location.href = meetingUrl;
-      else window.location.href = meetingUrl;
+      if (tab) {
+        tab.location.href = meetingUrl;
+      } else {
+        // Popup blocked. Offer the link rather than navigating this tab away:
+        // the room is already open either way, and yanking a teacher out of
+        // the classroom is worse than asking for one more click.
+        setBlockedUrl(meetingUrl);
+      }
       void poll();
     } catch {
       tab?.close();
@@ -203,6 +218,19 @@ export function LiveRoomCard({
           {error ? (
             <p className="mt-3 text-sm text-red-700" role="alert">
               {error}
+            </p>
+          ) : null}
+          {blockedUrl ? (
+            <p className="mt-3 text-sm text-ink-soft">
+              เบราว์เซอร์บล็อกการเปิดแท็บใหม่ —{" "}
+              <a
+                href={blockedUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-blue-700 underline underline-offset-2"
+              >
+                เปิดห้อง Meet
+              </a>
             </p>
           ) : null}
         </section>
@@ -255,6 +283,19 @@ export function LiveRoomCard({
           {error ? (
             <p className="mt-3 text-sm text-red-700" role="alert">
               {error}
+            </p>
+          ) : null}
+          {blockedUrl ? (
+            <p className="mt-3 text-sm text-ink-soft">
+              เบราว์เซอร์บล็อกการเปิดแท็บใหม่ —{" "}
+              <a
+                href={blockedUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-blue-700 underline underline-offset-2"
+              >
+                เปิดห้อง Meet
+              </a>
             </p>
           ) : null}
         </div>
