@@ -71,6 +71,22 @@ export function StageLive({
     canPresent: boolean;
   } | null>(null);
 
+  /**
+   * The callback is a way to report a failure, not an input to the request.
+   *
+   * Holding it in a ref is what keeps the session the effect's only real
+   * dependency. With it in the dependency array, an inline arrow from the
+   * caller re-ran the whole effect on every render — and the room re-renders
+   * every three seconds, because the state poll always sets a fresh object.
+   * Production was minting a LiveKit access token per participant per three
+   * seconds, each one a signed credential good for three hours, and handing
+   * `LiveKitRoom` a new `token` prop at the same cadence.
+   */
+  const onUnavailableRef = useRef(onUnavailable);
+  useEffect(() => {
+    onUnavailableRef.current = onUnavailable;
+  });
+
   useEffect(() => {
     let cancelled = false;
 
@@ -81,7 +97,7 @@ export function StageLive({
           { method: "POST" }
         );
         if (!res.ok) {
-          if (!cancelled) onUnavailable();
+          if (!cancelled) onUnavailableRef.current();
           return;
         }
         const data = (await res.json()) as {
@@ -91,7 +107,7 @@ export function StageLive({
         };
         if (!cancelled) setAuth(data);
       } catch {
-        if (!cancelled) onUnavailable();
+        if (!cancelled) onUnavailableRef.current();
       }
     };
 
@@ -100,7 +116,7 @@ export function StageLive({
       cancelled = true;
       window.clearTimeout(id);
     };
-  }, [sessionId, onUnavailable]);
+  }, [sessionId]);
 
   if (!auth) {
     return (
