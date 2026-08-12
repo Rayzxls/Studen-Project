@@ -42,7 +42,8 @@ export function RoomWorkspace({
     profileImageId: string | null;
   };
 }) {
-  const { room, busy, error, blockedUrl, open, join } = useLiveRoom(courseId);
+  const { room, busy, error, blockedUrl, open, join, markPresent } =
+    useLiveRoom(courseId);
   const [media, setMedia] = useState<RoomMediaState>(NO_MEDIA_STATE);
   // Stable so the reporter's effect fires on a real change, not every render.
   const onMediaChange = useCallback(
@@ -78,6 +79,10 @@ export function RoomWorkspace({
           sessionId={room.sessionId}
           enabled={stageEnabled}
           onMediaChange={onMediaChange}
+          /* Connecting to the stage is entering the room. Without this a person
+             could hear and be heard while the roster still said they were
+             absent. */
+          onConnected={markPresent}
         />
         <SelfPanel
           self={self}
@@ -85,6 +90,10 @@ export function RoomWorkspace({
           speaking={media.speaking.includes(self.userId)}
           busy={busy}
           onEnter={join}
+          /* With a stage there is nowhere to go back to — the room is on this
+             page. Without one the button still earns its place: being counted
+             in the room says nothing about whether the Meet tab is still open. */
+          canReEnter={!stageEnabled}
         />
         {error ? (
           <p className="text-sm text-red-700" role="alert">
@@ -126,13 +135,19 @@ function SelfPanel({
   speaking,
   busy,
   onEnter,
+  canReEnter,
 }: {
   self: { userId: string; name: string; profileImageId: string | null };
   inRoom: boolean;
   speaking: boolean;
   busy: boolean;
   onEnter: () => void;
+  /** Whether "go back in" means anything once you are already counted in. */
+  canReEnter: boolean;
 }) {
+  // A button offering to put you somewhere you already are is a button that
+  // makes a reader doubt the line above it.
+  const showEnter = !inRoom || canReEnter;
   return (
     <div className="card flex flex-wrap items-center gap-3 p-3">
       <SpeakingAvatar
@@ -152,15 +167,17 @@ function SelfPanel({
         </p>
       </div>
 
-      <button
-        type="button"
-        onClick={onEnter}
-        disabled={busy}
-        className="btn-primary ml-auto min-h-11"
-      >
-        <Video className="h-4 w-4" aria-hidden="true" />
-        {busy ? "กำลังเข้าห้อง…" : inRoom ? "กลับเข้าห้อง" : "เข้าห้องเรียน"}
-      </button>
+      {showEnter ? (
+        <button
+          type="button"
+          onClick={onEnter}
+          disabled={busy}
+          className="btn-primary ml-auto min-h-11"
+        >
+          <Video className="h-4 w-4" aria-hidden="true" />
+          {busy ? "กำลังเข้าห้อง…" : inRoom ? "กลับเข้าห้อง" : "เข้าห้องเรียน"}
+        </button>
+      ) : null}
     </div>
   );
 }

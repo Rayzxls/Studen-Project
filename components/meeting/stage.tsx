@@ -35,10 +35,12 @@ export function Stage({
   sessionId,
   enabled,
   onMediaChange,
+  onConnected,
 }: {
   sessionId: string | null;
   enabled: boolean;
   onMediaChange?: (state: RoomMediaState) => void;
+  onConnected?: () => void;
 }) {
   const [unavailable, setUnavailable] = useState(false);
 
@@ -48,6 +50,7 @@ export function Stage({
         sessionId={sessionId}
         onUnavailable={() => setUnavailable(true)}
         onMediaChange={onMediaChange}
+        onConnected={onConnected}
       />
     );
   }

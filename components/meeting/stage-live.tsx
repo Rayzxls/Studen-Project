@@ -42,6 +42,7 @@ export function StageLive({
   sessionId,
   onUnavailable,
   onMediaChange,
+  onConnected,
 }: {
   sessionId: string;
   onUnavailable: () => void;
@@ -51,6 +52,8 @@ export function StageLive({
    * roster and the self panel live outside this context.
    */
   onMediaChange?: (state: RoomMediaState) => void;
+  /** Fired once the stage is live — connecting is how you enter the room. */
+  onConnected?: () => void;
 }) {
   const [auth, setAuth] = useState<{
     token: string;
@@ -104,6 +107,7 @@ export function StageLive({
       connect
       audio={false}
       video={false}
+      onConnected={onConnected}
       onError={onUnavailable}
       className="contents"
     >
@@ -121,6 +125,8 @@ function StageSurface({
 }: {
   canPresent: boolean;
   onMediaChange?: (state: RoomMediaState) => void;
+  /** Fired once the stage is live — connecting is how you enter the room. */
+  onConnected?: () => void;
 }) {
   const screenShares = useTracks([Track.Source.ScreenShare], {
     onlySubscribed: true,

@@ -21,6 +21,12 @@ export interface LiveRoom {
   open: () => void;
   /** Anyone in the course: walk into a room that is already open. */
   join: () => void;
+  /**
+   * Record presence without going anywhere. For the stage, where connecting is
+   * itself the act of entering and there is no tab to open — using `join` here
+   * would flash a blank window open and shut.
+   */
+  markPresent: () => void;
 }
 
 /**
@@ -166,6 +172,17 @@ export function useLiveRoom(courseId: string): LiveRoom {
     [busy, poll]
   );
 
+  const markPresent = useCallback(() => {
+    if (!sessionId || hasJoined.current) return;
+    hasJoined.current = true;
+    void fetch(`/api/meeting/session/${sessionId}/join`, { method: "POST" })
+      .then(() => poll())
+      .catch(() => {
+        // Let the next attempt try again rather than stranding the flag.
+        hasJoined.current = false;
+      });
+  }, [sessionId, poll]);
+
   const open = useCallback(() => {
     void enterRoom(
       `/api/meeting/course/${courseId}/open`,
@@ -181,5 +198,5 @@ export function useLiveRoom(courseId: string): LiveRoom {
     );
   }, [sessionId, enterRoom]);
 
-  return { room, busy, error, blockedUrl, open, join };
+  return { room, busy, error, blockedUrl, open, join, markPresent };
 }
