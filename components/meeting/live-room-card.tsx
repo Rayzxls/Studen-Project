@@ -42,13 +42,14 @@ interface WireRoomState extends Omit<RoomState, "openedAt"> {
 export function LiveRoomCard({
   courseId,
   isTeacher,
-  openAction,
+  canOpen = false,
   closeAction,
   showWhenClosed = false,
 }: {
   courseId: string;
   isTeacher: boolean;
-  openAction?: RoomAction;
+  /** Teacher-only, and only where starting a class belongs. */
+  canOpen?: boolean;
   closeAction?: RoomAction;
   /**
    * On its own tab the card is the whole page, so a shut room has to say so.
@@ -58,7 +59,7 @@ export function LiveRoomCard({
   showWhenClosed?: boolean;
 }) {
   const [room, setRoom] = useState<RoomState | null>(null);
-  const [joining, setJoining] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const hasJoined = useRef(false);
 
@@ -132,9 +133,16 @@ export function LiveRoomCard({
     };
   }, [sessionId]);
 
-  async function join() {
-    if (!sessionId || joining) return;
-    setJoining(true);
+  /**
+   * Walk into Meet.
+   *
+   * `endpoint` is the only difference between a student joining a room that is
+   * already open and a teacher opening one — both end with the same tab going
+   * to the same URL, which is the point: one press, then you are in the class.
+   */
+  async function enterRoom(endpoint: string, failure: string) {
+    if (busy) return;
+    setBusy(true);
     setError(null);
 
     // Opened synchronously on the click. A tab opened after the await is a
@@ -142,12 +150,10 @@ export function LiveRoomCard({
     const tab = window.open("", "_blank", "noopener,noreferrer");
 
     try {
-      const res = await fetch(`/api/meeting/session/${sessionId}/join`, {
-        method: "POST",
-      });
+      const res = await fetch(endpoint, { method: "POST" });
       if (!res.ok) {
         tab?.close();
-        setError("เข้าห้องไม่ได้ ห้องอาจถูกปิดไปแล้ว");
+        setError(failure);
         return;
       }
       const { meetingUrl } = (await res.json()) as { meetingUrl: string };
@@ -157,16 +163,16 @@ export function LiveRoomCard({
       void poll();
     } catch {
       tab?.close();
-      setError("เข้าห้องไม่ได้ กรุณาลองใหม่");
+      setError("ทำรายการไม่สำเร็จ กรุณาลองใหม่");
     } finally {
-      setJoining(false);
+      setBusy(false);
     }
   }
 
   if (!room) return null;
 
   if (!room.isOpen) {
-    if (isTeacher && openAction) {
+    if (isTeacher && canOpen) {
       // No link means opening can only fail. Say so instead of offering the
       // button and answering with an error after the press.
       if (!room.hasMeetingLink) {
@@ -179,16 +185,26 @@ export function LiveRoomCard({
 
       return (
         <section className="card p-5 sm:p-6">
-          <Header subtitle="ยังไม่ได้เปิดห้อง นักเรียนจะได้รับแจ้งเตือนเมื่อคุณกดเปิด" />
-          <RoomControl
-            action={openAction}
-            courseId={courseId}
-            sessionId={null}
+          <Header subtitle="กดครั้งเดียว — ห้องเปิด นักเรียนได้รับแจ้งเตือน และคุณเข้า Meet ทันที" />
+          <button
+            type="button"
+            onClick={() =>
+              void enterRoom(
+                `/api/meeting/course/${courseId}/open`,
+                "เปิดห้องไม่สำเร็จ กรุณาลองใหม่"
+              )
+            }
+            disabled={busy}
             className="btn-primary mt-4 min-h-11"
-            label="เปิดห้องเรียนออนไลน์"
-            pendingLabel="กำลังเปิดห้อง…"
-            icon={<DoorOpen className="h-4 w-4" aria-hidden="true" />}
-          />
+          >
+            <DoorOpen className="h-4 w-4" aria-hidden="true" />
+            {busy ? "กำลังเปิดห้อง…" : "เปิดห้องเรียนออนไลน์"}
+          </button>
+          {error ? (
+            <p className="mt-3 text-sm text-red-700" role="alert">
+              {error}
+            </p>
+          ) : null}
         </section>
       );
     }
@@ -211,12 +227,17 @@ export function LiveRoomCard({
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => void join()}
-              disabled={joining}
+              onClick={() =>
+                void enterRoom(
+                  `/api/meeting/session/${sessionId}/join`,
+                  "เข้าห้องไม่ได้ ห้องอาจถูกปิดไปแล้ว"
+                )
+              }
+              disabled={busy}
               className="btn-primary min-h-11"
             >
               <Video className="h-4 w-4" aria-hidden="true" />
-              {joining ? "กำลังเข้าห้อง…" : "เข้าห้องเรียน"}
+              {busy ? "กำลังเข้าห้อง…" : "เข้าห้องเรียน"}
             </button>
 
             {isTeacher && closeAction ? (

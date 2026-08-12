@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { db } from "@/lib/db/client";
 import { Forbidden, ValidationError } from "@/lib/errors";
 import { setCourseMeetingUrl } from "@/lib/meeting/meeting-link";
+import { openRoomNow } from "@/lib/meeting/open-now";
 import {
   closeRoom,
   getRoomState,
@@ -371,5 +372,108 @@ describe("telling the class the room is open", () => {
         where: { kind: "MEETING_ROOM_OPENED", sourceEntityId: sessionId },
       })
     ).resolves.toBe(0);
+  });
+});
+
+describe("starting a class in one press", () => {
+  it("creates the period, opens the room, and hands back the link", async () => {
+    await setCourseMeetingUrl({
+      courseOfferingId: ctx.courseOfferingId,
+      meetingUrl: ROOM,
+      actorUserId: ctx.teacherUserId,
+    });
+
+    const opened = await openRoomNow({
+      courseOfferingId: ctx.courseOfferingId,
+      actorUserId: ctx.teacherUserId,
+    });
+
+    expect(opened.meetingUrl).toBe(ROOM);
+    const state = await getRoomState({
+      courseOfferingId: ctx.courseOfferingId,
+      actorUserId: ctx.teacherUserId,
+    });
+    expect(state.isOpen).toBe(true);
+    expect(state.sessionId).toBe(opened.sessionId);
+  });
+
+  it("puts the teacher in the room they just opened", async () => {
+    // Otherwise the first student to arrive sees an empty rail, which reads as
+    // "nobody is here" at exactly the wrong moment.
+    await setCourseMeetingUrl({
+      courseOfferingId: ctx.courseOfferingId,
+      meetingUrl: ROOM,
+      actorUserId: ctx.teacherUserId,
+    });
+    await openRoomNow({
+      courseOfferingId: ctx.courseOfferingId,
+      actorUserId: ctx.teacherUserId,
+    });
+
+    const state = await getRoomState({
+      courseOfferingId: ctx.courseOfferingId,
+      actorUserId: ctx.teacherUserId,
+    });
+    const teacher = state.participants.find(
+      (p) => p.userId === ctx.teacherUserId
+    );
+    expect(teacher?.isTeacher).toBe(true);
+    expect(teacher?.state).toBe("ACTIVE");
+  });
+
+  it("lands on the same period when pressed twice", async () => {
+    await setCourseMeetingUrl({
+      courseOfferingId: ctx.courseOfferingId,
+      meetingUrl: ROOM,
+      actorUserId: ctx.teacherUserId,
+    });
+    // Someone has to be enrolled for the count below to mean anything: fan-out
+    // writes a row per active enrolment, so an empty course notifies nobody.
+    await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
+
+    const first = await openRoomNow({
+      courseOfferingId: ctx.courseOfferingId,
+      actorUserId: ctx.teacherUserId,
+    });
+    const second = await openRoomNow({
+      courseOfferingId: ctx.courseOfferingId,
+      actorUserId: ctx.teacherUserId,
+    });
+
+    expect(second.sessionId).toBe(first.sessionId);
+    await expect(
+      db.notification.count({
+        where: { kind: "MEETING_ROOM_OPENED", sourceEntityId: first.sessionId },
+      })
+    ).resolves.toBe(1);
+  });
+
+  it("refuses a teacher who does not own the course", async () => {
+    await setCourseMeetingUrl({
+      courseOfferingId: ctx.courseOfferingId,
+      meetingUrl: ROOM,
+      actorUserId: ctx.teacherUserId,
+    });
+    await expect(
+      openRoomNow({
+        courseOfferingId: ctx.courseOfferingId,
+        actorUserId: ctx.otherTeacherUserId,
+      })
+    ).rejects.toBeInstanceOf(Forbidden);
+  });
+
+  it("refuses when the course has no link, before creating anything", async () => {
+    await expect(
+      openRoomNow({
+        courseOfferingId: ctx.courseOfferingId,
+        actorUserId: ctx.teacherUserId,
+      })
+    ).rejects.toBeInstanceOf(ValidationError);
+
+    const state = await getRoomState({
+      courseOfferingId: ctx.courseOfferingId,
+      actorUserId: ctx.teacherUserId,
+    });
+    expect(state.isOpen).toBe(false);
   });
 });

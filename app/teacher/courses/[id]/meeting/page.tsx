@@ -6,7 +6,7 @@ import { MeetingLinkCard } from "@/components/course/meeting-link-card";
 import { requireRole } from "@/lib/auth/guards";
 import { getCourseOfferingForTeacher } from "@/lib/course/queries";
 import { teacherCourseTabs } from "../_tabs";
-import { closeRoomAction, openRoomAction } from "./actions";
+import { closeRoomAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -48,7 +48,7 @@ export default async function TeacherMeetingPage({ params }: PageProps) {
         <LiveRoomCard
           courseId={id}
           isTeacher
-          openAction={openRoomAction}
+          canOpen
           closeAction={closeRoomAction}
           showWhenClosed
         />
