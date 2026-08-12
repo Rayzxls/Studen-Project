@@ -88,7 +88,12 @@ export function RoomWorkspace({
   };
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
+    // The browser floats its sharing notice across the bottom centre of the
+    // screen while a teacher is presenting, and no page can move it. Scrolled
+    // to the end, that lands squarely on the device controls. The room keeps a
+    // band clear at the bottom so the browser's bar has somewhere to sit that
+    // is not on top of the buttons.
+    <div className="grid gap-4 pb-20 lg:grid-cols-[minmax(0,1fr)_280px]">
       <div className="flex min-w-0 flex-col gap-4">
         <Stage
           sessionId={room.sessionId}

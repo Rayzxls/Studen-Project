@@ -6,17 +6,18 @@ import { MonitorX, RefreshCw } from "lucide-react";
 import type { ScreenShare } from "@/components/meeting/use-screen-share";
 
 /**
- * A quiet reminder that you are sharing, and the two things you might want to
- * do about it (ADR-0053).
+ * The room's own sharing indicator, and the two things you might want to do
+ * about it (ADR-0053).
  *
- * Deliberately small and in the corner. The browser puts its own, larger
- * sharing notice across the bottom of the screen and no page can remove it, so
- * anything of ours competing for the same space is two bars saying the same
- * thing. This one stays out of the way and earns its place on the one action
- * the browser's bar does not offer: changing what is shared.
+ * Centred at the **top**, and the position is the whole point. The browser
+ * pins its own sharing notice to the bottom centre of the screen and no page
+ * can move it, hide it or restyle it — it is a mandatory privacy indicator.
+ * Putting ours anywhere near the bottom centre means two bars saying the same
+ * thing in the same place, which is what happened the first time. The top is
+ * the furthest our own indicator can get from the browser's while still being
+ * the thing in the middle that a teacher looks at.
  *
- * Icon-only for the same reason. The words live in the accessible name, where a
- * screen reader needs them and a teacher mid-lesson does not.
+ * `top-20` clears the sticky nav rather than sitting on it.
  *
  * Portalled to `document.body` because `<main>` keeps a transform from
  * `animate-fade-in`'s `both` fill mode, which makes it the containing block for
@@ -36,17 +37,18 @@ export function SharingBar({
 
   return createPortal(
     <div
-      className="fixed bottom-4 right-4 z-50 print:hidden"
+      className="pointer-events-none fixed inset-x-0 top-20 z-50 flex justify-center px-4 print:hidden"
       role="status"
       aria-live="off"
     >
-      <div className="card flex items-center gap-1 rounded-full p-1 pl-3 shadow-card">
+      <div className="card pointer-events-auto flex items-center gap-1 rounded-full p-1 pl-3 shadow-card">
         <span
           className="h-2.5 w-2.5 shrink-0 rounded-full bg-red-500 motion-safe:animate-pulse"
           aria-hidden="true"
         />
-        {/* Carries the state for a screen reader without spending the width. */}
-        <span className="sr-only">กำลังแชร์หน้าจออยู่</span>
+        <span className="px-1 text-sm font-medium text-ink">
+          กำลังแชร์หน้าจออยู่
+        </span>
 
         <button
           type="button"
