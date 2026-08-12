@@ -417,7 +417,7 @@ function OverlapNotice({
       className={`flex items-start gap-2 rounded-xl border px-3 py-2.5 text-xs ${
         danger
           ? "border-red-500/25 bg-red-50 text-red-700"
-          : "border-amber-500/25 bg-amber-50 text-amber-700"
+          : "border-orange-500/25 bg-orange-50 text-orange-700"
       }`}
       role={danger ? "alert" : "status"}
     >
