@@ -34,31 +34,43 @@ type Step = readonly [number, number, number];
  */
 const SOUNDS: Record<RoomSound, readonly Step[]> = {
   join: [
-    [587.33, 0, 0.09],
-    [880, 0.075, 0.11],
+    [783.99, 0, 0.11],
+    [1174.66, 0.09, 0.17],
   ],
   leave: [
-    [880, 0, 0.09],
-    [587.33, 0.075, 0.11],
+    [1174.66, 0, 0.11],
+    [783.99, 0.09, 0.17],
   ],
-  "mic-on": [[880, 0, 0.07]],
-  "mic-off": [[587.33, 0, 0.07]],
-  "ears-on": [[1046.5, 0, 0.07]],
-  "ears-off": [[783.99, 0, 0.07]],
+  "mic-on": [[1046.5, 0, 0.12]],
+  "mic-off": [[698.46, 0, 0.12]],
+  "ears-on": [[1318.51, 0, 0.12]],
+  "ears-off": [[880, 0, 0.12]],
   "share-start": [
-    [587.33, 0, 0.07],
-    [783.99, 0.06, 0.07],
-    [1046.5, 0.12, 0.12],
+    [783.99, 0, 0.1],
+    [1046.5, 0.08, 0.1],
+    [1318.51, 0.16, 0.2],
   ],
   "share-stop": [
-    [1046.5, 0, 0.07],
-    [783.99, 0.06, 0.07],
-    [587.33, 0.12, 0.12],
+    [1318.51, 0, 0.1],
+    [1046.5, 0.08, 0.1],
+    [783.99, 0.16, 0.2],
   ],
 };
 
-/** Quiet enough to sit under a teacher talking, not under a shared video. */
-const PEAK_GAIN = 0.06;
+/**
+ * Loud enough to be heard over a lesson, which the first attempt at 0.06 was
+ * not. This is the knob: raise it to make every sound louder, lower it to make
+ * them all quieter.
+ */
+const PEAK_GAIN = 0.25;
+
+/**
+ * A triangle rather than a sine. Small speakers reproduce a pure sine poorly —
+ * it is the quietest possible waveform for a given amplitude, having no
+ * harmonics to carry it — and a laptop is what a teacher is using. Triangle
+ * keeps the softness while giving the speaker something to work with.
+ */
+const WAVE: OscillatorType = "triangle";
 
 interface WebkitWindow {
   webkitAudioContext?: typeof AudioContext;
@@ -88,15 +100,27 @@ export function playSound(sound: RoomSound): void {
   const ctx = context();
   if (!ctx) return;
 
-  // Contexts start suspended until the page has seen a gesture. Entering a
-  // room is a click, so by the time any of these fire there has been one.
-  if (ctx.state === "suspended") void ctx.resume().catch(() => {});
+  // A suspended context has a frozen clock. Scheduling against it and *then*
+  // resuming means every note was booked for a moment that has already passed
+  // by the time the clock starts, which is silence rather than a late sound —
+  // so wait for it to actually be running before booking anything.
+  if (ctx.state === "suspended") {
+    void ctx
+      .resume()
+      .then(() => schedule(ctx, sound))
+      .catch(() => {});
+    return;
+  }
 
+  schedule(ctx, sound);
+}
+
+function schedule(ctx: AudioContext, sound: RoomSound): void {
   const now = ctx.currentTime;
   for (const [frequency, at, length] of SOUNDS[sound]) {
     const oscillator = ctx.createOscillator();
     const gain = ctx.createGain();
-    oscillator.type = "sine";
+    oscillator.type = WAVE;
     oscillator.frequency.setValueAtTime(frequency, now + at);
 
     // Ramped rather than switched: a square-edged start and stop is a click,
