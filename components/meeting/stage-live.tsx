@@ -20,6 +20,8 @@ import {
   VolumeX,
 } from "lucide-react";
 
+import { StateToggle } from "@/components/meeting/state-toggle";
+
 import "@livekit/components-styles";
 
 /**
@@ -183,34 +185,36 @@ function RoomControls({ canPresent }: { canPresent: boolean }) {
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <button
-        type="button"
-        onClick={() => void toggleMic()}
+      <StateToggle
+        on={micOn}
         disabled={micPending}
-        aria-pressed={micOn}
-        className={micOn ? "btn-secondary min-h-11" : "btn-primary min-h-11"}
-      >
-        {micOn ? (
-          <Mic className="h-4 w-4" aria-hidden="true" />
-        ) : (
-          <MicOff className="h-4 w-4" aria-hidden="true" />
-        )}
-        {micOn ? "ปิดไมค์" : "เปิดไมค์"}
-      </button>
+        onClick={() => void toggleMic()}
+        onLabel="ไมค์เปิด"
+        offLabel="ไมค์ปิด"
+        actionLabel={micOn ? "ปิดไมค์" : "เปิดไมค์"}
+        icon={
+          micOn ? (
+            <Mic className="h-4 w-4" aria-hidden="true" />
+          ) : (
+            <MicOff className="h-4 w-4" aria-hidden="true" />
+          )
+        }
+      />
 
-      <button
-        type="button"
+      <StateToggle
+        on={!deafened}
         onClick={() => setDeafened((v) => !v)}
-        aria-pressed={deafened}
-        className="btn-secondary min-h-11"
-      >
-        {deafened ? (
-          <VolumeX className="h-4 w-4" aria-hidden="true" />
-        ) : (
-          <Volume2 className="h-4 w-4" aria-hidden="true" />
-        )}
-        {deafened ? "เปิดเสียง" : "ปิดเสียง"}
-      </button>
+        onLabel="เสียงเปิด"
+        offLabel="เสียงปิด"
+        actionLabel={deafened ? "เปิดเสียงห้อง" : "ปิดเสียงห้อง"}
+        icon={
+          deafened ? (
+            <VolumeX className="h-4 w-4" aria-hidden="true" />
+          ) : (
+            <Volume2 className="h-4 w-4" aria-hidden="true" />
+          )
+        }
+      />
 
       {canPresent ? <ShareControl /> : null}
 
@@ -259,18 +263,20 @@ function ShareControl() {
         type="button"
         onClick={() => void toggle()}
         disabled={pending}
-        className={sharing ? "btn-secondary min-h-11" : "btn-primary min-h-11"}
+        aria-pressed={sharing}
+        className={
+          "inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-medium transition-colors disabled:opacity-60 " +
+          (sharing
+            ? "border-green-500/25 bg-green-50 text-green-700 hover:bg-green-500/10"
+            : "border-hairline-strong bg-surface text-ink hover:bg-black/[0.04]")
+        }
       >
         {sharing ? (
           <MonitorX className="h-4 w-4" aria-hidden="true" />
         ) : (
           <MonitorUp className="h-4 w-4" aria-hidden="true" />
         )}
-        {pending
-          ? "กำลังดำเนินการ…"
-          : sharing
-            ? "หยุดแชร์หน้าจอ"
-            : "แชร์หน้าจอ"}
+        {pending ? "กำลังดำเนินการ…" : sharing ? "กำลังแชร์จอ" : "แชร์หน้าจอ"}
       </button>
 
       {failed ? (
