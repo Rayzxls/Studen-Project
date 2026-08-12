@@ -24,6 +24,8 @@ import {
 
 import { StateToggle } from "@/components/meeting/state-toggle";
 import type { RoomMediaState } from "@/components/meeting/room-media";
+import { SelfPanel } from "@/components/meeting/self-panel";
+import type { ComponentProps } from "react";
 
 import "@livekit/components-styles";
 
@@ -43,6 +45,7 @@ export function StageLive({
   onUnavailable,
   onMediaChange,
   onConnected,
+  selfPanel,
 }: {
   sessionId: string;
   onUnavailable: () => void;
@@ -54,6 +57,7 @@ export function StageLive({
   onMediaChange?: (state: RoomMediaState) => void;
   /** Fired once the stage is live — connecting is how you enter the room. */
   onConnected?: () => void;
+  selfPanel: ComponentProps<typeof SelfPanel>;
 }) {
   const [auth, setAuth] = useState<{
     token: string;
@@ -114,6 +118,7 @@ export function StageLive({
       <StageSurface
         canPresent={auth.canPresent}
         onMediaChange={onMediaChange}
+        selfPanel={selfPanel}
       />
     </LiveKitRoom>
   );
@@ -122,11 +127,11 @@ export function StageLive({
 function StageSurface({
   canPresent,
   onMediaChange,
+  selfPanel,
 }: {
   canPresent: boolean;
   onMediaChange?: (state: RoomMediaState) => void;
-  /** Fired once the stage is live — connecting is how you enter the room. */
-  onConnected?: () => void;
+  selfPanel: ComponentProps<typeof SelfPanel>;
 }) {
   const screenShares = useTracks([Track.Source.ScreenShare], {
     onlySubscribed: true,
@@ -146,7 +151,7 @@ function StageSurface({
       <div
         className={
           "card relative grid place-items-center overflow-hidden p-0 " +
-          (full ? "min-h-0 flex-1" : "min-h-72")
+          (full ? "min-h-0 flex-1" : "min-h-[58vh] lg:min-h-[62vh]")
         }
       >
         {shown ? (
@@ -176,10 +181,17 @@ function StageSurface({
         </button>
       </div>
 
-      <RoomControls
-        canPresent={canPresent}
-        deafened={deafened}
-        setDeafened={setDeafened}
+      {/* The controls live in the self panel: they act on you, and that is
+          where your own face already is. */}
+      <SelfPanel
+        {...selfPanel}
+        controls={
+          <RoomControls
+            canPresent={canPresent}
+            deafened={deafened}
+            setDeafened={setDeafened}
+          />
+        }
       />
       {onMediaChange ? (
         <MediaReporter deafened={deafened} onChange={onMediaChange} />

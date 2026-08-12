@@ -5,6 +5,10 @@ import dynamic from "next/dynamic";
 import { MonitorUp } from "lucide-react";
 
 import type { RoomMediaState } from "@/components/meeting/room-media";
+import { SelfPanel } from "@/components/meeting/self-panel";
+import type { ComponentProps } from "react";
+
+type SelfPanelProps = ComponentProps<typeof SelfPanel>;
 
 /**
  * The stage, or the hole where it will be (ADR-0053).
@@ -36,11 +40,14 @@ export function Stage({
   enabled,
   onMediaChange,
   onConnected,
+  selfPanel,
 }: {
   sessionId: string | null;
   enabled: boolean;
   onMediaChange?: (state: RoomMediaState) => void;
   onConnected?: () => void;
+  /** Rendered inside the connection, so the device controls can reach it. */
+  selfPanel: SelfPanelProps;
 }) {
   const [unavailable, setUnavailable] = useState(false);
 
@@ -51,11 +58,19 @@ export function Stage({
         onUnavailable={() => setUnavailable(true)}
         onMediaChange={onMediaChange}
         onConnected={onConnected}
+        selfPanel={selfPanel}
       />
     );
   }
 
-  return <StagePlaceholder reason={unavailable ? "failed" : "off"} />;
+  // The panel still belongs on screen when the stage is not carrying the
+  // class; it simply has no microphone to offer.
+  return (
+    <>
+      <StagePlaceholder reason={unavailable ? "failed" : "off"} />
+      <SelfPanel {...selfPanel} />
+    </>
+  );
 }
 
 /**

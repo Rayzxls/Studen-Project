@@ -8,7 +8,7 @@ import {
   NO_MEDIA_STATE,
   type RoomMediaState,
 } from "@/components/meeting/room-media";
-import { SpeakingAvatar } from "@/components/meeting/speaking-avatar";
+import { SelfPanel } from "@/components/meeting/self-panel";
 import { Stage } from "@/components/meeting/stage";
 import { useLiveRoom } from "@/components/meeting/use-live-room";
 
@@ -72,8 +72,21 @@ export function RoomWorkspace({
     );
   }
 
+  const selfPanel = {
+    self,
+    inRoom: room.participants.some((p) => p.userId === self.userId),
+    speaking: media.speaking.includes(self.userId),
+    busy,
+    onEnter: join,
+    /* With a stage there is nowhere to go back to — the room is on this page.
+       Without one the button still earns its place: being counted in the room
+       says nothing about whether the Meet tab is still open. */
+    showEnter:
+      !room.participants.some((p) => p.userId === self.userId) || !stageEnabled,
+  };
+
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
       <div className="flex min-w-0 flex-col gap-4">
         <Stage
           sessionId={room.sessionId}
@@ -83,18 +96,12 @@ export function RoomWorkspace({
              could hear and be heard while the roster still said they were
              absent. */
           onConnected={markPresent}
+          selfPanel={selfPanel}
         />
-        <SelfPanel
-          self={self}
-          inRoom={room.participants.some((p) => p.userId === self.userId)}
-          speaking={media.speaking.includes(self.userId)}
-          busy={busy}
-          onEnter={join}
-          /* With a stage there is nowhere to go back to — the room is on this
-             page. Without one the button still earns its place: being counted
-             in the room says nothing about whether the Meet tab is still open. */
-          canReEnter={!stageEnabled}
-        />
+
+        {/* Without a stage nothing else renders the panel, so it lives here. */}
+        {stageEnabled ? null : <SelfPanel {...selfPanel} />}
+
         {error ? (
           <p className="text-sm text-red-700" role="alert">
             {error}
@@ -118,66 +125,6 @@ export function RoomWorkspace({
       <aside className="card p-4 lg:sticky lg:top-24 lg:h-fit">
         <PresenceRail participants={room.participants} media={media} />
       </aside>
-    </div>
-  );
-}
-
-/**
- * Your own strip: who you are, and the controls that act on you.
- *
- * Bottom-left because that is where Discord puts it, and because the thing it
- * really carries is device control rather than identity — the name is there so
- * you know which account is about to walk into a room full of children.
- */
-function SelfPanel({
-  self,
-  inRoom,
-  speaking,
-  busy,
-  onEnter,
-  canReEnter,
-}: {
-  self: { userId: string; name: string; profileImageId: string | null };
-  inRoom: boolean;
-  speaking: boolean;
-  busy: boolean;
-  onEnter: () => void;
-  /** Whether "go back in" means anything once you are already counted in. */
-  canReEnter: boolean;
-}) {
-  // A button offering to put you somewhere you already are is a button that
-  // makes a reader doubt the line above it.
-  const showEnter = !inRoom || canReEnter;
-  return (
-    <div className="card flex flex-wrap items-center gap-3 p-3">
-      <SpeakingAvatar
-        userId={self.userId}
-        profileImageId={self.profileImageId}
-        size={36}
-        speaking={speaking}
-      />
-      <div className="min-w-0">
-        <p className="truncate text-sm font-medium text-ink">{self.name}</p>
-        <p className="text-xs text-ink-mute">
-          {speaking
-            ? "กำลังพูด"
-            : inRoom
-              ? "อยู่ในห้องแล้ว"
-              : "ยังไม่ได้เข้าห้อง"}
-        </p>
-      </div>
-
-      {showEnter ? (
-        <button
-          type="button"
-          onClick={onEnter}
-          disabled={busy}
-          className="btn-primary ml-auto min-h-11"
-        >
-          <Video className="h-4 w-4" aria-hidden="true" />
-          {busy ? "กำลังเข้าห้อง…" : inRoom ? "กลับเข้าห้อง" : "เข้าห้องเรียน"}
-        </button>
-      ) : null}
     </div>
   );
 }
