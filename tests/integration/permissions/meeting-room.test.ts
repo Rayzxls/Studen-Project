@@ -10,6 +10,7 @@ import {
   heartbeat,
   joinRoom,
   openRoom,
+  openRoomsForStudent,
   openRoomsForTeacher,
 } from "@/lib/meeting/room";
 import {
@@ -689,5 +690,87 @@ describe("with a stage of our own", () => {
         stageAvailable: true,
       })
     ).rejects.toBeInstanceOf(Forbidden);
+  });
+});
+
+describe("the app-level list of rooms a student can walk into", () => {
+  it("lists a course they are enrolled in", async () => {
+    const sessionId = await withLink();
+    await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
+    });
+
+    const rooms = await openRoomsForStudent({
+      studentUserId: ctx.studentUserId,
+    });
+    expect(rooms.map((r) => r.courseId)).toEqual([ctx.courseOfferingId]);
+  });
+
+  it("shows nothing to someone not in the course", async () => {
+    const sessionId = await withLink();
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
+    });
+
+    await expect(
+      openRoomsForStudent({ studentUserId: ctx.otherStudentUserId })
+    ).resolves.toEqual([]);
+  });
+
+  it("drops a student removed from the course", async () => {
+    // ADR-0052 again: losing the course loses the room, everywhere it appears.
+    const sessionId = await withLink();
+    await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
+    });
+    await db.enrollment.updateMany({
+      where: {
+        studentId: ctx.studentUserId, // dependency-gate-allow(student-id-symbol-review): internal Enrollment foreign key to User.id
+        courseOfferingId: ctx.courseOfferingId,
+      },
+      data: { removedAt: new Date() },
+    });
+
+    await expect(
+      openRoomsForStudent({ studentUserId: ctx.studentUserId })
+    ).resolves.toEqual([]);
+  });
+
+  it("forgets the room once the teacher closes it", async () => {
+    const sessionId = await withLink();
+    await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
+    });
+    await closeRoom({ sessionId, actorUserId: ctx.teacherUserId });
+
+    await expect(
+      openRoomsForStudent({ studentUserId: ctx.studentUserId })
+    ).resolves.toEqual([]);
+  });
+
+  it("hands out no meeting link — that is joinRoom's answer", async () => {
+    const sessionId = await withLink();
+    await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
+    });
+
+    const rooms = await openRoomsForStudent({
+      studentUserId: ctx.studentUserId,
+    });
+    expect(JSON.stringify(rooms)).not.toContain("meet.google.com");
   });
 });

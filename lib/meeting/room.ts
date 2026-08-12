@@ -399,6 +399,64 @@ export async function openRoomsForTeacher(params: {
   }));
 }
 
+/**
+ * Every room a student could walk into right now, across their courses.
+ *
+ * The app-level answer to "is anything happening", which a per-course page
+ * cannot give. Scoped to active enrolments in unarchived courses, so a removed
+ * student loses the listing in the same breath as the course (ADR-0052).
+ *
+ * Deliberately returns no meeting link. Where to go is `joinRoom`'s answer,
+ * behind its own check; this only says a class is on.
+ */
+export async function openRoomsForStudent(params: {
+  studentUserId: string;
+  now?: Date;
+}): Promise<
+  Array<{
+    sessionId: string;
+    courseId: string;
+    courseName: string;
+    openedAt: Date;
+    occupants: number;
+  }>
+> {
+  const now = params.now ?? new Date();
+  const sessions = await db.session.findMany({
+    where: {
+      roomOpenedAt: { not: null },
+      roomClosedAt: null,
+      cancelledAt: null,
+      course: {
+        archivedAt: null,
+        enrollments: {
+          some: {
+            studentId: params.studentUserId, // dependency-gate-allow(student-id-symbol-review): internal Enrollment foreign key to User.id
+            removedAt: null,
+          },
+        },
+      },
+    },
+    orderBy: { roomOpenedAt: "desc" },
+    select: {
+      id: true,
+      roomOpenedAt: true,
+      course: { select: { id: true, name: true } },
+      presence: { select: { lastSeenAt: true, lastActiveAt: true } },
+    },
+  });
+
+  return sessions.map((session) => ({
+    sessionId: session.id,
+    courseId: session.course.id,
+    courseName: session.course.name,
+    openedAt: session.roomOpenedAt as Date,
+    occupants: session.presence.filter(
+      (row) => derivePresenceState(row, now) !== "LEFT"
+    ).length,
+  }));
+}
+
 async function loadSessionForTeacher(sessionId: string, actorUserId: string) {
   const session = await db.session.findUnique({
     where: { id: sessionId },

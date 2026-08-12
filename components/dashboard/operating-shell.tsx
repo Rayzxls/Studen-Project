@@ -12,6 +12,7 @@ import {
   Scale,
   UserRound,
   UsersRound,
+  Video,
 } from "lucide-react";
 
 type DashboardRole = "student" | "teacher";
@@ -30,6 +31,7 @@ function navigationFor(role: DashboardRole, showModeration: boolean) {
             label: "วิชาที่จบไป",
             icon: Archive,
           },
+          { href: "/student/meeting", label: "ห้องออนไลน์", icon: Video },
           { href: "/student/terms", label: "ผลการเรียน", icon: GraduationCap },
           {
             href: "/student/timetable",
@@ -44,6 +46,7 @@ function navigationFor(role: DashboardRole, showModeration: boolean) {
             label: "วิชาที่ยกเลิก",
             icon: Archive,
           },
+          { href: "/teacher/meeting", label: "ห้องออนไลน์", icon: Video },
           {
             href: "/teacher/timetable",
             label: "ตารางสอน",
