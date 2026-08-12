@@ -441,7 +441,25 @@ function ShareControl() {
     setPending(true);
     setFailed(false);
     try {
-      await localParticipant.setScreenShareEnabled(!sharing, { audio: true });
+      await localParticipant.setScreenShareEnabled(!sharing, {
+        audio: true,
+        /**
+         * The picker itself is the browser's, and no page can draw, restyle or
+         * skip it — it is the permission gate for screen capture, and a site
+         * that could fake it could take a screen without asking. What a page
+         * *can* do is shape the choices, so:
+         */
+        // This tab is never what a teacher means to share, and picking it is
+        // the hall-of-mirrors mistake. Take it off the list.
+        selfBrowserSurface: "exclude",
+        // Move to another tab mid-lesson without stopping and starting again.
+        surfaceSwitching: "include",
+        // A video played to the class should carry its sound.
+        systemAudio: "include",
+        // Slides and documents rather than motion: keeps the bitrate on
+        // legible text instead of spending it on frame rate.
+        contentHint: "detail",
+      });
     } catch {
       // Includes the ordinary case of someone dismissing the browser's own
       // picker, which is not worth an alarming message.
@@ -461,7 +479,10 @@ function ShareControl() {
         className={
           "inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-medium transition-colors disabled:opacity-60 " +
           (sharing
-            ? "border-green-500/25 bg-green-50 text-green-700 hover:bg-green-500/10"
+            ? // Red and a verb, because while a share is running this is the
+              // stop button — the one the browser also offers from its own bar,
+              // which cannot be removed but can at least be ignored.
+              "border-red-500/25 bg-red-50 text-red-700 hover:bg-red-500/10"
             : "border-hairline-strong bg-surface text-ink hover:bg-black/[0.04]")
         }
       >
@@ -470,7 +491,15 @@ function ShareControl() {
         ) : (
           <MonitorUp className="h-4 w-4" aria-hidden="true" />
         )}
-        {pending ? "กำลังดำเนินการ…" : sharing ? "กำลังแชร์จอ" : "แชร์หน้าจอ"}
+        {/* The device toggles beside this one show their state; this one shows
+            its verb. It is an action with a consequence, not a mode to read at
+            a glance, and "กำลังแชร์จอ" left the only way to stop looking like a
+            label. */}
+        {pending
+          ? "กำลังดำเนินการ…"
+          : sharing
+            ? "หยุดแชร์หน้าจอ"
+            : "แชร์หน้าจอ"}
       </button>
 
       {failed ? (
