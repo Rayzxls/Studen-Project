@@ -1,12 +1,13 @@
 import { notFound, redirect } from "next/navigation";
 
 import { CourseShell } from "@/components/course/course-shell";
-import { LiveRoomCard } from "@/components/meeting/live-room-card";
 import { MeetingLinkCard } from "@/components/course/meeting-link-card";
+import { RoomWorkspace } from "@/components/meeting/room-workspace";
 import { requireRole } from "@/lib/auth/guards";
 import { getCourseOfferingForTeacher } from "@/lib/course/queries";
+import { db } from "@/lib/db/client";
+import { stageEnabled } from "@/lib/meeting/livekit";
 import { teacherCourseTabs } from "../_tabs";
-import { closeRoomAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -17,12 +18,12 @@ interface PageProps {
 /**
  * The teacher's online room (ADR-0052 for the link, ADR-0053 for the room).
  *
- * A tab of its own because starting a class is a thing a teacher goes to do,
- * and a control they have to hunt for on a dashboard is one they will not use
+ * A tab of its own because starting a class is something a teacher goes to do,
+ * and a control they have to hunt for on a dashboard is one they will not find
  * when a class is already two minutes late.
  *
- * Two cards, in the order the questions arrive: open the room now, and — below
- * it, because it is set once a term — where the room is.
+ * The link editor sits below the room, quiet, because it is set once a term
+ * while the room is opened every lesson.
  */
 export default async function TeacherMeetingPage({ params }: PageProps) {
   let session;
@@ -33,7 +34,13 @@ export default async function TeacherMeetingPage({ params }: PageProps) {
   }
 
   const { id } = await params;
-  const course = await getCourseOfferingForTeacher(id, session.user.id);
+  const [course, me] = await Promise.all([
+    getCourseOfferingForTeacher(id, session.user.id),
+    db.user.findUnique({
+      where: { id: session.user.id },
+      select: { firstName: true, lastName: true, profileImageId: true },
+    }),
+  ]);
   if (!course) notFound();
 
   return (
@@ -45,16 +52,29 @@ export default async function TeacherMeetingPage({ params }: PageProps) {
       tabs={teacherCourseTabs(id)}
     >
       <div className="space-y-6">
-        <LiveRoomCard
+        <RoomWorkspace
           courseId={id}
           isTeacher
-          canOpen
-          closeAction={closeRoomAction}
-          showWhenClosed
+          stageEnabled={stageEnabled()}
+          self={{
+            userId: session.user.id,
+            name: personName(me),
+            profileImageId: me?.profileImageId ?? null,
+          }}
         />
 
         <MeetingLinkCard courseId={id} meetingUrl={course.meetingUrl ?? null} />
       </div>
     </CourseShell>
   );
+}
+
+function personName(
+  person: { firstName: string | null; lastName: string | null } | null
+): string {
+  const name = [person?.firstName, person?.lastName]
+    .filter((part): part is string => Boolean(part && part.trim()))
+    .join(" ")
+    .trim();
+  return name.length > 0 ? name : "บัญชีของคุณ";
 }
