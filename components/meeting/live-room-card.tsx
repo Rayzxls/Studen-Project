@@ -1,17 +1,11 @@
 "use client";
 
-import {
-  useActionState,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useActionState } from "react";
 import { DoorOpen, Video } from "lucide-react";
 
 import { PresenceRail } from "@/components/meeting/presence-rail";
+import { useLiveRoom } from "@/components/meeting/use-live-room";
 import type { RoomActionState } from "@/app/teacher/courses/[id]/meeting/actions";
-import type { RoomState } from "@/lib/meeting/room";
 
 /** The shape both teacher controls share. Absent for a student. */
 export type RoomAction = (
@@ -20,13 +14,6 @@ export type RoomAction = (
 ) => Promise<RoomActionState>;
 
 const NO_STATE: RoomActionState = {};
-
-/** Matches the cadence the room was designed around (ADR-0053). */
-const POLL_MS = 3_000;
-
-interface WireRoomState extends Omit<RoomState, "openedAt"> {
-  openedAt: string | null;
-}
 
 /**
  * The live online room, as it appears on a course page (ADR-0053).
@@ -58,131 +45,7 @@ export function LiveRoomCard({
    */
   showWhenClosed?: boolean;
 }) {
-  const [room, setRoom] = useState<RoomState | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  /** Set only when the popup was blocked, so the link becomes the way in. */
-  const [blockedUrl, setBlockedUrl] = useState<string | null>(null);
-  const hasJoined = useRef(false);
-
-  const poll = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/meeting/course/${courseId}/state`, {
-        cache: "no-store",
-      });
-      if (!res.ok) return;
-      const wire = (await res.json()) as WireRoomState;
-      setRoom({
-        ...wire,
-        openedAt: wire.openedAt ? new Date(wire.openedAt) : null,
-      });
-    } catch {
-      // A dropped poll is not worth telling anyone about; the next one is
-      // three seconds away and the card simply shows its last known state.
-    }
-  }, [courseId]);
-
-  useEffect(() => {
-    let cancelled = false;
-    const tick = () => {
-      if (cancelled) return;
-      void poll();
-    };
-    // Deferred rather than called in the effect body: the first read still
-    // lands within a frame, and the effect itself no longer sets state.
-    const first = window.setTimeout(tick, 0);
-    const id = window.setInterval(tick, POLL_MS);
-    return () => {
-      cancelled = true;
-      window.clearTimeout(first);
-      window.clearInterval(id);
-    };
-  }, [poll]);
-
-  const sessionId = room?.sessionId ?? null;
-
-  // Heartbeat. `document.hasFocus()` rather than `visibilityState` because the
-  // hollow badge means "looking at something else", which includes another
-  // window on top of this one, not only another tab.
-  useEffect(() => {
-    if (!sessionId) return;
-
-    const beat = () => {
-      if (!hasJoined.current) return;
-      void fetch(`/api/meeting/session/${sessionId}/heartbeat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ focused: document.hasFocus() }),
-        keepalive: true,
-      }).catch(() => {
-        // Same as the poll: silence is the right response to one lost beat.
-      });
-    };
-
-    beat();
-    const id = window.setInterval(beat, POLL_MS);
-    // A hidden tab has its timer throttled to roughly once a minute, so send
-    // one immediately on the switch. Without it the badge lags by up to a
-    // minute at exactly the moment it should change.
-    document.addEventListener("visibilitychange", beat);
-    window.addEventListener("focus", beat);
-    window.addEventListener("blur", beat);
-    return () => {
-      window.clearInterval(id);
-      document.removeEventListener("visibilitychange", beat);
-      window.removeEventListener("focus", beat);
-      window.removeEventListener("blur", beat);
-    };
-  }, [sessionId]);
-
-  /**
-   * Walk into Meet.
-   *
-   * `endpoint` is the only difference between a student joining a room that is
-   * already open and a teacher opening one — both end with the same tab going
-   * to the same URL, which is the point: one press, then you are in the class.
-   */
-  async function enterRoom(endpoint: string, failure: string) {
-    if (busy) return;
-    setBusy(true);
-    setError(null);
-
-    // Opened synchronously on the click, because a tab opened after the await
-    // is a popup as far as the browser is concerned and gets blocked.
-    //
-    // No "noopener" here, deliberately: that feature makes window.open return
-    // null by design, which loses the handle this whole approach depends on.
-    // Passing it left a stray about:blank behind on every press and sent the
-    // current tab to Meet instead. The opener link is severed on the child
-    // below, which is the property noopener was wanted for.
-    const tab = window.open("", "_blank");
-    if (tab) tab.opener = null;
-
-    try {
-      const res = await fetch(endpoint, { method: "POST" });
-      if (!res.ok) {
-        tab?.close();
-        setError(failure);
-        return;
-      }
-      const { meetingUrl } = (await res.json()) as { meetingUrl: string };
-      hasJoined.current = true;
-      if (tab) {
-        tab.location.href = meetingUrl;
-      } else {
-        // Popup blocked. Offer the link rather than navigating this tab away:
-        // the room is already open either way, and yanking a teacher out of
-        // the classroom is worse than asking for one more click.
-        setBlockedUrl(meetingUrl);
-      }
-      void poll();
-    } catch {
-      tab?.close();
-      setError("ทำรายการไม่สำเร็จ กรุณาลองใหม่");
-    } finally {
-      setBusy(false);
-    }
-  }
+  const { room, busy, error, blockedUrl, open, join } = useLiveRoom(courseId);
 
   if (!room) return null;
 
@@ -203,12 +66,7 @@ export function LiveRoomCard({
           <Header subtitle="กดครั้งเดียว — ห้องเปิด นักเรียนได้รับแจ้งเตือน และคุณเข้า Meet ทันที" />
           <button
             type="button"
-            onClick={() =>
-              void enterRoom(
-                `/api/meeting/course/${courseId}/open`,
-                "เปิดห้องไม่สำเร็จ กรุณาลองใหม่"
-              )
-            }
+            onClick={open}
             disabled={busy}
             className="btn-primary mt-4 min-h-11"
           >
@@ -255,12 +113,7 @@ export function LiveRoomCard({
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() =>
-                void enterRoom(
-                  `/api/meeting/session/${sessionId}/join`,
-                  "เข้าห้องไม่ได้ ห้องอาจถูกปิดไปแล้ว"
-                )
-              }
+              onClick={join}
               disabled={busy}
               className="btn-primary min-h-11"
             >
@@ -272,7 +125,7 @@ export function LiveRoomCard({
               <RoomControl
                 action={closeAction}
                 courseId={courseId}
-                sessionId={sessionId}
+                sessionId={room.sessionId}
                 className="btn-secondary min-h-11"
                 label="ปิดห้อง"
                 pendingLabel="กำลังปิด…"
