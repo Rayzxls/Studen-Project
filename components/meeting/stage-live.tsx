@@ -29,6 +29,8 @@ import type { RoomMediaState } from "@/components/meeting/room-media";
 import { RoomChat } from "@/components/meeting/room-chat";
 import { SelfPanel } from "@/components/meeting/self-panel";
 import { SharingBar } from "@/components/meeting/sharing-bar";
+import { playSound } from "@/components/meeting/room-sounds";
+import { useRoomSounds } from "@/components/meeting/use-room-sounds";
 import { useStageFullscreen } from "@/components/meeting/use-stage-fullscreen";
 import {
   useScreenShare,
@@ -175,6 +177,9 @@ function StageSurface({
   // same share and two copies of this state would disagree the moment either
   // one was pressed.
   const share = useScreenShare();
+  // Arrivals, departures and the screen going up — heard by everyone in the
+  // room, each browser making its own noise from the same event.
+  useRoomSounds({ deafened });
 
   // The controls belong to whichever panel is on screen, so build them once
   // rather than letting the two branches drift apart.
@@ -308,6 +313,10 @@ function RoomControls({
     setMicDenied(false);
     try {
       await localParticipant.setMicrophoneEnabled(!micOn);
+      // Yours alone, and only once it actually happened: a chirp for a
+      // microphone that stayed off would be a lie about the thing that decides
+      // whether a class can hear you.
+      playSound(micOn ? "mic-off" : "mic-on");
     } catch {
       // Almost always a refused permission prompt rather than a fault.
       setMicDenied(true);
@@ -336,7 +345,13 @@ function RoomControls({
 
       <StateToggle
         on={!deafened}
-        onClick={() => setDeafened((v) => !v)}
+        onClick={() => {
+          // Plays even while deafening. Room sounds go quiet when your ears
+          // are shut, but the button that shut them still has to answer, or
+          // pressing it is indistinguishable from pressing nothing.
+          playSound(deafened ? "ears-on" : "ears-off");
+          setDeafened((v) => !v);
+        }}
         onLabel="เสียงเปิด"
         offLabel="เสียงปิด"
         actionLabel={deafened ? "เปิดเสียงห้อง" : "ปิดเสียงห้อง"}
