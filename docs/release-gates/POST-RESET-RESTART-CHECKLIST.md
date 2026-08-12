@@ -135,9 +135,12 @@ course alike. Before that change the allowlist named courses deleted in the
 reset, which made Quiz unreachable in Production while the configuration looked
 set — a new course would have needed its id added and a redeploy.
 
-- [ ] Delete `QUIZ_PILOT_COURSE_IDS` from the Vercel Production environment and
-      from `.env.local`. A leftover value is ignored, so this is tidiness rather
-      than a fix.
+- [x] Delete `QUIZ_PILOT_COURSE_IDS` from `.env.local`, and remove it from
+      `.env.example` so a fresh checkout never reintroduces it. Done 2026-08-12.
+- [ ] Delete `QUIZ_PILOT_COURSE_IDS` from the Vercel Production environment.
+      Only the owner can change Production configuration. A leftover value is
+      ignored by `lib/quiz/feature-flags.ts`, so this is tidiness rather than a
+      fix, and no redeploy is needed for this box alone.
 - [ ] Confirm `QUIZ_ENABLED=1` and `QUIZ_MUTATIONS_ENABLED=1` in Production, and
       redeploy so the change takes effect.
 - [ ] Check one course that was never on the old allowlist: its Quiz tab renders
