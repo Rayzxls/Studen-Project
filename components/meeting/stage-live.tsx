@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   LiveKitRoom,
   RoomAudioRenderer,
@@ -26,6 +27,7 @@ import { StateToggle } from "@/components/meeting/state-toggle";
 import type { RoomMediaState } from "@/components/meeting/room-media";
 import { RoomChat } from "@/components/meeting/room-chat";
 import { SelfPanel } from "@/components/meeting/self-panel";
+import { useStageFullscreen } from "@/components/meeting/use-stage-fullscreen";
 import type { ComponentProps } from "react";
 
 import "@livekit/components-styles";
@@ -144,21 +146,44 @@ function StageSurface({
     onlySubscribed: true,
   });
   const shown = screenShares[0];
-  const [full, setFull] = useState(false);
   const [deafened, setDeafened] = useState(false);
+  const surfaceRef = useRef<HTMLDivElement>(null);
+  const { active, native, toggle } = useStageFullscreen(surfaceRef);
 
-  return (
+  // The controls belong to whichever panel is on screen, so build them once
+  // rather than letting the two branches drift apart.
+  const controls = (
+    <RoomControls
+      canPresent={canPresent}
+      deafened={deafened}
+      setDeafened={setDeafened}
+    />
+  );
+
+  const surface = (
     <div
+      ref={surfaceRef}
       className={
-        full
-          ? "fixed inset-0 z-50 flex flex-col gap-3 bg-bg p-4"
+        active
+          ? // Native fullscreen is already sized and placed by the browser; the
+            // fallback has to cover the viewport itself, in dvh so a phone's
+            // collapsing address bar cannot crop the bottom off.
+            "flex flex-col bg-black " +
+            (native
+              ? "h-full w-full"
+              : "fixed inset-0 z-50 h-[100dvh] w-screen")
           : "flex flex-col gap-3"
       }
     >
       <div
         className={
-          "card relative grid place-items-center overflow-hidden p-0 " +
-          (full ? "min-h-0 flex-1" : "min-h-[58vh] lg:min-h-[62vh]")
+          "relative grid place-items-center overflow-hidden " +
+          (active
+            ? // Edge to edge: no card, no radius, no padding. A shared 16:9
+              // screen then lands on a 16:9 display at its full size, which is
+              // the whole point of asking for the screen.
+              "min-h-0 flex-1 bg-black"
+            : "card min-h-[58vh] p-0 lg:min-h-[62vh]")
         }
       >
         {shown ? (
@@ -167,7 +192,12 @@ function StageSurface({
             className="h-full w-full bg-black object-contain"
           />
         ) : (
-          <p className="p-8 text-center text-sm leading-6 text-ink-mute">
+          <p
+            className={
+              "p-8 text-center text-sm leading-6 " +
+              (active ? "text-white/70" : "text-ink-mute")
+            }
+          >
             {canPresent
               ? "ยังไม่มีการแชร์หน้าจอ — กดปุ่มด้านล่างเพื่อเริ่มแชร์"
               : "ยังไม่มีการแชร์หน้าจอ รอครูเริ่มได้เลย"}
@@ -176,35 +206,43 @@ function StageSurface({
 
         <button
           type="button"
-          onClick={() => setFull((v) => !v)}
-          aria-label={full ? "ออกจากเต็มจอ" : "ขยายเต็มจอ"}
-          className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
+          onClick={toggle}
+          aria-label={active ? "ออกจากเต็มจอ" : "ขยายเต็มจอ"}
+          className="absolute right-3 top-3 z-10 grid h-11 w-11 place-items-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
         >
-          {full ? (
+          {active ? (
             <Minimize2 className="h-4 w-4" aria-hidden="true" />
           ) : (
             <Maximize2 className="h-4 w-4" aria-hidden="true" />
           )}
         </button>
+
+        {/* Fullscreen means the share gets the screen, so the strip floats over
+            it rather than taking a slice of the height for itself. */}
+        {active ? (
+          <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/80 to-transparent p-3 pt-12">
+            <div className="mx-auto w-full max-w-4xl">
+              <SelfPanel {...selfPanel} controls={controls} />
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {/* The controls live in the self panel: they act on you, and that is
           where your own face already is. */}
-      <SelfPanel
-        {...selfPanel}
-        controls={
-          <RoomControls
-            canPresent={canPresent}
-            deafened={deafened}
-            setDeafened={setDeafened}
-          />
-        }
-      />
+      {active ? null : <SelfPanel {...selfPanel} controls={controls} />}
+
       {onMediaChange ? (
         <MediaReporter deafened={deafened} onChange={onMediaChange} />
       ) : null}
     </div>
   );
+
+  // Only the fallback moves in the DOM, and only to escape the containing block
+  // that `<main class="animate-fade-in">` creates — see use-stage-fullscreen.
+  // The move re-attaches the video element once; the track itself lives on the
+  // Room, not the DOM, so the media does not drop.
+  return active && !native ? createPortal(surface, document.body) : surface;
 }
 
 /**
