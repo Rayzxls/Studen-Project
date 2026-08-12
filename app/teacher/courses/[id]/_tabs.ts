@@ -48,6 +48,13 @@ export const teacherCourseTabs = (
     icon: "assignments",
   },
   {
+    // Its own tab rather than a corner of ภาพรวม: this is where a teacher
+    // goes to start a class, so it has to be somewhere they can aim for.
+    label: "ห้องออนไลน์",
+    href: `/teacher/courses/${courseId}/meeting`,
+    icon: "meeting",
+  },
+  {
     label: "สมาชิก",
     href: `/teacher/courses/${courseId}/members`,
     icon: "members",

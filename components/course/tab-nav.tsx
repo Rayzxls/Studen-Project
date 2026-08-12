@@ -14,6 +14,7 @@ import {
   Newspaper,
   Settings,
   Users,
+  Video,
   type LucideIcon,
 } from "lucide-react";
 
@@ -33,7 +34,8 @@ export type CourseTabIcon =
   | "schedule"
   | "scores"
   | "settings"
-  | "overview";
+  | "overview"
+  | "meeting";
 
 const TAB_ICONS: Record<CourseTabIcon, LucideIcon> = {
   feed: Newspaper,
@@ -46,6 +48,7 @@ const TAB_ICONS: Record<CourseTabIcon, LucideIcon> = {
   scores: BarChart3,
   settings: Settings,
   overview: LayoutGrid,
+  meeting: Video,
 };
 
 export type CourseTab = {

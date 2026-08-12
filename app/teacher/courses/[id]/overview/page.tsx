@@ -15,7 +15,7 @@ import { db } from "@/lib/db/client";
 import { CourseShell } from "@/components/course/course-shell";
 import { AnimatedStat } from "@/components/dashboard/animated-stat";
 import { LiveRoomCard } from "@/components/meeting/live-room-card";
-import { closeRoomAction, openRoomAction } from "../meeting/actions";
+import { closeRoomAction } from "../meeting/actions";
 import { teacherCourseTabs } from "../_tabs";
 
 export const dynamic = "force-dynamic";
@@ -92,15 +92,12 @@ export default async function CourseOverviewPage({ params }: PageProps) {
       tabs={teacherCourseTabs(id)}
     >
       <div className="space-y-6">
-        {/* Above the metrics: while a class is running, this is the only thing
-            on the page anyone needs. It renders nothing when there is no room
-            to open and none open. */}
-        <LiveRoomCard
-          courseId={id}
-          isTeacher
-          openAction={openRoomAction}
-          closeAction={closeRoomAction}
-        />
+        {/* Live only. No openAction here on purpose: starting a class belongs
+            to the ห้องออนไลน์ tab, and a second button for it here would be one
+            more thing to read past. While a class is running this is the most
+            useful thing on the page, and it renders nothing the rest of the
+            time. */}
+        <LiveRoomCard courseId={id} isTeacher closeAction={closeRoomAction} />
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <MetricCard

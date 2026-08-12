@@ -8,7 +8,6 @@ import { ClassCodeCard } from "@/components/class-code-card";
 import { ClassCodeControls } from "@/components/course/class-code-controls";
 import { ArchiveCourseDialog } from "@/components/course/archive-course-dialog";
 import { TimetableEditor } from "@/components/attendance/timetable-editor";
-import { MeetingLinkCard } from "@/components/course/meeting-link-card";
 import { GradeThresholdsCard } from "@/components/scoring/grade-thresholds-card";
 import { teacherCourseTabs } from "../_tabs";
 import { courseLearnerGroup, courseVisualKey } from "@/lib/course/display";
@@ -82,7 +81,6 @@ export default async function CourseSettingsPage({ params }: PageProps) {
           codeActive={course.codeActive}
           codeExpiresAt={course.codeExpiresAt}
         />
-        <MeetingLinkCard courseId={id} meetingUrl={course.meetingUrl} />
         {/* Anchor target for the "set the timetable" hint on the course feed. */}
         <div id="timetable" className="scroll-mt-24">
           <TimetableEditor
