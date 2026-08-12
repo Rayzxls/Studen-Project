@@ -19,6 +19,7 @@ import {
   Minimize2,
   MonitorUp,
   MonitorX,
+  RefreshCw,
   Volume2,
   VolumeX,
 } from "lucide-react";
@@ -27,7 +28,12 @@ import { StateToggle } from "@/components/meeting/state-toggle";
 import type { RoomMediaState } from "@/components/meeting/room-media";
 import { RoomChat } from "@/components/meeting/room-chat";
 import { SelfPanel } from "@/components/meeting/self-panel";
+import { SharingBar } from "@/components/meeting/sharing-bar";
 import { useStageFullscreen } from "@/components/meeting/use-stage-fullscreen";
+import {
+  useScreenShare,
+  type ScreenShare,
+} from "@/components/meeting/use-screen-share";
 import type { ComponentProps } from "react";
 
 import "@livekit/components-styles";
@@ -165,6 +171,10 @@ function StageSurface({
   const [deafened, setDeafened] = useState(false);
   const surfaceRef = useRef<HTMLDivElement>(null);
   const { active, native, toggle } = useStageFullscreen(surfaceRef);
+  // Owned here rather than in the button, because the standing bar acts on the
+  // same share and two copies of this state would disagree the moment either
+  // one was pressed.
+  const share = useScreenShare();
 
   // The controls belong to whichever panel is on screen, so build them once
   // rather than letting the two branches drift apart.
@@ -173,6 +183,7 @@ function StageSurface({
       canPresent={canPresent}
       deafened={deafened}
       setDeafened={setDeafened}
+      share={share}
     />
   );
 
@@ -248,6 +259,12 @@ function StageSurface({
           where your own face already is. */}
       {active ? null : <SelfPanel {...selfPanel} controls={controls} />}
 
+      {/* Follows the teacher around the page while a share is running, because
+          the room tab is not where a lesson is spent and stopping should never
+          need hunting for. Fullscreen already carries the same controls over
+          the video, so it does not need a second copy. */}
+      {canPresent ? <SharingBar share={share} hidden={active} /> : null}
+
       {onMediaChange ? (
         <MediaReporter deafened={deafened} onChange={onMediaChange} />
       ) : null}
@@ -273,10 +290,13 @@ function RoomControls({
   canPresent,
   deafened,
   setDeafened,
+  share,
 }: {
   canPresent: boolean;
   deafened: boolean;
   setDeafened: (next: (v: boolean) => boolean) => void;
+  /** Owned above, because the standing bar acts on the same share. */
+  share: ScreenShare;
 }) {
   const { localParticipant } = useLocalParticipant();
   const [micPending, setMicPending] = useState(false);
@@ -329,7 +349,7 @@ function RoomControls({
         }
       />
 
-      {canPresent ? <ShareControl /> : null}
+      {canPresent ? <ShareControl share={share} /> : null}
 
       {micDenied ? (
         <p className="w-full text-sm text-ink-mute">
@@ -431,49 +451,14 @@ function MediaReporter({
  * Rendered only for someone whose token permits publishing, but the token is
  * the actual gate — this button's absence is a courtesy, not a control.
  */
-function ShareControl() {
-  const { localParticipant } = useLocalParticipant();
-  const [pending, setPending] = useState(false);
-  const [failed, setFailed] = useState(false);
-  const sharing = localParticipant.isScreenShareEnabled;
-
-  const toggle = useCallback(async () => {
-    setPending(true);
-    setFailed(false);
-    try {
-      await localParticipant.setScreenShareEnabled(!sharing, {
-        audio: true,
-        /**
-         * The picker itself is the browser's, and no page can draw, restyle or
-         * skip it — it is the permission gate for screen capture, and a site
-         * that could fake it could take a screen without asking. What a page
-         * *can* do is shape the choices, so:
-         */
-        // This tab is never what a teacher means to share, and picking it is
-        // the hall-of-mirrors mistake. Take it off the list.
-        selfBrowserSurface: "exclude",
-        // Move to another tab mid-lesson without stopping and starting again.
-        surfaceSwitching: "include",
-        // A video played to the class should carry its sound.
-        systemAudio: "include",
-        // Slides and documents rather than motion: keeps the bitrate on
-        // legible text instead of spending it on frame rate.
-        contentHint: "detail",
-      });
-    } catch {
-      // Includes the ordinary case of someone dismissing the browser's own
-      // picker, which is not worth an alarming message.
-      setFailed(true);
-    } finally {
-      setPending(false);
-    }
-  }, [localParticipant, sharing]);
+function ShareControl({ share }: { share: ScreenShare }) {
+  const { sharing, pending, failed, toggle, switchSource } = share;
 
   return (
     <div className="flex flex-wrap items-center gap-3">
       <button
         type="button"
-        onClick={() => void toggle()}
+        onClick={toggle}
         disabled={pending}
         aria-pressed={sharing}
         className={
@@ -502,9 +487,29 @@ function ShareControl() {
             : "แชร์หน้าจอ"}
       </button>
 
+      {/* Changing what you share should not mean stopping and starting again:
+          the picker opens over the running share, and dismissing it leaves the
+          class looking at exactly what they were looking at. */}
+      {sharing ? (
+        <button
+          type="button"
+          onClick={switchSource}
+          disabled={pending}
+          className="inline-flex min-h-11 items-center gap-2 rounded-full border border-hairline-strong bg-surface px-4 text-sm font-medium text-ink transition-colors hover:bg-black/[0.04] disabled:opacity-60"
+        >
+          <RefreshCw className="h-4 w-4" aria-hidden="true" />
+          เปลี่ยนหน้าจอ
+        </button>
+      ) : null}
+
       {failed ? (
         <p className="text-sm text-ink-mute">
-          ไม่ได้เริ่มแชร์ — อาจกดยกเลิกไป หรือเบราว์เซอร์ไม่อนุญาต
+          {/* Still sharing means the attempt was a swap that did not happen, and
+              saying "ไม่ได้เริ่มแชร์" to someone who is plainly still sharing
+              reads as a fault rather than a cancelled dialog. */}
+          {sharing
+            ? "ไม่ได้เปลี่ยนหน้าจอ — ยังแชร์อันเดิมอยู่"
+            : "ไม่ได้เริ่มแชร์ — อาจกดยกเลิกไป หรือเบราว์เซอร์ไม่อนุญาต"}
         </p>
       ) : null}
     </div>
