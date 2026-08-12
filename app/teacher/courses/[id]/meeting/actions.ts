@@ -95,6 +95,17 @@ export async function closeRoomAction(
 }
 
 /**
+ * Closing from a plain form, for callers that are not driving a useActionState
+ * hook — the standing reminder in the top bar is a Server Component and has no
+ * hook to hold a result. A failure there is silent by design: the reminder is
+ * still on screen with the button still on it, which is the same affordance a
+ * retry needs.
+ */
+export async function closeRoomFormAction(formData: FormData): Promise<void> {
+  await closeRoomAction({}, formData);
+}
+
+/**
  * The period a teacher means at this moment, created if today has not had one.
  *
  * Ownership is checked by findOrCreateSession and again by openRoom; this

@@ -14,6 +14,7 @@ import { Bell } from "@/components/notification/bell";
 import { BeagleLogo } from "@/components/landing/beagle-logo";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { ThemeModeControl } from "@/components/theme/theme-mode-control";
+import { OpenRoomReminder } from "@/components/meeting/open-room-reminder";
 import { moderationCenterEnabled } from "@/lib/moderation/feature-flags";
 
 /**
@@ -210,6 +211,10 @@ export async function TopNav({
           )}
         </div>
       </div>
+
+      {/* Renders nothing unless this teacher has a room open. Sits inside the
+          sticky header so it travels with them (ADR-0053). */}
+      <OpenRoomReminder session={session} />
     </header>
   );
 }
