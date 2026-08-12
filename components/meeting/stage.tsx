@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import dynamic from "next/dynamic";
 import { MonitorUp } from "lucide-react";
 
@@ -53,11 +53,15 @@ export function Stage({
 }) {
   const [unavailable, setUnavailable] = useState(false);
 
+  // Stable, so a re-render of the room is not a new prop for the stage. The
+  // inline arrow this replaces changed identity three times a minute.
+  const onUnavailable = useCallback(() => setUnavailable(true), []);
+
   if (enabled && sessionId && !unavailable) {
     return (
       <StageLive
         sessionId={sessionId}
-        onUnavailable={() => setUnavailable(true)}
+        onUnavailable={onUnavailable}
         onMediaChange={onMediaChange}
         onConnected={onConnected}
         selfPanel={selfPanel}

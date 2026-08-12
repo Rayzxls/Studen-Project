@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   LiveKitRoom,
   RoomAudioRenderer,
@@ -18,6 +19,7 @@ import {
   Minimize2,
   MonitorUp,
   MonitorX,
+  RefreshCw,
   Volume2,
   VolumeX,
 } from "lucide-react";
@@ -26,6 +28,14 @@ import { StateToggle } from "@/components/meeting/state-toggle";
 import type { RoomMediaState } from "@/components/meeting/room-media";
 import { RoomChat } from "@/components/meeting/room-chat";
 import { SelfPanel } from "@/components/meeting/self-panel";
+import { SharingBar } from "@/components/meeting/sharing-bar";
+import { playSound } from "@/components/meeting/room-sounds";
+import { useRoomSounds } from "@/components/meeting/use-room-sounds";
+import { useStageFullscreen } from "@/components/meeting/use-stage-fullscreen";
+import {
+  useScreenShare,
+  type ScreenShare,
+} from "@/components/meeting/use-screen-share";
 import type { ComponentProps } from "react";
 
 import "@livekit/components-styles";
@@ -69,6 +79,22 @@ export function StageLive({
     canPresent: boolean;
   } | null>(null);
 
+  /**
+   * The callback is a way to report a failure, not an input to the request.
+   *
+   * Holding it in a ref is what keeps the session the effect's only real
+   * dependency. With it in the dependency array, an inline arrow from the
+   * caller re-ran the whole effect on every render — and the room re-renders
+   * every three seconds, because the state poll always sets a fresh object.
+   * Production was minting a LiveKit access token per participant per three
+   * seconds, each one a signed credential good for three hours, and handing
+   * `LiveKitRoom` a new `token` prop at the same cadence.
+   */
+  const onUnavailableRef = useRef(onUnavailable);
+  useEffect(() => {
+    onUnavailableRef.current = onUnavailable;
+  });
+
   useEffect(() => {
     let cancelled = false;
 
@@ -79,7 +105,7 @@ export function StageLive({
           { method: "POST" }
         );
         if (!res.ok) {
-          if (!cancelled) onUnavailable();
+          if (!cancelled) onUnavailableRef.current();
           return;
         }
         const data = (await res.json()) as {
@@ -89,7 +115,7 @@ export function StageLive({
         };
         if (!cancelled) setAuth(data);
       } catch {
-        if (!cancelled) onUnavailable();
+        if (!cancelled) onUnavailableRef.current();
       }
     };
 
@@ -98,7 +124,7 @@ export function StageLive({
       cancelled = true;
       window.clearTimeout(id);
     };
-  }, [sessionId, onUnavailable]);
+  }, [sessionId]);
 
   if (!auth) {
     return (
@@ -144,21 +170,52 @@ function StageSurface({
     onlySubscribed: true,
   });
   const shown = screenShares[0];
-  const [full, setFull] = useState(false);
   const [deafened, setDeafened] = useState(false);
+  const surfaceRef = useRef<HTMLDivElement>(null);
+  const { active, native, toggle } = useStageFullscreen(surfaceRef);
+  // Owned here rather than in the button, because the standing bar acts on the
+  // same share and two copies of this state would disagree the moment either
+  // one was pressed.
+  const share = useScreenShare();
+  // Arrivals, departures and the screen going up — heard by everyone in the
+  // room, each browser making its own noise from the same event.
+  useRoomSounds({ deafened });
 
-  return (
+  // The controls belong to whichever panel is on screen, so build them once
+  // rather than letting the two branches drift apart.
+  const controls = (
+    <RoomControls
+      canPresent={canPresent}
+      deafened={deafened}
+      setDeafened={setDeafened}
+      share={share}
+    />
+  );
+
+  const surface = (
     <div
+      ref={surfaceRef}
       className={
-        full
-          ? "fixed inset-0 z-50 flex flex-col gap-3 bg-bg p-4"
+        active
+          ? // Native fullscreen is already sized and placed by the browser; the
+            // fallback has to cover the viewport itself, in dvh so a phone's
+            // collapsing address bar cannot crop the bottom off.
+            "flex flex-col bg-black " +
+            (native
+              ? "h-full w-full"
+              : "fixed inset-0 z-50 h-[100dvh] w-screen")
           : "flex flex-col gap-3"
       }
     >
       <div
         className={
-          "card relative grid place-items-center overflow-hidden p-0 " +
-          (full ? "min-h-0 flex-1" : "min-h-[58vh] lg:min-h-[62vh]")
+          "relative grid place-items-center overflow-hidden " +
+          (active
+            ? // Edge to edge: no card, no radius, no padding. A shared 16:9
+              // screen then lands on a 16:9 display at its full size, which is
+              // the whole point of asking for the screen.
+              "min-h-0 flex-1 bg-black"
+            : "card min-h-[58vh] p-0 lg:min-h-[62vh]")
         }
       >
         {shown ? (
@@ -167,7 +224,12 @@ function StageSurface({
             className="h-full w-full bg-black object-contain"
           />
         ) : (
-          <p className="p-8 text-center text-sm leading-6 text-ink-mute">
+          <p
+            className={
+              "p-8 text-center text-sm leading-6 " +
+              (active ? "text-white/70" : "text-ink-mute")
+            }
+          >
             {canPresent
               ? "ยังไม่มีการแชร์หน้าจอ — กดปุ่มด้านล่างเพื่อเริ่มแชร์"
               : "ยังไม่มีการแชร์หน้าจอ รอครูเริ่มได้เลย"}
@@ -176,35 +238,49 @@ function StageSurface({
 
         <button
           type="button"
-          onClick={() => setFull((v) => !v)}
-          aria-label={full ? "ออกจากเต็มจอ" : "ขยายเต็มจอ"}
-          className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
+          onClick={toggle}
+          aria-label={active ? "ออกจากเต็มจอ" : "ขยายเต็มจอ"}
+          className="absolute right-3 top-3 z-10 grid h-11 w-11 place-items-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
         >
-          {full ? (
+          {active ? (
             <Minimize2 className="h-4 w-4" aria-hidden="true" />
           ) : (
             <Maximize2 className="h-4 w-4" aria-hidden="true" />
           )}
         </button>
+
+        {/* Fullscreen means the share gets the screen, so the strip floats over
+            it rather than taking a slice of the height for itself. */}
+        {active ? (
+          <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/80 to-transparent p-3 pt-12">
+            <div className="mx-auto w-full max-w-4xl">
+              <SelfPanel {...selfPanel} controls={controls} />
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {/* The controls live in the self panel: they act on you, and that is
           where your own face already is. */}
-      <SelfPanel
-        {...selfPanel}
-        controls={
-          <RoomControls
-            canPresent={canPresent}
-            deafened={deafened}
-            setDeafened={setDeafened}
-          />
-        }
-      />
+      {active ? null : <SelfPanel {...selfPanel} controls={controls} />}
+
+      {/* Follows the teacher around the page while a share is running, because
+          the room tab is not where a lesson is spent and stopping should never
+          need hunting for. Fullscreen already carries the same controls over
+          the video, so it does not need a second copy. */}
+      {canPresent ? <SharingBar share={share} hidden={active} /> : null}
+
       {onMediaChange ? (
         <MediaReporter deafened={deafened} onChange={onMediaChange} />
       ) : null}
     </div>
   );
+
+  // Only the fallback moves in the DOM, and only to escape the containing block
+  // that `<main class="animate-fade-in">` creates — see use-stage-fullscreen.
+  // The move re-attaches the video element once; the track itself lives on the
+  // Room, not the DOM, so the media does not drop.
+  return active && !native ? createPortal(surface, document.body) : surface;
 }
 
 /**
@@ -219,10 +295,13 @@ function RoomControls({
   canPresent,
   deafened,
   setDeafened,
+  share,
 }: {
   canPresent: boolean;
   deafened: boolean;
   setDeafened: (next: (v: boolean) => boolean) => void;
+  /** Owned above, because the standing bar acts on the same share. */
+  share: ScreenShare;
 }) {
   const { localParticipant } = useLocalParticipant();
   const [micPending, setMicPending] = useState(false);
@@ -234,6 +313,10 @@ function RoomControls({
     setMicDenied(false);
     try {
       await localParticipant.setMicrophoneEnabled(!micOn);
+      // Yours alone, and only once it actually happened: a chirp for a
+      // microphone that stayed off would be a lie about the thing that decides
+      // whether a class can hear you.
+      playSound(micOn ? "mic-off" : "mic-on");
     } catch {
       // Almost always a refused permission prompt rather than a fault.
       setMicDenied(true);
@@ -262,7 +345,13 @@ function RoomControls({
 
       <StateToggle
         on={!deafened}
-        onClick={() => setDeafened((v) => !v)}
+        onClick={() => {
+          // Plays even while deafening. Room sounds go quiet when your ears
+          // are shut, but the button that shut them still has to answer, or
+          // pressing it is indistinguishable from pressing nothing.
+          playSound(deafened ? "ears-on" : "ears-off");
+          setDeafened((v) => !v);
+        }}
         onLabel="เสียงเปิด"
         offLabel="เสียงปิด"
         actionLabel={deafened ? "เปิดเสียงห้อง" : "ปิดเสียงห้อง"}
@@ -275,7 +364,7 @@ function RoomControls({
         }
       />
 
-      {canPresent ? <ShareControl /> : null}
+      {canPresent ? <ShareControl share={share} /> : null}
 
       {micDenied ? (
         <p className="w-full text-sm text-ink-mute">
@@ -377,37 +466,23 @@ function MediaReporter({
  * Rendered only for someone whose token permits publishing, but the token is
  * the actual gate — this button's absence is a courtesy, not a control.
  */
-function ShareControl() {
-  const { localParticipant } = useLocalParticipant();
-  const [pending, setPending] = useState(false);
-  const [failed, setFailed] = useState(false);
-  const sharing = localParticipant.isScreenShareEnabled;
-
-  const toggle = useCallback(async () => {
-    setPending(true);
-    setFailed(false);
-    try {
-      await localParticipant.setScreenShareEnabled(!sharing, { audio: true });
-    } catch {
-      // Includes the ordinary case of someone dismissing the browser's own
-      // picker, which is not worth an alarming message.
-      setFailed(true);
-    } finally {
-      setPending(false);
-    }
-  }, [localParticipant, sharing]);
+function ShareControl({ share }: { share: ScreenShare }) {
+  const { sharing, pending, failed, toggle, switchSource } = share;
 
   return (
     <div className="flex flex-wrap items-center gap-3">
       <button
         type="button"
-        onClick={() => void toggle()}
+        onClick={toggle}
         disabled={pending}
         aria-pressed={sharing}
         className={
           "inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-medium transition-colors disabled:opacity-60 " +
           (sharing
-            ? "border-green-500/25 bg-green-50 text-green-700 hover:bg-green-500/10"
+            ? // Red and a verb, because while a share is running this is the
+              // stop button — the one the browser also offers from its own bar,
+              // which cannot be removed but can at least be ignored.
+              "border-red-500/25 bg-red-50 text-red-700 hover:bg-red-500/10"
             : "border-hairline-strong bg-surface text-ink hover:bg-black/[0.04]")
         }
       >
@@ -416,12 +491,40 @@ function ShareControl() {
         ) : (
           <MonitorUp className="h-4 w-4" aria-hidden="true" />
         )}
-        {pending ? "กำลังดำเนินการ…" : sharing ? "กำลังแชร์จอ" : "แชร์หน้าจอ"}
+        {/* The device toggles beside this one show their state; this one shows
+            its verb. It is an action with a consequence, not a mode to read at
+            a glance, and "กำลังแชร์จอ" left the only way to stop looking like a
+            label. */}
+        {pending
+          ? "กำลังดำเนินการ…"
+          : sharing
+            ? "หยุดแชร์หน้าจอ"
+            : "แชร์หน้าจอ"}
       </button>
+
+      {/* Changing what you share should not mean stopping and starting again:
+          the picker opens over the running share, and dismissing it leaves the
+          class looking at exactly what they were looking at. */}
+      {sharing ? (
+        <button
+          type="button"
+          onClick={switchSource}
+          disabled={pending}
+          className="inline-flex min-h-11 items-center gap-2 rounded-full border border-hairline-strong bg-surface px-4 text-sm font-medium text-ink transition-colors hover:bg-black/[0.04] disabled:opacity-60"
+        >
+          <RefreshCw className="h-4 w-4" aria-hidden="true" />
+          เปลี่ยนหน้าจอ
+        </button>
+      ) : null}
 
       {failed ? (
         <p className="text-sm text-ink-mute">
-          ไม่ได้เริ่มแชร์ — อาจกดยกเลิกไป หรือเบราว์เซอร์ไม่อนุญาต
+          {/* Still sharing means the attempt was a swap that did not happen, and
+              saying "ไม่ได้เริ่มแชร์" to someone who is plainly still sharing
+              reads as a fault rather than a cancelled dialog. */}
+          {sharing
+            ? "ไม่ได้เปลี่ยนหน้าจอ — ยังแชร์อันเดิมอยู่"
+            : "ไม่ได้เริ่มแชร์ — อาจกดยกเลิกไป หรือเบราว์เซอร์ไม่อนุญาต"}
         </p>
       ) : null}
     </div>
