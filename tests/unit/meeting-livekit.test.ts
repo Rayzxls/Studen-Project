@@ -61,37 +61,40 @@ describe("the room a period gets", () => {
 });
 
 describe("what a stage token permits", () => {
-  it("lets a teacher publish", async () => {
+  it("lets a teacher speak and put things on the stage", async () => {
     const jwt = await mintStageToken(
       {
         sessionId: "s1",
         userId: "teacher-1",
         participantName: "ครูสมชาย",
-        canPublish: true,
+        canPresent: true,
       },
       CONFIG
     );
     const video = payloadOf(jwt).video as Record<string, unknown>;
     expect(video.room).toBe("session-s1");
     expect(video.roomJoin).toBe(true);
-    expect(video.canPublish).toBe(true);
+    expect(video.canPublishSources).toContain("microphone");
+    expect(video.canPublishSources).toContain("screen_share");
   });
 
-  it("refuses a student the right to publish", async () => {
-    // The token is the gate, not the button: a student who edits the page
-    // still cannot put anything on the stage (ADR-0053).
+  it("lets a student speak but never take the stage", async () => {
+    // A class where students cannot answer is not a class, so the microphone
+    // is theirs. Presenting is the teacher's to hand over (ADR-0053), and the
+    // token is the gate rather than the button: a student who edits the page
+    // still cannot share a screen.
     const jwt = await mintStageToken(
       {
         sessionId: "s1",
         userId: "student-1",
         participantName: "มานี",
-        canPublish: false,
+        canPresent: false,
       },
       CONFIG
     );
     const video = payloadOf(jwt).video as Record<string, unknown>;
-    expect(video.canPublish).toBe(false);
     expect(video.canSubscribe).toBe(true);
+    expect(video.canPublishSources).toEqual(["microphone"]);
   });
 
   it("scopes the token to one room, so it cannot open another period", async () => {
@@ -100,7 +103,7 @@ describe("what a stage token permits", () => {
         sessionId: "only-this-one",
         userId: "student-1",
         participantName: "มานี",
-        canPublish: false,
+        canPresent: false,
       },
       CONFIG
     );
@@ -115,7 +118,7 @@ describe("what a stage token permits", () => {
         sessionId: "s1",
         userId: "student-1",
         participantName: "มานี ใจดี",
-        canPublish: false,
+        canPresent: false,
       },
       CONFIG
     );
@@ -130,7 +133,7 @@ describe("what a stage token permits", () => {
         sessionId: "s1",
         userId: "student-1",
         participantName: "มานี",
-        canPublish: false,
+        canPresent: false,
       },
       CONFIG
     );

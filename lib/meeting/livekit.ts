@@ -1,6 +1,6 @@
 import "server-only";
 
-import { AccessToken } from "livekit-server-sdk";
+import { AccessToken, TrackSource } from "livekit-server-sdk";
 
 /**
  * The stage's media server (ADR-0053).
@@ -48,18 +48,21 @@ export interface StageGrant {
   sessionId: string;
   userId: string;
   participantName: string;
-  /** Only a teacher may put anything on the stage without being handed it. */
-  canPublish: boolean;
+  /** Only a teacher may put something on the stage without being handed it. */
+  canPresent: boolean;
 }
 
 /**
  * A token that lets one person into one room, with exactly the rights they
  * should have there.
  *
- * Students are subscribe-only. Presenting is something a teacher hands over
- * (ADR-0053), and the enforcement lives here rather than in the interface: a
- * student who edits the page still cannot publish, because the token does not
- * permit it.
+ * Speaking and presenting are different rights and are granted differently.
+ * **Everyone may use a microphone** — a class where students cannot answer is
+ * not a class, and muting is theirs to control the way it is in any call.
+ * **Only a teacher may put something on the stage.** ADR-0053 makes presenting
+ * something the teacher hands over, and the enforcement is here rather than in
+ * the interface: a student who edits the page still cannot share a screen,
+ * because the token does not permit that source.
  */
 export async function mintStageToken(
   grant: StageGrant,
@@ -75,7 +78,15 @@ export async function mintStageToken(
     room: roomNameForSession(grant.sessionId),
     roomJoin: true,
     canSubscribe: true,
-    canPublish: grant.canPublish,
+    canPublish: true,
+    canPublishSources: grant.canPresent
+      ? [
+          TrackSource.MICROPHONE,
+          TrackSource.CAMERA,
+          TrackSource.SCREEN_SHARE,
+          TrackSource.SCREEN_SHARE_AUDIO,
+        ]
+      : [TrackSource.MICROPHONE],
     canPublishData: true,
   });
 

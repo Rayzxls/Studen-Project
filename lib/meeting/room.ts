@@ -1,6 +1,7 @@
 import { db } from "@/lib/db/client";
 import { Forbidden, NotFound, ValidationError } from "@/lib/errors";
 import { derivePresenceState, presentInRoom } from "@/lib/meeting/presence";
+import { stageEnabled } from "@/lib/meeting/livekit";
 import { resolveMeetingLink } from "@/lib/meeting/resolve";
 import { fanOutBroadcast } from "@/lib/notification";
 import { sendCoursePush } from "@/lib/notification/push";
@@ -48,6 +49,13 @@ export async function openRoom(params: {
   sessionId: string;
   actorUserId: string;
   now?: Date;
+  /**
+   * Whether a stage of our own can carry the class. Injectable so behaviour is
+   * pinned by the caller rather than by whichever machine runs the code —
+   * without it a test passes in CI and fails on a laptop that has LiveKit
+   * configured, which is worse than no test at all.
+   */
+  stageAvailable?: boolean;
 }): Promise<{ sessionId: string; openedAt: Date }> {
   const now = params.now ?? new Date();
   const session = await loadSessionForTeacher(
@@ -59,16 +67,19 @@ export async function openRoom(params: {
     throw new ValidationError({ room: "คาบนี้ถูกยกเลิกไปแล้ว" });
   }
 
-  // A room with no link is a Join button that goes nowhere. Refuse rather than
-  // let a teacher announce a class the students cannot reach.
-  const link = resolveMeetingLink({
-    slotMeetingUrl: session.timetableSlot?.meetingUrl ?? null,
-    courseMeetingUrl: session.course.meetingUrl,
-  });
-  if (!link) {
-    throw new ValidationError({
-      room: "ยังไม่ได้ตั้งลิงก์ห้องเรียนออนไลน์ของวิชานี้",
+  // With a stage of our own the room needs no outside link at all — the room
+  // is the product. Without one, a room with no link is a Join button that
+  // goes nowhere, so refuse rather than announce a class nobody can reach.
+  if (!(params.stageAvailable ?? stageEnabled())) {
+    const link = resolveMeetingLink({
+      slotMeetingUrl: session.timetableSlot?.meetingUrl ?? null,
+      courseMeetingUrl: session.course.meetingUrl,
     });
+    if (!link) {
+      throw new ValidationError({
+        room: "ยังไม่ได้ตั้งลิงก์ห้องเรียนออนไลน์ของวิชานี้",
+      });
+    }
   }
 
   // Already open: say when, and tell nobody. A second click is a slip, and a
@@ -143,17 +154,23 @@ export async function closeRoom(params: {
 }
 
 /**
- * Records that someone pressed Join, and returns where to go.
+ * Records that someone entered the room, and says where the class is.
  *
- * A press is not attendance. The student leaves for Meet and nothing comes
- * back, so this row means "asked for the link", which is exactly as much as
- * the interface is allowed to claim.
+ * `meetingUrl` is null when the stage carries the class, because then there is
+ * nowhere else to go — the room they are already looking at is the room.
+ *
+ * A press is still not attendance. With an outside link the student leaves and
+ * nothing comes back; with the stage the room knows only that they arrived.
+ * Either way this is "asked to come in", which is as much as anything
+ * downstream may claim (ADR-0052).
  */
 export async function joinRoom(params: {
   sessionId: string;
   actorUserId: string;
   now?: Date;
-}): Promise<{ meetingUrl: string }> {
+  /** See openRoom — injectable so tests do not depend on the machine's .env. */
+  stageAvailable?: boolean;
+}): Promise<{ meetingUrl: string | null }> {
   const now = params.now ?? new Date();
   const session = await loadSessionForMember(
     params.sessionId,
@@ -168,7 +185,10 @@ export async function joinRoom(params: {
     slotMeetingUrl: session.timetableSlot?.meetingUrl ?? null,
     courseMeetingUrl: session.course.meetingUrl,
   });
-  if (!link) throw new ValidationError({ room: "ไม่พบลิงก์ห้องเรียนออนไลน์" });
+  const stage = params.stageAvailable ?? stageEnabled();
+  if (!link && !stage) {
+    throw new ValidationError({ room: "ไม่พบลิงก์ห้องเรียนออนไลน์" });
+  }
 
   await db.meetingPresence.upsert({
     where: {
@@ -184,7 +204,8 @@ export async function joinRoom(params: {
     update: { lastSeenAt: now, lastActiveAt: now },
   });
 
-  return { meetingUrl: link.url };
+  // The stage wins when both exist: staying in the app beats a second tab.
+  return { meetingUrl: stage ? null : (link?.url ?? null) };
 }
 
 /**
@@ -311,7 +332,7 @@ export async function getRoomState(params: {
 export async function stageAccessFor(params: {
   sessionId: string;
   actorUserId: string;
-}): Promise<{ canPublish: boolean; participantName: string }> {
+}): Promise<{ canPresent: boolean; participantName: string }> {
   const session = await loadSessionForMember(
     params.sessionId,
     params.actorUserId
@@ -332,7 +353,7 @@ export async function stageAccessFor(params: {
       .trim() || "ผู้เข้าร่วม";
 
   return {
-    canPublish: session.course.teacherId === params.actorUserId,
+    canPresent: session.course.teacherId === params.actorUserId,
     participantName,
   };
 }

@@ -46,13 +46,13 @@ export async function POST(_request: Request, { params }: RouteProps) {
         sessionId,
         userId: session.user.id,
         participantName: access.participantName,
-        canPublish: access.canPublish,
+        canPresent: access.canPresent,
       },
       config
     );
 
     return NextResponse.json(
-      { token, url: config.url, canPublish: access.canPublish },
+      { token, url: config.url, canPresent: access.canPresent },
       { headers: { "Cache-Control": "no-store" } }
     );
   } catch (err) {
