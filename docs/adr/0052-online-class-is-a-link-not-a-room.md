@@ -4,7 +4,8 @@ Third and last of the Release F grill decisions from 2026-08-06, after
 [ADR-0050](./0050-chat-lives-inside-the-classroom.md) and
 [ADR-0051](./0051-rewards-are-a-ledger-with-two-economies.md).
 
-**Nothing here is implemented.** The domain language is in
+**Implemented.** Shipped 2026-08-11 (PR #62); the room around it followed in
+[ADR-0053](./0053-a-live-room-around-a-meeting-we-do-not-host.md). The domain language is in
 [CONTEXT.md § Meeting](../../CONTEXT.md).
 
 ## Two different products share the word "meeting"

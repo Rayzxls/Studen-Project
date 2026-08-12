@@ -6,7 +6,22 @@ That decision stands where it is not contradicted here: the link still lives on
 visible only to active enrolments and the owning teacher, and attendance is
 still the teacher's.
 
-**Nothing here is implemented.**
+**Implemented, and partly overtaken — 2026-08-12 (PR #68).**
+
+The room shipped as written. The stage did too, which this document says is
+deferred. Read the passages below about deferring it, about Google carrying the
+media, and about joining leaving for Meet as the reasoning of the day rather
+than as the current state: the owner chose to build the stage on LiveKit's free
+tier within hours of this being written, and a room with a stage needs no
+outside meeting link at all.
+
+What still stands unchanged: presence derived rather than stored, opening a
+room being separate from opening a Session, and pressing Join never being
+attendance. The one part genuinely unbuilt is handing the stage to a student —
+the token permits only a teacher to publish a screen.
+
+The chat this document leaves unspecified is settled in
+[ADR-0055](./0055-in-room-chat-is-not-the-course-channel.md).
 
 ## What changed since ADR-0052
 
