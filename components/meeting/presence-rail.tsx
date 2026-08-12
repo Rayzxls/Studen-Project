@@ -1,6 +1,6 @@
 import { Moon } from "lucide-react";
 
-import { UserAvatar } from "@/components/profile/user-avatar";
+import { SpeakingAvatar } from "@/components/meeting/speaking-avatar";
 import { presenceLabel, type PresenceState } from "@/lib/meeting/presence";
 import type { RoomParticipant } from "@/lib/meeting/room";
 
@@ -25,8 +25,11 @@ type ShownState = Exclude<PresenceState, "LEFT">;
  */
 export function PresenceRail({
   participants,
+  speakingUserIds = [],
 }: {
   participants: readonly RoomParticipant[];
+  /** Who is producing sound right now, from the stage. Empty without one. */
+  speakingUserIds?: readonly string[];
 }) {
   return (
     <div>
@@ -39,7 +42,10 @@ export function PresenceRail({
       <ul className="mt-3 space-y-2.5">
         {participants.map((person) => (
           <li key={person.userId} className="flex items-center gap-2.5">
-            <PresenceAvatar person={person} />
+            <PresenceAvatar
+              person={person}
+              speaking={speakingUserIds.includes(person.userId)}
+            />
             <span
               className={
                 "min-w-0 truncate text-sm " +
@@ -58,19 +64,26 @@ export function PresenceRail({
   );
 }
 
-function PresenceAvatar({ person }: { person: RoomParticipant }) {
-  const label = `${fullName(person)} — ${presenceLabel(person.state)}`;
+function PresenceAvatar({
+  person,
+  speaking,
+}: {
+  person: RoomParticipant;
+  speaking: boolean;
+}) {
+  const label =
+    `${fullName(person)} — ${presenceLabel(person.state)}` +
+    (speaking ? " · กำลังพูด" : "");
 
   return (
     <span className="relative shrink-0" title={label}>
-      <UserAvatar
+      <SpeakingAvatar
         userId={person.userId}
-        hasImage={person.profileImageId !== null}
-        version={person.profileImageId}
+        profileImageId={person.profileImageId}
         size={30}
-        alt=""
+        speaking={speaking}
+        badge={<PresenceBadge state={person.state} />}
       />
-      <PresenceBadge state={person.state} />
       <span className="sr-only">{label}</span>
     </span>
   );

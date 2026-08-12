@@ -1,11 +1,12 @@
 "use client";
 
+import { useCallback, useState } from "react";
 import { DoorOpen, Video } from "lucide-react";
 
 import { PresenceRail } from "@/components/meeting/presence-rail";
+import { SpeakingAvatar } from "@/components/meeting/speaking-avatar";
 import { Stage } from "@/components/meeting/stage";
 import { useLiveRoom } from "@/components/meeting/use-live-room";
-import { UserAvatar } from "@/components/profile/user-avatar";
 
 /**
  * The online room, as a room rather than a card (ADR-0053).
@@ -38,6 +39,9 @@ export function RoomWorkspace({
   };
 }) {
   const { room, busy, error, blockedUrl, open, join } = useLiveRoom(courseId);
+  const [speaking, setSpeaking] = useState<readonly string[]>([]);
+  // Stable so the reporter's effect fires on a real change, not every render.
+  const onSpeakingChange = useCallback((ids: string[]) => setSpeaking(ids), []);
 
   if (!room) {
     return (
@@ -63,10 +67,15 @@ export function RoomWorkspace({
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
       <div className="flex min-w-0 flex-col gap-4">
-        <Stage sessionId={room.sessionId} enabled={stageEnabled} />
+        <Stage
+          sessionId={room.sessionId}
+          enabled={stageEnabled}
+          onSpeakingChange={onSpeakingChange}
+        />
         <SelfPanel
           self={self}
           inRoom={room.participants.some((p) => p.userId === self.userId)}
+          speaking={speaking.includes(self.userId)}
           busy={busy}
           onEnter={join}
         />
@@ -91,7 +100,10 @@ export function RoomWorkspace({
       </div>
 
       <aside className="card p-4 lg:sticky lg:top-24 lg:h-fit">
-        <PresenceRail participants={room.participants} />
+        <PresenceRail
+          participants={room.participants}
+          speakingUserIds={speaking}
+        />
       </aside>
     </div>
   );
@@ -107,27 +119,32 @@ export function RoomWorkspace({
 function SelfPanel({
   self,
   inRoom,
+  speaking,
   busy,
   onEnter,
 }: {
   self: { userId: string; name: string; profileImageId: string | null };
   inRoom: boolean;
+  speaking: boolean;
   busy: boolean;
   onEnter: () => void;
 }) {
   return (
     <div className="card flex flex-wrap items-center gap-3 p-3">
-      <UserAvatar
+      <SpeakingAvatar
         userId={self.userId}
-        hasImage={self.profileImageId !== null}
-        version={self.profileImageId}
+        profileImageId={self.profileImageId}
         size={36}
-        alt=""
+        speaking={speaking}
       />
       <div className="min-w-0">
         <p className="truncate text-sm font-medium text-ink">{self.name}</p>
         <p className="text-xs text-ink-mute">
-          {inRoom ? "อยู่ในห้องแล้ว" : "ยังไม่ได้เข้าห้อง"}
+          {speaking
+            ? "กำลังพูด"
+            : inRoom
+              ? "อยู่ในห้องแล้ว"
+              : "ยังไม่ได้เข้าห้อง"}
         </p>
       </div>
 

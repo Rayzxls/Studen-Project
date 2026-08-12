@@ -32,9 +32,11 @@ const StageLive = dynamic(
 export function Stage({
   sessionId,
   enabled,
+  onSpeakingChange,
 }: {
   sessionId: string | null;
   enabled: boolean;
+  onSpeakingChange?: (userIds: string[]) => void;
 }) {
   const [unavailable, setUnavailable] = useState(false);
 
@@ -43,6 +45,7 @@ export function Stage({
       <StageLive
         sessionId={sessionId}
         onUnavailable={() => setUnavailable(true)}
+        onSpeakingChange={onSpeakingChange}
       />
     );
   }

@@ -5,6 +5,7 @@ import {
   LiveKitRoom,
   RoomAudioRenderer,
   useLocalParticipant,
+  useSpeakingParticipants,
   useTracks,
   VideoTrack,
 } from "@livekit/components-react";
@@ -38,9 +39,17 @@ import "@livekit/components-styles";
 export function StageLive({
   sessionId,
   onUnavailable,
+  onSpeakingChange,
 }: {
   sessionId: string;
   onUnavailable: () => void;
+  /**
+   * Who is speaking, by our own user id — the token sets LiveKit's identity to
+   * it, so no mapping is needed. Reported upward because the roster and the
+   * self panel live outside this context and would otherwise have no way to
+   * know a microphone is actually producing sound.
+   */
+  onSpeakingChange?: (userIds: string[]) => void;
 }) {
   const [auth, setAuth] = useState<{
     token: string;
@@ -98,6 +107,9 @@ export function StageLive({
       className="contents"
     >
       <StageSurface canPresent={auth.canPresent} />
+      {onSpeakingChange ? (
+        <SpeakingReporter onChange={onSpeakingChange} />
+      ) : null}
     </LiveKitRoom>
   );
 }
@@ -229,6 +241,31 @@ function RoomControls({ canPresent }: { canPresent: boolean }) {
       <RoomAudioRenderer muted={deafened} />
     </div>
   );
+}
+
+/**
+ * Carries "who is talking" out of the LiveKit context to the rest of the room.
+ *
+ * Renders nothing. The set is compared as a joined string before reporting, so
+ * the ordinary case — the same person still talking — does not re-render the
+ * whole room several times a second.
+ */
+function SpeakingReporter({
+  onChange,
+}: {
+  onChange: (userIds: string[]) => void;
+}) {
+  const speaking = useSpeakingParticipants();
+  const ids = speaking
+    .map((p) => p.identity)
+    .sort()
+    .join(",");
+
+  useEffect(() => {
+    onChange(ids.length > 0 ? ids.split(",") : []);
+  }, [ids, onChange]);
+
+  return null;
 }
 
 /**
