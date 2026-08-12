@@ -128,7 +128,7 @@ export default async function AdminDashboardPage() {
             className="text-base font-semibold text-black"
             style={{ letterSpacing: "-0.01em" }}
           >
-            งานผู้ดูแล
+            จัดการครู
           </h2>
           <div className="-mx-3 mt-2">
             <ActionRow

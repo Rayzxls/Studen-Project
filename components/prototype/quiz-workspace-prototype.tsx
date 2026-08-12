@@ -277,7 +277,7 @@ function BuilderView() {
                   <button
                     type="button"
                     title="คำตอบที่ถูก"
-                    className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border ${index === 1 ? "border-emerald-500 bg-emerald-500 text-white" : "border-hairline text-transparent"}`}
+                    className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border ${index === 1 ? "border-green-500 bg-green-500 text-white" : "border-hairline text-transparent"}`}
                   >
                     <Check className="h-4 w-4" />
                   </button>
@@ -333,7 +333,7 @@ function BuilderView() {
               </div>
             </Field>
           </div>
-          <div className="mt-5 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+          <div className="mt-5 rounded-lg border border-green-500/25 bg-green-50 p-3 text-sm text-green-700">
             <div className="flex items-center gap-2 font-semibold">
               <Check className="h-4 w-4" /> พร้อมบันทึก
             </div>
@@ -366,7 +366,7 @@ function AttemptView() {
             ครั้งที่ 1 จาก 1 · ระบบบันทึกคำตอบอัตโนมัติ
           </p>
         </div>
-        <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-amber-900">
+        <div className="flex items-center gap-2 rounded-lg border border-orange-500/25 bg-orange-50 px-4 py-2 text-orange-700">
           <Clock3 className="h-4 w-4" />
           <span className="font-mono text-lg font-semibold">18:42</span>
         </div>
@@ -443,7 +443,7 @@ function AttemptView() {
                   key={number}
                   type="button"
                   onClick={() => setCurrent(number)}
-                  className={`aspect-square rounded-md border text-sm font-semibold ${current === number ? "border-blue-600 bg-blue-600 text-white" : answered ? "border-emerald-300 bg-emerald-50 text-emerald-800" : "border-hairline text-ink-mute"}`}
+                  className={`aspect-square rounded-md border text-sm font-semibold ${current === number ? "border-blue-600 bg-blue-600 text-white" : answered ? "border-green-500/25 bg-green-50 text-green-700" : "border-hairline text-ink-mute"}`}
                 >
                   {number}
                 </button>
@@ -457,7 +457,7 @@ function AttemptView() {
             </p>
             <p className="flex justify-between">
               <span>บันทึกล่าสุด</span>
-              <strong className="text-emerald-700">เมื่อสักครู่</strong>
+              <strong className="text-green-700">เมื่อสักครู่</strong>
             </p>
           </div>
         </aside>
@@ -526,8 +526,8 @@ function ResultsView() {
                       <span
                         className={
                           student.status === "ส่งแล้ว"
-                            ? "text-emerald-700"
-                            : "text-amber-700"
+                            ? "text-green-700"
+                            : "text-orange-700"
                         }
                       >
                         {student.status}
@@ -569,13 +569,13 @@ function ResultsView() {
                     initial={{ width: 0 }}
                     animate={{ width: `${value}%` }}
                     transition={{ delay: index * 0.08, duration: 0.45 }}
-                    className={`h-full rounded-full ${value < 60 ? "bg-amber-500" : "bg-blue-600"}`}
+                    className={`h-full rounded-full ${value < 60 ? "bg-orange-500" : "bg-blue-600"}`}
                   />
                 </div>
               </div>
             ))}
           </div>
-          <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">
+          <div className="mt-6 rounded-lg border border-orange-500/25 bg-orange-50 p-3 text-xs leading-5 text-orange-700">
             <strong>ข้อที่ควรทบทวน:</strong> ข้อ 3 มีผู้ตอบถูกเพียงครึ่งหนึ่ง
             ตรวจโจทย์ก่อนเผยแพร่คะแนน
           </div>

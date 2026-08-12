@@ -53,7 +53,7 @@ export default async function AdminModerationPage({
         aria-label="มุมมอง Case"
       >
         <QueueTab href="/admin/moderation" active={filter === "active"}>
-          งานที่ต้องตรวจ
+          รอตัดสิน
         </QueueTab>
         <QueueTab
           href="/admin/moderation?view=history"
