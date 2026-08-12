@@ -346,7 +346,7 @@ export function TeacherQuizBuilder({
         </p>
       )}
       {locked && (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="rounded-lg border border-orange-500/25 bg-orange-50 px-4 py-3 text-sm text-orange-700">
           มีนักเรียนเริ่มทำแล้ว เนื้อหาจึงถูกล็อกเพื่อรักษาความยุติธรรม
         </p>
       )}
@@ -601,7 +601,7 @@ export function TeacherQuizBuilder({
                         onClick={() => markCorrect(index)}
                         disabled={locked}
                         title="กำหนดเป็นคำตอบที่ถูก"
-                        className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border ${option.isCorrect ? "border-emerald-600 bg-emerald-600 text-white" : "border-hairline text-transparent"}`}
+                        className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border ${option.isCorrect ? "border-green-500 bg-green-500 text-white" : "border-hairline text-transparent"}`}
                       >
                         <Check className="h-4 w-4" />
                       </button>

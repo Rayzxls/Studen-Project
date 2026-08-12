@@ -163,7 +163,7 @@ export default async function TeacherLessonDetailPage({
         </header>
 
         {lesson.openAssignmentCount > 0 && (
-          <div className="flex gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          <div className="flex gap-3 rounded-lg border border-orange-500/25 bg-orange-50 p-4 text-sm text-orange-700">
             <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
             <p>
               มีการบ้านเปิดรับส่ง {lesson.openAssignmentCount} ชิ้น
@@ -211,7 +211,7 @@ export default async function TeacherLessonDetailPage({
                         ยังไม่ส่ง {assignment.missingCount}
                       </span>
                       {assignment.pendingGradingCount > 0 && (
-                        <span className="rounded-full bg-amber-50 px-2.5 py-1 text-amber-800">
+                        <span className="rounded-full bg-orange-50 px-2.5 py-1 text-orange-700">
                           รอตรวจ {assignment.pendingGradingCount}
                         </span>
                       )}
@@ -441,7 +441,7 @@ function Stat({
   return (
     <div className="flex items-center gap-3 rounded-lg bg-black/[0.025] p-4">
       <Icon
-        className={`h-5 w-5 ${tone === "warning" ? "text-amber-600" : "text-blue-700"}`}
+        className={`h-5 w-5 ${tone === "warning" ? "text-orange-700" : "text-blue-700"}`}
       />
       <div>
         <p className="text-xs text-ink-mute">{label}</p>
