@@ -57,8 +57,9 @@ export function choosePeriodForNow(
     );
 
   if (candidates.length > 0) {
-    // The one already running beats one that merely starts soon, and among
-    // overlaps the latest start is the most specific.
+    // Latest start wins. At 09:55 a period ending at 10:00 loses to one
+    // beginning at 10:00: the teacher reaching for the button is starting the
+    // next class, not reopening the one they are finishing.
     candidates.sort((a, b) => (b.start as number) - (a.start as number));
     const chosen = candidates[0];
     if (chosen) {

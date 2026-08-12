@@ -137,3 +137,18 @@ describe("which period the teacher means", () => {
     expect(AD_HOC_MINUTES).toBe(60);
   });
 });
+
+describe("the changeover between two periods", () => {
+  it("reaches for the period beginning, not the one finishing", () => {
+    // 09:55 with a class ending at 10:00 and the next starting then. The
+    // teacher pressing the button is starting the next class.
+    const chosen = choosePeriodForNow(
+      [
+        lecture,
+        { id: "next", dayOfWeek: MONDAY, startTime: "10:00", endTime: "11:00" },
+      ],
+      { dayOfWeek: MONDAY, timeStr: "09:55" }
+    );
+    expect(chosen.timetableSlotId).toBe("next");
+  });
+});
