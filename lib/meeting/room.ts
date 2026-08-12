@@ -1,6 +1,10 @@
 import { db } from "@/lib/db/client";
 import { Forbidden, NotFound, ValidationError } from "@/lib/errors";
-import { derivePresenceState, presentInRoom } from "@/lib/meeting/presence";
+import {
+  derivePresenceState,
+  LEFT_AFTER_MS,
+  presentInRoom,
+} from "@/lib/meeting/presence";
 import { stageEnabled } from "@/lib/meeting/livekit";
 import { resolveMeetingLink } from "@/lib/meeting/resolve";
 import { fanOutBroadcast } from "@/lib/notification";
@@ -206,6 +210,38 @@ export async function joinRoom(params: {
 
   // The stage wins when both exist: staying in the app beats a second tab.
   return { meetingUrl: stage ? null : (link?.url ?? null) };
+}
+
+/**
+ * Someone leaving the room on purpose.
+ *
+ * Presence is derived, so this adds no column and no status to keep true: it
+ * writes a heartbeat old enough that `derivePresenceState` already calls it
+ * LEFT. Saying goodbye and dying without saying goodbye then end in exactly the
+ * same place, which is the property that makes the derived model worth having.
+ *
+ * The row itself stays. It is the only trace that the period had this person in
+ * it, and rejoining reuses it rather than starting the history again.
+ *
+ * Not attendance, in either direction. Leaving a room is no more a record of
+ * absence than pressing Join was a record of presence (ADR-0052).
+ */
+export async function leaveRoom(params: {
+  sessionId: string;
+  actorUserId: string;
+  now?: Date;
+}): Promise<void> {
+  const now = params.now ?? new Date();
+  await loadSessionForMember(params.sessionId, params.actorUserId);
+
+  // One second past the threshold rather than the epoch: a timestamp that is
+  // merely stale reads as what it is, where a 1970 date in a presence row would
+  // look like corruption to whoever finds it next.
+  const gone = new Date(now.getTime() - LEFT_AFTER_MS - 1_000);
+  await db.meetingPresence.updateMany({
+    where: { sessionId: params.sessionId, userId: params.actorUserId },
+    data: { lastSeenAt: gone, lastActiveAt: gone },
+  });
 }
 
 /**
