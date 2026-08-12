@@ -44,11 +44,18 @@ export function LiveRoomCard({
   isTeacher,
   openAction,
   closeAction,
+  showWhenClosed = false,
 }: {
   courseId: string;
   isTeacher: boolean;
   openAction?: RoomAction;
   closeAction?: RoomAction;
+  /**
+   * On its own tab the card is the whole page, so a shut room has to say so.
+   * Embedded on an overview it stays silent instead, because a card that only
+   * ever says "nothing is happening" is a card people learn to skip.
+   */
+  showWhenClosed?: boolean;
 }) {
   const [room, setRoom] = useState<RoomState | null>(null);
   const [joining, setJoining] = useState(false);
@@ -159,20 +166,40 @@ export function LiveRoomCard({
   if (!room) return null;
 
   if (!room.isOpen) {
-    return isTeacher && openAction ? (
+    if (isTeacher && openAction) {
+      // No link means opening can only fail. Say so instead of offering the
+      // button and answering with an error after the press.
+      if (!room.hasMeetingLink) {
+        return (
+          <section className="card p-5 sm:p-6">
+            <Header subtitle="ตั้งลิงก์ห้องประชุมของวิชานี้ก่อน แล้วปุ่มเปิดห้องจะขึ้นที่นี่ · ตั้งครั้งเดียวใช้ได้ทั้งเทอม" />
+          </section>
+        );
+      }
+
+      return (
+        <section className="card p-5 sm:p-6">
+          <Header subtitle="ยังไม่ได้เปิดห้อง นักเรียนจะได้รับแจ้งเตือนเมื่อคุณกดเปิด" />
+          <RoomControl
+            action={openAction}
+            courseId={courseId}
+            sessionId={null}
+            className="btn-primary mt-4 min-h-11"
+            label="เปิดห้องเรียนออนไลน์"
+            pendingLabel="กำลังเปิดห้อง…"
+            icon={<DoorOpen className="h-4 w-4" aria-hidden="true" />}
+          />
+        </section>
+      );
+    }
+
+    if (!showWhenClosed) return null;
+
+    return (
       <section className="card p-5 sm:p-6">
-        <Header subtitle="ยังไม่ได้เปิดห้อง นักเรียนจะได้รับแจ้งเตือนเมื่อคุณกดเปิด" />
-        <RoomControl
-          action={openAction}
-          courseId={courseId}
-          sessionId={null}
-          className="btn-primary mt-4 min-h-11"
-          label="เปิดห้องเรียนออนไลน์"
-          pendingLabel="กำลังเปิดห้อง…"
-          icon={<DoorOpen className="h-4 w-4" aria-hidden="true" />}
-        />
+        <Header subtitle="ยังไม่มีห้องเปิดอยู่ตอนนี้ เมื่อครูเปิดห้อง ปุ่มเข้าห้องจะขึ้นที่นี่และคุณจะได้รับแจ้งเตือน" />
       </section>
-    ) : null;
+    );
   }
 
   return (

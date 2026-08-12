@@ -34,6 +34,12 @@ export interface RoomState {
   openedAt: Date | null;
   /** Absent unless the room is open — there is nowhere to go when it is not. */
   meetingUrl: string | null;
+  /**
+   * Whether opening a room would find a link at all — the fact, never the URL.
+   * Lets the teacher's control say "set a link first" instead of offering a
+   * button whose only outcome is an error.
+   */
+  hasMeetingLink: boolean;
   participants: RoomParticipant[];
 }
 
@@ -227,6 +233,14 @@ export async function getRoomState(params: {
   const isTeacher = course.teacherId === params.actorUserId;
   if (!isTeacher) await requireActiveEnrolment(course.id, params.actorUserId);
 
+  // Whether a link exists anywhere for this course — the standing one, or a
+  // period that overrides it. The fact only; the URL stays behind joinRoom.
+  const hasMeetingLink =
+    (course.meetingUrl ?? "").trim().length > 0 ||
+    (await db.timetableSlot.count({
+      where: { courseOfferingId: course.id, meetingUrl: { not: null } },
+    })) > 0;
+
   const session = await db.session.findFirst({
     where: {
       courseOfferingId: course.id,
@@ -259,6 +273,7 @@ export async function getRoomState(params: {
       isOpen: false,
       openedAt: null,
       meetingUrl: null,
+      hasMeetingLink,
       participants: [],
     };
   }
@@ -273,6 +288,7 @@ export async function getRoomState(params: {
     isOpen: true,
     openedAt: session.roomOpenedAt,
     meetingUrl: link?.url ?? null,
+    hasMeetingLink,
     participants: presentInRoom(session.presence, now).map((row) => ({
       userId: row.userId,
       firstName: row.user.firstName,
