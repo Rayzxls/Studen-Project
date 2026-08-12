@@ -66,8 +66,10 @@ export function Stage({
     );
   }
 
-  // The panel still belongs on screen when the stage is not carrying the
-  // class; it simply has no microphone to offer.
+  // Stage owns the self panel in every branch — connected, off, and failed —
+  // so exactly one is ever drawn. The workspace used to render its own copy
+  // for the off case, which put two on screen the moment a deployment had no
+  // media server configured.
   return (
     <>
       <StagePlaceholder reason={unavailable ? "failed" : "off"} />

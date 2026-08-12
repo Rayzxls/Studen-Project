@@ -8,7 +8,6 @@ import {
   NO_MEDIA_STATE,
   type RoomMediaState,
 } from "@/components/meeting/room-media";
-import { SelfPanel } from "@/components/meeting/self-panel";
 import { Stage } from "@/components/meeting/stage";
 import { useLiveRoom } from "@/components/meeting/use-live-room";
 
@@ -102,9 +101,6 @@ export function RoomWorkspace({
           selfPanel={selfPanel}
           chatContainer={chatSlot}
         />
-
-        {/* Without a stage nothing else renders the panel, so it lives here. */}
-        {stageEnabled ? null : <SelfPanel {...selfPanel} />}
 
         {error ? (
           <p className="text-sm text-red-700" role="alert">
