@@ -51,7 +51,7 @@ export function RoomWorkspace({
     return (
       <ClosedRoom
         isTeacher={isTeacher}
-        hasLink={room.hasMeetingLink}
+        canStart={room.hasMeetingLink || stageEnabled}
         busy={busy}
         error={error}
         blockedUrl={blockedUrl}
@@ -146,14 +146,15 @@ function SelfPanel({
 
 function ClosedRoom({
   isTeacher,
-  hasLink,
+  canStart,
   busy,
   error,
   blockedUrl,
   onOpen,
 }: {
   isTeacher: boolean;
-  hasLink: boolean;
+  /** A stage of our own is enough; without one a meeting link is required. */
+  canStart: boolean;
   busy: boolean;
   error: string | null;
   blockedUrl: string | null;
@@ -184,15 +185,15 @@ function ClosedRoom({
           <DoorOpen className="h-5 w-5" aria-hidden="true" />
         </span>
         <p className="mt-4 text-base font-medium text-ink">
-          {hasLink ? "พร้อมเปิดห้องเรียน" : "ยังตั้งลิงก์ห้องประชุมไม่ครบ"}
+          {canStart ? "พร้อมเปิดห้องเรียน" : "ยังตั้งลิงก์ห้องประชุมไม่ครบ"}
         </p>
         <p className="mx-auto mt-1 max-w-md text-sm leading-6 text-ink-mute">
-          {hasLink
+          {canStart
             ? "กดครั้งเดียว — ห้องเปิด นักเรียนได้รับแจ้งเตือน และคุณเข้าห้องทันที"
             : "ตั้งลิงก์ด้านล่างก่อน ตั้งครั้งเดียวใช้ได้ทั้งเทอม"}
         </p>
 
-        {hasLink ? (
+        {canStart ? (
           <button
             type="button"
             onClick={onOpen}

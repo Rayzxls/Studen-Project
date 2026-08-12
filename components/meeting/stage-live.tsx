@@ -9,7 +9,16 @@ import {
   VideoTrack,
 } from "@livekit/components-react";
 import { Track } from "livekit-client";
-import { MonitorUp, MonitorX } from "lucide-react";
+import {
+  Maximize2,
+  Mic,
+  MicOff,
+  Minimize2,
+  MonitorUp,
+  MonitorX,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 
 import "@livekit/components-styles";
 
@@ -34,7 +43,7 @@ export function StageLive({
   const [auth, setAuth] = useState<{
     token: string;
     url: string;
-    canPublish: boolean;
+    canPresent: boolean;
   } | null>(null);
 
   useEffect(() => {
@@ -53,7 +62,7 @@ export function StageLive({
         const data = (await res.json()) as {
           token: string;
           url: string;
-          canPublish: boolean;
+          canPresent: boolean;
         };
         if (!cancelled) setAuth(data);
       } catch {
@@ -86,22 +95,32 @@ export function StageLive({
       onError={onUnavailable}
       className="contents"
     >
-      <StageSurface canPublish={auth.canPublish} />
-      {/* Audio from anyone who publishes it. Silent until someone does. */}
-      <RoomAudioRenderer />
+      <StageSurface canPresent={auth.canPresent} />
     </LiveKitRoom>
   );
 }
 
-function StageSurface({ canPublish }: { canPublish: boolean }) {
+function StageSurface({ canPresent }: { canPresent: boolean }) {
   const screenShares = useTracks([Track.Source.ScreenShare], {
     onlySubscribed: true,
   });
   const shown = screenShares[0];
+  const [full, setFull] = useState(false);
 
   return (
-    <div className="space-y-3">
-      <div className="card relative grid min-h-72 place-items-center overflow-hidden p-0">
+    <div
+      className={
+        full
+          ? "fixed inset-0 z-50 flex flex-col gap-3 bg-bg p-4"
+          : "flex flex-col gap-3"
+      }
+    >
+      <div
+        className={
+          "card relative grid place-items-center overflow-hidden p-0 " +
+          (full ? "min-h-0 flex-1" : "min-h-72")
+        }
+      >
         {shown ? (
           <VideoTrack
             trackRef={shown}
@@ -109,14 +128,101 @@ function StageSurface({ canPublish }: { canPublish: boolean }) {
           />
         ) : (
           <p className="p-8 text-center text-sm leading-6 text-ink-mute">
-            {canPublish
+            {canPresent
               ? "ยังไม่มีการแชร์หน้าจอ — กดปุ่มด้านล่างเพื่อเริ่มแชร์"
               : "ยังไม่มีการแชร์หน้าจอ รอครูเริ่มได้เลย"}
           </p>
         )}
+
+        <button
+          type="button"
+          onClick={() => setFull((v) => !v)}
+          aria-label={full ? "ออกจากเต็มจอ" : "ขยายเต็มจอ"}
+          className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
+        >
+          {full ? (
+            <Minimize2 className="h-4 w-4" aria-hidden="true" />
+          ) : (
+            <Maximize2 className="h-4 w-4" aria-hidden="true" />
+          )}
+        </button>
       </div>
 
-      {canPublish ? <ShareControl /> : null}
+      <RoomControls canPresent={canPresent} />
+    </div>
+  );
+}
+
+/**
+ * The control bar: your microphone, whether you can hear the room, and — for
+ * a teacher — the stage.
+ *
+ * Mute is per-person and always available. A class where a student cannot
+ * answer is not a class, and the token grants everyone a microphone; only the
+ * stage is the teacher's.
+ */
+function RoomControls({ canPresent }: { canPresent: boolean }) {
+  const { localParticipant } = useLocalParticipant();
+  const [micPending, setMicPending] = useState(false);
+  const [micDenied, setMicDenied] = useState(false);
+  const [deafened, setDeafened] = useState(false);
+  const micOn = localParticipant.isMicrophoneEnabled;
+
+  const toggleMic = useCallback(async () => {
+    setMicPending(true);
+    setMicDenied(false);
+    try {
+      await localParticipant.setMicrophoneEnabled(!micOn);
+    } catch {
+      // Almost always a refused permission prompt rather than a fault.
+      setMicDenied(true);
+    } finally {
+      setMicPending(false);
+    }
+  }, [localParticipant, micOn]);
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        onClick={() => void toggleMic()}
+        disabled={micPending}
+        aria-pressed={micOn}
+        className={micOn ? "btn-secondary min-h-11" : "btn-primary min-h-11"}
+      >
+        {micOn ? (
+          <Mic className="h-4 w-4" aria-hidden="true" />
+        ) : (
+          <MicOff className="h-4 w-4" aria-hidden="true" />
+        )}
+        {micOn ? "ปิดไมค์" : "เปิดไมค์"}
+      </button>
+
+      <button
+        type="button"
+        onClick={() => setDeafened((v) => !v)}
+        aria-pressed={deafened}
+        className="btn-secondary min-h-11"
+      >
+        {deafened ? (
+          <VolumeX className="h-4 w-4" aria-hidden="true" />
+        ) : (
+          <Volume2 className="h-4 w-4" aria-hidden="true" />
+        )}
+        {deafened ? "เปิดเสียง" : "ปิดเสียง"}
+      </button>
+
+      {canPresent ? <ShareControl /> : null}
+
+      {micDenied ? (
+        <p className="w-full text-sm text-ink-mute">
+          เบราว์เซอร์ไม่อนุญาตให้ใช้ไมโครโฟน — ตรวจสิทธิ์ของเว็บไซต์นี้
+        </p>
+      ) : null}
+
+      {/* Muting playback is local: nothing is unsubscribed, so unmuting is
+          instant rather than a reconnect. */}
+      <RoomAudioRenderer muted={deafened} />
     </div>
   );
 }

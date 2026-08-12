@@ -133,8 +133,20 @@ export function useLiveRoom(courseId: string): LiveRoom {
           setError(failure);
           return;
         }
-        const { meetingUrl } = (await res.json()) as { meetingUrl: string };
+        const { meetingUrl } = (await res.json()) as {
+          meetingUrl: string | null;
+        };
         hasJoined.current = true;
+
+        // Null means the stage carries the class: there is nowhere to send
+        // anyone, so the speculative tab is closed and they stay in the room
+        // they are already looking at.
+        if (meetingUrl === null) {
+          tab?.close();
+          void poll();
+          return;
+        }
+
         if (tab) {
           tab.location.href = meetingUrl;
         } else {

@@ -22,8 +22,9 @@ interface PageProps {
  * and a control they have to hunt for on a dashboard is one they will not find
  * when a class is already two minutes late.
  *
- * The link editor sits below the room, quiet, because it is set once a term
- * while the room is opened every lesson.
+ * The link editor appears only when no media server is configured. Once the
+ * stage carries the class the link is dead weight, and a field asking for one
+ * is a question about plumbing a teacher should never have to answer.
  */
 export default async function TeacherMeetingPage({ params }: PageProps) {
   let session;
@@ -33,6 +34,7 @@ export default async function TeacherMeetingPage({ params }: PageProps) {
     redirect("/dashboard");
   }
 
+  const stage = stageEnabled();
   const { id } = await params;
   const [course, me] = await Promise.all([
     getCourseOfferingForTeacher(id, session.user.id),
@@ -55,7 +57,7 @@ export default async function TeacherMeetingPage({ params }: PageProps) {
         <RoomWorkspace
           courseId={id}
           isTeacher
-          stageEnabled={stageEnabled()}
+          stageEnabled={stage}
           self={{
             userId: session.user.id,
             name: personName(me),
@@ -63,7 +65,15 @@ export default async function TeacherMeetingPage({ params }: PageProps) {
           }}
         />
 
-        <MeetingLinkCard courseId={id} meetingUrl={course.meetingUrl ?? null} />
+        {/* Only when there is no stage of our own. With one, the room needs no
+            outside link and a field asking for one is a question about
+            plumbing that the teacher should never have to answer. */}
+        {stage ? null : (
+          <MeetingLinkCard
+            courseId={id}
+            meetingUrl={course.meetingUrl ?? null}
+          />
+        )}
       </div>
     </CourseShell>
   );
