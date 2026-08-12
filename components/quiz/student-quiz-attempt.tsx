@@ -202,7 +202,7 @@ export function StudentQuizAttempt({
       </header>
 
       {!initial.writable && (
-        <div className="mt-5 flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+        <div className="mt-5 flex items-start gap-3 rounded-lg border border-orange-500/25 bg-orange-50 p-4 text-sm text-orange-700">
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
           อุปกรณ์นี้ดูคำตอบได้อย่างเดียว กรุณากลับไปกด “ทำต่อ”
           เพื่อรับสิทธิ์แก้ไข
