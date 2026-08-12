@@ -59,10 +59,13 @@ const SOUNDS: Record<RoomSound, readonly Step[]> = {
 
 /**
  * Loud enough to be heard over a lesson, which the first attempt at 0.06 was
- * not. This is the knob: raise it to make every sound louder, lower it to make
- * them all quieter.
+ * not and 0.25 still was not. This is the knob: raise it to make every sound
+ * louder, lower it to make them all quieter.
+ *
+ * 1.0 is full scale, so anything above it clips into distortion rather than
+ * getting louder. This leaves headroom on purpose.
  */
-const PEAK_GAIN = 0.25;
+const PEAK_GAIN = 0.5;
 
 /**
  * A triangle rather than a sine. Small speakers reproduce a pure sine poorly —
