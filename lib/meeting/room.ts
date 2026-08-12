@@ -300,6 +300,43 @@ export async function getRoomState(params: {
   };
 }
 
+/**
+ * Who this person is on the stage, and whether they may put anything on it.
+ *
+ * The same gate as the meeting link — active enrolment or the owning teacher,
+ * and a room that is actually open — because the stage is the room. Publishing
+ * is the teacher's until they hand it over (ADR-0053), and the answer here is
+ * what ends up inside the token rather than inside a button's disabled state.
+ */
+export async function stageAccessFor(params: {
+  sessionId: string;
+  actorUserId: string;
+}): Promise<{ canPublish: boolean; participantName: string }> {
+  const session = await loadSessionForMember(
+    params.sessionId,
+    params.actorUserId
+  );
+
+  if (session.roomOpenedAt === null || session.roomClosedAt !== null) {
+    throw new ValidationError({ stage: "ห้องเรียนออนไลน์ยังไม่เปิด" });
+  }
+
+  const person = await db.user.findUnique({
+    where: { id: params.actorUserId },
+    select: { firstName: true, lastName: true },
+  });
+  const participantName =
+    [person?.firstName, person?.lastName]
+      .filter((part): part is string => Boolean(part && part.trim()))
+      .join(" ")
+      .trim() || "ผู้เข้าร่วม";
+
+  return {
+    canPublish: session.course.teacherId === params.actorUserId,
+    participantName,
+  };
+}
+
 /** Whether a teacher still has a room open anywhere — drives the standing reminder. */
 export async function openRoomsForTeacher(params: {
   teacherUserId: string;
