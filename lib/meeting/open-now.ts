@@ -15,20 +15,27 @@ import { joinRoom, openRoom } from "@/lib/meeting/room";
  * "record that a class is starting". So the same press resolves the period,
  * creates the Session if today has not had one, opens the room, tells the
  * class, puts the teacher in the room's own occupant list, and answers with
- * the URL to walk through.
+ * where the class is — null when the stage carries it and there is nowhere
+ * else to go.
  *
  * Every step is idempotent, so a double press is the same as one.
  */
 export async function openRoomNow(params: {
   courseOfferingId: string;
   actorUserId: string;
-}): Promise<{ sessionId: string; meetingUrl: string }> {
+  /** See openRoom — injectable so tests do not depend on the machine's .env. */
+  stageAvailable?: boolean;
+}): Promise<{ sessionId: string; meetingUrl: string | null }> {
   const sessionId = await resolveSessionForNow(
     params.courseOfferingId,
     params.actorUserId
   );
 
-  await openRoom({ sessionId, actorUserId: params.actorUserId });
+  await openRoom({
+    sessionId,
+    actorUserId: params.actorUserId,
+    stageAvailable: params.stageAvailable,
+  });
 
   // The teacher is in the room they just opened. Without this the rail shows
   // an empty room to the first student who arrives, which reads as "nobody is
@@ -36,6 +43,7 @@ export async function openRoomNow(params: {
   const { meetingUrl } = await joinRoom({
     sessionId,
     actorUserId: params.actorUserId,
+    stageAvailable: params.stageAvailable,
   });
 
   return { sessionId, meetingUrl };

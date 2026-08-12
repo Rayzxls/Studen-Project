@@ -60,6 +60,7 @@ describe("who may open and close the online room", () => {
     const opened = await openRoom({
       sessionId,
       actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
     });
     expect(opened.openedAt).toBeInstanceOf(Date);
   });
@@ -67,7 +68,11 @@ describe("who may open and close the online room", () => {
   it("refuses a teacher who does not own the course", async () => {
     const sessionId = await withLink();
     await expect(
-      openRoom({ sessionId, actorUserId: ctx.otherTeacherUserId })
+      openRoom({
+        sessionId,
+        actorUserId: ctx.otherTeacherUserId,
+        stageAvailable: false,
+      })
     ).rejects.toBeInstanceOf(Forbidden);
   });
 
@@ -75,7 +80,11 @@ describe("who may open and close the online room", () => {
     const sessionId = await withLink();
     await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
     await expect(
-      openRoom({ sessionId, actorUserId: ctx.studentUserId })
+      openRoom({
+        sessionId,
+        actorUserId: ctx.studentUserId,
+        stageAvailable: false,
+      })
     ).rejects.toBeInstanceOf(Forbidden);
   });
 
@@ -83,23 +92,36 @@ describe("who may open and close the online room", () => {
     // Otherwise the class is told to join somewhere that does not exist.
     const sessionId = await makeSession();
     await expect(
-      openRoom({ sessionId, actorUserId: ctx.teacherUserId })
+      openRoom({
+        sessionId,
+        actorUserId: ctx.teacherUserId,
+        stageAvailable: false,
+      })
     ).rejects.toBeInstanceOf(ValidationError);
   });
 
   it("is idempotent, so a double click does not restart the clock", async () => {
     const sessionId = await withLink();
-    const first = await openRoom({ sessionId, actorUserId: ctx.teacherUserId });
+    const first = await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
+    });
     const second = await openRoom({
       sessionId,
       actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
     });
     expect(second.openedAt.getTime()).toBe(first.openedAt.getTime());
   });
 
   it("only lets the owning teacher close it", async () => {
     const sessionId = await withLink();
-    await openRoom({ sessionId, actorUserId: ctx.teacherUserId });
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
+    });
     await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
 
     await expect(
@@ -121,19 +143,35 @@ describe("who may open and close the online room", () => {
 describe("who may join, and what they get", () => {
   it("gives an active member the link", async () => {
     const sessionId = await withLink();
-    await openRoom({ sessionId, actorUserId: ctx.teacherUserId });
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
+    });
     await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
 
     await expect(
-      joinRoom({ sessionId, actorUserId: ctx.studentUserId })
+      joinRoom({
+        sessionId,
+        actorUserId: ctx.studentUserId,
+        stageAvailable: false,
+      })
     ).resolves.toEqual({ meetingUrl: ROOM });
   });
 
   it("refuses a student who is not enrolled in this course", async () => {
     const sessionId = await withLink();
-    await openRoom({ sessionId, actorUserId: ctx.teacherUserId });
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
+    });
     await expect(
-      joinRoom({ sessionId, actorUserId: ctx.otherStudentUserId })
+      joinRoom({
+        sessionId,
+        actorUserId: ctx.otherStudentUserId,
+        stageAvailable: false,
+      })
     ).rejects.toBeInstanceOf(Forbidden);
   });
 
@@ -141,7 +179,11 @@ describe("who may join, and what they get", () => {
     // ADR-0052: a leaked meeting link is a stranger in a room with children,
     // so losing the course loses the room in the same breath.
     const sessionId = await withLink();
-    await openRoom({ sessionId, actorUserId: ctx.teacherUserId });
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
+    });
     await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
     await db.enrollment.updateMany({
       where: {
@@ -152,7 +194,11 @@ describe("who may join, and what they get", () => {
     });
 
     await expect(
-      joinRoom({ sessionId, actorUserId: ctx.studentUserId })
+      joinRoom({
+        sessionId,
+        actorUserId: ctx.studentUserId,
+        stageAvailable: false,
+      })
     ).rejects.toBeInstanceOf(Forbidden);
   });
 
@@ -160,27 +206,51 @@ describe("who may join, and what they get", () => {
     const sessionId = await withLink();
     await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
     await expect(
-      joinRoom({ sessionId, actorUserId: ctx.studentUserId })
+      joinRoom({
+        sessionId,
+        actorUserId: ctx.studentUserId,
+        stageAvailable: false,
+      })
     ).rejects.toBeInstanceOf(ValidationError);
   });
 
   it("stops handing it out once the room is closed", async () => {
     const sessionId = await withLink();
     await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
-    await openRoom({ sessionId, actorUserId: ctx.teacherUserId });
-    await joinRoom({ sessionId, actorUserId: ctx.studentUserId });
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
+    });
+    await joinRoom({
+      sessionId,
+      actorUserId: ctx.studentUserId,
+      stageAvailable: false,
+    });
     await closeRoom({ sessionId, actorUserId: ctx.teacherUserId });
 
     await expect(
-      joinRoom({ sessionId, actorUserId: ctx.studentUserId })
+      joinRoom({
+        sessionId,
+        actorUserId: ctx.studentUserId,
+        stageAvailable: false,
+      })
     ).rejects.toBeInstanceOf(ValidationError);
   });
 
   it("writes no attendance record — ADR-0052 keeps that the teacher's", async () => {
     const sessionId = await withLink();
     await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
-    await openRoom({ sessionId, actorUserId: ctx.teacherUserId });
-    await joinRoom({ sessionId, actorUserId: ctx.studentUserId });
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
+    });
+    await joinRoom({
+      sessionId,
+      actorUserId: ctx.studentUserId,
+      stageAvailable: false,
+    });
 
     await expect(
       db.attendanceRecord.count({ where: { sessionId } })
@@ -202,9 +272,21 @@ describe("who may see who is in the room", () => {
   it("shows a joined student as active, and marks the teacher", async () => {
     const sessionId = await withLink();
     await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
-    await openRoom({ sessionId, actorUserId: ctx.teacherUserId });
-    await joinRoom({ sessionId, actorUserId: ctx.teacherUserId });
-    await joinRoom({ sessionId, actorUserId: ctx.studentUserId });
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
+    });
+    await joinRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
+    });
+    await joinRoom({
+      sessionId,
+      actorUserId: ctx.studentUserId,
+      stageAvailable: false,
+    });
 
     const state = await getRoomState({
       courseOfferingId: ctx.courseOfferingId,
@@ -227,8 +309,16 @@ describe("who may see who is in the room", () => {
   it("drops someone whose tab stopped reporting", async () => {
     const sessionId = await withLink();
     await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
-    await openRoom({ sessionId, actorUserId: ctx.teacherUserId });
-    await joinRoom({ sessionId, actorUserId: ctx.studentUserId });
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
+    });
+    await joinRoom({
+      sessionId,
+      actorUserId: ctx.studentUserId,
+      stageAvailable: false,
+    });
 
     // No sweeper runs; the row simply ages out of the rail.
     const later = new Date(Date.now() + 10 * 60_000);
@@ -243,8 +333,16 @@ describe("who may see who is in the room", () => {
   it("turns the dot hollow when a heartbeat says the tab is not frontmost", async () => {
     const sessionId = await withLink();
     await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
-    await openRoom({ sessionId, actorUserId: ctx.teacherUserId });
-    await joinRoom({ sessionId, actorUserId: ctx.studentUserId });
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
+    });
+    await joinRoom({
+      sessionId,
+      actorUserId: ctx.studentUserId,
+      stageAvailable: false,
+    });
 
     const later = new Date(Date.now() + 60_000);
     await heartbeat({
@@ -266,7 +364,11 @@ describe("who may see who is in the room", () => {
 
   it("refuses a heartbeat from someone who is not in the course", async () => {
     const sessionId = await withLink();
-    await openRoom({ sessionId, actorUserId: ctx.teacherUserId });
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
+    });
     await expect(
       heartbeat({
         sessionId,
@@ -280,7 +382,11 @@ describe("who may see who is in the room", () => {
 describe("the reminder that a room is still open", () => {
   it("lists the teacher's own open rooms and forgets them once closed", async () => {
     const sessionId = await withLink();
-    await openRoom({ sessionId, actorUserId: ctx.teacherUserId });
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
+    });
 
     await expect(
       openRoomsForTeacher({ teacherUserId: ctx.teacherUserId })
@@ -302,7 +408,11 @@ describe("telling the class the room is open", () => {
   it("notifies every active member once, and not the teacher", async () => {
     const sessionId = await withLink();
     await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
-    await openRoom({ sessionId, actorUserId: ctx.teacherUserId });
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
+    });
 
     const rows = await db.notification.findMany({
       where: { kind: "MEETING_ROOM_OPENED", sourceEntityId: sessionId },
@@ -318,7 +428,11 @@ describe("telling the class the room is open", () => {
     // link is the room. ADR-0047 allows the course name and the kind of event.
     const sessionId = await withLink();
     await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
-    await openRoom({ sessionId, actorUserId: ctx.teacherUserId });
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
+    });
 
     const row = await db.notification.findFirstOrThrow({
       where: { kind: "MEETING_ROOM_OPENED", sourceEntityId: sessionId },
@@ -331,8 +445,16 @@ describe("telling the class the room is open", () => {
   it("does not tell the class twice when the teacher double-clicks", async () => {
     const sessionId = await withLink();
     await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
-    await openRoom({ sessionId, actorUserId: ctx.teacherUserId });
-    await openRoom({ sessionId, actorUserId: ctx.teacherUserId });
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
+    });
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
+    });
 
     await expect(
       db.notification.count({
@@ -344,9 +466,17 @@ describe("telling the class the room is open", () => {
   it("tells them again when a room is genuinely reopened after closing", async () => {
     const sessionId = await withLink();
     await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
-    await openRoom({ sessionId, actorUserId: ctx.teacherUserId });
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
+    });
     await closeRoom({ sessionId, actorUserId: ctx.teacherUserId });
-    await openRoom({ sessionId, actorUserId: ctx.teacherUserId });
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
+    });
 
     await expect(
       db.notification.count({
@@ -365,7 +495,11 @@ describe("telling the class the room is open", () => {
       },
       data: { removedAt: new Date() },
     });
-    await openRoom({ sessionId, actorUserId: ctx.teacherUserId });
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
+    });
 
     await expect(
       db.notification.count({
@@ -386,6 +520,7 @@ describe("starting a class in one press", () => {
     const opened = await openRoomNow({
       courseOfferingId: ctx.courseOfferingId,
       actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
     });
 
     expect(opened.meetingUrl).toBe(ROOM);
@@ -408,6 +543,7 @@ describe("starting a class in one press", () => {
     await openRoomNow({
       courseOfferingId: ctx.courseOfferingId,
       actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
     });
 
     const state = await getRoomState({
@@ -434,10 +570,12 @@ describe("starting a class in one press", () => {
     const first = await openRoomNow({
       courseOfferingId: ctx.courseOfferingId,
       actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
     });
     const second = await openRoomNow({
       courseOfferingId: ctx.courseOfferingId,
       actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
     });
 
     expect(second.sessionId).toBe(first.sessionId);
@@ -458,6 +596,7 @@ describe("starting a class in one press", () => {
       openRoomNow({
         courseOfferingId: ctx.courseOfferingId,
         actorUserId: ctx.otherTeacherUserId,
+        stageAvailable: false,
       })
     ).rejects.toBeInstanceOf(Forbidden);
   });
@@ -467,6 +606,7 @@ describe("starting a class in one press", () => {
       openRoomNow({
         courseOfferingId: ctx.courseOfferingId,
         actorUserId: ctx.teacherUserId,
+        stageAvailable: false,
       })
     ).rejects.toBeInstanceOf(ValidationError);
 
@@ -475,5 +615,79 @@ describe("starting a class in one press", () => {
       actorUserId: ctx.teacherUserId,
     });
     expect(state.isOpen).toBe(false);
+  });
+});
+
+describe("with a stage of our own", () => {
+  it("opens a room for a course that has no link at all", async () => {
+    // The room is the product now. Requiring an outside link would be asking
+    // a teacher to configure plumbing the class no longer uses.
+    const sessionId = await makeSession();
+    await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
+
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: true,
+    });
+
+    const state = await getRoomState({
+      courseOfferingId: ctx.courseOfferingId,
+      actorUserId: ctx.studentUserId,
+    });
+    expect(state.isOpen).toBe(true);
+  });
+
+  it("sends nobody anywhere — the room they are looking at is the room", async () => {
+    const sessionId = await makeSession();
+    await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: true,
+    });
+
+    await expect(
+      joinRoom({
+        sessionId,
+        actorUserId: ctx.studentUserId,
+        stageAvailable: true,
+      })
+    ).resolves.toEqual({ meetingUrl: null });
+  });
+
+  it("prefers the stage over a link the course still has", async () => {
+    // Staying in the app beats bouncing to a second tab.
+    const sessionId = await withLink();
+    await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: true,
+    });
+
+    await expect(
+      joinRoom({
+        sessionId,
+        actorUserId: ctx.studentUserId,
+        stageAvailable: true,
+      })
+    ).resolves.toEqual({ meetingUrl: null });
+  });
+
+  it("still refuses someone who is not in the course", async () => {
+    const sessionId = await makeSession();
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: true,
+    });
+    await expect(
+      joinRoom({
+        sessionId,
+        actorUserId: ctx.otherStudentUserId,
+        stageAvailable: true,
+      })
+    ).rejects.toBeInstanceOf(Forbidden);
   });
 });
