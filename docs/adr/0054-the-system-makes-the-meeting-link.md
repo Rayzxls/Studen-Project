@@ -26,9 +26,17 @@ chore was reading it the way the screen presented it.
 
 ## What this changes
 
-A teacher presses "สร้างลิงก์ให้" and the system creates a real Google Meet
-space and stores its join URL as the course's standing link. No copying, no
-second tab. Google still carries the media, so this stays free.
+**There is no "create a link" button.** The teacher presses the button they
+already press — "เปิดห้องเรียนออนไลน์" — and if the course has no link yet, the
+system creates a real Google Meet space, stores its join URL as the course's
+standing link, and walks the teacher into it. First press of the term and every
+press after it look identical. Google still carries the media, so this stays
+free.
+
+A separate "generate a link" step was the first draft of this decision and it
+was wrong. It made a teacher learn that links are a thing the product has,
+which is precisely the knowledge this ADR exists to remove. Setup a teacher can
+notice is setup we failed to absorb.
 
 **One space per course, not one per class.** A per-class space would be more
 faithful to "this lesson's room", and it is the wrong choice here: ADR-0052
@@ -37,9 +45,10 @@ minted at open time cannot be on the timetable that morning. One space per
 course also keeps every part of the existing model — the standing link, the
 slot override, the resolver — untouched. Pressed once a term.
 
-Manual paste stays. A teacher with no Google account, or who wants the room
-they already use, keeps the field they have now. The generated link is an
-offer, never a requirement.
+Manual paste stays, below and quieter. A teacher with no Google account linked,
+or who wants the room they already use, keeps the field they have now — and it
+is also the escape hatch when generation fails, which is why the failure must
+leave that field usable rather than leaving the course unopenable.
 
 ## Two things this overturns, on purpose
 
