@@ -1,89 +1,123 @@
 # HANDOFF — Beagle Classroom
 
-## RELEASE F DESIGN CONTRACTS AND THE MEETING LINK — 2026-08-11 (READ FIRST)
+## THE LIVE ONLINE ROOM SHIPPED — 2026-08-12 (READ FIRST)
 
 Sections below this one are older. Where they disagree with this one, this one
-is current.
+is current. **Verify against the code and the database before trusting any of
+it** — this project's documents have been wrong three times in a fortnight, and
+two more stale lines were found today (noted at the end).
 
-### Resolved 2026-08-12: the migration gate now applies the whole folder
+### Everything merged. Nothing is open.
 
-`scripts/verify-migration-baseline.ts` used to apply **only** the single squashed
-baseline file into a temporary schema and diff it against
-`prisma/schema.prisma`. That encoded an assumption nobody had to state before:
-*the baseline alone reproduces the current schema*. It held only while no
-migration was added after the baseline, and `20260811000000_add_meeting_url` was
-the first one, so the gate failed a branch that was correct.
+PRs #62 through #68 and #70 are merged and deployed to Production. #69 was
+closed unmerged on purpose. There is no PR backlog for the first time in days.
 
-The gate now runs `prisma migrate deploy` over the whole `prisma/migrations`
-folder into the disposable schema. What it proves is unchanged — a database
-built only from migrations must match the schema — and it now tolerates
-migrations after the baseline. **Every future schema change goes in as a
-migration after the baseline and is proven this way.** Two checks were added:
-every migration directory must be recorded as applied and not rolled back, and
-the 41-table count now excludes `_prisma_migrations`.
+Production carries four migrations, none rolled back, verified by direct query
+rather than by report: the squashed baseline, `add_meeting_url`,
+`add_live_room_state` and `add_meeting_room_notification`.
 
-The baseline file was **not** edited and must never be: QA and Production have
-both recorded it as applied. Verified by drift test — adding a stray column to
-`schema.prisma` still fails the gate and names that column, so it did not become
-a rubber stamp. See the 2026-08-12 amendment in
-`docs/release-gates/2026-08-02-MIGRATION-BASELINE-PROOF.md`.
+### What a teacher and a student now have
 
-### The Production migration is applied
+One press opens the class. It resolves which period is meant, creates the
+`Session` if today has not had one, tells every enrolled student by Web Push,
+and puts the teacher in the room — in a single click.
 
-`20260811000000_add_meeting_url` adds two nullable text columns. Purely
-additive — no backfill, no default, no constraint on existing rows. Applied to
-Production on 2026-08-11 and re-verified read-only on 2026-08-12: `meetingUrl`
-exists as nullable `text` on both `CourseOffering` and `TimetableSlot`,
-`_prisma_migrations` holds exactly the two expected rows, and neither is rolled
-back.
+The room itself is ours: a stage across the middle carrying the teacher's
+screen share, a roster down the right with presence dots and a green ring while
+someone is actually speaking, an ephemeral chat under it, and your own strip
+with microphone, speaker and share at the bottom. There is a Dashboard entry
+listing every room open across all courses, for each role.
 
-### Merged today
+The media runs on LiveKit Cloud's free tier. Everything except the stage works
+without it — that fallback is real, tested, and is what Production was doing
+until an hour ago.
 
-| PR | What |
-| --- | --- |
-| #54 | Edit/delete controls on the publishing schedule, plus reschedule and publish-now |
-| #55 | Web Push observability, and the service-worker icon that had always 404'd |
-| #56 | Dark-theme contrast (47 pairs), plain-Thai copy pass, feed timestamp fix |
-| #57 | Status-bar badge built from the mark, PWA install identity |
-| #58 | Contrast sweep across 25 files, `docs/DATA-MODEL.md`, `pnpm db:studio` |
-| #59 | ADR-0049 (push may carry a message) + ADR-0050 (chat) |
-| #60 | ADR-0051 (rewards) |
-| #61 | ADR-0052 (online class is a link) |
+### The one thing not yet verified
 
-### Release F is designed but unbuilt
+**The owner added `LIVEKIT_URL`, `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` to
+Vercel Production minutes before this document was written, and nobody has
+confirmed the stage actually comes up there.** That is the first thing to
+check. Until it is confirmed, assume nothing about the Production stage.
 
-A grill on 2026-08-06 turned four names in a backlog table into recorded
-decisions. **None of it is implemented** apart from the meeting link in PR #62.
-The domain language lives in `CONTEXT.md` under three sections explicitly
-marked as design contracts; the reasoning lives in ADR-0049 through ADR-0052.
+What is known: the credentials work — a `RoomServiceClient.listRooms()` call
+against the real service was accepted and returned a live room. That was
+against the same LiveKit project, from a local process.
 
-Where the owner chose against the recommendation, both the decision and its
-cost are recorded rather than smoothed over — school-wide DMs, a stored point
-ledger instead of a derived status, random point payouts, and push payloads
-that carry message content.
+Two things follow from `stageEnabled()` being true that are worth recognising
+on screen: the meeting-link editor disappears from the room tab, and opening a
+room no longer requires a link at all.
 
-**Two reward questions were left open on purpose** and want answering before
-anyone builds it: what happens to a balance when a course is archived, and what
-happens to it when an account is anonymized.
+**Nothing behind the login has ever been seen rendered by an agent.** Every
+claim about the room's appearance rests on the owner's screenshots, token
+resolution measured in a browser, and tests.
 
-### Standing constraint on verification
+### Decisions recorded today
 
-An agent in this project cannot enter a password, so **nothing behind the login
-has ever been checked visually**. Everything is verified through tests, builds,
-route status codes, and read-only queries against the databases. The publishing
-schedule page, the reschedule dialog, the meeting-link card and the join control
-have all shipped or been written without a human seeing them render.
+- **ADR-0053** — the live room. Opening is separate from opening a Session,
+  presence is derived rather than stored, and pressing Join is not attendance.
+- **ADR-0055** — in-room chat is not ADR-0050's Channel. Zoom-shaped: typed,
+  read, gone, stored nowhere. **The cost is written into the ADR: there is no
+  evidence to report.** The owner was told before choosing.
+- **ADR-0054 does not exist in the repository.** It proposed having Google mint
+  meeting links; building our own stage removed the need. It lives only on
+  closed PR #69, where the two facts worth keeping are noted.
+
+### Open questions the owner has not answered
+
+- **Every microphone starts muted**, so a class of thirty shows thirty red mic
+  icons in the roster from the moment they arrive. Flagged, not decided. The
+  alternative is to flag who is *unmuted* instead.
+- **ADR-0053 left the presenting hand-over unbuilt.** A student cannot share a
+  screen at all yet; the token simply does not permit the source. The raise-hand
+  control exists in the design as the request mechanism.
+- **Bandwidth is free until it is not.** LiveKit Cloud's free tier is 5,000
+  participant-minutes a month — roughly three classes of thirty. Fine for three
+  users, not for a school. Self-hosting is ~150–350 THB/month on a small VPS.
+
+### Gotchas that cost time today, so they need not cost it twice
+
+- **`dependency-gate-allow` must be a trailing comment on the same line.** On
+  the line above it does nothing. This was rediscovered three times.
+- **`displayName` is a gate blocker, not a review.** It was a `User` column the
+  identity work removed. Naming a local helper that costs a red gate.
+- **`window.open(url, "_blank", "noopener")` returns `null` by design.** Using
+  it for the popup-blocker dance leaves a stray `about:blank` and navigates the
+  current tab instead. Sever `opener` on the child instead.
+- **`useParticipants()` does not re-render on an attribute change.** Anything
+  published through participant attributes needs a
+  `RoomEvent.ParticipantAttributesChanged` listener or it never reaches a
+  screen.
+- **Never read `stageEnabled()` from the ambient environment inside a tested
+  function.** Four tests passed in CI and failed on a laptop that had LiveKit
+  configured. It is an injected parameter now.
+- **`server-only` throws under vitest**; `vitest.config.ts` aliases it to a
+  stub. The guard still holds where it matters.
+- **Integration tests need QA migrated first** — `pnpm db:migrate:qa:deploy`.
+  They fail with "column does not exist" otherwise, including tests unrelated
+  to the change.
+- **`preview_stop` does not kill the dev-server process tree.** Port 3100 stays
+  held; kill from the root `pnpm dev:qa` process with `taskkill /T /F`.
+- **`main` requires branches to be up to date** (`strict: true`). Every merge
+  puts the rest BEHIND, so it is update-branch, wait for CI, merge, repeat.
+
+### Two documents that are now stale
+
+- **ADR-0052 and ADR-0053 both say "Nothing here is implemented."** Both are
+  implemented and in Production. The lines were true when written.
+- `docs/release-gates/POST-RESET-RESTART-CHECKLIST.md` still has one unchecked
+  box that is genuinely the owner's: deleting `QUIZ_PILOT_COURSE_IDS` from the
+  Vercel Production environment. Nothing reads it, so it is tidiness.
 
 ### Smaller things still open
 
-- The `"งาน"` ambiguity in dashboard and moderation copy — group A of the copy
-  review, which the owner did not select. `"งานที่ต้องตรวจ"` in moderation
-  still collides with grading.
-- Amber and emerald have no themed steps, so they stay light in a dark theme.
-  Fixing means adding tokens to the design system, which is a decision.
-- `next/font/google` fetches Anuphan at build time, so a Google hiccup fails
-  CI. Moving to `next/font/local` removes the network from the build.
-- `QUIZ_PILOT_COURSE_IDS` lingers in `.env.local` although ADR-0045 retired it.
+- Amber and emerald are gone from the components that mattered, but
+  `AccountStatusBadge` keeps `bg-amber-500` on purpose to tell
+  `DELETION_PENDING` from `SUSPENDED`.
+- The `"งาน"` ambiguity is resolved in moderation and the admin dashboard. The
+  word still means a student's work everywhere else, which is the point.
+- The migration gate now deploys the whole `prisma/migrations` folder. Its
+  expected table count is 42; bump it deliberately when a table is added, never
+  to turn a red gate green.
 
 ## RELEASE HARDENING AND EARLY WARNING — 2026-08-01
 
