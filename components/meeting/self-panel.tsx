@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Video } from "lucide-react";
+import { LogOut, Video } from "lucide-react";
 
 import { SpeakingAvatar } from "@/components/meeting/speaking-avatar";
 
@@ -22,7 +22,9 @@ export function SelfPanel({
   speaking,
   busy,
   onEnter,
+  onLeave,
   showEnter,
+  showLeave,
   controls,
 }: {
   self: { userId: string; name: string; profileImageId: string | null };
@@ -30,8 +32,11 @@ export function SelfPanel({
   speaking: boolean;
   busy?: boolean;
   onEnter?: () => void;
+  onLeave?: () => void;
   /** A button offering to put you where you already are makes a reader doubt. */
   showEnter: boolean;
+  /** The way out. Only meaningful while you are in. */
+  showLeave?: boolean;
   controls?: ReactNode;
 }) {
   return (
@@ -60,10 +65,34 @@ export function SelfPanel({
           type="button"
           onClick={onEnter}
           disabled={busy}
-          className={"btn-primary min-h-11 " + (controls ? "" : "ml-auto")}
+          className={
+            "btn-primary min-h-11 " + (controls || showLeave ? "" : "ml-auto")
+          }
         >
           <Video className="h-4 w-4" aria-hidden="true" />
-          {busy ? "กำลังเข้าห้อง…" : inRoom ? "กลับเข้าห้อง" : "เข้าห้องเรียน"}
+          {busy
+            ? "กำลังเข้าห้อง…"
+            : inRoom
+              ? "กลับเข้าห้อง"
+              : "เข้าร่วมห้องเรียน"}
+        </button>
+      ) : null}
+
+      {/* Quiet rather than primary: leaving is always available but it is never
+          the thing someone came here to do, and a red button beside a lesson
+          reads as an emergency. */}
+      {showLeave && onLeave ? (
+        <button
+          type="button"
+          onClick={onLeave}
+          disabled={busy}
+          className={
+            "inline-flex min-h-11 items-center gap-2 rounded-full border border-hairline-strong bg-surface px-4 text-sm font-medium text-ink transition-colors hover:bg-red-500/10 hover:text-red-700 disabled:opacity-60 " +
+            (controls || showEnter ? "" : "ml-auto")
+          }
+        >
+          <LogOut className="h-4 w-4" aria-hidden="true" />
+          ออกจากห้อง
         </button>
       ) : null}
     </div>

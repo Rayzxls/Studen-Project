@@ -21,12 +21,24 @@ export interface LiveRoom {
   open: () => void;
   /** Anyone in the course: walk into a room that is already open. */
   join: () => void;
+  /** Step out. The stage disconnects and the roster stops drawing you. */
+  leave: () => void;
   /**
    * Record presence without going anywhere. For the stage, where connecting is
    * itself the act of entering and there is no tab to open — using `join` here
    * would flash a blank window open and shut.
    */
   markPresent: () => void;
+  /**
+   * What this browser last asked for, which outranks what the poll says.
+   *
+   * The poll is up to three seconds behind and a response can already be in
+   * flight when someone presses Leave; without an intent that wins, that stale
+   * response would report them still present and walk them straight back in.
+   * `null` means nothing has been asked yet, so the server's answer stands —
+   * which is what lets a reload put someone back in the room they were in.
+   */
+  intent: "in" | "out" | null;
 }
 
 /**
@@ -45,6 +57,7 @@ export function useLiveRoom(courseId: string): LiveRoom {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [blockedUrl, setBlockedUrl] = useState<string | null>(null);
+  const [intent, setIntent] = useState<"in" | "out" | null>(null);
   const hasJoined = useRef(false);
 
   const poll = useCallback(async () => {
@@ -143,6 +156,7 @@ export function useLiveRoom(courseId: string): LiveRoom {
           meetingUrl: string | null;
         };
         hasJoined.current = true;
+        setIntent("in");
 
         // Null means the stage carries the class: there is nowhere to send
         // anyone, so the speculative tab is closed and they stay in the room
@@ -175,11 +189,29 @@ export function useLiveRoom(courseId: string): LiveRoom {
   const markPresent = useCallback(() => {
     if (!sessionId || hasJoined.current) return;
     hasJoined.current = true;
+    setIntent("in");
     void fetch(`/api/meeting/session/${sessionId}/join`, { method: "POST" })
       .then(() => poll())
       .catch(() => {
         // Let the next attempt try again rather than stranding the flag.
         hasJoined.current = false;
+      });
+  }, [sessionId, poll]);
+
+  /**
+   * Step out. The intent flips first so the stage unmounts on the click rather
+   * than on the next poll — a room you have left should stop carrying your
+   * microphone immediately, not up to three seconds later.
+   */
+  const leave = useCallback(() => {
+    if (!sessionId) return;
+    setIntent("out");
+    hasJoined.current = false;
+    void fetch(`/api/meeting/session/${sessionId}/leave`, { method: "POST" })
+      .then(() => poll())
+      .catch(() => {
+        // The roster clears itself either way: the heartbeat has stopped, so
+        // the row decays into "left" without anyone having to be told.
       });
   }, [sessionId, poll]);
 
@@ -198,5 +230,15 @@ export function useLiveRoom(courseId: string): LiveRoom {
     );
   }, [sessionId, enterRoom]);
 
-  return { room, busy, error, blockedUrl, open, join, markPresent };
+  return {
+    room,
+    busy,
+    error,
+    blockedUrl,
+    open,
+    join,
+    leave,
+    markPresent,
+    intent,
+  };
 }

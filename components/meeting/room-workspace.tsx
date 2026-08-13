@@ -41,8 +41,17 @@ export function RoomWorkspace({
     profileImageId: string | null;
   };
 }) {
-  const { room, busy, error, blockedUrl, open, join, markPresent } =
-    useLiveRoom(courseId);
+  const {
+    room,
+    busy,
+    error,
+    blockedUrl,
+    open,
+    join,
+    leave,
+    markPresent,
+    intent,
+  } = useLiveRoom(courseId);
   const [media, setMedia] = useState<RoomMediaState>(NO_MEDIA_STATE);
   // The chat lives in the rail but needs the stage's connection, so the rail
   // lends it a node to draw into rather than moving into the stage.
@@ -74,17 +83,37 @@ export function RoomWorkspace({
     );
   }
 
+  /**
+   * Whether this person is in the room, and it is a decision rather than a
+   * lookup.
+   *
+   * What this browser last asked for wins, because the poll is up to three
+   * seconds behind: a response already in flight when Leave is pressed would
+   * otherwise report them present and walk them straight back in. Only when
+   * nothing has been asked does the server's answer stand — which is what lets
+   * a reload drop someone back into the room they were already in, instead of
+   * making them knock twice.
+   *
+   * Opening a room counts as asking: a teacher who just opened it is in it.
+   */
+  const presentOnServer = room.participants.some(
+    (p) => p.userId === self.userId
+  );
+  const inRoom = intent === null ? presentOnServer : intent === "in";
+
   const selfPanel = {
     self,
-    inRoom: room.participants.some((p) => p.userId === self.userId),
+    inRoom,
     speaking: media.speaking.includes(self.userId),
     busy,
     onEnter: join,
+    onLeave: leave,
     /* With a stage there is nowhere to go back to — the room is on this page.
        Without one the button still earns its place: being counted in the room
        says nothing about whether the Meet tab is still open. */
-    showEnter:
-      !room.participants.some((p) => p.userId === self.userId) || !stageEnabled,
+    showEnter: !inRoom || !stageEnabled,
+    /* Leaving is only meaningful while you are in. */
+    showLeave: inRoom,
   };
 
   return (
@@ -97,7 +126,11 @@ export function RoomWorkspace({
       <div className="flex min-w-0 flex-col gap-4">
         <Stage
           sessionId={room.sessionId}
-          enabled={stageEnabled}
+          /* Nobody is connected to anything until they ask to be. A page that
+             puts a student into a live room simply because they opened the tab
+             has taken a decision that is theirs — ADR-0053 has Join as a press,
+             and a microphone that joins a class unbidden is the reason why. */
+          enabled={stageEnabled && inRoom}
           onMediaChange={onMediaChange}
           /* Connecting to the stage is entering the room. Without this a person
              could hear and be heard while the roster still said they were
