@@ -1,10 +1,11 @@
 # HANDOFF — Beagle Classroom
 
-## NEXT TRACK: PERSISTENT CHAT — 2026-08-14 (MERGED, QA ACCEPTED)
+## NEXT TRACK: PERSISTENT CHAT — 2026-08-14 (PRODUCTION MIGRATED, FLAGS OFF)
 
 PR #76 merged the complete guarded Persistent Chat V1 into `main` at merge
-commit `199e5f9`. Main CI and the Vercel Production deployment passed, but both
-Chat flags remain off and the Chat migration has not been applied to Production.
+commit `199e5f9`. Main CI and the Vercel Production deployment passed. After a
+separate owner approval, the guarded additive Chat migration was applied to
+Production on 2026-08-14. Both Chat flags remain off.
 This is the persistent product from ADR-0050, not the ephemeral chat inside a
 live room:
 
@@ -27,21 +28,25 @@ Validation before merge: full Unit `1008/1008`, TypeScript, repository ESLint,
 Production build, Prisma validation/generation, disposable migration-baseline,
 and main CI all passed. The additive migration
 `20260814000000_add_chat_foundation` was then applied to the isolated QA database
-only; `prisma migrate status` reports QA up to date. Focused Course Channel and
-DM permission integration tests pass `9/9`. Browser E2E passes `2/2`: one
-Course Channel is shared by its Teacher and active Student, DM discovery/send
-works in both directions, and Dark/Cream/Light/System desktop/mobile layouts
-have no document-level horizontal overflow. Production schema and data remain
-untouched.
+first; `prisma migrate status` reports QA and Production up to date. Focused
+Course Channel and DM permission integration tests pass `9/9`. Browser E2E
+passes `2/2`: one Course Channel is shared by its Teacher and active Student,
+DM discovery/send works in both directions, and Dark/Cream/Light/System
+desktop/mobile layouts have no document-level horizontal overflow. Existing
+Production application data remains untouched; only the reviewed additive
+schema was applied, and all four new Chat tables remain empty.
 
 Rollout order is binding: merge code with both Chat flags still `0` **done**;
 apply the additive migration to QA **done**; run integration, E2E, and
 mobile/all-theme acceptance **done**; approve and apply the Production migration
-separately **pending**; then set both Vercel flags to `1` and redeploy. Finally
+separately **done**; then separately approve setting both Vercel flags to `1`
+and redeploy **pending**. Finally
 create a second cron-job.org GET job for
 `https://beagleclassroom.com/api/cron/chat-retention`, every day, with the same
-`Authorization: Bearer <CRON_SECRET>` header as publish-due. No Chat migration
-is authorized for Production merely because this branch or its PR exists.
+`Authorization: Bearer <CRON_SECRET>` header as publish-due. The retained Neon
+restore point is `production-chat-backup-2026-08-14` (parent `production`,
+expires 2026-08-21). Migration evidence is recorded in
+`docs/release-gates/2026-08-14-PERSISTENT-CHAT-PRODUCTION-MIGRATION.md`.
 
 ## STUDENT SCREEN SHARE AND TEACHER MODERATION — 2026-08-14 (PR #75)
 
