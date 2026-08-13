@@ -243,5 +243,18 @@ export function buildNotificationPreview(args: {
         meta: buildMeta(courseName),
       };
     }
+
+    case "CHAT_MESSAGE": {
+      const senderName = readString(payload, "senderName");
+      const messagePreview = readString(payload, "messagePreview");
+      if (!senderName) return GENERIC_FALLBACK;
+      return {
+        iconKey: "MessageSquare",
+        bold: messagePreview
+          ? `${senderName}: ${softTruncate(messagePreview)}`
+          : `${senderName} ส่งข้อความใหม่`,
+        meta: buildMeta(courseName ?? "ข้อความส่วนตัว"),
+      };
+    }
   }
 }

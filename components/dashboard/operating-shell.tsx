@@ -8,12 +8,14 @@ import {
   ClipboardCheck,
   GraduationCap,
   LayoutDashboard,
+  MessageCircle,
   Plus,
   Scale,
   UserRound,
   UsersRound,
   Video,
 } from "lucide-react";
+import { chatEnabled } from "@/lib/chat/feature-flags";
 
 type DashboardRole = "student" | "teacher";
 
@@ -57,6 +59,9 @@ function navigationFor(role: DashboardRole, showModeration: boolean) {
 
   return [
     ...common,
+    ...(chatEnabled()
+      ? [{ href: "/chat", label: "ข้อความ", icon: MessageCircle }]
+      : []),
     ...roleItems,
     ...(showModeration
       ? [{ href: "/moderation", label: "Moderation", icon: Scale }]

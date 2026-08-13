@@ -133,6 +133,121 @@ export async function sendPushToUsers(
 }
 
 /**
+ * Chat is the one ADR-0049 exception allowed to carry content. The preview
+ * decision belongs to each subscription row, so two devices on one account
+ * may receive different payloads without changing the in-app notification.
+ */
+export async function sendChatPushToUsers(
+  userIds: readonly string[],
+  args: {
+    senderName: string;
+    messageBody: string;
+    url: string;
+    tag?: string;
+  }
+): Promise<PushOutcome> {
+  if (userIds.length === 0) return { ...EMPTY_OUTCOME, configured: true };
+  if (!ensureConfigured()) {
+    reportUnconfigured();
+    return EMPTY_OUTCOME;
+  }
+  const subscriptions = await db.webPushSubscription.findMany({
+    where: { userId: { in: [...userIds] } },
+    select: {
+      id: true,
+      endpoint: true,
+      p256dh: true,
+      auth: true,
+      messagePreviewEnabled: true,
+    },
+  });
+  if (subscriptions.length === 0) {
+    return { ...EMPTY_OUTCOME, configured: true };
+  }
+
+  const gone: string[] = [];
+  const failures: number[] = [];
+  let sent = 0;
+  await Promise.all(
+    subscriptions.map(async (subscription) => {
+      const message: PushMessage = subscription.messagePreviewEnabled
+        ? {
+            title: args.senderName,
+            body: args.messageBody,
+            url: args.url,
+            tag: args.tag,
+          }
+        : {
+            title: "ข้อความใหม่",
+            body: "แตะเพื่อเปิด Beagle Classroom",
+            url: args.url,
+            tag: args.tag,
+          };
+      try {
+        await webpush.sendNotification(
+          {
+            endpoint: subscription.endpoint,
+            keys: { p256dh: subscription.p256dh, auth: subscription.auth },
+          },
+          JSON.stringify(message)
+        );
+        sent += 1;
+      } catch (error: unknown) {
+        const status =
+          typeof error === "object" && error !== null && "statusCode" in error
+            ? Number((error as { statusCode: unknown }).statusCode)
+            : 0;
+        if (status === 404 || status === 410) gone.push(subscription.id);
+        else failures.push(status);
+      }
+    })
+  );
+  if (gone.length > 0) {
+    await db.webPushSubscription.deleteMany({ where: { id: { in: gone } } });
+  }
+  if (failures.length > 0) reportFailures(failures, sent);
+  return {
+    sent,
+    removed: gone.length,
+    failed: failures.length,
+    configured: true,
+  };
+}
+
+export async function sendCourseChatPush(args: {
+  courseOfferingId: string;
+  senderId: string;
+  senderName: string;
+  messageBody: string;
+}): Promise<PushOutcome> {
+  const course = await db.courseOffering.findUnique({
+    where: { id: args.courseOfferingId },
+    select: {
+      teacherId: true,
+      enrollments: {
+        where: { removedAt: null },
+        select: { studentId: true }, // dependency-gate-allow(student-id-symbol-review): internal Enrollment foreign key to User.id
+      },
+    },
+  });
+  if (!course) return { ...EMPTY_OUTCOME, configured: pushConfigured() };
+  const recipients = [
+    course.teacherId,
+    ...course.enrollments.map((enrollment) => enrollment.studentId), // dependency-gate-allow(student-id-symbol-review): internal Enrollment foreign key to User.id
+  ].filter((userId) => userId !== args.senderId);
+  try {
+    return await sendChatPushToUsers(recipients, {
+      senderName: args.senderName,
+      messageBody: args.messageBody,
+      url: `/chat/course/${args.courseOfferingId}`,
+      tag: `chat-course-${args.courseOfferingId}`,
+    });
+  } catch {
+    return { ...EMPTY_OUTCOME, configured: pushConfigured() };
+  }
+}
+
+/**
  * What one send attempt did.
  *
  * `configured: false` is the case that used to be indistinguishable from

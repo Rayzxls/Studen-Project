@@ -55,3 +55,25 @@ export async function deletePushSubscriptionAction(
     where: { endpoint: endpoint.trim(), userId: session.user.id },
   });
 }
+
+export async function getMessagePreviewPreferenceAction(
+  endpoint: string
+): Promise<boolean> {
+  const session = await requireAuth();
+  const row = await db.webPushSubscription.findFirst({
+    where: { endpoint: endpoint.trim(), userId: session.user.id },
+    select: { messagePreviewEnabled: true },
+  });
+  return row?.messagePreviewEnabled ?? true;
+}
+
+export async function setMessagePreviewPreferenceAction(
+  endpoint: string,
+  enabled: boolean
+): Promise<void> {
+  const session = await requireAuth();
+  await db.webPushSubscription.updateMany({
+    where: { endpoint: endpoint.trim(), userId: session.user.id },
+    data: { messagePreviewEnabled: enabled },
+  });
+}

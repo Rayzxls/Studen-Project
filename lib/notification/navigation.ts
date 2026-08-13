@@ -75,6 +75,8 @@ export function resolveNotificationDestinationLabel(
       // Into the course, not out to Meet: the room may already be closed by
       // the time this is tapped, and the join control is what knows.
       return "เข้าห้องเรียน";
+    case "CHAT_MESSAGE":
+      return "เปิดแชต";
     case "COMMENT_REPLIED": {
       switch (payloadString(args.payload, "entityKind")) {
         case "ASSIGNMENT":
@@ -110,6 +112,15 @@ export function resolveNotificationHref(
   const { kind, role, courseOfferingId, sourceEntityId } = args;
   const lessonId = payloadString(args.payload, "lessonId");
   const useLessonWorkspace = args.lessonWorkspaceEnabled === true;
+
+  // A Course Channel returns to its course tab; a DM intentionally has no
+  // course context and addresses only the guarded conversation route.
+  if (kind === "CHAT_MESSAGE") {
+    if (role === "ADMIN") return DASHBOARD;
+    if (!courseOfferingId) return `/chat/${sourceEntityId}`;
+    const rolePath = role === "TEACHER" ? "teacher" : "student";
+    return `/${rolePath}/courses/${courseOfferingId}/chat`;
+  }
 
   // Ultimate fallback when the course context is missing.
   if (!courseOfferingId) return DASHBOARD;

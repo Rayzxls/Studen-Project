@@ -24,6 +24,7 @@ import { ThemeModeControl } from "@/components/theme/theme-mode-control";
 import { ReplayToursForm } from "@/components/guide/replay-tours-form";
 import { PushToggle } from "@/components/notification/push-toggle";
 import { pushConfigured } from "@/lib/notification/push";
+import { chatEnabled } from "@/lib/chat/feature-flags";
 import { replayGuideToursAction } from "@/app/dashboard/guide-actions";
 import { startGoogleLinkAction } from "./actions";
 
@@ -235,6 +236,7 @@ export default async function ProfilePage({
             <PushToggle
               publicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""}
               serverReady={pushConfigured()}
+              chatReady={chatEnabled()}
             />
           </section>
 

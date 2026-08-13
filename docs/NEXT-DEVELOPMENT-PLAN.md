@@ -1,8 +1,16 @@
 # Next Development Plan
 
-**Updated:** 2026-07-29
+**Updated:** 2026-08-14
 **Sequence:** Core completion -> Lesson Workspace -> Quiz -> Identity/Integrations -> AI -> Optional product modules
-**Current state:** A0 Documentation Alignment, A1 Report/Export v1, A2 Critical-path QA, and A3/A3.1 static correctness work are complete. Automated invite coverage plus a physical-phone Production QR scan passed, and authenticated Production private-R2 upload/preview/download passed after the explicit attachment-disposition fix. A4 Account Lifecycle and the operational Moderation Center have additive persistence, audited transactions, and feature-flagged Admin surfaces. Lesson Workspace B1-B6 are implemented and accepted on isolated Neon QA. Quiz C1-C5c are implemented and the additive Quiz migrations are current in Production. The owner accepted the pilot on 2026-07-31, so ADR-0045 retired the per-course allowlist: `QUIZ_ENABLED` and `QUIZ_MUTATIONS_ENABLED` now cover every CourseOffering alike, and a new course needs no environment change.
+**Current state:** Releases A-C and the Identity D1 rollout are on Production.
+Early Warning (ADR-0048), scheduled publishing, Web Push, Sentry/CI gates, and
+the Live Online Room are also shipped. The room now has its own LiveKit stage,
+ephemeral in-room chat, direct student screen sharing, and teacher controls;
+that ephemeral room chat is deliberately not the persistent Channel/DM product
+defined by ADR-0050. Persistent Chat V1 is implemented on a guarded branch and
+awaits additive QA/Production rollout; it is not shipped merely because the
+code exists. Reward remains behind two unresolved lifecycle decisions in
+ADR-0051.
 
 ## Why this order
 
@@ -24,8 +32,10 @@ This matrix prevents an implemented screen or database field from being mistaken
 | Profile personal information | Avatar, legacy display-name behavior, real identity, password, and theme exist | Target profile is intentionally minimal: editable re-authenticated Real Name, user-uploaded Avatar, owner/Admin-only verified email, optional fallback password, and theme; no separate Display Name |
 | Quiz / Testing | Approved contract, four ADRs, additive schema, Teacher Builder, Student Attempt/autosave/auto-grading, Teacher Results/lifecycle/publication, private attachments, Moderation evidence, Teacher CSV analytics, and an aggregate-only Admin observer | Shipped to every course: the pilot was accepted on 2026-07-31 and ADR-0045 retired per-course gating, leaving `QUIZ_ENABLED`/`QUIZ_MUTATIONS_ENABLED` as the only switches |
 | AI Assistant | No model-provider integration found | Not implemented; planned only after stable Lesson/Quiz contracts |
-| Google Login | NextAuth currently uses Credentials only | Not implemented; identity-linking rules must be designed first |
-| Chat Room, Reward, Meeting | No domain model or route found | Candidate backlog; not committed to the current release plan |
+| Google Login | Google-first onboarding, returning sign-in, provider linking, fallback password, recovery, and verified-email change are deployed | Shipped behind the accepted Identity V2 contracts |
+| Persistent Chat | Guarded V1 implements Course Channels, 3+ character school-wide DM search, bilateral blocking, focused-tab polling, notifications/push privacy, immutable report snapshots, and 12-month/anonymization expiry | Code complete; additive migration and flags remain off pending QA then separately approved Production rollout |
+| Reward | ADR-0051 defines two ledger economies, achievement-based awards, reversals, redemption, and quests | Planned after Chat; implementation remains blocked on archive/anonymization lifecycle decisions |
+| Meeting | LiveKit-backed room, roster/presence, ephemeral room chat, screen share, join/leave/close, and teacher participant removal are deployed | Shipped; monitor participant-minute capacity before scale-up |
 | External integrations | CSV import/export and private R2 storage are the current integrations | Partial; each new integration needs its own ownership, privacy, and failure policy |
 | Subscription / global multi-tenant | Current product is single-tenant school | Separate product strategy, not an unfinished CRUD item in this project |
 
@@ -712,13 +722,16 @@ AI is optional and follows Quiz. Begin with low-risk assistance rather than auto
 
 ## Release F: Optional product modules
 
-These are visible backlog candidates, not promises for the current school release.
+**Status update — 2026-08-14:** Meeting is shipped. Persistent Chat is the next
+approved implementation track. Reward follows after its two open lifecycle
+questions are settled. These modules remain separate releases rather than one
+combined schema or cutover.
 
 | Candidate | Dependency and recommended direction |
 | --- | --- |
-| Chat Room | Run a separate Grill after moderation and notifications are complete. First prove that Feed comments and private Submission Conversation do not already solve the need. |
-| Reward system | Start only after Lesson Progress and Quiz produce trustworthy events. Rewards must not expose peer performance or encourage point farming. |
-| Meeting room | Prefer integration with an established meeting provider before considering custom WebRTC infrastructure. Define host, admission, recording, consent, and attendance semantics first. |
+| Chat Room | ADR-0050 and ADR-0049 are locked. Build persistent course Channels and DMs behind additive schema and fail-closed flags; preserve strict DM privacy, blocking, report snapshots, 12-month retention, and focused-tab polling. |
+| Reward system | ADR-0051 is mostly locked and Lesson/Quiz events now exist. Settle archive and anonymization lifecycle first; rewards must not expose peer performance or encourage point farming. |
+| Meeting room | Shipped on LiveKit through PRs #68-#75. The remaining roadmap concern is capacity/cost monitoring, not missing room functionality. |
 | Advanced analytics | Requires stable event definitions and enough historical data. Do not infer learning outcomes from raw click counts. |
 
 ### Separate strategy: Subscription and global multi-tenant
@@ -736,4 +749,9 @@ The current application is a single-tenant school system. Subscription, tenant i
 
 ## Recommended first work item after approval
 
-Do not start with Prisma schema changes. **A0 Documentation Alignment is complete.** Continue with **A1 Report/Export Decision**, turn **A2 Critical-path QA** into an executable release gate, and classify every row in **A3 Functional Completeness Audit**. Only after A0-A3 close should implementation begin at **B1 Additive Domain Foundation**.
+Begin persistent Chat as guarded vertical slices: first an additive schema and
+pure permission/retention policies, then course Channel reads/writes, then DM
+search/blocking, and finally push previews plus Moderation snapshots. Keep both
+read and mutation flags off until the migration and permission matrix pass on
+isolated Neon QA. Do not apply the migration to Production merely because its
+SQL exists in the repository.

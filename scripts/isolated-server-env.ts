@@ -25,5 +25,9 @@ export function prepareIsolatedServerEnv<T extends ServerEnv>(
     // that DATABASE_URL was replaced with a distinct QA_DATABASE_URL.
     QUIZ_ENABLED: env.QUIZ_ENABLED ?? "1",
     QUIZ_MUTATIONS_ENABLED: env.QUIZ_MUTATIONS_ENABLED ?? "1",
+    // Persistent Chat is separate from the live-room data channel. Only the
+    // isolated server opts into the new additive tables by default.
+    CHAT_ENABLED: env.CHAT_ENABLED ?? "1",
+    CHAT_MUTATIONS_ENABLED: env.CHAT_MUTATIONS_ENABLED ?? "1",
   };
 }

@@ -117,6 +117,44 @@ function compactLabel(
     : normalized;
 }
 
+const chatEvidenceMessageSelect = {
+  id: true,
+  authorId: true,
+  body: true,
+  createdAt: true,
+  deletedAt: true,
+  author: {
+    select: {
+      firstName: true,
+      lastName: true,
+      teacher: { select: { firstName: true, lastName: true } },
+      student: { select: { firstName: true, lastName: true } },
+    },
+  },
+} as const;
+
+function chatEvidenceAuthorName(
+  author: {
+    firstName: string | null;
+    lastName: string | null;
+    teacher: { firstName: string; lastName: string } | null;
+    student: { firstName: string; lastName: string } | null;
+  } | null
+): string {
+  if (!author) return "อดีตสมาชิก";
+  return (
+    [
+      author.firstName ??
+        author.teacher?.firstName ??
+        author.student?.firstName,
+      author.lastName ?? author.teacher?.lastName ?? author.student?.lastName,
+    ]
+      .filter((part): part is string => Boolean(part?.trim()))
+      .join(" ")
+      .trim() || "สมาชิก"
+  );
+}
+
 async function assertCourseAccess(
   client: DatabaseClient,
   actor: Actor,
@@ -482,6 +520,107 @@ async function resolveTarget(
       },
       courseOfferingId: row.quiz.courseOfferingId,
       ownerUserId: row.quiz.createdById,
+    };
+  }
+
+  if (targetType === "CHAT_MESSAGE") {
+    const row = await client.chatMessage.findUnique({
+      where: { id: targetId },
+      select: {
+        id: true,
+        body: true,
+        authorId: true,
+        createdAt: true,
+        deletedAt: true,
+        conversation: {
+          select: {
+            id: true,
+            kind: true,
+            courseOfferingId: true,
+            members: {
+              where: { userId: actor.userId },
+              select: { userId: true },
+              take: 1,
+            },
+          },
+        },
+      },
+    });
+    if (!row || row.deletedAt || !row.body) {
+      throw new NotFound("moderation_target_not_found");
+    }
+
+    // A reviewer never reads the live thread. Only a current participant can
+    // create the immutable evidence snapshot that the reviewer later sees.
+    if (actor.role === "ADMIN") {
+      throw new NotFound("moderation_target_not_found");
+    }
+    if (row.conversation.kind === "COURSE_CHANNEL") {
+      if (!row.conversation.courseOfferingId) {
+        throw new NotFound("moderation_target_not_found");
+      }
+      await assertCourseAccess(
+        client,
+        actor,
+        row.conversation.courseOfferingId
+      );
+    } else if (row.conversation.members.length === 0) {
+      throw new NotFound("moderation_target_not_found");
+    }
+
+    const [before, after] = await Promise.all([
+      client.chatMessage.findMany({
+        where: {
+          conversationId: row.conversation.id,
+          OR: [
+            { createdAt: { lt: row.createdAt } },
+            { createdAt: row.createdAt, id: { lt: row.id } },
+          ],
+        },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: 5,
+        select: chatEvidenceMessageSelect,
+      }),
+      client.chatMessage.findMany({
+        where: {
+          conversationId: row.conversation.id,
+          OR: [
+            { createdAt: { gt: row.createdAt } },
+            { createdAt: row.createdAt, id: { gt: row.id } },
+          ],
+        },
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        take: 5,
+        select: chatEvidenceMessageSelect,
+      }),
+    ]);
+    const reported = await client.chatMessage.findUniqueOrThrow({
+      where: { id: row.id },
+      select: chatEvidenceMessageSelect,
+    });
+    const messages = [...before.reverse(), reported, ...after].map(
+      (message) => ({
+        id: message.id,
+        authorId: message.authorId,
+        authorName: chatEvidenceAuthorName(message.author),
+        body: message.body,
+        createdAt: message.createdAt.toISOString(),
+        deleted: message.deletedAt !== null,
+        reported: message.id === row.id,
+      })
+    );
+    return {
+      targetType,
+      targetId,
+      targetLabel: compactLabel(row.body, "ข้อความแชต"),
+      targetSnapshot: {
+        kind: row.conversation.kind,
+        conversationId: row.conversation.id,
+        reportedMessageId: row.id,
+        messages,
+      },
+      courseOfferingId: row.conversation.courseOfferingId,
+      ownerUserId: row.authorId,
     };
   }
 

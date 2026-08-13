@@ -176,6 +176,42 @@ describe("a send that the push service rejects", () => {
   });
 });
 
+describe("chat previews are a per-device choice", () => {
+  it("sends content only to subscriptions that opted into previews", async () => {
+    configure();
+    mocks.findMany.mockResolvedValue([
+      { ...SUBSCRIPTION, id: "preview-on", messagePreviewEnabled: true },
+      {
+        ...SUBSCRIPTION,
+        id: "preview-off",
+        endpoint: "https://push.example/private",
+        messagePreviewEnabled: false,
+      },
+    ]);
+    const { sendChatPushToUsers } = await loadPush();
+
+    await sendChatPushToUsers(["student-1"], {
+      senderName: "Bob Tester",
+      messageBody: "ข้อความส่วนตัว",
+      url: "/chat/dm-1",
+    });
+
+    const payloads = mocks.sendNotification.mock.calls.map((call) =>
+      JSON.parse(String(call[1]))
+    );
+    expect(payloads).toContainEqual({
+      title: "Bob Tester",
+      body: "ข้อความส่วนตัว",
+      url: "/chat/dm-1",
+    });
+    expect(payloads).toContainEqual({
+      title: "ข้อความใหม่",
+      body: "แตะเพื่อเปิด Beagle Classroom",
+      url: "/chat/dm-1",
+    });
+  });
+});
+
 describe("a VAPID subject the library refuses", () => {
   it("switches push off rather than failing the publishing sweep", async () => {
     configure();

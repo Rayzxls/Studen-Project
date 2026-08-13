@@ -226,6 +226,32 @@ export async function setupTestCourse(): Promise<TestCourseContext> {
           ],
         },
       });
+      const moderationCaseIds = (
+        await db.moderationCase.findMany({
+          where: {
+            OR: [
+              { ownerUserId: { in: userIds } },
+              { reports: { some: { reporterId: { in: userIds } } } },
+            ],
+          },
+          select: { id: true },
+        })
+      ).map((row) => row.id);
+      await db.moderationCaseEvent.deleteMany({
+        where: { caseId: { in: moderationCaseIds } },
+      });
+      await db.moderationReport.deleteMany({
+        where: { caseId: { in: moderationCaseIds } },
+      });
+      await db.moderationCase.deleteMany({
+        where: { id: { in: moderationCaseIds } },
+      });
+      // Persistent Chat: DM conversations are not course children and their
+      // creator FK is Restrict, so drain every test-user conversation before
+      // deleting the fixture identities.
+      await db.chatConversation.deleteMany({
+        where: { members: { some: { userId: { in: userIds } } } },
+      });
       await db.submissionVersion.deleteMany({
         where: { submissionId: { in: submissionIds } },
       });

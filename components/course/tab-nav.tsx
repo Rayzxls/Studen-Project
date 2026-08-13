@@ -12,6 +12,7 @@ import {
   LayoutGrid,
   ListChecks,
   Newspaper,
+  MessageCircle,
   Settings,
   Users,
   Video,
@@ -35,7 +36,8 @@ export type CourseTabIcon =
   | "scores"
   | "settings"
   | "overview"
-  | "meeting";
+  | "meeting"
+  | "chat";
 
 const TAB_ICONS: Record<CourseTabIcon, LucideIcon> = {
   feed: Newspaper,
@@ -49,6 +51,7 @@ const TAB_ICONS: Record<CourseTabIcon, LucideIcon> = {
   settings: Settings,
   overview: LayoutGrid,
   meeting: Video,
+  chat: MessageCircle,
 };
 
 export type CourseTab = {

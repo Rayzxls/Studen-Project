@@ -5,7 +5,9 @@ import { BellRing } from "lucide-react";
 
 import {
   deletePushSubscriptionAction,
+  getMessagePreviewPreferenceAction,
   savePushSubscriptionAction,
+  setMessagePreviewPreferenceAction,
 } from "@/app/profile/push-actions";
 
 /**
@@ -42,6 +44,7 @@ function urlBase64ToBytes(base64: string): ArrayBuffer {
 export function PushToggle({
   publicKey,
   serverReady,
+  chatReady = false,
 }: {
   publicKey: string;
   /**
@@ -54,10 +57,13 @@ export function PushToggle({
    * cannot buzz.
    */
   serverReady: boolean;
+  chatReady?: boolean;
 }) {
   const [state, setState] = useState<State>("checking");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [previewEnabled, setPreviewEnabled] = useState(true);
+  const [endpoint, setEndpoint] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -76,6 +82,14 @@ export function PushToggle({
 
       const registration = await navigator.serviceWorker.getRegistration();
       const existing = await registration?.pushManager.getSubscription();
+      if (existing) {
+        setEndpoint(existing.endpoint);
+        if (chatReady) {
+          setPreviewEnabled(
+            await getMessagePreviewPreferenceAction(existing.endpoint)
+          );
+        }
+      }
       return existing ? ("on" as const) : ("off" as const);
     };
 
@@ -85,7 +99,7 @@ export function PushToggle({
     return () => {
       cancelled = true;
     };
-  }, [publicKey]);
+  }, [chatReady, publicKey]);
 
   const enable = async () => {
     setError(null);
@@ -116,6 +130,8 @@ export function PushToggle({
           auth: json.keys!.auth!,
           userAgent: navigator.userAgent,
         });
+        setEndpoint(subscription.endpoint);
+        setPreviewEnabled(true);
         setState("on");
       });
     } catch {
@@ -136,6 +152,7 @@ export function PushToggle({
       await subscription.unsubscribe();
       startTransition(async () => {
         await deletePushSubscriptionAction(endpoint);
+        setEndpoint(null);
         setState("off");
       });
     } catch {
@@ -194,6 +211,31 @@ export function PushToggle({
         <span className="text-sm text-green-700">
           เปิดอยู่บนอุปกรณ์นี้ — เปิดแยกได้ในแต่ละเครื่อง
         </span>
+      )}
+      {state === "on" && chatReady && endpoint && (
+        <label className="flex w-full items-start gap-3 rounded-xl border border-black/[0.06] bg-bg px-3 py-3 text-sm text-ink">
+          <input
+            type="checkbox"
+            className="mt-0.5 h-4 w-4 accent-blue-600"
+            checked={previewEnabled}
+            disabled={pending}
+            onChange={(event) => {
+              const next = event.target.checked;
+              setPreviewEnabled(next);
+              startTransition(async () => {
+                await setMessagePreviewPreferenceAction(endpoint, next);
+              });
+            }}
+          />
+          <span>
+            <strong className="block font-medium">
+              แสดงชื่อผู้ส่งและข้อความแชต
+            </strong>
+            <span className="mt-0.5 block text-xs leading-5 text-ink-mute">
+              ปิดได้สำหรับอุปกรณ์นี้ หากไม่ต้องการให้เนื้อหาปรากฏบนหน้าจอล็อก
+            </span>
+          </span>
+        </label>
       )}
       {error && <span className="text-sm text-red-700">{error}</span>}
     </div>
