@@ -82,7 +82,7 @@ describe("persistent Course Channel permissions", () => {
     await db.enrollment.update({
       where: {
         studentId_courseOfferingId: {
-          studentId: ctx.studentUserId,
+          studentId: ctx.studentUserId, // dependency-gate-allow(student-id-symbol-review): internal Enrollment foreign key to User.id
           courseOfferingId: ctx.courseOfferingId,
         },
       },

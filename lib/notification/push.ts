@@ -226,14 +226,14 @@ export async function sendCourseChatPush(args: {
       teacherId: true,
       enrollments: {
         where: { removedAt: null },
-        select: { studentId: true },
+        select: { studentId: true }, // dependency-gate-allow(student-id-symbol-review): internal Enrollment foreign key to User.id
       },
     },
   });
   if (!course) return { ...EMPTY_OUTCOME, configured: pushConfigured() };
   const recipients = [
     course.teacherId,
-    ...course.enrollments.map((enrollment) => enrollment.studentId),
+    ...course.enrollments.map((enrollment) => enrollment.studentId), // dependency-gate-allow(student-id-symbol-review): internal Enrollment foreign key to User.id
   ].filter((userId) => userId !== args.senderId);
   try {
     return await sendChatPushToUsers(recipients, {

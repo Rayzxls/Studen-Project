@@ -49,7 +49,10 @@ async function requireCourseMember(params: {
       teacherId: true,
       archivedAt: true,
       enrollments: {
-        where: { studentId: params.actorUserId, removedAt: null },
+        where: {
+          studentId: params.actorUserId, // dependency-gate-allow(student-id-symbol-review): internal Enrollment foreign key to User.id
+          removedAt: null,
+        },
         select: { id: true },
         take: 1,
       },
@@ -255,13 +258,13 @@ export async function sendCourseChannelMessage(params: {
         teacherId: true,
         enrollments: {
           where: { removedAt: null },
-          select: { studentId: true },
+          select: { studentId: true }, // dependency-gate-allow(student-id-symbol-review): internal Enrollment foreign key to User.id
         },
       },
     });
     const recipientIds = [
       course.teacherId,
-      ...course.enrollments.map((enrollment) => enrollment.studentId),
+      ...course.enrollments.map((enrollment) => enrollment.studentId), // dependency-gate-allow(student-id-symbol-review): internal Enrollment foreign key to User.id
     ].filter((userId) => userId !== params.ctx.actorUserId);
     await fanOutTargetedMany(tx, {
       recipientIds,

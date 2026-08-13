@@ -47,7 +47,7 @@ function assertMutationsEnabled(env?: ChatFeatureFlagEnv) {
     throw new Forbidden("chat_mutations_disabled");
 }
 
-function displayName(person: {
+function personName(person: {
   firstName: string | null;
   lastName: string | null;
 }): string {
@@ -429,7 +429,7 @@ export async function sendDirectMessage(params: {
   if (!actor || actor.role === "ADMIN")
     throw new Forbidden("chat_actor_forbidden");
   const author = toPerson(actor);
-  const senderName = displayName(author);
+  const senderName = personName(author);
 
   const message = await db.$transaction(async (tx) => {
     const created = await tx.chatMessage.create({
