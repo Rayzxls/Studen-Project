@@ -1,6 +1,6 @@
 # HANDOFF — Beagle Classroom
 
-## THE ROOM IS FURNISHED — 2026-08-13 (READ FIRST)
+## THE ROOM IS FURNISHED — 2026-08-14 (READ FIRST)
 
 Sections below this one are older. Where they disagree, this one is current.
 **Verify against the code and the database before trusting any of it** — this
@@ -21,7 +21,7 @@ not. The owner's screenshots later agreed.
 No redeploy was needed: the deployment carrying the credentials was created
 after they were added.
 
-### Two pull requests merged since, both on Production
+### Three pull requests merged since, all on Production
 
 **PR #72** — the stage's own behaviour:
 
@@ -67,6 +67,22 @@ after they were added.
   report the person present and walk them back in. Only when nothing has been
   asked does the server's answer stand, which is what lets a reload keep someone
   in the room they were already in.
+
+**PR #74** — ending the lesson for everyone:
+
+- **The teacher can close the room, not merely leave it.** The live workspace
+  now carries a distinct `ปิดห้องเรียน` control above the stage. It asks for
+  confirmation because this ends the lesson for every participant; the ordinary
+  Leave control still removes only the person who pressed it.
+- **The close is enforced on the server.** `POST .../close` requires an
+  authenticated user and `closeRoom` verifies course ownership, so an enrolled
+  student or a teacher from another course cannot end the lesson. Closing twice
+  is idempotent.
+- **A failed close does not strand the teacher.** The client releases the stage
+  optimistically so its microphone stops at once, but restores the previous
+  room intent and heartbeat if the API rejects or drops the request, and exposes
+  the failure through an alert. Other participants discover a successful close
+  on the existing three-second poll and disconnect from the stage.
 
 ### Still true, still worth knowing
 
