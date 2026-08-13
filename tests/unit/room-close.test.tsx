@@ -39,15 +39,20 @@ const TEACHER_PRESENT = {
 };
 
 let closeCalls = 0;
+let closeResponseOk = true;
 
 beforeEach(() => {
   closeCalls = 0;
+  closeResponseOk = true;
   vi.stubGlobal(
     "fetch",
     vi.fn(async (url: string) => {
       if (String(url).includes("/close")) {
         closeCalls += 1;
-        return { ok: true, json: async () => ({ closedAt: new Date() }) };
+        return {
+          ok: closeResponseOk,
+          json: async () => ({ closedAt: new Date() }),
+        };
       }
       return {
         ok: true,
@@ -124,5 +129,19 @@ describe("ending the lesson", () => {
     fireEvent.click(screen.getByText("ยืนยันปิดห้อง"));
 
     await waitFor(() => expect(closeCalls).toBe(1));
+  });
+
+  it("reports a rejected close and keeps the teacher in the open room", async () => {
+    closeResponseOk = false;
+    renderAs(true);
+    await waitFor(() => expect(screen.getByText("ปิดห้องเรียน")).toBeTruthy());
+
+    fireEvent.click(screen.getByText("ปิดห้องเรียน"));
+    fireEvent.click(screen.getByText("ยืนยันปิดห้อง"));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "ปิดห้องไม่สำเร็จ"
+    );
+    expect(screen.getByText("ออกจากห้อง")).toBeTruthy();
   });
 });

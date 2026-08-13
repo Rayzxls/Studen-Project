@@ -229,14 +229,25 @@ export function useLiveRoom(courseId: string): LiveRoom {
    */
   const closeRoom = useCallback(() => {
     if (!sessionId) return;
+    const previousIntent = intent;
+    const wasJoined = hasJoined.current;
     setIntent("out");
     hasJoined.current = false;
     void fetch(`/api/meeting/session/${sessionId}/close`, { method: "POST" })
-      .then(() => poll())
+      .then((response) => {
+        if (!response.ok) throw new Error("room_close_failed");
+        return poll();
+      })
       .catch(() => {
+        // Closing is optimistic so the microphone and stage stop immediately.
+        // If the server refuses or the request drops, put the teacher back in
+        // exactly the state they had before the press so they can keep teaching
+        // and try again instead of being stranded outside an open room.
+        setIntent(previousIntent);
+        hasJoined.current = wasJoined;
         setError("ปิดห้องไม่สำเร็จ กรุณาลองใหม่");
       });
-  }, [sessionId, poll]);
+  }, [sessionId, poll, intent]);
 
   const open = useCallback(() => {
     void enterRoom(
