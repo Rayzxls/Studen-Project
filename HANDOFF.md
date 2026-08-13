@@ -1,11 +1,11 @@
 # HANDOFF — Beagle Classroom
 
-## STUDENT SCREEN SHARE AND TEACHER MODERATION — 2026-08-14 (IN PROGRESS)
+## STUDENT SCREEN SHARE AND TEACHER MODERATION — 2026-08-14 (PR #75)
 
 This section records the owner's latest decisions and supersedes the open
-questions below. The implementation is on
-`codex/live-room-student-controls`; do not call it Production until its PR is
-merged and the Production deployment is verified.
+questions below. The implementation and its tests are PR #75. Verify the PR's
+merge state and the Production deployment rather than inferring either from
+this document.
 
 - **Every active room member may share a screen immediately.** A student does
   not raise a hand or wait for a teacher grant. The server still authorizes the
