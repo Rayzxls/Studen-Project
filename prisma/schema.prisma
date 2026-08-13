@@ -89,32 +89,37 @@ model User {
   profileImageId String?
   themeMode      ThemeMode @default(SYSTEM)
 
-  admin                   Admin?
-  teacher                 Teacher?
-  student                 Student?
-  sessions                UserSession[]
-  auditLogsAsActor        AuditLog[]              @relation("ActorLogs")
-  commentsAuthored        Comment[]               @relation("CommentAuthor")
-  notifications           Notification[]          @relation("NotificationRecipient") // Phase 7
-  materialsPosted         Material[]              @relation("MaterialAuthor") // Phase 7
-  announcementsPosted     Announcement[]          @relation("AnnouncementAuthor") // Phase 7
-  lifecycleEventsAsTarget AccountLifecycleEvent[] @relation("LifecycleTarget")
-  lifecycleEventsAsActor  AccountLifecycleEvent[] @relation("LifecycleActor")
-  moderationReports       ModerationReport[]      @relation("ModerationReporter")
-  moderationCasesOwned    ModerationCase[]        @relation("ModerationOwner")
-  moderationCasesReviewed ModerationCase[]        @relation("ModerationReviewer")
-  moderationEventsAsActor ModerationCaseEvent[]   @relation("ModerationEventActor")
-  authIdentities          AuthIdentity[]
-  identityTokens          IdentityToken[]
-  consentAcceptances      ConsentAcceptance[]
-  realNameChanges         RealNameHistory[]       @relation("RealNameTarget")
-  realNameChangesAsActor  RealNameHistory[]       @relation("RealNameActor")
-  teacherInvitesCreated   TeacherInvite[]         @relation("TeacherInviteCreator")
-  teacherInvitesAccepted  TeacherInvite[]         @relation("TeacherInviteAcceptedBy")
-  teacherInvitesRevoked   TeacherInvite[]         @relation("TeacherInviteRevokedBy")
-  guideToursCompleted     GuideTourCompletion[]
-  webPushSubscriptions    WebPushSubscription[]
-  meetingPresences        MeetingPresence[]
+  admin                    Admin?
+  teacher                  Teacher?
+  student                  Student?
+  sessions                 UserSession[]
+  auditLogsAsActor         AuditLog[]               @relation("ActorLogs")
+  commentsAuthored         Comment[]                @relation("CommentAuthor")
+  notifications            Notification[]           @relation("NotificationRecipient") // Phase 7
+  materialsPosted          Material[]               @relation("MaterialAuthor") // Phase 7
+  announcementsPosted      Announcement[]           @relation("AnnouncementAuthor") // Phase 7
+  lifecycleEventsAsTarget  AccountLifecycleEvent[]  @relation("LifecycleTarget")
+  lifecycleEventsAsActor   AccountLifecycleEvent[]  @relation("LifecycleActor")
+  moderationReports        ModerationReport[]       @relation("ModerationReporter")
+  moderationCasesOwned     ModerationCase[]         @relation("ModerationOwner")
+  moderationCasesReviewed  ModerationCase[]         @relation("ModerationReviewer")
+  moderationEventsAsActor  ModerationCaseEvent[]    @relation("ModerationEventActor")
+  authIdentities           AuthIdentity[]
+  identityTokens           IdentityToken[]
+  consentAcceptances       ConsentAcceptance[]
+  realNameChanges          RealNameHistory[]        @relation("RealNameTarget")
+  realNameChangesAsActor   RealNameHistory[]        @relation("RealNameActor")
+  teacherInvitesCreated    TeacherInvite[]          @relation("TeacherInviteCreator")
+  teacherInvitesAccepted   TeacherInvite[]          @relation("TeacherInviteAcceptedBy")
+  teacherInvitesRevoked    TeacherInvite[]          @relation("TeacherInviteRevokedBy")
+  guideToursCompleted      GuideTourCompletion[]
+  webPushSubscriptions     WebPushSubscription[]
+  meetingPresences         MeetingPresence[]
+  chatConversationsCreated ChatConversation[]       @relation("ChatConversationCreator")
+  chatMemberships          ChatConversationMember[]
+  chatMessages             ChatMessage[]            @relation("ChatMessageAuthor")
+  chatBlocksMade           ChatBlock[]              @relation("ChatBlocker")
+  chatBlocksReceived       ChatBlock[]              @relation("ChatBlocked")
 
   @@index([role])
   @@index([accountStatus])
@@ -235,6 +240,7 @@ enum ModerationTargetType {
   QUIZ_QUESTION
   FILE_ATTACHMENT
   PROFILE_IMAGE
+  CHAT_MESSAGE
 }
 
 enum ModerationCaseStatus {
@@ -361,22 +367,24 @@ model Admin {
 ///
 /// Cascades with the User: deleting an account takes its subscriptions too.
 model WebPushSubscription {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  endpoint  String   @unique
-  p256dh    String
-  auth      String
-  userAgent String?
-  createdAt DateTime @default(now())
-  lastUsedAt DateTime?
+  id                    String    @id @default(cuid())
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint              String    @unique
+  p256dh                String
+  auth                  String
+  userAgent             String?
+  /// Per-device ADR-0049 privacy control. False omits sender/body previews.
+  messagePreviewEnabled Boolean   @default(true)
+  createdAt             DateTime  @default(now())
+  lastUsedAt            DateTime?
 
   @@index([userId])
 }
 
 model GuideTourCompletion {
   userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   tourId String
   seenAt DateTime @default(now())
 
@@ -486,6 +494,7 @@ model CourseOffering {
   assignments    Assignment[]
   materials      Material[] // Phase 7
   announcements  Announcement[] // Phase 7
+  chatChannel    ChatConversation?
 
   @@index([classCode])
   @@index([teacherId])
@@ -605,9 +614,9 @@ model MeetingPresence {
   userId    String
   user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  joinedAt DateTime @default(now())
+  joinedAt     DateTime @default(now())
   /// Any heartbeat, focused or not. Silence here means the tab is gone.
-  lastSeenAt DateTime
+  lastSeenAt   DateTime
   /// Heartbeat while the tab was frontmost. Drives the away/moon threshold.
   lastActiveAt DateTime
 
@@ -615,6 +624,92 @@ model MeetingPresence {
   @@unique([sessionId, userId])
   // Rendering the rail: everyone in this session, most recently seen first.
   @@index([sessionId, lastSeenAt])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Persistent classroom Chat (ADR-0049, ADR-0050)
+// ═══════════════════════════════════════════════════════════════════════════
+
+enum ChatConversationKind {
+  COURSE_CHANNEL
+  DIRECT_MESSAGE
+}
+
+enum ChatMessageDeletionReason {
+  RETENTION
+  ACCOUNT_ANONYMIZED
+}
+
+/// A persistent conversation. Course Channel membership is always derived
+/// from the owning Teacher plus active Enrollment rows; member rows exist only
+/// for a two-person DM. The migration adds a CHECK tying each kind to exactly
+/// one of courseOfferingId/directKey.
+model ChatConversation {
+  id               String               @id @default(cuid())
+  kind             ChatConversationKind
+  courseOfferingId String?              @unique
+  courseOffering   CourseOffering?      @relation(fields: [courseOfferingId], references: [id], onDelete: Cascade)
+  /// Stable sorted pair key. Null for a Course Channel.
+  directKey        String?              @unique
+  createdById      String
+  createdBy        User                 @relation("ChatConversationCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  lastMessageAt    DateTime?
+
+  members  ChatConversationMember[]
+  messages ChatMessage[]
+
+  @@index([kind, lastMessageAt(sort: Desc)])
+  @@index([createdById, createdAt])
+}
+
+/// Explicit membership is deliberately DM-only. Services never consult or
+/// create these rows for a Course Channel; its authorization is derived from
+/// the current CourseOffering owner and active Enrollment rows.
+model ChatConversationMember {
+  conversationId String
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt       DateTime         @default(now())
+
+  @@id([conversationId, userId])
+  @@index([userId, conversationId])
+}
+
+/// Message content is transient rather than academic evidence. Retention or
+/// account anonymization clears body/author and leaves this structural row so
+/// the other participant still sees a coherent placeholder. Report evidence
+/// is an immutable ModerationCase snapshot, not a dependency on this row.
+model ChatMessage {
+  id             String                     @id @default(cuid())
+  conversationId String
+  conversation   ChatConversation           @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  authorId       String?
+  author         User?                      @relation("ChatMessageAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  body           String?                    @db.VarChar(4000)
+  createdAt      DateTime                   @default(now())
+  expiresAt      DateTime
+  deletedAt      DateTime?
+  deletionReason ChatMessageDeletionReason?
+
+  @@index([conversationId, createdAt(sort: Desc)])
+  @@index([authorId, createdAt])
+  @@index([expiresAt, deletedAt])
+}
+
+/// A block is directional as stored but bilateral in policy: either row makes
+/// both users disappear from DM discovery and prevents messages both ways.
+model ChatBlock {
+  blockerId String
+  blocker   User     @relation("ChatBlocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blockedId String
+  blocked   User     @relation("ChatBlocked", fields: [blockedId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([blockerId, blockedId])
+  @@index([blockedId, blockerId])
 }
 
 enum AttendanceStatus {
@@ -1207,6 +1302,8 @@ enum NotificationKind {
   QUIZ_EXCEPTION_GRANTED
   // The teacher opened the period's online room (ADR-0053). Broadcast.
   MEETING_ROOM_OPENED
+  // Persistent Course Channel or DM message (ADR-0049/0050).
+  CHAT_MESSAGE
 }
 
 enum NotifEntityType {
@@ -1219,6 +1316,7 @@ enum NotifEntityType {
   ENROLLMENT // for CLASS_CODE_JOINED
   QUIZ
   SESSION // for MEETING_ROOM_OPENED — the period whose room was opened
+  CHAT_CONVERSATION
 }
 
 model Notification {

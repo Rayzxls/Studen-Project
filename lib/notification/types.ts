@@ -54,6 +54,11 @@ export interface AnnouncementPostedPayload extends BasePayload {
  */
 export type MeetingRoomOpenedPayload = BasePayload;
 
+export interface ChatMessagePayload extends BasePayload {
+  senderName: string;
+  messagePreview: string;
+}
+
 // ─── Targeted kinds (1 recipient) ────────────────────────────
 
 export interface ScoreEntryEditedPayload extends BasePayload {
@@ -123,10 +128,11 @@ export type NotificationPayload =
   | { kind: "CLASS_CODE_JOINED"; data: ClassCodeJoinedPayload }
   | { kind: "QUIZ_REOPENED"; data: QuizReopenedPayload }
   | { kind: "QUIZ_EXCEPTION_GRANTED"; data: QuizExceptionGrantedPayload }
-  | { kind: "MEETING_ROOM_OPENED"; data: MeetingRoomOpenedPayload };
+  | { kind: "MEETING_ROOM_OPENED"; data: MeetingRoomOpenedPayload }
+  | { kind: "CHAT_MESSAGE"; data: ChatMessagePayload };
 
 /** Compile-time check that the discriminator covers every NotificationKind. */
-type _AssertKindCoverage = NotificationPayload["kind"] extends NotificationKind
+type _AssertKindCoverage = NotificationKind extends NotificationPayload["kind"]
   ? true
   : false;
 type _AssertEntityCoverage = NotifEntityType extends NotifEntityType

@@ -1,6 +1,7 @@
 import type { CourseTab } from "@/components/course/tab-nav";
 import { lessonWorkspaceCourseEnabled } from "@/lib/lesson";
 import { quizEnabled } from "@/lib/quiz";
+import { chatEnabled } from "@/lib/chat/feature-flags";
 
 /**
  * Student CourseOffering tab list — Phase 10C reshape per ADR-0025.
@@ -45,6 +46,15 @@ export const studentCourseTabs = (courseId: string): CourseTab[] => [
     href: `/student/courses/${courseId}/meeting`,
     icon: "meeting",
   },
+  ...(chatEnabled()
+    ? [
+        {
+          label: "แชต",
+          href: `/student/courses/${courseId}/chat`,
+          icon: "chat" as const,
+        },
+      ]
+    : []),
   {
     label: "เพื่อนร่วมห้อง",
     href: `/student/courses/${courseId}/members`,

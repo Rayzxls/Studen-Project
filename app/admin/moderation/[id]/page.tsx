@@ -161,6 +161,7 @@ function EvidencePreview({
   const links = stringList(record, "linkUrls");
   const filename = textValue(record, "originalFilename");
   const questions = evidenceQuestions(record);
+  const chatMessages = evidenceChatMessages(record);
   const capturedFileCount = moderationEvidenceFileIds(snapshot).length;
   const unavailableFileCount = Math.max(
     0,
@@ -181,6 +182,40 @@ function EvidencePreview({
           <p className="whitespace-pre-wrap text-sm leading-6 text-black/80">
             {body}
           </p>
+        )}
+        {chatMessages.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-ink-soft">
+              บริบทรอบข้อความที่ถูกรายงาน · snapshot ณ เวลารายงาน
+            </p>
+            {chatMessages.map((message) => (
+              <article
+                key={message.id}
+                className={`rounded-xl border p-3 ${
+                  message.reported
+                    ? "border-amber-300 bg-amber-50"
+                    : "border-hairline bg-surface"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-3 text-xs">
+                  <strong className="text-ink">{message.authorName}</strong>
+                  {message.reported && (
+                    <span className="font-medium text-amber-800">
+                      ข้อความที่รายงาน
+                    </span>
+                  )}
+                </div>
+                <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-ink-soft">
+                  {message.deleted || !message.body
+                    ? "ข้อความถูกนำออกแล้ว"
+                    : message.body}
+                </p>
+              </article>
+            ))}
+            <p className="text-xs text-ink-soft">
+              ผู้ดูแลเห็นเฉพาะสำเนานี้ และไม่สามารถเปิดห้องสนทนาจริงได้
+            </p>
+          </div>
         )}
         {filename && (
           <p className="text-sm text-black">
@@ -261,7 +296,8 @@ function EvidencePreview({
           !body &&
           !filename &&
           links.length === 0 &&
-          questions.length === 0 && (
+          questions.length === 0 &&
+          chatMessages.length === 0 && (
             <p className="text-sm text-ink-soft">
               รายการนี้มีเฉพาะข้อมูลอ้างอิงของเนื้อหา
             </p>
@@ -274,6 +310,34 @@ function EvidencePreview({
 function textValue(record: Prisma.JsonObject, key: string): string {
   const value = record[key];
   return typeof value === "string" ? value : "";
+}
+
+function evidenceChatMessages(record: Prisma.JsonObject): Array<{
+  id: string;
+  authorName: string;
+  body: string | null;
+  deleted: boolean;
+  reported: boolean;
+}> {
+  const value = record.messages;
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+    const message = item as Prisma.JsonObject;
+    if (typeof message.id !== "string") return [];
+    return [
+      {
+        id: message.id,
+        authorName:
+          typeof message.authorName === "string"
+            ? message.authorName
+            : "อดีตสมาชิก",
+        body: typeof message.body === "string" ? message.body : null,
+        deleted: message.deleted === true,
+        reported: message.reported === true,
+      },
+    ];
+  });
 }
 
 function stringList(record: Prisma.JsonObject, key: string): string[] {

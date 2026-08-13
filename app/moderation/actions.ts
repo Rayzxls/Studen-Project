@@ -28,6 +28,7 @@ const TARGET_TYPES = new Set<ModerationTargetType>([
   "QUIZ_QUESTION",
   "FILE_ATTACHMENT",
   "PROFILE_IMAGE",
+  "CHAT_MESSAGE",
 ]);
 
 const CATEGORIES = new Set<ModerationReportCategory>([

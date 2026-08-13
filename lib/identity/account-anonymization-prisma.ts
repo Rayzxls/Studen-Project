@@ -2,6 +2,7 @@ import type { Prisma, PrismaClient } from "@prisma/client";
 
 import { db } from "@/lib/db/client";
 import { identityFoundationMutationsEnabled } from "./feature-flags";
+import { chatEnabled } from "@/lib/chat/feature-flags";
 import {
   ANONYMIZED_STUDENT_NAME,
   anonymizedUserFields,
@@ -20,7 +21,8 @@ const TX_OPTS = {
 };
 
 function createTransactionPort(
-  tx: Prisma.TransactionClient
+  tx: Prisma.TransactionClient,
+  eraseChatContent: boolean
 ): AccountAnonymizationTransactionPort {
   return {
     reloadCandidate: async (userId) => {
@@ -63,6 +65,17 @@ function createTransactionPort(
       // Detach every linked provider so the anonymized account is unreachable
       // and the Google address is free to start a fresh account later.
       await tx.authIdentity.deleteMany({ where: { userId } });
+      if (eraseChatContent) {
+        await tx.chatMessage.updateMany({
+          where: { authorId: userId, deletedAt: null },
+          data: {
+            authorId: null,
+            body: null,
+            deletedAt: anonymizedAt,
+            deletionReason: "ACCOUNT_ANONYMIZED",
+          },
+        });
+      }
     },
     createAuditLogs: async (inputs) => {
       for (const input of inputs) {
@@ -101,7 +114,10 @@ export function createPrismaAccountAnonymizationService(
       return rows.map((r) => ({ userId: r.id, role: r.role }));
     },
     transaction: async (work) =>
-      client.$transaction((tx) => work(createTransactionPort(tx)), TX_OPTS),
+      client.$transaction(
+        (tx) => work(createTransactionPort(tx, chatEnabled(env))),
+        TX_OPTS
+      ),
   };
 
   return createAccountAnonymizationService(database, {

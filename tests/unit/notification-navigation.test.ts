@@ -344,6 +344,39 @@ describe("resolveNotificationHref — Lesson Workspace deep links", () => {
 });
 
 describe("resolveNotificationHref — fallbacks", () => {
+  it("opens a DM without requiring course context", () => {
+    expect(
+      resolveNotificationHref({
+        kind: "CHAT_MESSAGE",
+        role: "STUDENT",
+        courseOfferingId: null,
+        sourceEntityId: "conversation-1",
+        payload: {},
+      })
+    ).toBe("/chat/conversation-1");
+  });
+
+  it("returns a Course Channel notification to the role-specific chat tab", () => {
+    expect(
+      resolveNotificationHref({
+        kind: "CHAT_MESSAGE",
+        role: "TEACHER",
+        courseOfferingId: "course-1",
+        sourceEntityId: "conversation-1",
+        payload: {},
+      })
+    ).toBe("/teacher/courses/course-1/chat");
+    expect(
+      resolveNotificationHref({
+        kind: "CHAT_MESSAGE",
+        role: "STUDENT",
+        courseOfferingId: "course-1",
+        sourceEntityId: "conversation-1",
+        payload: {},
+      })
+    ).toBe("/student/courses/course-1/chat");
+  });
+
   it("returns /dashboard when courseOfferingId is null", () => {
     expect(
       resolveNotificationHref({
@@ -380,6 +413,7 @@ describe("resolveNotificationDestinationLabel", () => {
     ["ANNOUNCEMENT_POSTED", "STUDENT", {}, "อ่านประกาศ"],
     ["COMMENT_REPLIED", "STUDENT", { entityKind: "MATERIAL" }, "เปิดเอกสาร"],
     ["CLASS_CODE_JOINED", "TEACHER", {}, "ดูสมาชิก"],
+    ["CHAT_MESSAGE", "STUDENT", {}, "เปิดแชต"],
   ] as const)("%s for %s shows %s", (kind, role, payload, expected) => {
     expect(resolveNotificationDestinationLabel({ kind, role, payload })).toBe(
       expected

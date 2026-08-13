@@ -45,6 +45,28 @@ describe("Quiz notification previews", () => {
 });
 
 describe("buildNotificationPreview — happy paths", () => {
+  it("CHAT_MESSAGE shows sender and the bounded preview", () => {
+    const preview = buildNotificationPreview({
+      kind: "CHAT_MESSAGE",
+      payload: {
+        senderName: "สมชาย",
+        messagePreview: "ส่งไฟล์ให้แล้วนะ",
+      },
+    });
+    expect(preview.iconKey).toBe("MessageSquare");
+    expect(preview.bold).toContain("สมชาย");
+    expect(preview.bold).toContain("ส่งไฟล์ให้แล้วนะ");
+    expect(preview.meta).toBe("ข้อความส่วนตัว");
+  });
+
+  it("CHAT_MESSAGE hides content when the per-device preview is off", () => {
+    const preview = buildNotificationPreview({
+      kind: "CHAT_MESSAGE",
+      payload: { senderName: "สมชาย" },
+    });
+    expect(preview.bold).toBe("สมชาย ส่งข้อความใหม่");
+  });
+
   it("SCORE_ITEM_PUBLISHED", () => {
     const p = buildNotificationPreview({
       kind: "SCORE_ITEM_PUBLISHED",

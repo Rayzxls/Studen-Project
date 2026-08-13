@@ -32,9 +32,9 @@ const RAW_SQL_PATH = resolve(
   "prisma/raw-sql/0001-notification-partial-unique.sql"
 );
 // Bumped deliberately, never to make a red gate green: the count exists so a
-// table that disappears from a migration is caught. 41 → 42 adds
-// MeetingPresence (ADR-0053).
-const EXPECTED_TABLE_COUNT = 42;
+// table that disappears from a migration is caught. 42 → 46 adds the four
+// persistent Chat foundation tables (ADR-0050).
+const EXPECTED_TABLE_COUNT = 46;
 const VERIFIER_ADVISORY_LOCK_ID = "68434670120260802";
 
 type CommandResult = SpawnSyncReturns<string>;
