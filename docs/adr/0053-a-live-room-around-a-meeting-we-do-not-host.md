@@ -17,8 +17,16 @@ outside meeting link at all.
 
 What still stands unchanged: presence derived rather than stored, opening a
 room being separate from opening a Session, and pressing Join never being
-attendance. The one part genuinely unbuilt is handing the stage to a student —
-the token permits only a teacher to publish a screen.
+attendance. Student screen sharing was subsequently implemented under the
+owner's revised decision recorded below.
+
+**Revised — 2026-08-14.** The owner explicitly chose immediate self-service
+screen sharing for every active room member. The teacher-grant workflow in this
+ADR is therefore historical reasoning, not the current rule. An active student
+may publish a screen without requesting permission; server-side course
+authorization remains mandatory. The owning teacher may remove a student from
+the current live room, which disconnects that participant but does not change
+course enrolment or attendance and does not prevent a later rejoin.
 
 The chat this document leaves unspecified is settled in
 [ADR-0055](./0055-in-room-chat-is-not-the-course-channel.md).
@@ -112,7 +120,7 @@ course and the kind of thing that happened, and stops there."* A room opening is
 exactly that. And as ADR-0047 requires, the push is a courier, never the record:
 the `Notification` row is written first and the push follows.
 
-## Students present too, but the teacher hands over the stage
+## Students present too; the teacher-grant decision was later reversed
 
 Presenting work is a reason to have a stage at all, so sharing is not a teacher
 capability with students as an audience. It is one stage that one person holds
@@ -122,6 +130,10 @@ Who holds it is the teacher's to decide. A student does not take the stage; the
 student asks — the raise-hand control already in the room is that request — and
 the teacher grants it. The teacher can reclaim it at any moment with one
 control, and the grant lasts for that presentation rather than for the term.
+
+**Superseded on 2026-08-14:** students now share directly without a request or
+grant. The paragraph above is retained to explain the earlier trade-off, not to
+describe the product.
 
 This is a safeguarding rule before it is a classroom-management one. A shared
 screen shows whatever is on it, including things the student did not mean to
