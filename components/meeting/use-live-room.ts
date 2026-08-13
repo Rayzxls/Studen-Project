@@ -30,6 +30,12 @@ export interface LiveRoom {
    * on its next poll and falls back to the closed state.
    */
   closeRoom: () => void;
+  /** Teacher only: remove one student from this room, not from the course. */
+  kickParticipant: (userId: string) => Promise<boolean>;
+  /** The row whose removal request is currently in flight. */
+  kickingUserId: string | null;
+  /** Called when LiveKit says this browser was removed by room moderation. */
+  markKicked: () => void;
   /**
    * Record presence without going anywhere. For the stage, where connecting is
    * itself the act of entering and there is no tab to open — using `join` here
@@ -65,6 +71,7 @@ export function useLiveRoom(courseId: string): LiveRoom {
   const [error, setError] = useState<string | null>(null);
   const [blockedUrl, setBlockedUrl] = useState<string | null>(null);
   const [intent, setIntent] = useState<"in" | "out" | null>(null);
+  const [kickingUserId, setKickingUserId] = useState<string | null>(null);
   const hasJoined = useRef(false);
 
   const poll = useCallback(async () => {
@@ -249,6 +256,36 @@ export function useLiveRoom(courseId: string): LiveRoom {
       });
   }, [sessionId, poll, intent]);
 
+  const kickParticipant = useCallback(
+    async (userId: string): Promise<boolean> => {
+      if (!sessionId || kickingUserId) return false;
+      setKickingUserId(userId);
+      setError(null);
+      try {
+        const response = await fetch(
+          `/api/meeting/session/${sessionId}/participants/${userId}/kick`,
+          { method: "POST" }
+        );
+        if (!response.ok) throw new Error("participant_kick_failed");
+        await poll();
+        return true;
+      } catch {
+        setError("นำผู้เรียนออกจากห้องไม่สำเร็จ กรุณาลองใหม่");
+        return false;
+      } finally {
+        setKickingUserId(null);
+      }
+    },
+    [sessionId, kickingUserId, poll]
+  );
+
+  const markKicked = useCallback(() => {
+    setIntent("out");
+    hasJoined.current = false;
+    setError("ครูนำคุณออกจากห้องแล้ว คุณสามารถเข้าร่วมใหม่ได้");
+    void poll();
+  }, [poll]);
+
   const open = useCallback(() => {
     void enterRoom(
       `/api/meeting/course/${courseId}/open`,
@@ -273,6 +310,9 @@ export function useLiveRoom(courseId: string): LiveRoom {
     join,
     leave,
     closeRoom,
+    kickParticipant,
+    kickingUserId,
+    markKicked,
     markPresent,
     intent,
   };

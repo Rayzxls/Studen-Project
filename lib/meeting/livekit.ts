@@ -1,6 +1,11 @@
 import "server-only";
 
-import { AccessToken, TrackSource } from "livekit-server-sdk";
+import {
+  AccessToken,
+  RoomServiceClient,
+  ServerError,
+  TrackSource,
+} from "livekit-server-sdk";
 
 /**
  * The stage's media server (ADR-0053).
@@ -48,7 +53,7 @@ export interface StageGrant {
   sessionId: string;
   userId: string;
   participantName: string;
-  /** Only a teacher may put something on the stage without being handed it. */
+  /** Whether this participant may share a screen on the stage. */
   canPresent: boolean;
 }
 
@@ -59,10 +64,10 @@ export interface StageGrant {
  * Speaking and presenting are different rights and are granted differently.
  * **Everyone may use a microphone** — a class where students cannot answer is
  * not a class, and muting is theirs to control the way it is in any call.
- * **Only a teacher may put something on the stage.** ADR-0053 makes presenting
- * something the teacher hands over, and the enforcement is here rather than in
- * the interface: a student who edits the page still cannot share a screen,
- * because the token does not permit that source.
+ * **Every active room member may share a screen.** This is enforced in the
+ * token rather than by the interface, so the visible control and the media
+ * server cannot drift apart. Camera publishing stays out of the grant because
+ * this stage is intentionally a screen-share surface, not a camera grid.
  */
 export async function mintStageToken(
   grant: StageGrant,
@@ -82,7 +87,6 @@ export async function mintStageToken(
     canPublishSources: grant.canPresent
       ? [
           TrackSource.MICROPHONE,
-          TrackSource.CAMERA,
           TrackSource.SCREEN_SHARE,
           TrackSource.SCREEN_SHARE_AUDIO,
         ]
@@ -91,6 +95,46 @@ export async function mintStageToken(
   });
 
   return token.toJwt();
+}
+
+/**
+ * Disconnect one participant from the stage without ending the room.
+ *
+ * LiveKit documents removal as re-joinable. Revoking the token used for the
+ * removed connection prevents that exact credential from racing straight back
+ * in, while a deliberate Join press mints a fresh token normally.
+ */
+export async function removeStageParticipant(params: {
+  sessionId: string;
+  userId: string;
+  config?: LiveKitConfig | null;
+  now?: Date;
+}): Promise<void> {
+  const config =
+    params.config === undefined ? readLiveKitConfig() : params.config;
+  if (!config) return;
+
+  const client = new RoomServiceClient(
+    config.url,
+    config.apiKey,
+    config.apiSecret
+  );
+  try {
+    await client.removeParticipant(
+      roomNameForSession(params.sessionId),
+      params.userId,
+      {
+        revokeTokenTs: BigInt(
+          Math.floor((params.now ?? new Date()).getTime() / 1_000)
+        ),
+      }
+    );
+  } catch (error) {
+    // Presence can outlive a dropped media connection for one polling window.
+    // Removing someone who has already disconnected is therefore success.
+    if (error instanceof ServerError && error.status === 404) return;
+    throw error;
+  }
 }
 
 /**

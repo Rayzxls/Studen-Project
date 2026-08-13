@@ -9,9 +9,11 @@ import {
   getRoomState,
   heartbeat,
   joinRoom,
+  kickParticipant,
   openRoom,
   openRoomsForStudent,
   openRoomsForTeacher,
+  stageAccessFor,
 } from "@/lib/meeting/room";
 import {
   enrollStudent,
@@ -256,6 +258,100 @@ describe("who may join, and what they get", () => {
     await expect(
       db.attendanceRecord.count({ where: { sessionId } })
     ).resolves.toBe(0);
+  });
+});
+
+describe("sharing and teacher room moderation", () => {
+  it("grants an enrolled student screen-sharing access without approval", async () => {
+    const sessionId = await withLink();
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: true,
+    });
+    await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
+
+    await expect(
+      stageAccessFor({ sessionId, actorUserId: ctx.studentUserId })
+    ).resolves.toMatchObject({ canPresent: true });
+  });
+
+  it("lets only the owning teacher remove a student from the room", async () => {
+    const now = new Date("2026-08-14T02:00:00.000Z");
+    const sessionId = await withLink();
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: true,
+      now,
+    });
+    await enrollStudent(ctx.courseOfferingId, ctx.studentUserId);
+    await joinRoom({
+      sessionId,
+      actorUserId: ctx.studentUserId,
+      stageAvailable: true,
+      now,
+    });
+
+    const disconnected: string[] = [];
+    const disconnectFromStage = async (input: { userId: string }) => {
+      disconnected.push(input.userId);
+    };
+
+    await expect(
+      kickParticipant({
+        sessionId,
+        actorUserId: ctx.studentUserId,
+        targetUserId: ctx.studentUserId,
+        now,
+        disconnectFromStage,
+      })
+    ).rejects.toBeInstanceOf(Forbidden);
+    await expect(
+      kickParticipant({
+        sessionId,
+        actorUserId: ctx.otherTeacherUserId,
+        targetUserId: ctx.studentUserId,
+        now,
+        disconnectFromStage,
+      })
+    ).rejects.toBeInstanceOf(Forbidden);
+
+    await kickParticipant({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      targetUserId: ctx.studentUserId,
+      now,
+      disconnectFromStage,
+    });
+
+    expect(disconnected).toEqual([ctx.studentUserId]);
+    const state = await getRoomState({
+      courseOfferingId: ctx.courseOfferingId,
+      actorUserId: ctx.teacherUserId,
+      now,
+    });
+    expect(state.participants.map((person) => person.userId)).not.toContain(
+      ctx.studentUserId
+    );
+  });
+
+  it("never lets the teacher target themself", async () => {
+    const sessionId = await withLink();
+    await openRoom({
+      sessionId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: true,
+    });
+
+    await expect(
+      kickParticipant({
+        sessionId,
+        actorUserId: ctx.teacherUserId,
+        targetUserId: ctx.teacherUserId,
+        disconnectFromStage: async () => {},
+      })
+    ).rejects.toBeInstanceOf(ValidationError);
   });
 });
 

@@ -40,6 +40,7 @@ export function Stage({
   enabled,
   onMediaChange,
   onConnected,
+  onRemoved,
   selfPanel,
   chatContainer,
 }: {
@@ -47,6 +48,8 @@ export function Stage({
   enabled: boolean;
   onMediaChange?: (state: RoomMediaState) => void;
   onConnected?: () => void;
+  /** LiveKit moderation removed this browser from the room. */
+  onRemoved?: () => void;
   /** Rendered inside the connection, so the device controls can reach it. */
   selfPanel: SelfPanelProps;
   chatContainer?: HTMLElement | null;
@@ -64,6 +67,7 @@ export function Stage({
         onUnavailable={onUnavailable}
         onMediaChange={onMediaChange}
         onConnected={onConnected}
+        onRemoved={onRemoved}
         selfPanel={selfPanel}
         chatContainer={chatContainer}
       />

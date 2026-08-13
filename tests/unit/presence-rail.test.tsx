@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import { PresenceRail } from "@/components/meeting/presence-rail";
 import type { RoomParticipant } from "@/lib/meeting/room";
@@ -159,5 +159,59 @@ describe("who cannot speak and who cannot hear", () => {
     );
     expect(screen.getByText("วีระ ใจดี ปิดไมค์")).toBeDefined();
     expect(screen.getByText("วีระ ใจดี ปิดเสียง ไม่ได้ยินห้อง")).toBeDefined();
+  });
+});
+
+describe("teacher room moderation", () => {
+  const teacher = person({
+    userId: "teacher",
+    firstName: "ครูสมชาย",
+    isTeacher: true,
+  });
+  const student = person({ userId: "student", firstName: "มานี" });
+
+  it("asks before removing a student and confirms successful removal", async () => {
+    const onKick = vi.fn(async () => true);
+    render(
+      <PresenceRail
+        participants={[teacher, student]}
+        canKick
+        selfUserId="teacher"
+        onKick={onKick}
+      />
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "นำ มานี ใจดี ออกจากห้อง" })
+    );
+    expect(onKick).not.toHaveBeenCalled();
+    expect(screen.getByText("นำ มานี ใจดี ออกจากห้องนี้?")).toBeVisible();
+
+    fireEvent.click(screen.getByRole("button", { name: "ยืนยันนำออก" }));
+    await waitFor(() => expect(onKick).toHaveBeenCalledWith("student"));
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "นำ มานี ใจดี ออกจากห้องแล้ว"
+    );
+  });
+
+  it("never offers removal to students or against the teacher", () => {
+    const { rerender } = render(
+      <PresenceRail participants={[teacher, student]} selfUserId="student" />
+    );
+    expect(
+      screen.queryByRole("button", { name: /นำ .* ออกจากห้อง/ })
+    ).toBeNull();
+
+    rerender(
+      <PresenceRail
+        participants={[teacher]}
+        canKick
+        selfUserId="teacher"
+        onKick={async () => true}
+      />
+    );
+    expect(
+      screen.queryByRole("button", { name: /นำ .* ออกจากห้อง/ })
+    ).toBeNull();
   });
 });

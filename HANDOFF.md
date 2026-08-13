@@ -1,5 +1,28 @@
 # HANDOFF — Beagle Classroom
 
+## STUDENT SCREEN SHARE AND TEACHER MODERATION — 2026-08-14 (PR #75)
+
+This section records the owner's latest decisions and supersedes the open
+questions below. The implementation and its tests are PR #75. Verify the PR's
+merge state and the Production deployment rather than inferring either from
+this document.
+
+- **Every active room member may share a screen immediately.** A student does
+  not raise a hand or wait for a teacher grant. The server still authorizes the
+  user as the owning teacher or an active enrolment before it mints a LiveKit
+  token, and student tokens still cannot publish a camera.
+- **Microphone behaviour is deliberately unchanged.** The owner cancelled the
+  proposed change to the roster's microphone indicator. Keep the current
+  `micOff` behaviour unless a later decision explicitly replaces it.
+- **The owning teacher may remove a student from the current live room.** The
+  roster asks for confirmation, LiveKit disconnects the participant, and the
+  derived presence is backdated so the room state agrees immediately. This is
+  not removal from the course or attendance, and the student may join again
+  while the room remains open.
+- The teacher cannot remove themself with the participant action; use Leave or
+  Close room for those different intentions. Students and teachers from other
+  courses cannot call the moderation endpoint.
+
 ## THE ROOM IS FURNISHED — 2026-08-14 (READ FIRST)
 
 Sections below this one are older. Where they disagree, this one is current.
@@ -98,9 +121,8 @@ after they were added.
 
 ### Open questions the owner has not answered
 
-Unchanged from the section below: every microphone starting muted, handing the
-stage to a student, and LiveKit's free tier being roughly three classes of
-thirty a month.
+LiveKit's free tier being roughly three classes of thirty a month remains open.
+The microphone and student-sharing questions are settled in the section above.
 
 ## THE LIVE ONLINE ROOM SHIPPED — 2026-08-12
 

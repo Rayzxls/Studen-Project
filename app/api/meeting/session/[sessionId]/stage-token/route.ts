@@ -20,8 +20,9 @@ interface RouteProps {
  * room that is actually open. A student removed from the course stops being
  * able to mint one in the same breath as losing the course.
  *
- * The token itself carries the publish right, so a student who edits the page
- * still cannot put anything on the stage — the server decided, not the button.
+ * The token itself carries the publish right. Every active member gets screen
+ * sharing without an approval step; someone outside the course still cannot
+ * mint a token even if they edit the page.
  *
  * Never cached, for the obvious reason.
  */

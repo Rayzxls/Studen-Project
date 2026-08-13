@@ -37,13 +37,23 @@ const TEACHER_PRESENT = {
   isTeacher: true,
   state: "ACTIVE" as const,
 };
+const STUDENT_PRESENT = {
+  userId: "s1",
+  firstName: "มานี",
+  lastName: "ใจดี",
+  profileImageId: null,
+  isTeacher: false,
+  state: "ACTIVE" as const,
+};
 
 let closeCalls = 0;
 let closeResponseOk = true;
+let kickCalls: string[] = [];
 
 beforeEach(() => {
   closeCalls = 0;
   closeResponseOk = true;
+  kickCalls = [];
   vi.stubGlobal(
     "fetch",
     vi.fn(async (url: string) => {
@@ -54,6 +64,10 @@ beforeEach(() => {
           json: async () => ({ closedAt: new Date() }),
         };
       }
+      if (String(url).includes("/kick")) {
+        kickCalls.push(String(url));
+        return { ok: true, json: async () => ({ ok: true }) };
+      }
       return {
         ok: true,
         json: async () => ({
@@ -62,7 +76,7 @@ beforeEach(() => {
           openedAt: new Date().toISOString(),
           meetingUrl: null,
           hasMeetingLink: true,
-          participants: [TEACHER_PRESENT],
+          participants: [TEACHER_PRESENT, STUDENT_PRESENT],
         }),
       };
     })
@@ -143,5 +157,32 @@ describe("ending the lesson", () => {
       "ปิดห้องไม่สำเร็จ"
     );
     expect(screen.getByText("ออกจากห้อง")).toBeTruthy();
+  });
+});
+
+describe("removing one student", () => {
+  it("is confirmed by the teacher and sent to that participant's endpoint", async () => {
+    renderAs(true);
+    const remove = await screen.findByRole("button", {
+      name: "นำ มานี ใจดี ออกจากห้อง",
+    });
+
+    fireEvent.click(remove);
+    expect(kickCalls).toEqual([]);
+    fireEvent.click(screen.getByRole("button", { name: "ยืนยันนำออก" }));
+
+    await waitFor(() =>
+      expect(kickCalls).toEqual([
+        "/api/meeting/session/s1/participants/s1/kick",
+      ])
+    );
+  });
+
+  it("is never offered to a student", async () => {
+    renderAs(false);
+    await waitFor(() => expect(screen.getByText("มานี ใจดี")).toBeTruthy());
+    expect(
+      screen.queryByRole("button", { name: "นำ มานี ใจดี ออกจากห้อง" })
+    ).toBeNull();
   });
 });

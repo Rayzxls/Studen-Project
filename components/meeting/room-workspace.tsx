@@ -50,6 +50,9 @@ export function RoomWorkspace({
     join,
     leave,
     closeRoom,
+    kickParticipant,
+    kickingUserId,
+    markKicked,
     markPresent,
     intent,
   } = useLiveRoom(courseId);
@@ -188,6 +191,7 @@ export function RoomWorkspace({
              could hear and be heard while the roster still said they were
              absent. */
           onConnected={markPresent}
+          onRemoved={markKicked}
           selfPanel={selfPanel}
           chatContainer={chatSlot}
         />
@@ -213,7 +217,14 @@ export function RoomWorkspace({
       </div>
 
       <aside className="card p-4 lg:sticky lg:top-24 lg:h-fit">
-        <PresenceRail participants={room.participants} media={media} />
+        <PresenceRail
+          participants={room.participants}
+          media={media}
+          canKick={isTeacher && stageEnabled}
+          selfUserId={self.userId}
+          kickingUserId={kickingUserId}
+          onKick={kickParticipant}
+        />
         <div ref={setChatSlot} />
       </aside>
     </div>

@@ -1,4 +1,7 @@
-import { MicOff, Moon, VolumeX } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { MicOff, Moon, UserMinus, VolumeX } from "lucide-react";
 
 import {
   NO_MEDIA_STATE,
@@ -30,11 +33,23 @@ type ShownState = Exclude<PresenceState, "LEFT">;
 export function PresenceRail({
   participants,
   media = NO_MEDIA_STATE,
+  canKick = false,
+  selfUserId,
+  kickingUserId = null,
+  onKick,
 }: {
   participants: readonly RoomParticipant[];
   /** Audio state from the stage. All empty when there is no media server. */
   media?: RoomMediaState;
+  /** Owning teacher on a LiveKit-backed stage. */
+  canKick?: boolean;
+  selfUserId?: string;
+  kickingUserId?: string | null;
+  onKick?: (userId: string) => Promise<boolean>;
 }) {
+  const [confirmingUserId, setConfirmingUserId] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
+
   return (
     <div>
       <p className="text-xs text-ink-mute">
@@ -44,32 +59,102 @@ export function PresenceRail({
       </p>
 
       <ul className="mt-3 space-y-2.5">
-        {participants.map((person) => (
-          <li key={person.userId} className="flex items-center gap-2.5">
-            <PresenceAvatar
-              person={person}
-              speaking={media.speaking.includes(person.userId)}
-            />
-            <span
-              className={
-                "min-w-0 truncate text-sm " +
-                (person.state === "ACTIVE" ? "text-ink" : "text-ink-mute")
-              }
-            >
-              {fullName(person)}
-              {person.isTeacher ? (
-                <span className="ml-1.5 text-xs text-ink-mute">ครู</span>
-              ) : null}
-            </span>
+        {participants.map((person) => {
+          const name = fullName(person);
+          const kickable =
+            canKick &&
+            !person.isTeacher &&
+            person.userId !== selfUserId &&
+            Boolean(onKick);
+          const confirming = confirmingUserId === person.userId;
+          const pending = kickingUserId === person.userId;
 
-            <AudioFlags
-              name={fullName(person)}
-              micOff={media.micOff.includes(person.userId)}
-              deafened={media.deafened.includes(person.userId)}
-            />
-          </li>
-        ))}
+          return (
+            <li key={person.userId} className="rounded-xl">
+              <div className="flex items-center gap-2.5">
+                <PresenceAvatar
+                  person={person}
+                  speaking={media.speaking.includes(person.userId)}
+                />
+                <span
+                  className={
+                    "min-w-0 flex-1 truncate text-sm " +
+                    (person.state === "ACTIVE" ? "text-ink" : "text-ink-mute")
+                  }
+                >
+                  {name}
+                  {person.isTeacher ? (
+                    <span className="ml-1.5 text-xs text-ink-mute">ครู</span>
+                  ) : null}
+                </span>
+
+                <AudioFlags
+                  name={name}
+                  micOff={media.micOff.includes(person.userId)}
+                  deafened={media.deafened.includes(person.userId)}
+                />
+
+                {kickable ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFeedback(null);
+                      setConfirmingUserId(person.userId);
+                    }}
+                    disabled={Boolean(kickingUserId)}
+                    aria-label={`นำ ${name} ออกจากห้อง`}
+                    title={`นำ ${name} ออกจากห้อง`}
+                    className="grid h-9 w-9 shrink-0 cursor-pointer place-items-center rounded-full text-ink-mute transition-colors duration-200 hover:bg-red-500/10 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <UserMinus className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                ) : null}
+              </div>
+
+              {confirming ? (
+                <div className="mt-2 rounded-xl border border-red-500/20 bg-red-50 p-3 text-sm">
+                  <p className="font-medium text-red-800">
+                    นำ {name} ออกจากห้องนี้?
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-red-700">
+                    ยังเป็นสมาชิกวิชา และสามารถกดเข้าร่วมใหม่ได้
+                  </p>
+                  <div className="mt-3 flex flex-wrap justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setConfirmingUserId(null)}
+                      disabled={pending}
+                      className="min-h-10 cursor-pointer rounded-full border border-hairline-strong bg-surface px-3 text-xs font-medium text-ink transition-colors duration-200 hover:bg-black/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      ยกเลิก
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!onKick) return;
+                        const removed = await onKick(person.userId);
+                        if (!removed) return;
+                        setConfirmingUserId(null);
+                        setFeedback(`นำ ${name} ออกจากห้องแล้ว`);
+                      }}
+                      disabled={pending}
+                      className="min-h-10 cursor-pointer rounded-full border border-red-500/25 bg-red-600 px-3 text-xs font-medium text-white transition-colors duration-200 hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {pending ? "กำลังนำออก…" : "ยืนยันนำออก"}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </li>
+          );
+        })}
       </ul>
+
+      {feedback ? (
+        <p className="mt-3 text-xs text-ink-mute" role="status">
+          {feedback}
+        </p>
+      ) : null}
     </div>
   );
 }
