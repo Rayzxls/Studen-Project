@@ -8,10 +8,10 @@ the Live Online Room are also shipped. The room now has its own LiveKit stage,
 ephemeral in-room chat, direct student screen sharing, and teacher controls;
 that ephemeral room chat is deliberately not the persistent Channel/DM product
 defined by ADR-0050. Persistent Chat V1 is merged and its additive migration is
-applied on isolated QA; Production still has both Chat flags off and no Chat
-migration. Browser/mobile/all-theme QA passed on isolated QA; only the
-separately approved Production migration, flag cutover, and retention cron
-remain. Reward remains behind two unresolved lifecycle decisions in ADR-0051.
+applied on isolated QA and Production. Production still has both Chat flags
+off. Browser/mobile/all-theme QA passed on isolated QA; only the separately
+approved flag cutover and retention cron remain. Reward remains behind two
+unresolved lifecycle decisions in ADR-0051.
 
 ## Why this order
 
@@ -34,7 +34,7 @@ This matrix prevents an implemented screen or database field from being mistaken
 | Quiz / Testing | Approved contract, four ADRs, additive schema, Teacher Builder, Student Attempt/autosave/auto-grading, Teacher Results/lifecycle/publication, private attachments, Moderation evidence, Teacher CSV analytics, and an aggregate-only Admin observer | Shipped to every course: the pilot was accepted on 2026-07-31 and ADR-0045 retired per-course gating, leaving `QUIZ_ENABLED`/`QUIZ_MUTATIONS_ENABLED` as the only switches |
 | AI Assistant | No model-provider integration found | Not implemented; planned only after stable Lesson/Quiz contracts |
 | Google Login | Google-first onboarding, returning sign-in, provider linking, fallback password, recovery, and verified-email change are deployed | Shipped behind the accepted Identity V2 contracts |
-| Persistent Chat | Guarded V1 implements exactly one Course Channel per CourseOffering, 3+ character school-wide DM search, bilateral blocking, focused-tab polling, notifications/push privacy, immutable report snapshots, and 12-month/anonymization expiry | Merged; QA migration, focused permission integration, and browser/mobile/all-theme acceptance passed. A separately approved Production migration, flag rollout, and retention cron remain |
+| Persistent Chat | Guarded V1 implements exactly one Course Channel per CourseOffering, 3+ character school-wide DM search, bilateral blocking, focused-tab polling, notifications/push privacy, immutable report snapshots, and 12-month/anonymization expiry | Merged; QA and Production migrations passed, as did focused permission integration and browser/mobile/all-theme acceptance. A separately approved flag rollout and retention cron remain |
 | Reward | ADR-0051 defines two ledger economies, achievement-based awards, reversals, redemption, and quests | Planned after Chat; implementation remains blocked on archive/anonymization lifecycle decisions |
 | Meeting | LiveKit-backed room, roster/presence, ephemeral room chat, screen share, join/leave/close, and teacher participant removal are deployed | Shipped; monitor participant-minute capacity before scale-up |
 | External integrations | CSV import/export and private R2 storage are the current integrations | Partial; each new integration needs its own ownership, privacy, and failure policy |
@@ -750,9 +750,8 @@ The current application is a single-tenant school system. Subscription, tenant i
 
 ## Recommended first work item after approval
 
-Begin persistent Chat as guarded vertical slices: first an additive schema and
-pure permission/retention policies, then course Channel reads/writes, then DM
-search/blocking, and finally push previews plus Moderation snapshots. Keep both
-read and mutation flags off until the migration and permission matrix pass on
-isolated Neon QA. Do not apply the migration to Production merely because its
-SQL exists in the repository.
+Persistent Chat implementation, isolated-QA acceptance, and the separately
+approved Production migration are complete. Keep both read and mutation flags
+off until the owner separately approves the Vercel flag cutover. After cutover,
+run authenticated Production smoke checks before creating the daily retention
+cron with the existing `CRON_SECRET` authorization contract.
