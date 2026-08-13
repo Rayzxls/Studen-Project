@@ -7,10 +7,11 @@ Early Warning (ADR-0048), scheduled publishing, Web Push, Sentry/CI gates, and
 the Live Online Room are also shipped. The room now has its own LiveKit stage,
 ephemeral in-room chat, direct student screen sharing, and teacher controls;
 that ephemeral room chat is deliberately not the persistent Channel/DM product
-defined by ADR-0050. Persistent Chat V1 is implemented on a guarded branch and
-awaits additive QA/Production rollout; it is not shipped merely because the
-code exists. Reward remains behind two unresolved lifecycle decisions in
-ADR-0051.
+defined by ADR-0050. Persistent Chat V1 is merged and its additive migration is
+applied on isolated QA; Production still has both Chat flags off and no Chat
+migration. Browser/mobile/all-theme QA passed on isolated QA; only the
+separately approved Production migration, flag cutover, and retention cron
+remain. Reward remains behind two unresolved lifecycle decisions in ADR-0051.
 
 ## Why this order
 
@@ -33,7 +34,7 @@ This matrix prevents an implemented screen or database field from being mistaken
 | Quiz / Testing | Approved contract, four ADRs, additive schema, Teacher Builder, Student Attempt/autosave/auto-grading, Teacher Results/lifecycle/publication, private attachments, Moderation evidence, Teacher CSV analytics, and an aggregate-only Admin observer | Shipped to every course: the pilot was accepted on 2026-07-31 and ADR-0045 retired per-course gating, leaving `QUIZ_ENABLED`/`QUIZ_MUTATIONS_ENABLED` as the only switches |
 | AI Assistant | No model-provider integration found | Not implemented; planned only after stable Lesson/Quiz contracts |
 | Google Login | Google-first onboarding, returning sign-in, provider linking, fallback password, recovery, and verified-email change are deployed | Shipped behind the accepted Identity V2 contracts |
-| Persistent Chat | Guarded V1 implements Course Channels, 3+ character school-wide DM search, bilateral blocking, focused-tab polling, notifications/push privacy, immutable report snapshots, and 12-month/anonymization expiry | Code complete; additive migration and flags remain off pending QA then separately approved Production rollout |
+| Persistent Chat | Guarded V1 implements exactly one Course Channel per CourseOffering, 3+ character school-wide DM search, bilateral blocking, focused-tab polling, notifications/push privacy, immutable report snapshots, and 12-month/anonymization expiry | Merged; QA migration, focused permission integration, and browser/mobile/all-theme acceptance passed. A separately approved Production migration, flag rollout, and retention cron remain |
 | Reward | ADR-0051 defines two ledger economies, achievement-based awards, reversals, redemption, and quests | Planned after Chat; implementation remains blocked on archive/anonymization lifecycle decisions |
 | Meeting | LiveKit-backed room, roster/presence, ephemeral room chat, screen share, join/leave/close, and teacher participant removal are deployed | Shipped; monitor participant-minute capacity before scale-up |
 | External integrations | CSV import/export and private R2 storage are the current integrations | Partial; each new integration needs its own ownership, privacy, and failure policy |

@@ -478,14 +478,18 @@ Edit เสรี (Verbose, ไม่ log) · soft-delete = audit `MATERIAL_DELE
 
 ---
 
-## Chat (Release F design contract — ยังไม่ implement)
+## Chat (Release F — implemented, rollout pending)
 
-ภาษาส่วนนี้เป็นสัญญาการออกแบบที่ตกลงกันไว้ ยังไม่มีโค้ด schema หรือ route ใดรองรับ
+Chat V1 มี schema, route และหน้าจอแล้ว แต่ Production ยังปิด feature flags และยังไม่ได้
+apply migration ส่วน QA apply additive migration แล้วเมื่อ 2026-08-14 ข้อตกลงที่ใช้กับ V1 คือ
+**หนึ่ง CourseOffering มี Course Channel เดียว**; หากต้องการหลาย Channel ในอนาคตต้องออกแบบ
+ชื่อห้อง การสร้าง/เก็บถาวร และ navigation เป็น release แยก ไม่ใช่พฤติกรรมแฝงของ V1
 เหตุผลเบื้องหลังอยู่ใน [ADR-0050](./docs/adr/0050-chat-lives-inside-the-classroom.md)
 ส่วนเรื่อง push ที่มีเนื้อหาอยู่ใน [ADR-0049](./docs/adr/0049-push-may-carry-a-message-and-only-a-message.md)
 
 ### Channel (ห้องคุยในวิชา)
-ห้องข้อความถาวรที่อยู่ใต้ CourseOffering หนึ่ง ครูสร้างได้หลายห้องต่อวิชา
+ห้องข้อความถาวรหนึ่งห้องที่อยู่ใต้ CourseOffering หนึ่ง โดยระบบสร้างหรือค้นคืนจาก CourseOffering
+เดิมเสมอ ครูและนักเรียนไม่ต้องสร้างห้องและไม่มีรายการหลายห้องให้เลือก
 สมาชิกคือ Enrollment ที่ active ของวิชานั้น บวกครูเจ้าของวิชา — ไม่มีการเชิญรายคน
 
 **Channel ต่างจาก Comment แบบ CLASS_WIDE อย่างไร:** Comment เกาะอยู่กับ entity
