@@ -11,7 +11,7 @@ import {
   useTracks,
   VideoTrack,
 } from "@livekit/components-react";
-import { RoomEvent, Track } from "livekit-client";
+import { DisconnectReason, RoomEvent, Track } from "livekit-client";
 import {
   Maximize2,
   Mic,
@@ -56,6 +56,7 @@ export function StageLive({
   onUnavailable,
   onMediaChange,
   onConnected,
+  onRemoved,
   selfPanel,
   chatContainer,
 }: {
@@ -69,6 +70,8 @@ export function StageLive({
   onMediaChange?: (state: RoomMediaState) => void;
   /** Fired once the stage is live — connecting is how you enter the room. */
   onConnected?: () => void;
+  /** Fired when the teacher removes this participant through LiveKit. */
+  onRemoved?: () => void;
   selfPanel: ComponentProps<typeof SelfPanel>;
   /** Where the chat panel should appear — a node in the right rail. */
   chatContainer?: HTMLElement | null;
@@ -142,6 +145,9 @@ export function StageLive({
       audio={false}
       video={false}
       onConnected={onConnected}
+      onDisconnected={(reason) => {
+        if (reason === DisconnectReason.PARTICIPANT_REMOVED) onRemoved?.();
+      }}
       onError={onUnavailable}
       className="contents"
     >
@@ -232,7 +238,7 @@ function StageSurface({
           >
             {canPresent
               ? "ยังไม่มีการแชร์หน้าจอ — กดปุ่มด้านล่างเพื่อเริ่มแชร์"
-              : "ยังไม่มีการแชร์หน้าจอ รอครูเริ่มได้เลย"}
+              : "บัญชีนี้ไม่ได้รับสิทธิ์แชร์หน้าจอ"}
           </p>
         )}
 
@@ -264,7 +270,7 @@ function StageSurface({
           where your own face already is. */}
       {active ? null : <SelfPanel {...selfPanel} controls={controls} />}
 
-      {/* Follows the teacher around the page while a share is running, because
+      {/* Follows the presenter around the page while a share is running, because
           the room tab is not where a lesson is spent and stopping should never
           need hunting for. Fullscreen already carries the same controls over
           the video, so it does not need a second copy. */}
@@ -285,11 +291,11 @@ function StageSurface({
 
 /**
  * The control bar: your microphone, whether you can hear the room, and — for
- * a teacher — the stage.
+ * any room member — the shared stage.
  *
  * Mute is per-person and always available. A class where a student cannot
  * answer is not a class, and the token grants everyone a microphone; only the
- * stage is the teacher's.
+ * stage is available to every active room member without an approval step.
  */
 function RoomControls({
   canPresent,
@@ -461,7 +467,7 @@ function MediaReporter({
 }
 
 /**
- * The teacher's share toggle.
+ * This participant's share toggle.
  *
  * Rendered only for someone whose token permits publishing, but the token is
  * the actual gate — this button's absence is a courtesy, not a control.

@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { render, waitFor } from "@testing-library/react";
+import { act, render, waitFor } from "@testing-library/react";
+
+let liveKitRoomProps: {
+  onDisconnected?: (reason: string) => void;
+} = {};
 
 /**
  * One token per room, not one per render (ADR-0053).
@@ -16,9 +20,15 @@ import { render, waitFor } from "@testing-library/react";
 
 vi.mock("@livekit/components-react", async () => {
   const { createElement } = await import("react");
-  type Props = { children?: React.ReactNode };
+  type Props = {
+    children?: React.ReactNode;
+    onDisconnected?: (reason: string) => void;
+  };
   return {
-    LiveKitRoom: ({ children }: Props) => createElement("div", null, children),
+    LiveKitRoom: (props: Props) => {
+      liveKitRoomProps = props;
+      return createElement("div", null, props.children);
+    },
     RoomAudioRenderer: () => null,
     VideoTrack: () => null,
     useTracks: () => [],
@@ -38,6 +48,7 @@ vi.mock("@livekit/components-react", async () => {
 vi.mock("livekit-client", () => ({
   Track: { Source: { ScreenShare: "screen_share" } },
   RoomEvent: { ParticipantAttributesChanged: "participantAttributesChanged" },
+  DisconnectReason: { PARTICIPANT_REMOVED: "participant_removed" },
 }));
 
 // Needs the room's data channel, which is not what this test is about.
@@ -108,5 +119,22 @@ describe("the stage mints one token per room", () => {
 
     rerender(view("s2"));
     await waitFor(() => expect(tokenCalls()).toBe(2));
+  });
+
+  it("reports when LiveKit says the teacher removed this participant", async () => {
+    const onRemoved = vi.fn();
+    render(
+      <StageLive
+        sessionId="s1"
+        onUnavailable={() => {}}
+        onRemoved={onRemoved}
+        selfPanel={SELF_PANEL}
+      />
+    );
+    await waitFor(() => expect(tokenCalls()).toBe(1));
+
+    act(() => liveKitRoomProps.onDisconnected?.("participant_removed"));
+
+    expect(onRemoved).toHaveBeenCalledOnce();
   });
 });

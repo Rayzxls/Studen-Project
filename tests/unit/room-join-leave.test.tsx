@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 
 import { LEFT_AFTER_MS, derivePresenceState } from "@/lib/meeting/presence";
 
@@ -16,6 +22,7 @@ interface StageProps {
   enabled: boolean;
   sessionId: string | null;
   selfPanel: Record<string, unknown>;
+  onRemoved?: () => void;
 }
 let lastStage: StageProps | null = null;
 
@@ -150,6 +157,22 @@ describe("leaving the room", () => {
     fireEvent.click(screen.getByText("ออกจากห้อง"));
 
     await waitFor(() => expect(leaveCalls).toBe(1));
+  });
+});
+
+describe("being removed by the teacher", () => {
+  it("disconnects immediately and explains that joining again is allowed", async () => {
+    renderRoom();
+    roster = [TEACHER, SELF_PRESENT];
+    await waitFor(() => expect(lastStage?.enabled).toBe(true));
+
+    act(() => lastStage?.onRemoved?.());
+
+    await waitFor(() => expect(lastStage?.enabled).toBe(false));
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "ครูนำคุณออกจากห้องแล้ว"
+    );
+    expect(screen.getByText("เข้าร่วมห้องเรียน")).toBeTruthy();
   });
 });
 

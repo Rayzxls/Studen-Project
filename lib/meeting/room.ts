@@ -5,7 +5,7 @@ import {
   LEFT_AFTER_MS,
   presentInRoom,
 } from "@/lib/meeting/presence";
-import { stageEnabled } from "@/lib/meeting/livekit";
+import { removeStageParticipant, stageEnabled } from "@/lib/meeting/livekit";
 import { resolveMeetingLink } from "@/lib/meeting/resolve";
 import { fanOutBroadcast } from "@/lib/notification";
 import { sendCoursePush } from "@/lib/notification/push";
@@ -245,6 +245,54 @@ export async function leaveRoom(params: {
 }
 
 /**
+ * The owning teacher removes one student from the current room.
+ *
+ * This is room moderation, not enrolment or attendance. The student remains in
+ * the course and may deliberately join again later while the room is open.
+ * LiveKit is disconnected before presence is moved to LEFT so a failed media
+ * command never claims somebody was removed while their microphone is live.
+ */
+export async function kickParticipant(params: {
+  sessionId: string;
+  actorUserId: string;
+  targetUserId: string;
+  now?: Date;
+  disconnectFromStage?: (input: {
+    sessionId: string;
+    userId: string;
+    now: Date;
+  }) => Promise<void>;
+}): Promise<void> {
+  const now = params.now ?? new Date();
+  const session = await loadSessionForTeacher(
+    params.sessionId,
+    params.actorUserId
+  );
+
+  if (session.roomOpenedAt === null || session.roomClosedAt !== null) {
+    throw new ValidationError({ room: "ห้องเรียนออนไลน์ไม่ได้เปิดอยู่" });
+  }
+  if (params.targetUserId === session.course.teacherId) {
+    throw new ValidationError({ participant: "ไม่สามารถนำครูออกจากห้องได้" });
+  }
+
+  await requireActiveEnrolment(session.course.id, params.targetUserId);
+
+  const disconnect = params.disconnectFromStage ?? removeStageParticipant;
+  await disconnect({
+    sessionId: session.id,
+    userId: params.targetUserId,
+    now,
+  });
+
+  const gone = new Date(now.getTime() - LEFT_AFTER_MS - 1_000);
+  await db.meetingPresence.updateMany({
+    where: { sessionId: session.id, userId: params.targetUserId },
+    data: { lastSeenAt: gone, lastActiveAt: gone },
+  });
+}
+
+/**
  * A tab reporting that it is still there.
  *
  * `focused` is the whole difference between the green dot and the hollow one.
@@ -358,12 +406,12 @@ export async function getRoomState(params: {
 }
 
 /**
- * Who this person is on the stage, and whether they may put anything on it.
+ * Who this person is on the stage, and whether they may share a screen.
  *
  * The same gate as the meeting link — active enrolment or the owning teacher,
- * and a room that is actually open — because the stage is the room. Publishing
- * is the teacher's until they hand it over (ADR-0053), and the answer here is
- * what ends up inside the token rather than inside a button's disabled state.
+ * and a room that is actually open — because the stage is the room. Every
+ * active member may share without approval; the answer here ends up inside the
+ * token rather than inside a button's disabled state.
  */
 export async function stageAccessFor(params: {
   sessionId: string;
@@ -389,7 +437,7 @@ export async function stageAccessFor(params: {
       .trim() || "ผู้เข้าร่วม";
 
   return {
-    canPresent: session.course.teacherId === params.actorUserId,
+    canPresent: true,
     participantName,
   };
 }

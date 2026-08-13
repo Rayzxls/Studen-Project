@@ -78,23 +78,27 @@ describe("what a stage token permits", () => {
     expect(video.canPublishSources).toContain("screen_share");
   });
 
-  it("lets a student speak but never take the stage", async () => {
-    // A class where students cannot answer is not a class, so the microphone
-    // is theirs. Presenting is the teacher's to hand over (ADR-0053), and the
-    // token is the gate rather than the button: a student who edits the page
-    // still cannot share a screen.
+  it("lets a student speak and share a screen without approval", async () => {
+    // The permission lives in the signed token, not only in the button. Every
+    // active room member can present immediately, while camera publishing stays
+    // outside this screen-share stage.
     const jwt = await mintStageToken(
       {
         sessionId: "s1",
         userId: "student-1",
         participantName: "มานี",
-        canPresent: false,
+        canPresent: true,
       },
       CONFIG
     );
     const video = payloadOf(jwt).video as Record<string, unknown>;
     expect(video.canSubscribe).toBe(true);
-    expect(video.canPublishSources).toEqual(["microphone"]);
+    expect(video.canPublishSources).toEqual([
+      "microphone",
+      "screen_share",
+      "screen_share_audio",
+    ]);
+    expect(video.canPublishSources).not.toContain("camera");
   });
 
   it("scopes the token to one room, so it cannot open another period", async () => {
