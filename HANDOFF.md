@@ -1,12 +1,12 @@
 # HANDOFF — Beagle Classroom
 
-## NEXT TRACK: PERSISTENT CHAT — 2026-08-14 (IMPLEMENTED, ROLLOUT PENDING)
+## NEXT TRACK: PERSISTENT CHAT — 2026-08-14 (MERGED, QA ACCEPTED)
 
-After PR #75, `main` had no open PR or source-code diff. The current roadmap was
-then reconciled with Production: Google Login and Meeting were incorrectly
-still listed as unimplemented. Persistent Chat from ADR-0050 is the next
-implementation-ready Release F module; it is not the ephemeral chat inside a
-live room. Branch `codex/chat-foundation` now contains the complete guarded V1:
+PR #76 merged the complete guarded Persistent Chat V1 into `main` at merge
+commit `199e5f9`. Main CI and the Vercel Production deployment passed, but both
+Chat flags remain off and the Chat migration has not been applied to Production.
+This is the persistent product from ADR-0050, not the ephemeral chat inside a
+live room:
 
 - one Course Channel per CourseOffering, with membership derived from the
   owning Teacher and active Enrollment rows;
@@ -23,18 +23,22 @@ live room. Branch `codex/chat-foundation` now contains the complete guarded V1:
 - fail-closed `CHAT_ENABLED` / `CHAT_MUTATIONS_ENABLED` flags. When disabled,
   tabs and routes do not query the new tables.
 
-Validation on the implementation branch: full Unit `1008/1008`, TypeScript,
-repository ESLint, Production build, Prisma validation/generation, and the
-disposable migration-baseline verifier all pass. The verifier created and
-removed only a random temporary schema; it did not migrate active QA or
-Production. The DM/Course permission and retention integration tests are in the
-branch but still need the disposable CI PostgreSQL gate (or an explicitly
-authorized QA migration) before rollout.
+Validation before merge: full Unit `1008/1008`, TypeScript, repository ESLint,
+Production build, Prisma validation/generation, disposable migration-baseline,
+and main CI all passed. The additive migration
+`20260814000000_add_chat_foundation` was then applied to the isolated QA database
+only; `prisma migrate status` reports QA up to date. Focused Course Channel and
+DM permission integration tests pass `9/9`. Browser E2E passes `2/2`: one
+Course Channel is shared by its Teacher and active Student, DM discovery/send
+works in both directions, and Dark/Cream/Light/System desktop/mobile layouts
+have no document-level horizontal overflow. Production schema and data remain
+untouched.
 
-Rollout order is binding: merge code with both Chat flags still `0`; apply the
-additive migration to QA; run integration/E2E and mobile/all-theme acceptance;
-approve and apply the Production migration separately; then set both Vercel
-flags to `1` and redeploy. Finally create a second cron-job.org GET job for
+Rollout order is binding: merge code with both Chat flags still `0` **done**;
+apply the additive migration to QA **done**; run integration, E2E, and
+mobile/all-theme acceptance **done**; approve and apply the Production migration
+separately **pending**; then set both Vercel flags to `1` and redeploy. Finally
+create a second cron-job.org GET job for
 `https://beagleclassroom.com/api/cron/chat-retention`, every day, with the same
 `Authorization: Bearer <CRON_SECRET>` header as publish-due. No Chat migration
 is authorized for Production merely because this branch or its PR exists.
