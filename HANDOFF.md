@@ -1,6 +1,108 @@
 # HANDOFF — Beagle Classroom
 
-## THE LIVE ONLINE ROOM SHIPPED — 2026-08-12 (READ FIRST)
+## THE ROOM IS FURNISHED — 2026-08-14 (READ FIRST)
+
+Sections below this one are older. Where they disagree, this one is current.
+**Verify against the code and the database before trusting any of it** — this
+project's documents have been wrong repeatedly, and the section directly below
+this one was itself stale within a day of being written.
+
+### The stage is up on Production, and that is settled
+
+The section below asks someone to confirm it. It is confirmed.
+
+It was proved without ever seeing the page, which is the technique worth
+keeping: **`POST /api/meeting/session/[id]/stage-token` returns 400 when
+`readLiveKitConfig()` is null and 200 otherwise**, so 200s in the Vercel runtime
+logs prove all three `LIVEKIT_*` variables are present in the Production
+runtime. No login required, and a status code is evidence where a document is
+not. The owner's screenshots later agreed.
+
+No redeploy was needed: the deployment carrying the credentials was created
+after they were added.
+
+### Three pull requests merged since, all on Production
+
+**PR #72** — the stage's own behaviour:
+
+- **Fullscreen is real fullscreen.** It used `position: fixed; inset: 0`, which
+  stops at the browser chrome — and did not even manage that, because every
+  page's `<main>` carries `animate-fade-in` and that token's `both` fill mode
+  leaves `transform: translateY(0)` applied permanently. A transform other than
+  `none` makes an element the containing block for its fixed descendants, so
+  "fullscreen" was the width of the 1480px page column. It now asks the browser
+  through the Fullscreen API and lands in the top layer, with a portalled
+  viewport cover kept only for iPhone Safari, which has no element fullscreen.
+  Entering fullscreen on a phone asks for landscape.
+- **One stage token per room, not one every three seconds.** The token effect
+  listed `onUnavailable` among its dependencies while the caller passed an
+  inline arrow, and the room re-renders at the poll's cadence, so Production was
+  minting a signed three-hour credential per participant every three seconds and
+  handing `LiveKitRoom` a new `token` prop each time.
+- **Screen sharing behaves.** The stop control reads as a stop control, the
+  picker's contents are shaped (own tab excluded, system audio offered, tab
+  switching allowed, content hint set to text), and the source can be changed
+  mid-lesson without the class losing the picture — `createLocalScreenTracks`
+  opens the dialog over the running share and `replaceTrack` swaps the media, so
+  dismissing the picker costs nothing and subscribers never see a stop and
+  start.
+- **The room has sounds.** Arrivals, departures and the screen going up are
+  heard by everyone; microphone and ears are heard only by you. Nothing is
+  transmitted — each client answers the same `RoomEvent` locally. Synthesised
+  with Web Audio rather than shipped as files, because other applications' sounds
+  are their property. `PEAK_GAIN` in `components/meeting/room-sounds.ts` is the
+  single volume knob and currently sits at 0.5.
+
+**PR #73** — getting in and out:
+
+- **Joining is a press again.** Opening the room tab used to connect a student
+  to the class — a live microphone because they navigated somewhere. ADR-0053
+  always said Join was a press; the stage shipped without honouring it.
+- **Everyone has a way out.** `POST .../leave` exists, and leaving writes no new
+  column: presence is derived, so it records a heartbeat old enough that the
+  existing derivation already reads `LEFT`. Saying goodbye and a tab dying
+  without saying goodbye end in the same place.
+- **What the browser last asked for outranks the poll.** The poll is three
+  seconds behind, so a response in flight when Leave is pressed would otherwise
+  report the person present and walk them back in. Only when nothing has been
+  asked does the server's answer stand, which is what lets a reload keep someone
+  in the room they were already in.
+
+**PR #74** — ending the lesson for everyone:
+
+- **The teacher can close the room, not merely leave it.** The live workspace
+  now carries a distinct `ปิดห้องเรียน` control above the stage. It asks for
+  confirmation because this ends the lesson for every participant; the ordinary
+  Leave control still removes only the person who pressed it.
+- **The close is enforced on the server.** `POST .../close` requires an
+  authenticated user and `closeRoom` verifies course ownership, so an enrolled
+  student or a teacher from another course cannot end the lesson. Closing twice
+  is idempotent.
+- **A failed close does not strand the teacher.** The client releases the stage
+  optimistically so its microphone stops at once, but restores the previous
+  room intent and heartbeat if the API rejects or drops the request, and exposes
+  the failure through an alert. Other participants discover a successful close
+  on the existing three-second poll and disconnect from the stage.
+
+### Still true, still worth knowing
+
+- **Nothing behind the login has ever been seen rendered by an agent.** Every
+  claim about appearance rests on the owner's screenshots, on tests, and on
+  status codes read from runtime logs.
+- The browser's screen-share picker and its "is sharing a window" bar **cannot
+  be replaced, restyled or hidden by a page**, and no amount of asking changes
+  that. Discord's own picker exists because Discord is an Electron desktop app
+  with `desktopCapturer`; Discord in a browser shows the same dialog we do. The
+  only route to a picker of our own is shipping a desktop application.
+- `PEAK_GAIN` above 1.0 clips rather than getting louder.
+
+### Open questions the owner has not answered
+
+Unchanged from the section below: every microphone starting muted, handing the
+stage to a student, and LiveKit's free tier being roughly three classes of
+thirty a month.
+
+## THE LIVE ONLINE ROOM SHIPPED — 2026-08-12
 
 Sections below this one are older. Where they disagree with this one, this one
 is current. **Verify against the code and the database before trusting any of
@@ -32,12 +134,13 @@ The media runs on LiveKit Cloud's free tier. Everything except the stage works
 without it — that fallback is real, tested, and is what Production was doing
 until an hour ago.
 
-### The one thing not yet verified
+### The one thing not yet verified — SETTLED, see the section above
 
 **The owner added `LIVEKIT_URL`, `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` to
 Vercel Production minutes before this document was written, and nobody has
-confirmed the stage actually comes up there.** That is the first thing to
-check. Until it is confirmed, assume nothing about the Production stage.
+confirmed the stage actually comes up there.** Confirmed on 2026-08-13 from
+runtime-log status codes; no redeploy was needed. The rest of this paragraph is
+kept as written.
 
 What is known: the credentials work — a `RoomServiceClient.listRooms()` call
 against the real service was accepted and returned a live room. That was

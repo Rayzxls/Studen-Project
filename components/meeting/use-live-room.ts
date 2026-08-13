@@ -24,6 +24,13 @@ export interface LiveRoom {
   /** Step out. The stage disconnects and the roster stops drawing you. */
   leave: () => void;
   /**
+   * Teacher only: end the room for everyone still in it.
+   *
+   * Not the same as leaving. This shuts the room; every other browser finds out
+   * on its next poll and falls back to the closed state.
+   */
+  closeRoom: () => void;
+  /**
    * Record presence without going anywhere. For the stage, where connecting is
    * itself the act of entering and there is no tab to open — using `join` here
    * would flash a blank window open and shut.
@@ -215,6 +222,33 @@ export function useLiveRoom(courseId: string): LiveRoom {
       });
   }, [sessionId, poll]);
 
+  /**
+   * Ends the room rather than stepping out of it, so the intent goes to "out"
+   * too: whoever closed it is no longer in it, and the stage should let go on
+   * the click rather than waiting for the poll to report the room shut.
+   */
+  const closeRoom = useCallback(() => {
+    if (!sessionId) return;
+    const previousIntent = intent;
+    const wasJoined = hasJoined.current;
+    setIntent("out");
+    hasJoined.current = false;
+    void fetch(`/api/meeting/session/${sessionId}/close`, { method: "POST" })
+      .then((response) => {
+        if (!response.ok) throw new Error("room_close_failed");
+        return poll();
+      })
+      .catch(() => {
+        // Closing is optimistic so the microphone and stage stop immediately.
+        // If the server refuses or the request drops, put the teacher back in
+        // exactly the state they had before the press so they can keep teaching
+        // and try again instead of being stranded outside an open room.
+        setIntent(previousIntent);
+        hasJoined.current = wasJoined;
+        setError("ปิดห้องไม่สำเร็จ กรุณาลองใหม่");
+      });
+  }, [sessionId, poll, intent]);
+
   const open = useCallback(() => {
     void enterRoom(
       `/api/meeting/course/${courseId}/open`,
@@ -238,6 +272,7 @@ export function useLiveRoom(courseId: string): LiveRoom {
     open,
     join,
     leave,
+    closeRoom,
     markPresent,
     intent,
   };

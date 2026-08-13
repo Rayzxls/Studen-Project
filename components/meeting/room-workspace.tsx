@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { DoorOpen, Video } from "lucide-react";
+import { DoorClosed, DoorOpen, Video } from "lucide-react";
 
 import { PresenceRail } from "@/components/meeting/presence-rail";
 import {
@@ -49,10 +49,13 @@ export function RoomWorkspace({
     open,
     join,
     leave,
+    closeRoom,
     markPresent,
     intent,
   } = useLiveRoom(courseId);
   const [media, setMedia] = useState<RoomMediaState>(NO_MEDIA_STATE);
+  // Closing ends the lesson for everyone still in it, so it asks first.
+  const [confirmingClose, setConfirmingClose] = useState(false);
   // The chat lives in the rail but needs the stage's connection, so the rail
   // lends it a node to draw into rather than moving into the stage.
   const [chatSlot, setChatSlot] = useState<HTMLDivElement | null>(null);
@@ -124,6 +127,55 @@ export function RoomWorkspace({
     // is not on top of the buttons.
     <div className="grid gap-4 pb-20 lg:grid-cols-[minmax(0,1fr)_280px]">
       <div className="flex min-w-0 flex-col gap-4">
+        {/* Closing is the teacher's and nobody else's, and it is not the same
+            act as leaving: this ends the lesson for everyone still in the room,
+            where leaving is one person stepping out of a room that carries on.
+            Two words apart in Thai, so the button says which one it is and the
+            confirmation says what it will do. */}
+        {isTeacher ? (
+          <div className="card flex flex-wrap items-center justify-between gap-3 p-3">
+            <p className="text-sm text-ink-mute">
+              ห้องเรียนเปิดอยู่
+              {room.openedAt ? ` · เปิดเมื่อ ${clockTime(room.openedAt)}` : ""}
+            </p>
+
+            {confirmingClose ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-sm text-ink">
+                  ปิดแล้วทุกคนจะออกจากห้อง เปิดใหม่ได้ภายหลัง
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setConfirmingClose(false)}
+                  className="inline-flex min-h-11 items-center rounded-full border border-hairline-strong bg-surface px-4 text-sm font-medium text-ink transition-colors hover:bg-black/[0.04]"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setConfirmingClose(false);
+                    closeRoom();
+                  }}
+                  className="inline-flex min-h-11 items-center gap-2 rounded-full border border-red-500/25 bg-red-50 px-4 text-sm font-medium text-red-700 transition-colors hover:bg-red-500/10"
+                >
+                  <DoorClosed className="h-4 w-4" aria-hidden="true" />
+                  ยืนยันปิดห้อง
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConfirmingClose(true)}
+                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-hairline-strong bg-surface px-4 text-sm font-medium text-ink transition-colors hover:bg-red-500/10 hover:text-red-700"
+              >
+                <DoorClosed className="h-4 w-4" aria-hidden="true" />
+                ปิดห้องเรียน
+              </button>
+            )}
+          </div>
+        ) : null}
+
         <Stage
           sessionId={room.sessionId}
           /* Nobody is connected to anything until they ask to be. A page that
@@ -166,6 +218,15 @@ export function RoomWorkspace({
       </aside>
     </div>
   );
+}
+
+/** Just the clock, 24-hour: the date is today by definition of a room being open. */
+function clockTime(at: Date): string {
+  return at.toLocaleTimeString("th-TH", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
 }
 
 function ClosedRoom({
