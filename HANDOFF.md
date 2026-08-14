@@ -48,13 +48,24 @@ using the throwing `requireAuth` guard. Production was rolled back before the
 mutation flag existed; PR #79 changed those routes to redirect to `/login` and
 added regression coverage. The repeated rollout returned 200 for `/` and
 `/login`, 307 from all unauthenticated Chat pages to `/login`, 401 from
-unauthenticated Chat write APIs, and no deployment 500 logs. Finally create a
-second cron-job.org GET job for
+unauthenticated Chat write APIs, and no deployment 500 logs. The second
+cron-job.org GET job now calls
 `https://beagleclassroom.com/api/cron/chat-retention`, every day, with the same
-`Authorization: Bearer <CRON_SECRET>` header as publish-due. The retained Neon
-restore point is `production-chat-backup-2026-08-14` (parent `production`,
+`Authorization: Bearer <CRON_SECRET>` header as publish-due; its manual test
+returned 200. Authenticated Teacher/Student Production acceptance remains. The
+retained Neon restore point is `production-chat-backup-2026-08-14` (parent `production`,
 expires 2026-08-21). Migration evidence is recorded in
 `docs/release-gates/2026-08-14-PERSISTENT-CHAT-PRODUCTION-MIGRATION.md`.
+
+## NEXT TRACK: REWARD FOUNDATION — 2026-08-14 (DECISIONS LOCKED)
+
+ADR-0051 now locks the two previously open lifecycle rules. Archiving a
+CourseOffering freezes its reward economy without deleting points; restoring
+the course thaws the same ledger. Account anonymization cancels pending
+redemptions and erases the ledger plus redemption history because rewards are
+not academic evidence. Build the additive, fail-closed ledger foundation and
+permission tests first. Do not apply a Reward migration to QA or Production
+without a separate rollout gate and approval.
 
 ## STUDENT SCREEN SHARE AND TEACHER MODERATION — 2026-08-14 (PR #75)
 

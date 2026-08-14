@@ -76,7 +76,7 @@ Both Production Chat flags are now enabled.
 
 ## Next gate
 
-Run a short authenticated Teacher/Student Production acceptance pass covering a
-Course Channel, DM send/receive, block behavior, and notification/push privacy.
-Then create the daily `chat-retention` cron job with the existing
-`CRON_SECRET`; cron creation remains a separate external operation.
+The daily `chat-retention` cron job was created with the existing `CRON_SECRET`
+contract and its manual test returned 200. The remaining gate is a short
+authenticated Teacher/Student Production acceptance pass covering a Course
+Channel, DM send/receive, block behavior, and notification/push privacy.
