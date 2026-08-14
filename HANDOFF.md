@@ -57,15 +57,30 @@ retained Neon restore point is `production-chat-backup-2026-08-14` (parent `prod
 expires 2026-08-21). Migration evidence is recorded in
 `docs/release-gates/2026-08-14-PERSISTENT-CHAT-PRODUCTION-MIGRATION.md`.
 
-## NEXT TRACK: REWARD FOUNDATION — 2026-08-14 (DECISIONS LOCKED)
+## NEXT TRACK: REWARD FOUNDATION — 2026-08-15 (QA MIGRATION ACCEPTED)
 
-ADR-0051 now locks the two previously open lifecycle rules. Archiving a
-CourseOffering freezes its reward economy without deleting points; restoring
-the course thaws the same ledger. Account anonymization cancels pending
-redemptions and erases the ledger plus redemption history because rewards are
-not academic evidence. Build the additive, fail-closed ledger foundation and
-permission tests first. Do not apply a Reward migration to QA or Production
-without a separate rollout gate and approval.
+PR #81 merged the guarded Reward ledger foundation into `main` at `074f58a`.
+Main CI and the Vercel Production code deployment passed while both Reward
+flags remained disabled. After a separate owner approval, additive migration
+`20260814010000_add_reward_ledger_foundation` was applied to the identity-checked
+QA database only on 2026-08-15. Prisma reports all six QA migrations current.
+
+Focused QA integration passes `8/8`: idempotent awards, exact Teacher/Student
+permissions, archive and removed-enrollment freeze behavior, append-only
+reversal plus audit, and Reward-history erasure during account anonymization.
+The fixtures cleaned up their temporary users, courses, enrollments, ledger
+entries, and audits. No Production database migration or Production/QA Reward
+flag change was made.
+
+ADR-0051 locks the lifecycle rules: archiving a CourseOffering freezes its
+reward economy without deleting points; restoring the course thaws the same
+ledger. Account anonymization cancels future pending redemptions and erases the
+ledger plus redemption history because rewards are not academic evidence.
+
+Next gate: merge the QA evidence document, then obtain separate explicit owner
+approval before applying the Reward migration to Production. Keep
+`REWARD_ENABLED=0` and `REWARD_MUTATIONS_ENABLED=0`; UI/API rollout is a later
+implementation slice after Production schema readiness.
 
 ## STUDENT SCREEN SHARE AND TEACHER MODERATION — 2026-08-14 (PR #75)
 
