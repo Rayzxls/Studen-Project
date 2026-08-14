@@ -5,7 +5,7 @@ import {
   type DirectConversationCard,
 } from "@/components/chat/direct-message-inbox";
 import { TopNav } from "@/components/layout/top-nav";
-import { requireAuth } from "@/lib/auth/guards";
+import { getValidSession } from "@/lib/auth/guards";
 import { listDirectConversations } from "@/lib/chat/direct-message";
 import { chatEnabled } from "@/lib/chat/feature-flags";
 
@@ -13,7 +13,8 @@ export const dynamic = "force-dynamic";
 
 export default async function ChatInboxPage() {
   if (!chatEnabled()) notFound();
-  const session = await requireAuth();
+  const session = await getValidSession();
+  if (!session) redirect("/login");
   if (session.user.role === "ADMIN") redirect("/admin/dashboard");
   const conversations = await listDirectConversations({
     ctx: { actorUserId: session.user.id },

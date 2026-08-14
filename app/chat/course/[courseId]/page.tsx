@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 
-import { requireAuth } from "@/lib/auth/guards";
+import { getValidSession } from "@/lib/auth/guards";
 import { chatEnabled } from "@/lib/chat/feature-flags";
 
 interface PageProps {
@@ -9,7 +9,8 @@ interface PageProps {
 
 export default async function CourseChatRedirectPage({ params }: PageProps) {
   if (!chatEnabled()) notFound();
-  const session = await requireAuth();
+  const session = await getValidSession();
+  if (!session) redirect("/login");
   const { courseId } = await params;
   if (session.user.role === "TEACHER") {
     redirect(`/teacher/courses/${courseId}/chat`);

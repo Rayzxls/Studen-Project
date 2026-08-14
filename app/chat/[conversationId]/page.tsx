@@ -7,7 +7,7 @@ import {
   type CourseChannelMessage,
 } from "@/components/chat/course-channel";
 import { TopNav } from "@/components/layout/top-nav";
-import { requireAuth } from "@/lib/auth/guards";
+import { getValidSession } from "@/lib/auth/guards";
 import {
   getDirectConversation,
   listDirectMessages,
@@ -23,7 +23,8 @@ interface PageProps {
 
 export default async function DirectConversationPage({ params }: PageProps) {
   if (!chatEnabled()) notFound();
-  const session = await requireAuth();
+  const session = await getValidSession();
+  if (!session) redirect("/login");
   if (session.user.role === "ADMIN") redirect("/admin/dashboard");
   const { conversationId } = await params;
   const [conversation, messages] = await Promise.all([
