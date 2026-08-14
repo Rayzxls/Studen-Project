@@ -17,6 +17,7 @@ const env = {
   IDENTITY_FOUNDATION_MUTATIONS_ENABLED: "1",
   IDENTITY_TERMS_VERSION: "terms-2026-07",
   IDENTITY_PRIVACY_VERSION: "privacy-2026-07",
+  REWARD_ENABLED: "1",
 };
 
 const consent = {
@@ -68,6 +69,17 @@ describe("post-window account anonymization", () => {
 
   it("erases PII, detaches the identity, and flags the student once the window lapses", async () => {
     studentUserId = await onboardAndRequestDeletion(studentEmail);
+    await db.rewardLedgerEntry.create({
+      data: {
+        economy: "SYSTEM",
+        studentId: studentUserId,
+        kind: "AWARD",
+        amount: 10,
+        achievementType: "SYSTEM_QUEST",
+        achievementId: "onboarding-quest",
+        awardKey: `[\"SYSTEM\",\"${studentUserId}\",\"onboarding-quest\"]`,
+      },
+    });
 
     // Force the recovery window into the past.
     await db.user.update({
@@ -123,6 +135,9 @@ describe("post-window account anonymization", () => {
         where: { actorId: studentUserId, action: "ACCOUNT_ANONYMIZED" },
       })
     ).toBe(1);
+    expect(
+      await db.rewardLedgerEntry.count({ where: { studentId: studentUserId } })
+    ).toBe(0);
   });
 
   it("never anonymizes an account still inside its recovery window", async () => {

@@ -120,6 +120,7 @@ model User {
   chatMessages             ChatMessage[]            @relation("ChatMessageAuthor")
   chatBlocksMade           ChatBlock[]              @relation("ChatBlocker")
   chatBlocksReceived       ChatBlock[]              @relation("ChatBlocked")
+  rewardEntriesCreated     RewardLedgerEntry[]      @relation("RewardEntryActor")
 
   @@index([role])
   @@index([accountStatus])
@@ -408,7 +409,8 @@ model Student {
   lastName   String
   anonymized Boolean @default(false)
 
-  enrollments Enrollment[]
+  enrollments   Enrollment[]
+  rewardEntries RewardLedgerEntry[]
 }
 
 model UserSession {
@@ -495,6 +497,7 @@ model CourseOffering {
   materials      Material[] // Phase 7
   announcements  Announcement[] // Phase 7
   chatChannel    ChatConversation?
+  rewardEntries  RewardLedgerEntry[]
 
   @@index([classCode])
   @@index([teacherId])
@@ -519,10 +522,79 @@ model Enrollment {
   submissions       Submission[]
   quizAttempts      QuizAttempt[]
   quizExceptions    QuizStudentException[]
+  rewardEntries     RewardLedgerEntry[]
 
   @@unique([studentId, courseOfferingId])
   @@index([courseOfferingId])
   @@index([removedAt]) // fast "active members" filtering (where removedAt: null)
+}
+
+// ═══════════════════════════════════════════════════════════
+// Reward ledger foundation (ADR-0051)
+// ═══════════════════════════════════════════════════════════
+
+enum RewardEconomy {
+  COURSE
+  SYSTEM
+}
+
+enum RewardLedgerEntryKind {
+  AWARD
+  REVERSAL
+}
+
+enum RewardAchievementType {
+  ASSIGNMENT_SUBMITTED
+  ATTENDANCE_PRESENT
+  SCORE_THRESHOLD
+  SYSTEM_QUEST
+}
+
+/// Immutable point movement. A balance is always the sum of entries; facts
+/// that change create a REVERSAL row instead of editing or deleting history.
+/// COURSE entries carry both CourseOffering and Enrollment scope. SYSTEM
+/// entries intentionally carry neither so the two economies never mix.
+model RewardLedgerEntry {
+  id String @id @default(cuid())
+
+  economy RewardEconomy
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [userId], onDelete: Cascade)
+
+  enrollmentId String?
+  enrollment   Enrollment? @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  courseOfferingId String?
+  course           CourseOffering? @relation(fields: [courseOfferingId], references: [id], onDelete: Cascade)
+
+  kind   RewardLedgerEntryKind
+  amount Int
+
+  achievementType RewardAchievementType
+  achievementId   String
+
+  // Present only on AWARD rows. The service derives it from the student,
+  // economy/scope, achievement type, and achievement id. Unique + nullable
+  // makes the same achievement idempotent while allowing reversal rows.
+  awardKey String? @unique
+
+  // A row can be reversed once. Reversing that REVERSAL later creates the
+  // next immutable row in the chain and restores the points transparently.
+  reversesEntryId String?            @unique
+  reversesEntry   RewardLedgerEntry? @relation("RewardEntryReversal", fields: [reversesEntryId], references: [id], onDelete: Cascade)
+  reversedBy      RewardLedgerEntry? @relation("RewardEntryReversal")
+
+  actorUserId String?
+  actor       User?   @relation("RewardEntryActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@index([studentId, economy, createdAt(sort: Desc)])
+  @@index([enrollmentId, createdAt(sort: Desc)])
+  @@index([courseOfferingId, createdAt(sort: Desc)])
+  @@index([achievementType, achievementId])
 }
 
 // ═══════════════════════════════════════════════════════════

@@ -61,6 +61,9 @@ const ACTION_LABEL_TH: Record<AuditEvent, string> = {
   SCORE_DELETE_AFTER_PUBLISH: "ลบรายการคะแนนหลังเผยแพร่",
   QUIZ_REOPENED: "เปิดแบบทดสอบอีกครั้ง",
   QUIZ_STUDENT_EXCEPTION_GRANTED: "ให้สิทธิ์พิเศษแบบทดสอบ",
+  // Reward ledger
+  REWARD_POINTS_AWARDED: "ให้แต้มรางวัล",
+  REWARD_ENTRY_REVERSED: "หักกลับรายการแต้ม",
   // Attendance
   ATTENDANCE_BACK_EDIT: "แก้การเข้าเรียนย้อนหลัง",
   SESSION_CANCELLED: "ยกเลิกคาบเรียน",

@@ -29,5 +29,9 @@ export function prepareIsolatedServerEnv<T extends ServerEnv>(
     // isolated server opts into the new additive tables by default.
     CHAT_ENABLED: env.CHAT_ENABLED ?? "1",
     CHAT_MUTATIONS_ENABLED: env.CHAT_MUTATIONS_ENABLED ?? "1",
+    // Reward starts with a guarded ledger foundation. Isolated QA may opt in
+    // after applying the additive migration; normal environments remain off.
+    REWARD_ENABLED: env.REWARD_ENABLED ?? "1",
+    REWARD_MUTATIONS_ENABLED: env.REWARD_MUTATIONS_ENABLED ?? "1",
   };
 }

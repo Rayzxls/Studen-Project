@@ -48,6 +48,8 @@ describe("tierFor — per-action default tier", () => {
       "TEACHER_INVITE_REPLACED",
       "TEACHER_INVITE_REVOKED",
       "TEACHER_INVITE_ACCEPTED",
+      "REWARD_POINTS_AWARDED",
+      "REWARD_ENTRY_REVERSED",
     ]) {
       expect(tierFor(a)).toBe("IMPORTANT");
     }
@@ -131,6 +133,8 @@ describe("actionsForTier — flat action lists for WHERE IN (…)", () => {
     expect(arr).toContain("LOGIN_SUCCESS");
     expect(arr).toContain("CSV_IMPORT");
     expect(arr).toContain("TEACHER_INVITE_REVOKED");
+    expect(arr).toContain("REWARD_POINTS_AWARDED");
+    expect(arr).toContain("REWARD_ENTRY_REVERSED");
     expect(arr).not.toContain("USER_LOCKED");
   });
 

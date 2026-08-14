@@ -128,9 +128,17 @@ spendable, and usable again if they return through the existing rejoin flow.
 Removal is sometimes a correction, and destroying a term's savings on the spot
 would turn an administrative action into a punishment nobody chose to impose.
 
-**Two questions remain open** and should be settled before implementation: what
-happens to a balance when a course is archived — the proposal is to warn
-students, let them spend, then expire the points with the course, since points
-belong to that course — and what happens on account anonymization, where the
-proposal is to delete both the ledger and the redemption history, because
-unlike a score a point is not academic evidence anyone needs later.
+The remaining lifecycle questions were settled by the owner on 2026-08-14.
+
+**Archiving a course freezes its reward economy.** The ledger and redemption
+history remain readable, but no points may be awarded, reversed, or spent and
+no reward may be fulfilled while the course is archived. Restoring the course
+thaws the same economy. Archive therefore never destroys points and an
+accidental archive remains reversible.
+
+**Account anonymization erases rewards rather than preserving an anonymous
+wallet.** Pending redemptions are cancelled first, then the point ledger and
+redemption history are deleted. Rewards are not academic evidence and retaining
+them would keep unnecessary behavioural history after the identity is erased.
+Aggregate, non-identifying operational metrics may remain only when they cannot
+be linked back to the account.

@@ -51,6 +51,9 @@ export type AuditEvent =
   // Quiz lifecycle (Release C)
   | "QUIZ_REOPENED"
   | "QUIZ_STUDENT_EXCEPTION_GRANTED"
+  // Reward ledger (Release F)
+  | "REWARD_POINTS_AWARDED"
+  | "REWARD_ENTRY_REVERSED"
   // Attendance (Phase 4)
   | "ATTENDANCE_BACK_EDIT"
   | "SESSION_CANCELLED"
