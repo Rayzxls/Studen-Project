@@ -3,6 +3,7 @@ import type { Prisma, PrismaClient } from "@prisma/client";
 import { db } from "@/lib/db/client";
 import { identityFoundationMutationsEnabled } from "./feature-flags";
 import { chatEnabled } from "@/lib/chat/feature-flags";
+import { rewardEnabled } from "@/lib/reward/feature-flags";
 import {
   ANONYMIZED_STUDENT_NAME,
   anonymizedUserFields,
@@ -22,7 +23,8 @@ const TX_OPTS = {
 
 function createTransactionPort(
   tx: Prisma.TransactionClient,
-  eraseChatContent: boolean
+  eraseChatContent: boolean,
+  eraseRewardHistory: boolean
 ): AccountAnonymizationTransactionPort {
   return {
     reloadCandidate: async (userId) => {
@@ -76,6 +78,12 @@ function createTransactionPort(
           },
         });
       }
+      if (eraseRewardHistory) {
+        // Rewards are behavioural history, not academic evidence. The Student
+        // row remains as an anonymized academic placeholder, so its cascading
+        // FK cannot perform this erasure for us.
+        await tx.rewardLedgerEntry.deleteMany({ where: { studentId: userId } });
+      }
     },
     createAuditLogs: async (inputs) => {
       for (const input of inputs) {
@@ -115,7 +123,8 @@ export function createPrismaAccountAnonymizationService(
     },
     transaction: async (work) =>
       client.$transaction(
-        (tx) => work(createTransactionPort(tx, chatEnabled(env))),
+        (tx) =>
+          work(createTransactionPort(tx, chatEnabled(env), rewardEnabled(env))),
         TX_OPTS
       ),
   };
