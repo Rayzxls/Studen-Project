@@ -1,11 +1,12 @@
 # HANDOFF — Beagle Classroom
 
-## NEXT TRACK: PERSISTENT CHAT — 2026-08-14 (PRODUCTION MIGRATED, FLAGS OFF)
+## NEXT TRACK: PERSISTENT CHAT — 2026-08-14 (LIVE ON PRODUCTION)
 
 PR #76 merged the complete guarded Persistent Chat V1 into `main` at merge
 commit `199e5f9`. Main CI and the Vercel Production deployment passed. After a
 separate owner approval, the guarded additive Chat migration was applied to
-Production on 2026-08-14. Both Chat flags remain off.
+Production on 2026-08-14. A later explicit approval enabled both Production
+Chat flags after a staged read-only rollout.
 This is the persistent product from ADR-0050, not the ephemeral chat inside a
 live room:
 
@@ -39,9 +40,16 @@ schema was applied, and all four new Chat tables remain empty.
 Rollout order is binding: merge code with both Chat flags still `0` **done**;
 apply the additive migration to QA **done**; run integration, E2E, and
 mobile/all-theme acceptance **done**; approve and apply the Production migration
-separately **done**; then separately approve setting both Vercel flags to `1`
-and redeploy **pending**. Finally
-create a second cron-job.org GET job for
+separately **done**; separately approve and enable `CHAT_ENABLED=1` **done**;
+verify the read-only Production gate **done**; enable
+`CHAT_MUTATIONS_ENABLED=1` and verify the final deployment **done**. The first
+read-only attempt exposed an unauthenticated `/chat` 500 caused by UI routes
+using the throwing `requireAuth` guard. Production was rolled back before the
+mutation flag existed; PR #79 changed those routes to redirect to `/login` and
+added regression coverage. The repeated rollout returned 200 for `/` and
+`/login`, 307 from all unauthenticated Chat pages to `/login`, 401 from
+unauthenticated Chat write APIs, and no deployment 500 logs. Finally create a
+second cron-job.org GET job for
 `https://beagleclassroom.com/api/cron/chat-retention`, every day, with the same
 `Authorization: Bearer <CRON_SECRET>` header as publish-due. The retained Neon
 restore point is `production-chat-backup-2026-08-14` (parent `production`,
