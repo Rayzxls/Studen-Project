@@ -3,9 +3,9 @@
 ## Scope and authorization
 
 The owner explicitly authorized the Persistent Chat migration on Production.
-This authorization covered the additive database migration only. It did not
-authorize enabling `CHAT_ENABLED`, enabling `CHAT_MUTATIONS_ENABLED`, creating
-the retention cron, or writing Chat data.
+That first authorization covered the additive database migration only. On
+2026-08-14 the owner separately authorized enabling the Production Chat flags.
+The retention cron remains outside this authorization.
 
 ## Restore point
 
@@ -45,12 +45,38 @@ successfully.
   default `true`.
 - Chat conversation and deletion-reason enums contain the reviewed values.
 - All four new Chat tables contain zero rows.
-- Both Chat feature flags remain off, so deployed application routes remain
-  fail-closed and do not query or mutate the new tables.
+- The flags were initially left off so deployed application routes remained
+  fail-closed during migration verification.
+
+## Feature-flag rollout
+
+The first read-only rollout set only `CHAT_ENABLED=1`. An unauthenticated request
+to `/chat` returned 500 because the UI route used the throwing `requireAuth`
+guard. Production was immediately returned to `CHAT_ENABLED=0`, and
+`CHAT_MUTATIONS_ENABLED` had not been created, so the failed attempt could not
+write Chat data.
+
+PR #79 replaced the throwing guard on all three general Chat UI routes with the
+same login redirect used by the rest of the application and added an E2E
+regression test. Local verification passed TypeScript, targeted ESLint, all
+1,008 unit tests, and the three focused Chat E2E tests. PR CI, main CI, and the
+Vercel Production deployment all passed.
+
+The rollout was then repeated in two gates:
+
+1. `CHAT_ENABLED=1` with mutations still disabled: `/` and `/login` returned
+   200, all three unauthenticated Chat page shapes returned 307 to `/login`, and
+   the deployment had no 500 logs.
+2. `CHAT_MUTATIONS_ENABLED=1`: the final deployment reached Ready and was
+   aliased to `beagleclassroom.com`; the same page checks passed,
+   unauthenticated Chat write APIs returned 401, and the deployment had no 500
+   logs.
+
+Both Production Chat flags are now enabled.
 
 ## Next gate
 
-Obtain a separate owner approval before changing either Chat flag in Vercel.
-After redeploy, run authenticated Teacher/Student Course Channel and DM smoke
-checks, notification/push privacy checks, and a flag-off rollback rehearsal.
-Only then create the daily `chat-retention` cron job.
+Run a short authenticated Teacher/Student Production acceptance pass covering a
+Course Channel, DM send/receive, block behavior, and notification/push privacy.
+Then create the daily `chat-retention` cron job with the existing
+`CRON_SECRET`; cron creation remains a separate external operation.
