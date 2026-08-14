@@ -1,6 +1,6 @@
 {
   "rulesVersion": "2026-08-02.1",
-  "generatedAt": "2026-08-02T05:51:05.119Z",
+  "generatedAt": "2026-08-14T01:45:32.411Z",
   "findings": [
     {
       "fingerprint": "3ec5322f2f86ea915d4f",
@@ -68,7 +68,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "app/student/courses/[id]/overview/page.tsx",
-      "line": 77,
+      "line": 78,
       "excerpt": "none: { enrollment: { studentId: session.user.id } },",
       "occurrence": 1
     },
@@ -78,7 +78,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "app/student/courses/[id]/overview/page.tsx",
-      "line": 83,
+      "line": 84,
       "excerpt": "enrollment: { studentId: session.user.id },",
       "occurrence": 1
     },
@@ -108,7 +108,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "app/student/timetable/page.tsx",
-      "line": 25,
+      "line": 26,
       "excerpt": "studentId: session.user.id,",
       "occurrence": 1
     },
@@ -648,7 +648,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/course/queries.ts",
-      "line": 70,
+      "line": 71,
       "excerpt": "some: { studentId: studentUserId, removedAt: null },",
       "occurrence": 1
     },
@@ -713,6 +713,16 @@
       "occurrence": 1
     },
     {
+      "fingerprint": "d1297886840f9bdc1c23",
+      "ruleId": "student-id-symbol-review",
+      "severity": "review",
+      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
+      "path": "lib/identity/account-anonymization-prisma.ts",
+      "line": 85,
+      "excerpt": "await tx.rewardLedgerEntry.deleteMany({ where: { studentId: userId } });",
+      "occurrence": 1
+    },
+    {
       "fingerprint": "34d4a7e36536b36f1292",
       "ruleId": "student-id-symbol-review",
       "severity": "review",
@@ -758,7 +768,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/moderation/service.ts",
-      "line": 138,
+      "line": 176,
       "excerpt": "studentId: actor.userId,",
       "occurrence": 1
     },
@@ -768,7 +778,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "lib/moderation/service.ts",
-      "line": 412,
+      "line": 450,
       "excerpt": "enrollment: { studentId: actor.userId, removedAt: null },",
       "occurrence": 1
     },
@@ -933,6 +943,76 @@
       "occurrence": 1
     },
     {
+      "fingerprint": "c5f3a98aa6be2145e26c",
+      "ruleId": "student-id-symbol-review",
+      "severity": "review",
+      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
+      "path": "lib/reward/course-ledger.ts",
+      "line": 56,
+      "excerpt": "studentId: string;",
+      "occurrence": 1
+    },
+    {
+      "fingerprint": "b6e3a426484b09c73746",
+      "ruleId": "student-id-symbol-review",
+      "severity": "review",
+      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
+      "path": "lib/reward/course-ledger.ts",
+      "line": 90,
+      "excerpt": "studentId: true,",
+      "occurrence": 1
+    },
+    {
+      "fingerprint": "dd6597c0a48cf2bf1d9b",
+      "ruleId": "student-id-symbol-review",
+      "severity": "review",
+      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
+      "path": "lib/reward/course-ledger.ts",
+      "line": 105,
+      "excerpt": "studentId: enrollment.studentId,",
+      "occurrence": 1
+    },
+    {
+      "fingerprint": "fc8c33a49125e68facea",
+      "ruleId": "student-id-symbol-review",
+      "severity": "review",
+      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
+      "path": "lib/reward/course-ledger.ts",
+      "line": 120,
+      "excerpt": "actorUserId !== scope.studentId",
+      "occurrence": 1
+    },
+    {
+      "fingerprint": "89d37e92357b505e929f",
+      "ruleId": "student-id-symbol-review",
+      "severity": "review",
+      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
+      "path": "lib/reward/course-ledger.ts",
+      "line": 233,
+      "excerpt": "studentId: scope.studentId,",
+      "occurrence": 1
+    },
+    {
+      "fingerprint": "4817bbe32c79a40aee73",
+      "ruleId": "student-id-symbol-review",
+      "severity": "review",
+      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
+      "path": "lib/reward/course-ledger.ts",
+      "line": 312,
+      "excerpt": "studentId: true,",
+      "occurrence": 2
+    },
+    {
+      "fingerprint": "00363ba7686e6c96b0fa",
+      "ruleId": "student-id-symbol-review",
+      "severity": "review",
+      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
+      "path": "lib/reward/course-ledger.ts",
+      "line": 339,
+      "excerpt": "studentId: original.studentId,",
+      "occurrence": 1
+    },
+    {
       "fingerprint": "6a53ca2685bca3f9e88e",
       "ruleId": "student-id-symbol-review",
       "severity": "review",
@@ -998,7 +1078,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "prisma/schema.prisma",
-      "line": 490,
+      "line": 509,
       "excerpt": "studentId String",
       "occurrence": 1
     },
@@ -1008,7 +1088,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "prisma/schema.prisma",
-      "line": 491,
+      "line": 510,
       "excerpt": "student Student @relation(fields: [studentId], references: [userId], onDelete: Cascade)",
       "occurrence": 1
     },
@@ -1018,8 +1098,38 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "prisma/schema.prisma",
-      "line": 507,
+      "line": 527,
       "excerpt": "@@unique([studentId, courseOfferingId])",
+      "occurrence": 1
+    },
+    {
+      "fingerprint": "55d2ba84fbd87236f28c",
+      "ruleId": "student-id-symbol-review",
+      "severity": "review",
+      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
+      "path": "prisma/schema.prisma",
+      "line": 562,
+      "excerpt": "studentId String",
+      "occurrence": 2
+    },
+    {
+      "fingerprint": "e9e7c956ab003103e90a",
+      "ruleId": "student-id-symbol-review",
+      "severity": "review",
+      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
+      "path": "prisma/schema.prisma",
+      "line": 563,
+      "excerpt": "student Student @relation(fields: [studentId], references: [userId], onDelete: Cascade)",
+      "occurrence": 2
+    },
+    {
+      "fingerprint": "4889421cf8b0c0113371",
+      "ruleId": "student-id-symbol-review",
+      "severity": "review",
+      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
+      "path": "prisma/schema.prisma",
+      "line": 594,
+      "excerpt": "@@index([studentId, economy, createdAt(sort: Desc)])",
       "occurrence": 1
     },
     {
@@ -1073,6 +1183,26 @@
       "occurrence": 2
     },
     {
+      "fingerprint": "d841c7cb6916dff55173",
+      "ruleId": "student-id-symbol-review",
+      "severity": "review",
+      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
+      "path": "tests/integration/identity-account-anonymization.test.ts",
+      "line": 75,
+      "excerpt": "studentId: studentUserId,",
+      "occurrence": 1
+    },
+    {
+      "fingerprint": "bd417c569d307cf1d6c4",
+      "ruleId": "student-id-symbol-review",
+      "severity": "review",
+      "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
+      "path": "tests/integration/identity-account-anonymization.test.ts",
+      "line": 139,
+      "excerpt": "await db.rewardLedgerEntry.count({ where: { studentId: studentUserId } })",
+      "occurrence": 1
+    },
+    {
       "fingerprint": "1287054fa2c9bebca651",
       "ruleId": "student-id-symbol-review",
       "severity": "review",
@@ -1098,7 +1228,7 @@
       "severity": "review",
       "description": "studentId may be an internal User relation or a retired human identifier; classify before changing it.",
       "path": "tests/integration/permissions/_fixtures.ts",
-      "line": 266,
+      "line": 292,
       "excerpt": "data: { studentId: studentUserId, courseOfferingId },",
       "occurrence": 1
     },
