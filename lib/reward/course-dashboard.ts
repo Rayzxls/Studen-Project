@@ -283,7 +283,7 @@ export async function getStudentCourseRewardDashboard(input: {
   const enrollment = await db.enrollment.findFirst({
     where: {
       courseOfferingId: input.courseOfferingId,
-      studentId: input.ctx.actorUserId,
+      studentId: input.ctx.actorUserId, // dependency-gate-allow(student-id-symbol-review): internal Enrollment foreign key to User.id
       removedAt: null,
       course: { archivedAt: null },
     },
