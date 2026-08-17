@@ -11,9 +11,9 @@ defined by ADR-0050. Persistent Chat V1 is live on Production with both flags
 enabled. Browser/mobile/all-theme QA passed on isolated QA, Production safety
 smoke passed, and the daily retention cron returned 200. Authenticated
 Teacher/Student Production acceptance remains. Reward now has its guarded
-ledger foundation plus a fail-closed Teacher/Student course workspace from PR
-#84. Authenticated isolated-QA acceptance passed; a separate Production flag
-decision is its next release gate.
+ledger foundation plus the Teacher/Student course workspace from PR #84 live on
+Production. Both Reward flags are enabled, and authenticated read-only
+Teacher/Student Production acceptance passed without creating a ledger entry.
 
 ## Why this order
 
@@ -37,7 +37,7 @@ This matrix prevents an implemented screen or database field from being mistaken
 | AI Assistant | No model-provider integration found | Not implemented; planned only after stable Lesson/Quiz contracts |
 | Google Login | Google-first onboarding, returning sign-in, provider linking, fallback password, recovery, and verified-email change are deployed | Shipped behind the accepted Identity V2 contracts |
 | Persistent Chat | Guarded V1 implements exactly one Course Channel per CourseOffering, 3+ character school-wide DM search, bilateral blocking, focused-tab polling, notifications/push privacy, immutable report snapshots, and 12-month/anonymization expiry | Live on Production; both flags are enabled and the daily retention cron returned 200. Authenticated Production acceptance remains |
-| Reward | Guarded ledger foundation plus the first course workspace cover real-evidence awards, immutable reversals, balances, history, exact Teacher ownership, and Student self-only privacy | PR #84 is merged and isolated-QA acceptance passed. Production flags require a separate decision; catalogue, redemption, and System Quest remain future slices |
+| Reward | Guarded ledger foundation plus the first course workspace cover real-evidence awards, immutable reversals, balances, history, exact Teacher ownership, and Student self-only privacy | Live on Production with both flags enabled; authenticated Teacher/Student read-only acceptance passed. Catalogue, redemption, and System Quest remain future slices |
 | Meeting | LiveKit-backed room, roster/presence, ephemeral room chat, screen share, join/leave/close, and teacher participant removal are deployed | Shipped; monitor participant-minute capacity before scale-up |
 | External integrations | CSV import/export and private R2 storage are the current integrations | Partial; each new integration needs its own ownership, privacy, and failure policy |
 | Subscription / global multi-tenant | Current product is single-tenant school | Separate product strategy, not an unfinished CRUD item in this project |
@@ -727,14 +727,15 @@ AI is optional and follows Quiz. Begin with low-risk assistance rather than auto
 
 **Status update — 2026-08-17:** Meeting and Persistent Chat are shipped. Reward
 has a deployed ledger foundation and PR #84 shipped its first guarded course
-workspace. Isolated-QA acceptance passed; a separate Production flag decision
-is next. Catalogue, redemption, and System Quest remain separate slices. These
-modules remain separate releases rather than one combined schema or cutover.
+workspace. Isolated-QA acceptance and authenticated read-only Production
+acceptance passed, and both Reward flags are enabled on Production. Catalogue,
+redemption, and System Quest remain separate slices. These modules remain
+separate releases rather than one combined schema or cutover.
 
 | Candidate | Dependency and recommended direction |
 | --- | --- |
 | Chat Room | Shipped as Persistent Chat V1 with course Channels and DMs, strict privacy, blocking, immutable report snapshots, retention, and focused-tab polling. |
-| Reward system | Ledger foundation and PR #84 guarded Course Reward UI/service flows are deployed; isolated-QA acceptance passed. Next: separate Production flag decision, then independently scope catalogue/redemption and System Quest without exposing peer performance or enabling point farming. |
+| Reward system | Ledger foundation and PR #84 Course Reward UI/service flows are live on Production; isolated-QA and authenticated read-only Production acceptance passed. Next: independently scope catalogue/redemption and System Quest without exposing peer performance or enabling point farming. |
 | Meeting room | Shipped on LiveKit through PRs #68-#75. The remaining roadmap concern is capacity/cost monitoring, not missing room functionality. |
 | Advanced analytics | Requires stable event definitions and enough historical data. Do not infer learning outcomes from raw click counts. |
 
@@ -751,9 +752,8 @@ The current application is a single-tenant school system. Subscription, tenant i
 - A central Lesson comment thread.
 - Automatic AI grading or AI attendance decisions.
 
-## Recommended next work item after Reward QA acceptance
+## Recommended next work item after Reward Production acceptance
 
-Decide whether to enable both Reward flags on Production. If approved, change
-only `REWARD_ENABLED` and `REWARD_MUTATIONS_ENABLED`, redeploy, and perform
-authenticated Teacher/Student Production acceptance. Catalogue/redemption and
-System Quest remain later product slices.
+Reward V1 is live with both Production flags enabled. Decide whether the next
+independent Reward slice should be catalogue/redemption or System Quest, and
+write its privacy, anti-farming, expiry, and audit contract before implementation.

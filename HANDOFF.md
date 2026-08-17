@@ -57,7 +57,7 @@ retained Neon restore point is `production-chat-backup-2026-08-14` (parent `prod
 expires 2026-08-21). Migration evidence is recorded in
 `docs/release-gates/2026-08-14-PERSISTENT-CHAT-PRODUCTION-MIGRATION.md`.
 
-## NEXT TRACK: REWARD COURSE WORKSPACE — 2026-08-17 (QA ACCEPTED)
+## NEXT TRACK: REWARD COURSE WORKSPACE — 2026-08-17 (LIVE ON PRODUCTION)
 
 PR #81 merged the guarded Reward ledger foundation into `main` at `074f58a`.
 Main CI and the Vercel Production code deployment passed while both Reward
@@ -94,18 +94,26 @@ an immutable compensating entry, and inspect balances/history. A Student can see
 only their own balance and history. Server Actions re-resolve every selectable
 achievement and the service layer enforces exact course ownership.
 
-Both `REWARD_ENABLED` and `REWARD_MUTATIONS_ENABLED` remain `0` on Production,
-so these routes remain hidden there. Authenticated isolated-QA acceptance passed
-the real Teacher award -> Student balance/history -> Teacher immutable reversal
--> Student corrected-history cycle. The ledger returned to a zero balance while
-retaining both `+7` and `-7` entries. Desktop and 375 px acceptance had no
-horizontal overflow, and the Reward mutation cycle produced no console errors.
+Authenticated isolated-QA acceptance passed the real Teacher award -> Student
+balance/history -> Teacher immutable reversal -> Student corrected-history
+cycle. The ledger returned to a zero balance while retaining both `+7` and `-7`
+entries. Desktop and 375 px acceptance had no horizontal overflow, and the
+Reward mutation cycle produced no console errors.
 
-The next gate is a separate owner decision for both Production Reward flags.
-Do not enable either flag merely because the schema, workspace, and QA are ready.
-Evidence is in
-`docs/release-gates/2026-08-17-REWARD-PRODUCTION-MIGRATION.md` and
-`docs/release-gates/2026-08-17-REWARD-COURSE-WORKSPACE-QA.md`.
+After a separate explicit owner approval, Production now has
+`REWARD_ENABLED=1` and `REWARD_MUTATIONS_ENABLED=1`. Vercel redeployed the
+already-merged `main` artifact, reached Ready, and restored the
+`beagleclassroom.com` alias. Authenticated read-only Production acceptance passed
+for both roles: the Student saw only their own zero balance/history, direct
+Teacher-route access returned to the Student dashboard, and the owning Teacher
+saw the real course roster plus two eligible achievements. Opening and cancelling
+the award form produced no console errors and created no Production ledger row.
+
+Reward V1 is therefore live. The next Reward scope is a product decision for
+catalogue/redemption and System Quest; it is not part of this cutover. Evidence
+is in `docs/release-gates/2026-08-17-REWARD-PRODUCTION-MIGRATION.md`,
+`docs/release-gates/2026-08-17-REWARD-COURSE-WORKSPACE-QA.md`, and
+`docs/release-gates/2026-08-17-REWARD-PRODUCTION-FLAG-CUTOVER.md`.
 
 ## STUDENT SCREEN SHARE AND TEACHER MODERATION — 2026-08-14 (PR #75)
 

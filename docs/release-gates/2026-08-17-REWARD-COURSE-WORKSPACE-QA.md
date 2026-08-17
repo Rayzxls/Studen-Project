@@ -60,11 +60,12 @@ the mutation cycle. Earlier desktop and 375 px checks passed without horizontal
 overflow. A general development-only LCP warning for the existing cloud banner
 was observed and is unrelated to Reward behavior.
 
-## Result and next gate
+## Result and subsequent gate
 
-**Accepted on isolated QA.** The first Course Reward workspace is ready for a
-separate Production flag decision. That decision must explicitly cover both
-`REWARD_ENABLED` and `REWARD_MUTATIONS_ENABLED`; schema readiness, code deploy,
-and QA acceptance do not enable either flag automatically.
+**Accepted on isolated QA.** The first Course Reward workspace became eligible
+for a separate Production flag decision. The owner later explicitly approved
+both `REWARD_ENABLED` and `REWARD_MUTATIONS_ENABLED`; the resulting cutover and
+authenticated read-only Production acceptance are recorded in
+`2026-08-17-REWARD-PRODUCTION-FLAG-CUTOVER.md`.
 
 Reward catalogue/redemption and System Quest remain future slices.
