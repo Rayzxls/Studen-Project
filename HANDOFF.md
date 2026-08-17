@@ -57,7 +57,7 @@ retained Neon restore point is `production-chat-backup-2026-08-14` (parent `prod
 expires 2026-08-21). Migration evidence is recorded in
 `docs/release-gates/2026-08-14-PERSISTENT-CHAT-PRODUCTION-MIGRATION.md`.
 
-## NEXT TRACK: REWARD FOUNDATION — 2026-08-15 (QA MIGRATION ACCEPTED)
+## NEXT TRACK: REWARD FOUNDATION — 2026-08-17 (SCHEMA READY ON PRODUCTION)
 
 PR #81 merged the guarded Reward ledger foundation into `main` at `074f58a`.
 Main CI and the Vercel Production code deployment passed while both Reward
@@ -69,18 +69,28 @@ Focused QA integration passes `8/8`: idempotent awards, exact Teacher/Student
 permissions, archive and removed-enrollment freeze behavior, append-only
 reversal plus audit, and Reward-history erasure during account anonymization.
 The fixtures cleaned up their temporary users, courses, enrollments, ledger
-entries, and audits. No Production database migration or Production/QA Reward
-flag change was made.
+entries, and audits.
+
+After another explicit owner approval, the same migration was applied to
+Production on 2026-08-17 through the guarded runner. Before deployment Neon
+forked `production-reward-backup-2026-08-17` from `production`; it expires on
+2026-08-24 at 09:17 Asia/Bangkok. Production now reports all six migrations
+current, the migration is finished and not rolled back, and
+`RewardLedgerEntry` starts with zero rows. Public/protected Production safe
+smoke passed `12/12` after explicitly targeting `https://beagleclassroom.com`.
+The first smoke invocation targeted its default inactive localhost and is not a
+Production failure.
 
 ADR-0051 locks the lifecycle rules: archiving a CourseOffering freezes its
 reward economy without deleting points; restoring the course thaws the same
 ledger. Account anonymization cancels future pending redemptions and erases the
 ledger plus redemption history because rewards are not academic evidence.
 
-Next gate: merge the QA evidence document, then obtain separate explicit owner
-approval before applying the Reward migration to Production. Keep
-`REWARD_ENABLED=0` and `REWARD_MUTATIONS_ENABLED=0`; UI/API rollout is a later
-implementation slice after Production schema readiness.
+Both `REWARD_ENABLED` and `REWARD_MUTATIONS_ENABLED` remain `0`; no Reward route
+or UI is exposed. The next implementation slice is the first guarded Reward
+API/UI vertical slice, followed by isolated-QA acceptance. Do not enable either
+Production flag merely because the schema is ready. Migration evidence is in
+`docs/release-gates/2026-08-17-REWARD-PRODUCTION-MIGRATION.md`.
 
 ## STUDENT SCREEN SHARE AND TEACHER MODERATION — 2026-08-14 (PR #75)
 
