@@ -3,7 +3,10 @@ import type { Prisma, PrismaClient } from "@prisma/client";
 import { db } from "@/lib/db/client";
 import { identityFoundationMutationsEnabled } from "./feature-flags";
 import { chatEnabled } from "@/lib/chat/feature-flags";
-import { rewardEnabled } from "@/lib/reward/feature-flags";
+import {
+  courseRewardMilestonesEnabled,
+  rewardEnabled,
+} from "@/lib/reward/feature-flags";
 import {
   ANONYMIZED_STUDENT_NAME,
   anonymizedUserFields,
@@ -82,6 +85,13 @@ function createTransactionPort(
         // Rewards are behavioural history, not academic evidence. The Student
         // row remains as an anonymized academic placeholder, so its cascading
         // FK cannot perform this erasure for us.
+        await tx.courseRewardClaim.deleteMany({
+          where: {
+            enrollment: {
+              studentId: userId, // dependency-gate-allow(student-id-symbol-review): internal Enrollment foreign key to User.id
+            },
+          },
+        });
         await tx.rewardLedgerEntry.deleteMany({ where: { studentId: userId } });
       }
     },
@@ -124,7 +134,13 @@ export function createPrismaAccountAnonymizationService(
     transaction: async (work) =>
       client.$transaction(
         (tx) =>
-          work(createTransactionPort(tx, chatEnabled(env), rewardEnabled(env))),
+          work(
+            createTransactionPort(
+              tx,
+              chatEnabled(env),
+              rewardEnabled(env) || courseRewardMilestonesEnabled(env)
+            )
+          ),
         TX_OPTS
       ),
   };

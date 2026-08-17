@@ -348,6 +348,10 @@ Response = 429 + `Retry-After`
 - `LESSON_CONTENT_MOVED` (เก็บ before/after Lesson id และชื่อ)
 - `REWARD_POINTS_AWARDED` (รายการแต้มใหม่ผูกกับความสำเร็จเดียว)
 - `REWARD_ENTRY_REVERSED` (หักกลับด้วยเหตุผลโดยไม่แก้รายการเดิม)
+- `COURSE_REWARD_TIER_CREATED` (ครูเจ้าของวิชาสร้างเกณฑ์ Score Total)
+- `COURSE_REWARD_CLAIM_REQUESTED` (นักเรียนขอรับเกณฑ์สูงสุดที่มีสิทธิ์)
+- `COURSE_REWARD_CLAIM_FULFILLED` (ครูยืนยันการส่งมอบรางวัล)
+- `COURSE_REWARD_CLAIM_REJECTED` (ครูปฏิเสธพร้อมเหตุผล)
 
 B2 compatibility backfill writes one `LESSON_CONTENT_MOVED` event per linked
 Assignment or Material with a null system actor, deterministic before/after

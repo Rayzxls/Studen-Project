@@ -89,38 +89,40 @@ model User {
   profileImageId String?
   themeMode      ThemeMode @default(SYSTEM)
 
-  admin                    Admin?
-  teacher                  Teacher?
-  student                  Student?
-  sessions                 UserSession[]
-  auditLogsAsActor         AuditLog[]               @relation("ActorLogs")
-  commentsAuthored         Comment[]                @relation("CommentAuthor")
-  notifications            Notification[]           @relation("NotificationRecipient") // Phase 7
-  materialsPosted          Material[]               @relation("MaterialAuthor") // Phase 7
-  announcementsPosted      Announcement[]           @relation("AnnouncementAuthor") // Phase 7
-  lifecycleEventsAsTarget  AccountLifecycleEvent[]  @relation("LifecycleTarget")
-  lifecycleEventsAsActor   AccountLifecycleEvent[]  @relation("LifecycleActor")
-  moderationReports        ModerationReport[]       @relation("ModerationReporter")
-  moderationCasesOwned     ModerationCase[]         @relation("ModerationOwner")
-  moderationCasesReviewed  ModerationCase[]         @relation("ModerationReviewer")
-  moderationEventsAsActor  ModerationCaseEvent[]    @relation("ModerationEventActor")
-  authIdentities           AuthIdentity[]
-  identityTokens           IdentityToken[]
-  consentAcceptances       ConsentAcceptance[]
-  realNameChanges          RealNameHistory[]        @relation("RealNameTarget")
-  realNameChangesAsActor   RealNameHistory[]        @relation("RealNameActor")
-  teacherInvitesCreated    TeacherInvite[]          @relation("TeacherInviteCreator")
-  teacherInvitesAccepted   TeacherInvite[]          @relation("TeacherInviteAcceptedBy")
-  teacherInvitesRevoked    TeacherInvite[]          @relation("TeacherInviteRevokedBy")
-  guideToursCompleted      GuideTourCompletion[]
-  webPushSubscriptions     WebPushSubscription[]
-  meetingPresences         MeetingPresence[]
-  chatConversationsCreated ChatConversation[]       @relation("ChatConversationCreator")
-  chatMemberships          ChatConversationMember[]
-  chatMessages             ChatMessage[]            @relation("ChatMessageAuthor")
-  chatBlocksMade           ChatBlock[]              @relation("ChatBlocker")
-  chatBlocksReceived       ChatBlock[]              @relation("ChatBlocked")
-  rewardEntriesCreated     RewardLedgerEntry[]      @relation("RewardEntryActor")
+  admin                            Admin?
+  teacher                          Teacher?
+  student                          Student?
+  sessions                         UserSession[]
+  auditLogsAsActor                 AuditLog[]                 @relation("ActorLogs")
+  commentsAuthored                 Comment[]                  @relation("CommentAuthor")
+  notifications                    Notification[]             @relation("NotificationRecipient") // Phase 7
+  materialsPosted                  Material[]                 @relation("MaterialAuthor") // Phase 7
+  announcementsPosted              Announcement[]             @relation("AnnouncementAuthor") // Phase 7
+  lifecycleEventsAsTarget          AccountLifecycleEvent[]    @relation("LifecycleTarget")
+  lifecycleEventsAsActor           AccountLifecycleEvent[]    @relation("LifecycleActor")
+  moderationReports                ModerationReport[]         @relation("ModerationReporter")
+  moderationCasesOwned             ModerationCase[]           @relation("ModerationOwner")
+  moderationCasesReviewed          ModerationCase[]           @relation("ModerationReviewer")
+  moderationEventsAsActor          ModerationCaseEvent[]      @relation("ModerationEventActor")
+  authIdentities                   AuthIdentity[]
+  identityTokens                   IdentityToken[]
+  consentAcceptances               ConsentAcceptance[]
+  realNameChanges                  RealNameHistory[]          @relation("RealNameTarget")
+  realNameChangesAsActor           RealNameHistory[]          @relation("RealNameActor")
+  teacherInvitesCreated            TeacherInvite[]            @relation("TeacherInviteCreator")
+  teacherInvitesAccepted           TeacherInvite[]            @relation("TeacherInviteAcceptedBy")
+  teacherInvitesRevoked            TeacherInvite[]            @relation("TeacherInviteRevokedBy")
+  guideToursCompleted              GuideTourCompletion[]
+  webPushSubscriptions             WebPushSubscription[]
+  meetingPresences                 MeetingPresence[]
+  chatConversationsCreated         ChatConversation[]         @relation("ChatConversationCreator")
+  chatMemberships                  ChatConversationMember[]
+  chatMessages                     ChatMessage[]              @relation("ChatMessageAuthor")
+  chatBlocksMade                   ChatBlock[]                @relation("ChatBlocker")
+  chatBlocksReceived               ChatBlock[]                @relation("ChatBlocked")
+  rewardEntriesCreated             RewardLedgerEntry[]        @relation("RewardEntryActor")
+  courseRewardTierRevisionsCreated CourseRewardTierRevision[] @relation("CourseRewardTierRevisionActor")
+  courseRewardClaimsResolved       CourseRewardClaim[]        @relation("CourseRewardClaimResolver")
 
   @@index([role])
   @@index([accountStatus])
@@ -498,6 +500,7 @@ model CourseOffering {
   announcements  Announcement[] // Phase 7
   chatChannel    ChatConversation?
   rewardEntries  RewardLedgerEntry[]
+  rewardTiers    CourseRewardTier[]
 
   @@index([classCode])
   @@index([teacherId])
@@ -523,6 +526,7 @@ model Enrollment {
   quizAttempts      QuizAttempt[]
   quizExceptions    QuizStudentException[]
   rewardEntries     RewardLedgerEntry[]
+  rewardClaims      CourseRewardClaim[]
 
   @@unique([studentId, courseOfferingId])
   @@index([courseOfferingId])
@@ -595,6 +599,100 @@ model RewardLedgerEntry {
   @@index([enrollmentId, createdAt(sort: Desc)])
   @@index([courseOfferingId, createdAt(sort: Desc)])
   @@index([achievementType, achievementId])
+}
+
+// ═══════════════════════════════════════════════════════════
+// Course Score Milestones (Reward V2 · ADR-0056)
+// ═══════════════════════════════════════════════════════════
+
+enum CourseRewardClaimStatus {
+  PENDING
+  FULFILLED
+  REJECTED
+  SUPERSEDED
+}
+
+model CourseRewardTier {
+  id               String         @id @default(cuid())
+  courseOfferingId String
+  course           CourseOffering @relation(fields: [courseOfferingId], references: [id], onDelete: Cascade)
+
+  title                   String
+  description             String?
+  fulfillmentInstructions String?
+  requiredScore           Int
+  version                 Int       @default(1)
+  archivedAt              DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  revisions CourseRewardTierRevision[]
+  claims    CourseRewardClaim[]
+
+  @@unique([courseOfferingId, requiredScore])
+  @@index([courseOfferingId, archivedAt, requiredScore])
+}
+
+/// Append-only snapshot written whenever the owning Teacher changes a tier.
+model CourseRewardTierRevision {
+  id     String           @id @default(cuid())
+  tierId String
+  tier   CourseRewardTier @relation(fields: [tierId], references: [id], onDelete: Cascade)
+
+  version                 Int
+  title                   String
+  description             String?
+  fulfillmentInstructions String?
+  requiredScore           Int
+  archivedAt              DateTime?
+
+  actorUserId String?
+  actor       User?    @relation("CourseRewardTierRevisionActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+
+  @@unique([tierId, version])
+  @@index([actorUserId, createdAt])
+}
+
+/// A claim never trusts browser eligibility. The service recalculates the
+/// canonical published Score Total and freezes both score and tier snapshots.
+model CourseRewardClaim {
+  id           String                  @id @default(cuid())
+  tierId       String
+  tier         CourseRewardTier        @relation(fields: [tierId], references: [id], onDelete: Cascade)
+  enrollmentId String
+  enrollment   Enrollment              @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  attempt      Int                     @default(1)
+  status       CourseRewardClaimStatus @default(PENDING)
+
+  snapshotTierTitle                   String
+  snapshotTierDescription             String?
+  snapshotTierFulfillmentInstructions String?
+  snapshotTierRequiredScore           Int
+  snapshotTierVersion                 Int
+  snapshotScorePercent                Float
+  snapshotEarnedScore                 Int
+  snapshotPublishedFullScore          Int
+
+  requestedAt DateTime?
+  resolvedAt  DateTime?
+
+  resolvedByUserId String?
+  resolvedBy       User?   @relation("CourseRewardClaimResolver", fields: [resolvedByUserId], references: [id], onDelete: Restrict)
+  resolutionReason String?
+
+  supersededByClaimId String?
+  supersededByClaim   CourseRewardClaim?  @relation("CourseRewardClaimSupersession", fields: [supersededByClaimId], references: [id], onDelete: Cascade)
+  supersededClaims    CourseRewardClaim[] @relation("CourseRewardClaimSupersession")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tierId, enrollmentId, attempt])
+  @@index([enrollmentId, status, createdAt(sort: Desc)])
+  @@index([tierId, status, createdAt(sort: Desc)])
+  @@index([resolvedByUserId, resolvedAt])
+  @@index([supersededByClaimId])
 }
 
 // ═══════════════════════════════════════════════════════════

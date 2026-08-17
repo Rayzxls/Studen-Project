@@ -34,8 +34,9 @@ const RAW_SQL_PATH = resolve(
 // Bumped deliberately, never to make a red gate green: the count exists so a
 // table that disappears from a migration is caught. 42 → 46 adds the four
 // persistent Chat foundation tables (ADR-0050). 46 → 47 adds the immutable
-// Reward ledger table (ADR-0051).
-const EXPECTED_TABLE_COUNT = 47;
+// Reward ledger table (ADR-0051). 47 → 50 adds CourseRewardTier,
+// CourseRewardTierRevision, and CourseRewardClaim (ADR-0056).
+const EXPECTED_TABLE_COUNT = 50;
 const VERIFIER_ADVISORY_LOCK_ID = "68434670120260802";
 
 type CommandResult = SpawnSyncReturns<string>;
