@@ -39,7 +39,7 @@ This matrix prevents an implemented screen or database field from being mistaken
 | AI Assistant | No model-provider integration found | Not implemented; planned only after stable Lesson/Quiz contracts |
 | Google Login | Google-first onboarding, returning sign-in, provider linking, fallback password, recovery, and verified-email change are deployed | Shipped behind the accepted Identity V2 contracts |
 | Persistent Chat | Guarded V1 implements exactly one Course Channel per CourseOffering, 3+ character school-wide DM search, bilateral blocking, focused-tab polling, notifications/push privacy, immutable report snapshots, and 12-month/anonymization expiry | Live on Production; both flags are enabled and the daily retention cron returned 200. Authenticated Production acceptance remains |
-| Reward | V1 ledger/workspace remains as frozen implementation history; ADR-0056 defines Course Score Milestones and a separate System Quest wallet | Additive Course Milestone schema/service passed CI and QA migration/integration acceptance. Production V1 and V2 flags remain off. Next: Teacher/Student milestone UI and QA browser acceptance; System Quest follows separately |
+| Reward | V1 ledger/workspace remains as frozen implementation history; ADR-0056 defines Course Score Milestones and a separate System Quest wallet | Additive Course Milestone schema/service passed CI and QA migration/integration acceptance. Teacher/Student milestone UI is implemented with exact-owner/exact-self projections; authenticated Teacher plus Dark/Cream/System browser acceptance remains. Production V1 and V2 flags remain off; System Quest follows separately |
 | Meeting | LiveKit-backed room, roster/presence, ephemeral room chat, screen share, join/leave/close, and teacher participant removal are deployed | Shipped; monitor participant-minute capacity before scale-up |
 | External integrations | CSV import/export and private R2 storage are the current integrations | Partial; each new integration needs its own ownership, privacy, and failure policy |
 | Subscription / global multi-tenant | Current product is single-tenant school | Separate product strategy, not an unfinished CRUD item in this project |
@@ -756,10 +756,12 @@ The current application is a single-tenant school system. Subscription, tenant i
 
 ## Recommended next work item after Reward V2 approval
 
-Complete the Course Score Milestone vertical slice behind
+Finish Course Score Milestone acceptance behind
 `COURSE_REWARD_MILESTONES_ENABLED` and
-`COURSE_REWARD_MILESTONES_MUTATIONS_ENABLED`: build the Teacher tier/claim
-workspace and Student milestone ladder on top of the QA-verified schema and
-service, then run mobile/all-theme browser acceptance. Keep V1 and Production
-V2 flags disabled. Design and implement the System Quest wallet/catalogue only
-after this slice has independent UI acceptance evidence.
+`COURSE_REWARD_MILESTONES_MUTATIONS_ENABLED`: the Teacher tier/claim workspace,
+Student milestone ladder, Server Actions, immutable revisions, and audit events
+are implemented. Complete authenticated Teacher visual acceptance and
+Dark/Cream/System browser passes, then review the independent Production
+migration and flag gates. Keep V1 and Production V2 flags disabled until those
+separate approvals. Design the System Quest wallet/catalogue only after this
+slice has independent acceptance evidence.

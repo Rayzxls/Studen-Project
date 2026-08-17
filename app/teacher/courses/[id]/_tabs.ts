@@ -2,7 +2,7 @@ import type { CourseTab } from "@/components/course/tab-nav";
 import { lessonWorkspaceCourseEnabled } from "@/lib/lesson";
 import { quizEnabled } from "@/lib/quiz";
 import { chatEnabled } from "@/lib/chat/feature-flags";
-import { rewardEnabled } from "@/lib/reward/feature-flags";
+import { courseRewardMilestonesEnabled } from "@/lib/reward/feature-flags";
 
 /**
  * Teacher CourseOffering tab list — Phase 10C reshape per ADR-0025.
@@ -80,7 +80,7 @@ export const teacherCourseTabs = (
     href: `/teacher/courses/${courseId}/scores`,
     icon: "scores",
   },
-  ...(rewardEnabled()
+  ...(courseRewardMilestonesEnabled()
     ? [
         {
           label: "รางวัล",
