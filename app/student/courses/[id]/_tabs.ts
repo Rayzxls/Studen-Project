@@ -2,6 +2,7 @@ import type { CourseTab } from "@/components/course/tab-nav";
 import { lessonWorkspaceCourseEnabled } from "@/lib/lesson";
 import { quizEnabled } from "@/lib/quiz";
 import { chatEnabled } from "@/lib/chat/feature-flags";
+import { rewardEnabled } from "@/lib/reward/feature-flags";
 
 /**
  * Student CourseOffering tab list — Phase 10C reshape per ADR-0025.
@@ -70,6 +71,15 @@ export const studentCourseTabs = (courseId: string): CourseTab[] => [
     href: `/student/courses/${courseId}/scores`,
     icon: "scores",
   },
+  ...(rewardEnabled()
+    ? [
+        {
+          label: "แต้มของฉัน",
+          href: `/student/courses/${courseId}/rewards`,
+          icon: "rewards" as const,
+        },
+      ]
+    : []),
   {
     label: "ภาพรวม",
     href: `/student/courses/${courseId}/overview`,

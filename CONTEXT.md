@@ -539,9 +539,9 @@ Push ของ **ข้อความสนทนาเท่านั้น** 
 กับรูปโปรไฟล์เท่านั้น **ไม่มีการไล่ดูรายชื่อทั้งโรงเรียน** เจตนาคือให้ทักคนที่รู้จักชื่ออยู่แล้วได้
 โดยไม่กลายเป็นสมุดรายชื่อเด็กที่เปิดกวาดดูได้ ดู § Visibility Level (L1) ข้อยกเว้น
 
-## Reward (Release F design contract — ยังไม่ implement)
+## Reward (Release F — ledger foundation และ Course Reward workspace implement แล้ว)
 
-ภาษาส่วนนี้เป็นสัญญาการออกแบบที่ตกลงกันไว้ ยังไม่มีโค้ด schema หรือ route ใดรองรับ
+สัญญาการออกแบบนี้มี ledger foundation และ Course Reward workspace รองรับแล้ว ส่วน System Quest และการแลกรางวัลยังไม่ implement
 เหตุผลเบื้องหลังอยู่ใน [ADR-0051](./docs/adr/0051-rewards-are-a-ledger-with-two-economies.md)
 
 ### Course Reward (แต้มของวิชา)

@@ -1,8 +1,19 @@
 // @vitest-environment node
 
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
+import { studentCourseTabs } from "@/app/student/courses/[id]/_tabs";
 import { teacherCourseTabs } from "@/app/teacher/courses/[id]/_tabs";
+
+const originalRewardEnabled = process.env.REWARD_ENABLED;
+
+afterEach(() => {
+  if (originalRewardEnabled === undefined) {
+    delete process.env.REWARD_ENABLED;
+  } else {
+    process.env.REWARD_ENABLED = originalRewardEnabled;
+  }
+});
 
 describe("teacher course navigation", () => {
   it("links to the publishing schedule and can show the waiting count", () => {
@@ -15,6 +26,36 @@ describe("teacher course navigation", () => {
       href: "/teacher/courses/course-1/schedule",
       icon: "schedule",
       badge: 3,
+    });
+  });
+
+  it("keeps reward navigation fail-closed for both roles", () => {
+    delete process.env.REWARD_ENABLED;
+
+    expect(
+      teacherCourseTabs("course-1").some((tab) => tab.icon === "rewards")
+    ).toBe(false);
+    expect(
+      studentCourseTabs("course-1").some((tab) => tab.icon === "rewards")
+    ).toBe(false);
+  });
+
+  it("shows role-specific reward navigation only when the read flag is enabled", () => {
+    process.env.REWARD_ENABLED = "1";
+
+    expect(
+      teacherCourseTabs("course-1").find((tab) => tab.icon === "rewards")
+    ).toEqual({
+      label: "รางวัล",
+      href: "/teacher/courses/course-1/rewards",
+      icon: "rewards",
+    });
+    expect(
+      studentCourseTabs("course-1").find((tab) => tab.icon === "rewards")
+    ).toEqual({
+      label: "แต้มของฉัน",
+      href: "/student/courses/course-1/rewards",
+      icon: "rewards",
     });
   });
 });

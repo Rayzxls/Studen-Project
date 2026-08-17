@@ -1,6 +1,6 @@
 # Next Development Plan
 
-**Updated:** 2026-08-14
+**Updated:** 2026-08-17
 **Sequence:** Core completion -> Lesson Workspace -> Quiz -> Identity/Integrations -> AI -> Optional product modules
 **Current state:** Releases A-C and the Identity D1 rollout are on Production.
 Early Warning (ADR-0048), scheduled publishing, Web Push, Sentry/CI gates, and
@@ -10,9 +10,9 @@ that ephemeral room chat is deliberately not the persistent Channel/DM product
 defined by ADR-0050. Persistent Chat V1 is live on Production with both flags
 enabled. Browser/mobile/all-theme QA passed on isolated QA, Production safety
 smoke passed, and the daily retention cron returned 200. Authenticated
-Teacher/Student Production acceptance remains. Reward lifecycle decisions are
-now locked in ADR-0051, so its guarded foundation is the next implementation
-slice.
+Teacher/Student Production acceptance remains. Reward now has its guarded
+ledger foundation plus a fail-closed Teacher/Student course workspace in PR
+#84; isolated-QA flag acceptance is its next release gate.
 
 ## Why this order
 
@@ -36,7 +36,7 @@ This matrix prevents an implemented screen or database field from being mistaken
 | AI Assistant | No model-provider integration found | Not implemented; planned only after stable Lesson/Quiz contracts |
 | Google Login | Google-first onboarding, returning sign-in, provider linking, fallback password, recovery, and verified-email change are deployed | Shipped behind the accepted Identity V2 contracts |
 | Persistent Chat | Guarded V1 implements exactly one Course Channel per CourseOffering, 3+ character school-wide DM search, bilateral blocking, focused-tab polling, notifications/push privacy, immutable report snapshots, and 12-month/anonymization expiry | Live on Production; both flags are enabled and the daily retention cron returned 200. Authenticated Production acceptance remains |
-| Reward | ADR-0051 defines two ledger economies, achievement-based awards, reversals, redemption, and quests | Next implementation track; archive freezes/thaws the course economy and account anonymization erases reward history |
+| Reward | Guarded ledger foundation plus the first course workspace cover real-evidence awards, immutable reversals, balances, history, exact Teacher ownership, and Student self-only privacy | PR #84 is under review; isolated-QA flag acceptance follows. Catalogue, redemption, and System Quest remain future slices |
 | Meeting | LiveKit-backed room, roster/presence, ephemeral room chat, screen share, join/leave/close, and teacher participant removal are deployed | Shipped; monitor participant-minute capacity before scale-up |
 | External integrations | CSV import/export and private R2 storage are the current integrations | Partial; each new integration needs its own ownership, privacy, and failure policy |
 | Subscription / global multi-tenant | Current product is single-tenant school | Separate product strategy, not an unfinished CRUD item in this project |
@@ -724,15 +724,16 @@ AI is optional and follows Quiz. Begin with low-risk assistance rather than auto
 
 ## Release F: Optional product modules
 
-**Status update — 2026-08-14:** Meeting and Persistent Chat are shipped. Reward
-is the next approved implementation track after its archive and anonymization
-lifecycle decisions were settled. These modules remain separate releases
-rather than one combined schema or cutover.
+**Status update — 2026-08-17:** Meeting and Persistent Chat are shipped. Reward
+has a deployed ledger foundation and PR #84 adds its first guarded course
+workspace. Isolated-QA acceptance is next; catalogue, redemption, and System
+Quest remain separate slices. These modules remain separate releases rather
+than one combined schema or cutover.
 
 | Candidate | Dependency and recommended direction |
 | --- | --- |
-| Chat Room | ADR-0050 and ADR-0049 are locked. Build persistent course Channels and DMs behind additive schema and fail-closed flags; preserve strict DM privacy, blocking, report snapshots, 12-month retention, and focused-tab polling. |
-| Reward system | ADR-0051 is mostly locked and Lesson/Quiz events now exist. Settle archive and anonymization lifecycle first; rewards must not expose peer performance or encourage point farming. |
+| Chat Room | Shipped as Persistent Chat V1 with course Channels and DMs, strict privacy, blocking, immutable report snapshots, retention, and focused-tab polling. |
+| Reward system | Ledger foundation is deployed and PR #84 adds guarded Course Reward UI/service flows. Next: isolated-QA acceptance, then separately scope catalogue/redemption and System Quest without exposing peer performance or enabling point farming. |
 | Meeting room | Shipped on LiveKit through PRs #68-#75. The remaining roadmap concern is capacity/cost monitoring, not missing room functionality. |
 | Advanced analytics | Requires stable event definitions and enough historical data. Do not infer learning outcomes from raw click counts. |
 
@@ -749,10 +750,9 @@ The current application is a single-tenant school system. Subscription, tenant i
 - A central Lesson comment thread.
 - Automatic AI grading or AI attendance decisions.
 
-## Recommended first work item after approval
+## Recommended next work item after PR #84
 
-Begin with a fail-closed Reward ledger foundation: additive schema, exact
-CourseOffering/Enrollment authorization, immutable entries with reversals,
-archive freeze/thaw enforcement, anonymization erasure hooks, and focused
-permission tests. Do not apply the migration to QA or Production until the
-local schema and behavior pass review.
+Run isolated-QA acceptance with both Reward flags enabled only on QA. Verify
+Teacher award/reversal flows against real course evidence, Student self-only
+history, archived-course read-only behavior, and responsive layouts before any
+separate Production flag approval.
