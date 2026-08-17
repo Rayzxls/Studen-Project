@@ -1,5 +1,11 @@
 # Rewards are a ledger, with two economies
 
+**Status:** Partially superseded on 2026-08-17 by
+[ADR-0056](./0056-course-score-milestones-and-system-quest-wallet.md). The
+manual Course points economy and random System Quest payout below are
+historical V1 decisions. Keep this ADR for the deployed ledger history and the
+lifecycle/privacy rationale that ADR-0056 retains.
+
 Release F listed a reward system as a backlog candidate with no requirement
 written anywhere. This records what was decided when it was grilled, on
 2026-08-06, alongside [ADR-0050](./0050-chat-lives-inside-the-classroom.md).

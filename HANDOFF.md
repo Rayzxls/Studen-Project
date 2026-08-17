@@ -57,7 +57,44 @@ retained Neon restore point is `production-chat-backup-2026-08-14` (parent `prod
 expires 2026-08-21). Migration evidence is recorded in
 `docs/release-gates/2026-08-14-PERSISTENT-CHAT-PRODUCTION-MIGRATION.md`.
 
-## NEXT TRACK: REWARD COURSE WORKSPACE — 2026-08-17 (LIVE ON PRODUCTION)
+## REWARD V2 CONTRACT AND V1 SHUTDOWN — 2026-08-17
+
+The owner confirmed that the deployed Reward V1 product model was not the
+intended one. Reward V1 asked a Teacher to award a second Course points balance;
+the intended Course flow derives eligibility directly from the existing
+published Score Total. The owner approved temporarily disabling V1 while V2 is
+built.
+
+Production now has `REWARD_ENABLED=0` and `REWARD_MUTATIONS_ENABLED=0`.
+Vercel redeployed the already-built latest `main` artifact as
+`dpl_GgWwxXBz8SiZHQjD4VrQXkWco1Sd`, reached Ready, and restored the
+`beagleclassroom.com` alias. Public `/` and `/login` returned 200. An
+authenticated Student received the application 404 on the former Reward route,
+the Course Feed loaded with no Reward tab, and the console remained clear. No
+schema or data mutation occurred.
+
+ADR-0056 supersedes the V1 Course economy and random System Quest payout:
+
+- Course rewards are Teacher-defined Score Total milestones from 0–100. Score
+  Total is the existing percentage over published Score Items; Teachers never
+  award Course points manually.
+- A Student claims the highest currently eligible unclaimed tier. A previously
+  claimed lower tier does not block a later higher tier, while lower eligible
+  tiers skipped on the first claim become `SUPERSEDED`.
+- Claims snapshot the score and tier revision, then move from `PENDING` to
+  Teacher-owned `FULFILLED` or reason-required `REJECTED`.
+- System Quests count auditable actions, never academic scores, and pay a fixed
+  advertised amount into a separate immutable `SYSTEM` wallet.
+- System catalogue rewards may customize or assist the in-app experience but
+  never change grades, attendance, deadlines, course access, core functions, or
+  accessibility.
+
+The next implementation is additive and uses new V2 flags. Existing Reward
+ledger data is frozen and must not be silently converted or deleted. Shutdown
+evidence is in
+`docs/release-gates/2026-08-17-REWARD-V1-PRODUCTION-SHUTDOWN.md`.
+
+## REWARD V1 IMPLEMENTATION HISTORY — 2026-08-17 (DISABLED ON PRODUCTION)
 
 PR #81 merged the guarded Reward ledger foundation into `main` at `074f58a`.
 Main CI and the Vercel Production code deployment passed while both Reward

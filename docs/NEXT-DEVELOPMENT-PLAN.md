@@ -10,10 +10,11 @@ that ephemeral room chat is deliberately not the persistent Channel/DM product
 defined by ADR-0050. Persistent Chat V1 is live on Production with both flags
 enabled. Browser/mobile/all-theme QA passed on isolated QA, Production safety
 smoke passed, and the daily retention cron returned 200. Authenticated
-Teacher/Student Production acceptance remains. Reward now has its guarded
-ledger foundation plus the Teacher/Student course workspace from PR #84 live on
-Production. Both Reward flags are enabled, and authenticated read-only
-Teacher/Student Production acceptance passed without creating a ledger entry.
+Teacher/Student Production acceptance remains. Reward V1 proved its guarded
+ledger and Course workspace, but its manual Course points model did not match
+the intended product and is now disabled on Production. ADR-0056 defines V2 as
+Teacher-owned Score Total milestones plus a separate fixed-payout System Quest
+wallet. No V2 schema has been deployed.
 
 ## Why this order
 
@@ -37,7 +38,7 @@ This matrix prevents an implemented screen or database field from being mistaken
 | AI Assistant | No model-provider integration found | Not implemented; planned only after stable Lesson/Quiz contracts |
 | Google Login | Google-first onboarding, returning sign-in, provider linking, fallback password, recovery, and verified-email change are deployed | Shipped behind the accepted Identity V2 contracts |
 | Persistent Chat | Guarded V1 implements exactly one Course Channel per CourseOffering, 3+ character school-wide DM search, bilateral blocking, focused-tab polling, notifications/push privacy, immutable report snapshots, and 12-month/anonymization expiry | Live on Production; both flags are enabled and the daily retention cron returned 200. Authenticated Production acceptance remains |
-| Reward | Guarded ledger foundation plus the first course workspace cover real-evidence awards, immutable reversals, balances, history, exact Teacher ownership, and Student self-only privacy | Live on Production with both flags enabled; authenticated Teacher/Student read-only acceptance passed. Catalogue, redemption, and System Quest remain future slices |
+| Reward | V1 ledger/workspace remains as frozen implementation history; ADR-0056 defines Course Score Milestones and a separate System Quest wallet | V1 is disabled on Production (`REWARD_ENABLED=0`, `REWARD_MUTATIONS_ENABLED=0`). Next: additive Course Milestone schema/service behind distinct V2 flags; System Quest follows as a separate slice |
 | Meeting | LiveKit-backed room, roster/presence, ephemeral room chat, screen share, join/leave/close, and teacher participant removal are deployed | Shipped; monitor participant-minute capacity before scale-up |
 | External integrations | CSV import/export and private R2 storage are the current integrations | Partial; each new integration needs its own ownership, privacy, and failure policy |
 | Subscription / global multi-tenant | Current product is single-tenant school | Separate product strategy, not an unfinished CRUD item in this project |
@@ -726,16 +727,16 @@ AI is optional and follows Quiz. Begin with low-risk assistance rather than auto
 ## Release F: Optional product modules
 
 **Status update — 2026-08-17:** Meeting and Persistent Chat are shipped. Reward
-has a deployed ledger foundation and PR #84 shipped its first guarded course
-workspace. Isolated-QA acceptance and authenticated read-only Production
-acceptance passed, and both Reward flags are enabled on Production. Catalogue,
-redemption, and System Quest remain separate slices. These modules remain
-separate releases rather than one combined schema or cutover.
+V1's guarded ledger and Course workspace passed QA and authenticated read-only
+Production acceptance, but the manual Course points product model was rejected
+after deployment. Both V1 flags are now disabled. ADR-0056 replaces it with
+Course Score Milestones and a separate fixed-payout System Quest wallet. These
+remain separate additive slices rather than one combined schema or cutover.
 
 | Candidate | Dependency and recommended direction |
 | --- | --- |
 | Chat Room | Shipped as Persistent Chat V1 with course Channels and DMs, strict privacy, blocking, immutable report snapshots, retention, and focused-tab polling. |
-| Reward system | Ledger foundation and PR #84 Course Reward UI/service flows are live on Production; isolated-QA and authenticated read-only Production acceptance passed. Next: independently scope catalogue/redemption and System Quest without exposing peer performance or enabling point farming. |
+| Reward system | V1 is disabled and retained only for audit/legacy safety. Build Course Score Milestones first: Teacher-defined 0–100 tiers, Student highest-eligible claim, and Teacher fulfilment. Then build the Admin-owned System Quest wallet/catalogue with fixed payouts and no academic advantages. |
 | Meeting room | Shipped on LiveKit through PRs #68-#75. The remaining roadmap concern is capacity/cost monitoring, not missing room functionality. |
 | Advanced analytics | Requires stable event definitions and enough historical data. Do not infer learning outcomes from raw click counts. |
 
@@ -752,8 +753,12 @@ The current application is a single-tenant school system. Subscription, tenant i
 - A central Lesson comment thread.
 - Automatic AI grading or AI attendance decisions.
 
-## Recommended next work item after Reward Production acceptance
+## Recommended next work item after Reward V2 approval
 
-Reward V1 is live with both Production flags enabled. Decide whether the next
-independent Reward slice should be catalogue/redemption or System Quest, and
-write its privacy, anti-farming, expiry, and audit contract before implementation.
+Implement the additive Course Score Milestone vertical slice behind
+`COURSE_REWARD_MILESTONES_ENABLED` and
+`COURSE_REWARD_MILESTONES_MUTATIONS_ENABLED`: tier configuration, canonical
+published Score Total eligibility, highest-tier claim/supersession, Teacher
+fulfilment, immutable snapshots, permissions, audit, archive/removal freeze,
+and anonymization cleanup. Keep V1 flags disabled. Design and implement the
+System Quest wallet/catalogue only after this slice has independent QA evidence.
