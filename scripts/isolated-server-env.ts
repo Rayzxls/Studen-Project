@@ -29,9 +29,13 @@ export function prepareIsolatedServerEnv<T extends ServerEnv>(
     // isolated server opts into the new additive tables by default.
     CHAT_ENABLED: env.CHAT_ENABLED ?? "1",
     CHAT_MUTATIONS_ENABLED: env.CHAT_MUTATIONS_ENABLED ?? "1",
-    // Reward starts with a guarded ledger foundation. Isolated QA may opt in
-    // after applying the additive migration; normal environments remain off.
-    REWARD_ENABLED: env.REWARD_ENABLED ?? "1",
-    REWARD_MUTATIONS_ENABLED: env.REWARD_MUTATIONS_ENABLED ?? "1",
+    // Reward V1 is retired. Keep its manual Course points UI closed even in
+    // isolated QA, and exercise V2 through its independent additive gates.
+    REWARD_ENABLED: env.REWARD_ENABLED ?? "0",
+    REWARD_MUTATIONS_ENABLED: env.REWARD_MUTATIONS_ENABLED ?? "0",
+    COURSE_REWARD_MILESTONES_ENABLED:
+      env.COURSE_REWARD_MILESTONES_ENABLED ?? "1",
+    COURSE_REWARD_MILESTONES_MUTATIONS_ENABLED:
+      env.COURSE_REWARD_MILESTONES_MUTATIONS_ENABLED ?? "1",
   };
 }

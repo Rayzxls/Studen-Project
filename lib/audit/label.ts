@@ -64,6 +64,10 @@ const ACTION_LABEL_TH: Record<AuditEvent, string> = {
   // Reward ledger
   REWARD_POINTS_AWARDED: "ให้แต้มรางวัล",
   REWARD_ENTRY_REVERSED: "หักกลับรายการแต้ม",
+  COURSE_REWARD_TIER_CREATED: "สร้างเกณฑ์รางวัลวิชา",
+  COURSE_REWARD_CLAIM_REQUESTED: "นักเรียนขอรับรางวัลวิชา",
+  COURSE_REWARD_CLAIM_FULFILLED: "ส่งมอบรางวัลวิชาแล้ว",
+  COURSE_REWARD_CLAIM_REJECTED: "ปฏิเสธคำขอรางวัลวิชา",
   // Attendance
   ATTENDANCE_BACK_EDIT: "แก้การเข้าเรียนย้อนหลัง",
   SESSION_CANCELLED: "ยกเลิกคาบเรียน",

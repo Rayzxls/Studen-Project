@@ -19,8 +19,10 @@ describe("isolated QA server feature flags", () => {
       QUIZ_MUTATIONS_ENABLED: "1",
       CHAT_ENABLED: "1",
       CHAT_MUTATIONS_ENABLED: "1",
-      REWARD_ENABLED: "1",
-      REWARD_MUTATIONS_ENABLED: "1",
+      REWARD_ENABLED: "0",
+      REWARD_MUTATIONS_ENABLED: "0",
+      COURSE_REWARD_MILESTONES_ENABLED: "1",
+      COURSE_REWARD_MILESTONES_MUTATIONS_ENABLED: "1",
     });
   });
 
@@ -36,6 +38,8 @@ describe("isolated QA server feature flags", () => {
       CHAT_MUTATIONS_ENABLED: "0",
       REWARD_ENABLED: "0",
       REWARD_MUTATIONS_ENABLED: "0",
+      COURSE_REWARD_MILESTONES_ENABLED: "0",
+      COURSE_REWARD_MILESTONES_MUTATIONS_ENABLED: "0",
     });
 
     expect(env).toMatchObject({
@@ -49,6 +53,8 @@ describe("isolated QA server feature flags", () => {
       CHAT_MUTATIONS_ENABLED: "0",
       REWARD_ENABLED: "0",
       REWARD_MUTATIONS_ENABLED: "0",
+      COURSE_REWARD_MILESTONES_ENABLED: "0",
+      COURSE_REWARD_MILESTONES_MUTATIONS_ENABLED: "0",
     });
   });
 });

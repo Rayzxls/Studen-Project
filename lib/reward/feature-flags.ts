@@ -15,3 +15,20 @@ export function rewardMutationsEnabled(
 ): boolean {
   return rewardEnabled(env) && env.REWARD_MUTATIONS_ENABLED === ENABLED_VALUE;
 }
+
+/** Reward V2 Course Score Milestone reads use an independent fail-closed gate. */
+export function courseRewardMilestonesEnabled(
+  env: RewardFeatureFlagEnv = process.env
+): boolean {
+  return env.COURSE_REWARD_MILESTONES_ENABLED === ENABLED_VALUE;
+}
+
+/** Course Score Milestone writes require both V2 read and mutation gates. */
+export function courseRewardMilestoneMutationsEnabled(
+  env: RewardFeatureFlagEnv = process.env
+): boolean {
+  return (
+    courseRewardMilestonesEnabled(env) &&
+    env.COURSE_REWARD_MILESTONES_MUTATIONS_ENABLED === ENABLED_VALUE
+  );
+}
