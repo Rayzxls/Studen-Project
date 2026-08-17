@@ -59,6 +59,24 @@ expires 2026-08-21). Migration evidence is recorded in
 
 ## REWARD V2 COURSE MILESTONE QA MIGRATION — 2026-08-17
 
+The Course Milestone UI vertical slice is now implemented on branch
+`codex/reward-v2-course-milestone-ui` (PR pending). The retired manual-points
+workspace was removed from the Teacher/Student routes and navigation now uses
+the independent V2 read gate. Teachers can create, edit, and archive 0–100
+milestones, see exact-student pending claims, and fulfil or reason-reject them.
+Students see the canonical published Score Total numerator/denominator, their
+milestone ladder, only the highest eligible claim action, and their own claim
+history. Server projections enforce exact course ownership / exact self scope;
+tier edits and archives append revisions and Important-tier audit events.
+
+Verification on the UI branch: TypeScript, full repository ESLint, strict
+dependency gate, Production build, Unit `1024/1024`, and focused isolated-QA
+integration `5/5` passed. Student browser acceptance loaded the real QA data at
+70% (56/80), showed no console errors, and had no document-level horizontal
+overflow at the 375 px mobile viewport. Authenticated Teacher visual acceptance
+and Dark/Cream/System browser passes remain before enabling either V2 flag on
+Production. Production database and flags were not changed.
+
 PR #88 merged the additive Course Score Milestone foundation into `main` at
 `34f01e5`. Main CI passed migration-baseline verification, disposable
 PostgreSQL migration deployment, all integration tests, unit tests,
