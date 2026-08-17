@@ -61,11 +61,13 @@ reached. The Production endpoint still answered the complete `12/12` smoke.
 This usage warning is separate from the successful migration and should be
 reviewed before relying on additional long-running QA/backup computes.
 
-## Flags and next gate
+## Subsequent flag cutover
 
-`REWARD_ENABLED=0` and `REWARD_MUTATIONS_ENABLED=0` remain the binding
-Production state. PR #84 subsequently deployed the first guarded Course Reward
-workspace and authenticated isolated-QA acceptance passed on 2026-08-17. A
-separate owner decision is still required before enabling either Production
-flag; schema readiness, code deployment, and QA acceptance do not constitute
-that approval.
+At migration time, `REWARD_ENABLED=0` and `REWARD_MUTATIONS_ENABLED=0` remained
+the binding Production state. PR #84 subsequently deployed the first guarded
+Course Reward workspace and authenticated isolated-QA acceptance passed on
+2026-08-17.
+
+The owner later supplied the separate approval for both flags. The flag change,
+redeployment, and authenticated read-only Production acceptance are recorded in
+`2026-08-17-REWARD-PRODUCTION-FLAG-CUTOVER.md`.
