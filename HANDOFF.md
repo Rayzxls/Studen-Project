@@ -57,6 +57,30 @@ retained Neon restore point is `production-chat-backup-2026-08-14` (parent `prod
 expires 2026-08-21). Migration evidence is recorded in
 `docs/release-gates/2026-08-14-PERSISTENT-CHAT-PRODUCTION-MIGRATION.md`.
 
+## REWARD V2 COURSE MILESTONE QA MIGRATION — 2026-08-17
+
+PR #88 merged the additive Course Score Milestone foundation into `main` at
+`34f01e5`. Main CI passed migration-baseline verification, disposable
+PostgreSQL migration deployment, all integration tests, unit tests,
+lint/typecheck, dependency gate, and build. The Production code deployment is
+Ready, but V1 remains disabled and the independent V2 flags remain off.
+
+After the owner explicitly approved “deploy Course Reward Milestone migration
+on QA”, the isolated Prisma guard selected the Neon QA branch at
+`ep-autumn-wave-aotw5g6k-pooler.c-2.ap-southeast-1.aws.neon.tech`. Preflight
+found exactly one pending migration,
+`20260817050000_add_course_reward_milestones`. It applied successfully, and
+post-deploy status reports all seven migrations current.
+
+Focused integration acceptance passed `4/4` on QA: fail-closed gates, exact
+Teacher ownership, duplicate-threshold rejection, immutable initial revision,
+highest-eligible claim with lower-tier supersession, idempotent duplicate
+claim, fulfilled 50 then later claim 80, reason-required rejection, and
+removed-enrolment freeze. Test fixtures cleaned up their temporary users,
+course, scores, tiers, claims, revisions, and audits. Production database and
+Production flags were not changed. Evidence is in
+`docs/release-gates/2026-08-17-REWARD-V2-COURSE-MILESTONE-QA-MIGRATION.md`.
+
 ## REWARD V2 CONTRACT AND V1 SHUTDOWN — 2026-08-17
 
 The owner confirmed that the deployed Reward V1 product model was not the
