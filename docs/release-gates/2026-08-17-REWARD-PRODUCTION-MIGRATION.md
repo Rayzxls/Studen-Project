@@ -64,7 +64,8 @@ reviewed before relying on additional long-running QA/backup computes.
 ## Flags and next gate
 
 `REWARD_ENABLED=0` and `REWARD_MUTATIONS_ENABLED=0` remain the binding
-Production state. The foundation currently exposes no user-facing Reward route
-or UI. The next gate is to implement a guarded API/UI vertical slice and accept
-it on isolated QA; schema readiness alone is not approval to enable Production
-flags.
+Production state. PR #84 subsequently deployed the first guarded Course Reward
+workspace and authenticated isolated-QA acceptance passed on 2026-08-17. A
+separate owner decision is still required before enabling either Production
+flag; schema readiness, code deployment, and QA acceptance do not constitute
+that approval.
