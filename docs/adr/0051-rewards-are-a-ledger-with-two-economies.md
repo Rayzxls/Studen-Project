@@ -4,7 +4,9 @@ Release F listed a reward system as a backlog candidate with no requirement
 written anywhere. This records what was decided when it was grilled, on
 2026-08-06, alongside [ADR-0050](./0050-chat-lives-inside-the-classroom.md).
 
-**Nothing here is implemented.** The domain language is in
+**Implementation status.** The guarded ledger foundation and first Course
+Reward workspace are implemented. The reward catalogue, redemption workflow,
+and System Quest economy remain design-only. The domain language is in
 [CONTEXT.md § Reward](../../CONTEXT.md); this is the reasoning behind it.
 
 ## A stored balance, not a derived one

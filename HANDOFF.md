@@ -57,7 +57,7 @@ retained Neon restore point is `production-chat-backup-2026-08-14` (parent `prod
 expires 2026-08-21). Migration evidence is recorded in
 `docs/release-gates/2026-08-14-PERSISTENT-CHAT-PRODUCTION-MIGRATION.md`.
 
-## NEXT TRACK: REWARD FOUNDATION — 2026-08-17 (SCHEMA READY ON PRODUCTION)
+## NEXT TRACK: REWARD COURSE WORKSPACE — 2026-08-17 (PR #84)
 
 PR #81 merged the guarded Reward ledger foundation into `main` at `074f58a`.
 Main CI and the Vercel Production code deployment passed while both Reward
@@ -86,10 +86,19 @@ reward economy without deleting points; restoring the course thaws the same
 ledger. Account anonymization cancels future pending redemptions and erases the
 ledger plus redemption history because rewards are not academic evidence.
 
-Both `REWARD_ENABLED` and `REWARD_MUTATIONS_ENABLED` remain `0`; no Reward route
-or UI is exposed. The next implementation slice is the first guarded Reward
-API/UI vertical slice, followed by isolated-QA acceptance. Do not enable either
-Production flag merely because the schema is ready. Migration evidence is in
+PR #84 adds the first fail-closed Reward workspace without changing the schema:
+the owning Teacher can award points only from real course evidence (submitted
+assignments, present attendance, or published scores), reverse an award through
+an immutable compensating entry, and inspect balances/history. A Student can see
+only their own balance and history. Server Actions re-resolve every selectable
+achievement and the service layer enforces exact course ownership.
+
+Both `REWARD_ENABLED` and `REWARD_MUTATIONS_ENABLED` remain `0` on Production,
+so these routes remain hidden there. Local Teacher/Student desktop and 375 px
+acceptance passed with no horizontal overflow or console errors; isolated-QA
+flag acceptance is the next gate after PR #84 passes review and CI. Do not enable
+either Production flag merely because the schema and workspace are ready.
+Migration evidence is in
 `docs/release-gates/2026-08-17-REWARD-PRODUCTION-MIGRATION.md`.
 
 ## STUDENT SCREEN SHARE AND TEACHER MODERATION — 2026-08-14 (PR #75)
