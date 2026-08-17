@@ -45,6 +45,8 @@ export type CourseRewardClaimView = {
   attempt: number;
   status: CourseRewardClaimStatus;
   snapshotTierTitle: string;
+  snapshotTierDescription: string | null;
+  snapshotTierFulfillmentInstructions: string | null;
   snapshotTierRequiredScore: number;
   snapshotTierVersion: number;
   snapshotScorePercent: number;
@@ -54,6 +56,36 @@ export type CourseRewardClaimView = {
   resolvedAt: Date | null;
   resolutionReason: string | null;
   supersededByClaimId: string | null;
+};
+
+export type TeacherCourseRewardMilestoneDashboard = {
+  courseOfferingId: string;
+  tiers: CourseRewardTierView[];
+  pendingClaims: TeacherCourseRewardClaimItem[];
+  recentClaims: TeacherCourseRewardClaimItem[];
+};
+
+export type TeacherCourseRewardClaimItem = CourseRewardClaimView & {
+  student: {
+    userId: string;
+    firstName: string;
+    lastName: string;
+    profileImageId: string | null;
+  };
+};
+
+export type StudentCourseRewardTierItem = CourseRewardTierView & {
+  latestClaim: CourseRewardClaimView | null;
+};
+
+export type StudentCourseRewardMilestoneDashboard = {
+  courseOfferingId: string;
+  enrollmentId: string;
+  score: CourseRewardScoreSnapshot | null;
+  tiers: StudentCourseRewardTierItem[];
+  claims: CourseRewardClaimView[];
+  claimableTierId: string | null;
+  pendingClaimId: string | null;
 };
 
 type ClaimProjection = CourseRewardClaimView;
@@ -74,6 +106,8 @@ const CLAIM_SELECT = {
   attempt: true,
   status: true,
   snapshotTierTitle: true,
+  snapshotTierDescription: true,
+  snapshotTierFulfillmentInstructions: true,
   snapshotTierRequiredScore: true,
   snapshotTierVersion: true,
   snapshotScorePercent: true,
@@ -550,4 +584,388 @@ export async function listCourseRewardTiers(input: {
       archivedAt: true,
     },
   });
+}
+
+export async function updateCourseRewardTier(input: {
+  tierId: string;
+  title: string;
+  description?: string | null;
+  fulfillmentInstructions?: string | null;
+  requiredScore: number;
+  now?: Date;
+  ctx: CourseRewardMilestoneContext;
+}): Promise<CourseRewardTierView> {
+  if (!courseRewardMilestoneMutationsEnabled(input.ctx.env)) {
+    throw new Forbidden("course_reward_milestone_mutations_disabled");
+  }
+
+  let normalized: ReturnType<typeof normalizeCourseRewardTierInput>;
+  try {
+    normalized = normalizeCourseRewardTierInput(input);
+  } catch (error) {
+    policyValidation(error);
+  }
+  const now = input.now ?? new Date();
+
+  try {
+    return await db.$transaction(async (tx) => {
+      const current = await tx.courseRewardTier.findUnique({
+        where: { id: input.tierId },
+        select: {
+          id: true,
+          version: true,
+          archivedAt: true,
+          course: {
+            select: { id: true, name: true, teacherId: true, archivedAt: true },
+          },
+        },
+      });
+      if (!current) throw new NotFound("course_reward_tier_not_found");
+      if (current.course.teacherId !== input.ctx.actorUserId) {
+        throw new Forbidden("course_reward_not_course_owner");
+      }
+      if (current.course.archivedAt !== null || current.archivedAt !== null) {
+        throw new Forbidden("course_reward_tier_archived");
+      }
+
+      const nextVersion = current.version + 1;
+      const updated = await tx.courseRewardTier.updateMany({
+        where: { id: current.id, version: current.version, archivedAt: null },
+        data: { ...normalized, version: nextVersion },
+      });
+      if (updated.count !== 1) {
+        throw new Conflict("course_reward_tier_changed");
+      }
+      await tx.courseRewardTierRevision.create({
+        data: {
+          tierId: current.id,
+          version: nextVersion,
+          ...normalized,
+          archivedAt: null,
+          actorUserId: input.ctx.actorUserId,
+          createdAt: now,
+        },
+      });
+      const tier = await tx.courseRewardTier.findUniqueOrThrow({
+        where: { id: current.id },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          fulfillmentInstructions: true,
+          requiredScore: true,
+          version: true,
+          archivedAt: true,
+        },
+      });
+      await audit(
+        {
+          actorId: input.ctx.actorUserId,
+          actorRole: "TEACHER",
+          action: "COURSE_REWARD_TIER_UPDATED",
+          targetType: "CourseRewardTier",
+          targetId: tier.id,
+          targetLabel: `${tier.title} (${current.course.name})`,
+          after: {
+            courseOfferingId: current.course.id,
+            requiredScore: tier.requiredScore,
+            version: tier.version,
+          },
+        },
+        tx
+      );
+      return tier;
+    }, TX_OPTIONS);
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      throw new Conflict("course_reward_threshold_exists");
+    }
+    throw error;
+  }
+}
+
+export async function archiveCourseRewardTier(input: {
+  tierId: string;
+  now?: Date;
+  ctx: CourseRewardMilestoneContext;
+}): Promise<CourseRewardTierView> {
+  if (!courseRewardMilestoneMutationsEnabled(input.ctx.env)) {
+    throw new Forbidden("course_reward_milestone_mutations_disabled");
+  }
+  const now = input.now ?? new Date();
+
+  return db.$transaction(async (tx) => {
+    const current = await tx.courseRewardTier.findUnique({
+      where: { id: input.tierId },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        fulfillmentInstructions: true,
+        requiredScore: true,
+        version: true,
+        archivedAt: true,
+        course: {
+          select: { id: true, name: true, teacherId: true, archivedAt: true },
+        },
+      },
+    });
+    if (!current) throw new NotFound("course_reward_tier_not_found");
+    if (current.course.teacherId !== input.ctx.actorUserId) {
+      throw new Forbidden("course_reward_not_course_owner");
+    }
+    if (current.course.archivedAt !== null) {
+      throw new Forbidden("course_reward_course_archived");
+    }
+    if (current.archivedAt !== null) return current;
+
+    const nextVersion = current.version + 1;
+    const updated = await tx.courseRewardTier.updateMany({
+      where: { id: current.id, version: current.version, archivedAt: null },
+      data: { archivedAt: now, version: nextVersion },
+    });
+    if (updated.count !== 1) {
+      throw new Conflict("course_reward_tier_changed");
+    }
+    await tx.courseRewardTierRevision.create({
+      data: {
+        tierId: current.id,
+        version: nextVersion,
+        title: current.title,
+        description: current.description,
+        fulfillmentInstructions: current.fulfillmentInstructions,
+        requiredScore: current.requiredScore,
+        archivedAt: now,
+        actorUserId: input.ctx.actorUserId,
+        createdAt: now,
+      },
+    });
+    const tier = await tx.courseRewardTier.findUniqueOrThrow({
+      where: { id: current.id },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        fulfillmentInstructions: true,
+        requiredScore: true,
+        version: true,
+        archivedAt: true,
+      },
+    });
+    await audit(
+      {
+        actorId: input.ctx.actorUserId,
+        actorRole: "TEACHER",
+        action: "COURSE_REWARD_TIER_ARCHIVED",
+        targetType: "CourseRewardTier",
+        targetId: tier.id,
+        targetLabel: `${tier.title} (${current.course.name})`,
+        after: {
+          courseOfferingId: current.course.id,
+          requiredScore: tier.requiredScore,
+          version: tier.version,
+          archivedAt: now.toISOString(),
+        },
+      },
+      tx
+    );
+    return tier;
+  }, TX_OPTIONS);
+}
+
+const CLAIM_WITH_STUDENT_SELECT = {
+  ...CLAIM_SELECT,
+  enrollment: {
+    select: {
+      student: {
+        select: {
+          userId: true,
+          firstName: true,
+          lastName: true,
+          user: { select: { profileImageId: true } },
+        },
+      },
+    },
+  },
+} satisfies Prisma.CourseRewardClaimSelect;
+
+function teacherClaimItem(
+  claim: Prisma.CourseRewardClaimGetPayload<{
+    select: typeof CLAIM_WITH_STUDENT_SELECT;
+  }>
+): TeacherCourseRewardClaimItem {
+  const { enrollment, ...view } = claim;
+  return {
+    ...view,
+    student: {
+      userId: enrollment.student.userId,
+      firstName: enrollment.student.firstName,
+      lastName: enrollment.student.lastName,
+      profileImageId: enrollment.student.user.profileImageId,
+    },
+  };
+}
+
+export async function getTeacherCourseRewardMilestoneDashboard(input: {
+  courseOfferingId: string;
+  ctx: CourseRewardMilestoneContext;
+}): Promise<TeacherCourseRewardMilestoneDashboard> {
+  if (!courseRewardMilestonesEnabled(input.ctx.env)) {
+    throw new NotFound("course_reward_milestones_not_found");
+  }
+  const course = await db.courseOffering.findUnique({
+    where: { id: input.courseOfferingId },
+    select: { id: true, teacherId: true },
+  });
+  if (!course) throw new NotFound("course_reward_course_not_found");
+  if (course.teacherId !== input.ctx.actorUserId) {
+    throw new Forbidden("course_reward_not_course_owner");
+  }
+
+  const [tiers, pendingClaims, recentClaims] = await Promise.all([
+    db.courseRewardTier.findMany({
+      where: { courseOfferingId: course.id, archivedAt: null },
+      orderBy: [{ requiredScore: "asc" }, { id: "asc" }],
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        fulfillmentInstructions: true,
+        requiredScore: true,
+        version: true,
+        archivedAt: true,
+      },
+    }),
+    db.courseRewardClaim.findMany({
+      where: {
+        status: "PENDING",
+        tier: { courseOfferingId: course.id },
+        enrollment: { removedAt: null },
+      },
+      orderBy: [{ requestedAt: "asc" }, { id: "asc" }],
+      select: CLAIM_WITH_STUDENT_SELECT,
+    }),
+    db.courseRewardClaim.findMany({
+      where: {
+        status: { in: ["FULFILLED", "REJECTED"] },
+        tier: { courseOfferingId: course.id },
+      },
+      orderBy: [{ resolvedAt: "desc" }, { id: "desc" }],
+      take: 20,
+      select: CLAIM_WITH_STUDENT_SELECT,
+    }),
+  ]);
+
+  return {
+    courseOfferingId: course.id,
+    tiers,
+    pendingClaims: pendingClaims.map(teacherClaimItem),
+    recentClaims: recentClaims.map(teacherClaimItem),
+  };
+}
+
+export async function getStudentCourseRewardMilestoneDashboard(input: {
+  courseOfferingId: string;
+  ctx: CourseRewardMilestoneContext;
+}): Promise<StudentCourseRewardMilestoneDashboard> {
+  if (!courseRewardMilestonesEnabled(input.ctx.env)) {
+    throw new NotFound("course_reward_milestones_not_found");
+  }
+  const enrollment = await db.enrollment.findUnique({
+    where: {
+      studentId_courseOfferingId: {
+        studentId: input.ctx.actorUserId, // dependency-gate-allow(student-id-symbol-review): exact self scope
+        courseOfferingId: input.courseOfferingId,
+      },
+    },
+    select: {
+      id: true,
+      removedAt: true,
+      course: {
+        select: {
+          id: true,
+          archivedAt: true,
+          scoreItems: {
+            select: {
+              id: true,
+              fullScore: true,
+              publishedAt: true,
+              entries: {
+                where: {
+                  enrollment: {
+                    studentId: input.ctx.actorUserId, // dependency-gate-allow(student-id-symbol-review): exact self score rows
+                  },
+                },
+                select: { scoreItemId: true, value: true },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+  if (!enrollment) throw new Forbidden("course_reward_tiers_forbidden");
+  if (enrollment.removedAt !== null || enrollment.course.archivedAt !== null) {
+    throw new Forbidden("course_reward_enrollment_removed");
+  }
+
+  const [tiersWithClaims, claims] = await Promise.all([
+    db.courseRewardTier.findMany({
+      where: { courseOfferingId: enrollment.course.id, archivedAt: null },
+      orderBy: [{ requiredScore: "asc" }, { id: "asc" }],
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        fulfillmentInstructions: true,
+        requiredScore: true,
+        version: true,
+        archivedAt: true,
+        claims: {
+          where: { enrollmentId: enrollment.id },
+          orderBy: [{ attempt: "desc" }, { createdAt: "desc" }],
+          select: CLAIM_SELECT,
+        },
+      },
+    }),
+    db.courseRewardClaim.findMany({
+      where: { enrollmentId: enrollment.id },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: 30,
+      select: CLAIM_SELECT,
+    }),
+  ]);
+  const score = courseRewardScoreSnapshot(
+    enrollment.course.scoreItems,
+    enrollment.course.scoreItems.flatMap((item) => item.entries)
+  );
+  const pendingClaim = claims.find((claim) => claim.status === "PENDING");
+  const available = tiersWithClaims.filter(
+    (tier) =>
+      !tier.claims.some((claim) =>
+        (["PENDING", "FULFILLED", "SUPERSEDED"] as const).includes(
+          claim.status as "PENDING" | "FULFILLED" | "SUPERSEDED"
+        )
+      )
+  );
+  const claimable =
+    score && !pendingClaim
+      ? highestEligibleCourseRewardTier(available, score)
+      : null;
+
+  return {
+    courseOfferingId: enrollment.course.id,
+    enrollmentId: enrollment.id,
+    score,
+    tiers: tiersWithClaims.map(({ claims: tierClaims, ...tier }) => ({
+      ...tier,
+      latestClaim: tierClaims[0] ? claimView(tierClaims[0]) : null,
+    })),
+    claims: claims.map(claimView),
+    claimableTierId: claimable?.id ?? null,
+    pendingClaimId: pendingClaim?.id ?? null,
+  };
 }

@@ -349,6 +349,8 @@ Response = 429 + `Retry-After`
 - `REWARD_POINTS_AWARDED` (รายการแต้มใหม่ผูกกับความสำเร็จเดียว)
 - `REWARD_ENTRY_REVERSED` (หักกลับด้วยเหตุผลโดยไม่แก้รายการเดิม)
 - `COURSE_REWARD_TIER_CREATED` (ครูเจ้าของวิชาสร้างเกณฑ์ Score Total)
+- `COURSE_REWARD_TIER_UPDATED` (ครูเจ้าของวิชาแก้ไขเกณฑ์และสร้าง revision ใหม่)
+- `COURSE_REWARD_TIER_ARCHIVED` (ครูเจ้าของวิชาปิดรับคำขอใหม่โดยเก็บประวัติเดิม)
 - `COURSE_REWARD_CLAIM_REQUESTED` (นักเรียนขอรับเกณฑ์สูงสุดที่มีสิทธิ์)
 - `COURSE_REWARD_CLAIM_FULFILLED` (ครูยืนยันการส่งมอบรางวัล)
 - `COURSE_REWARD_CLAIM_REJECTED` (ครูปฏิเสธพร้อมเหตุผล)

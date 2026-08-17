@@ -2,7 +2,7 @@ export function RewardPageSkeleton() {
   return (
     <div
       role="status"
-      aria-label="กำลังโหลดข้อมูลแต้ม"
+      aria-label="กำลังโหลดข้อมูลรางวัล"
       className="space-y-5 motion-safe:animate-pulse"
     >
       <div className="h-56 rounded-3xl border border-black/[0.06] bg-black/[0.04]" />
@@ -11,7 +11,7 @@ export function RewardPageSkeleton() {
         <div className="h-32 rounded-3xl border border-black/[0.06] bg-black/[0.035]" />
         <div className="h-32 rounded-3xl border border-black/[0.06] bg-black/[0.035]" />
       </div>
-      <span className="sr-only">กำลังโหลดข้อมูลแต้ม</span>
+      <span className="sr-only">กำลังโหลดข้อมูลรางวัล</span>
     </div>
   );
 }

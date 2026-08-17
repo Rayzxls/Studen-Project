@@ -5,9 +5,13 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { db } from "@/lib/db/client";
 import { Conflict, Forbidden } from "@/lib/errors";
 import {
+  archiveCourseRewardTier,
   claimHighestEligibleCourseReward,
   createCourseRewardTier,
+  getStudentCourseRewardMilestoneDashboard,
+  getTeacherCourseRewardMilestoneDashboard,
   resolveCourseRewardClaim,
+  updateCourseRewardTier,
 } from "@/lib/reward/course-milestones";
 import {
   enrollStudent,
@@ -204,5 +208,66 @@ describe("Course Score Milestone permissions and claim lifecycle", () => {
         ctx: { actorUserId: ctx.teacherUserId, env: ENABLED },
       })
     ).rejects.toBeInstanceOf(Forbidden);
+  });
+
+  it("projects self/owner dashboards and preserves tier revisions across update/archive", async () => {
+    const tier = await createTier(50, "Starter reward");
+    await updateCourseRewardTier({
+      tierId: tier.id,
+      title: "Progress reward",
+      description: "Published score milestone",
+      fulfillmentInstructions: "Show the pending request to the Teacher",
+      requiredScore: 60,
+      ctx: { actorUserId: ctx.teacherUserId, env: ENABLED },
+    });
+    await setPublishedScore(70);
+
+    const studentDashboard = await getStudentCourseRewardMilestoneDashboard({
+      courseOfferingId: ctx.courseOfferingId,
+      ctx: { actorUserId: ctx.studentUserId, env: ENABLED },
+    });
+    expect(studentDashboard).toMatchObject({
+      enrollmentId,
+      score: {
+        percent: 70,
+        earnedScore: 70,
+        publishedFullScore: 100,
+      },
+      claimableTierId: tier.id,
+    });
+    expect(studentDashboard.tiers).toHaveLength(1);
+
+    const claim = await claimHighestEligibleCourseReward({
+      enrollmentId,
+      ctx: { actorUserId: ctx.studentUserId, env: ENABLED },
+    });
+    const teacherDashboard = await getTeacherCourseRewardMilestoneDashboard({
+      courseOfferingId: ctx.courseOfferingId,
+      ctx: { actorUserId: ctx.teacherUserId, env: ENABLED },
+    });
+    expect(teacherDashboard.pendingClaims).toEqual([
+      expect.objectContaining({
+        id: claim.id,
+        snapshotTierTitle: "Progress reward",
+        student: expect.objectContaining({
+          userId: ctx.studentUserId,
+          firstName: "Alice",
+        }),
+      }),
+    ]);
+
+    await archiveCourseRewardTier({
+      tierId: tier.id,
+      ctx: { actorUserId: ctx.teacherUserId, env: ENABLED },
+    });
+    await expect(
+      db.courseRewardTierRevision.count({ where: { tierId: tier.id } })
+    ).resolves.toBe(3);
+    await expect(
+      getStudentCourseRewardMilestoneDashboard({
+        courseOfferingId: ctx.courseOfferingId,
+        ctx: { actorUserId: ctx.studentUserId, env: ENABLED },
+      })
+    ).resolves.toMatchObject({ tiers: [], claimableTierId: null });
   });
 });

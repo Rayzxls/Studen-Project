@@ -1,11 +1,11 @@
 import { notFound, redirect } from "next/navigation";
 
 import { CourseShell } from "@/components/course/course-shell";
-import { TeacherCourseRewards } from "@/components/reward/teacher-course-rewards";
+import { TeacherCourseMilestones } from "@/components/reward/teacher-course-milestones";
 import { requireRole } from "@/lib/auth/guards";
 import { getCourseOfferingForTeacher } from "@/lib/course/queries";
-import { getTeacherCourseRewardDashboard } from "@/lib/reward/course-dashboard";
-import { rewardEnabled } from "@/lib/reward/feature-flags";
+import { getTeacherCourseRewardMilestoneDashboard } from "@/lib/reward/course-milestones";
+import { courseRewardMilestonesEnabled } from "@/lib/reward/feature-flags";
 import { teacherCourseTabs } from "../_tabs";
 
 export const dynamic = "force-dynamic";
@@ -23,10 +23,10 @@ export default async function TeacherCourseRewardsPage({
   }
 
   const { id } = await params;
-  if (!rewardEnabled()) notFound();
+  if (!courseRewardMilestonesEnabled()) notFound();
   const [course, dashboard] = await Promise.all([
     getCourseOfferingForTeacher(id, session.user.id),
-    getTeacherCourseRewardDashboard({
+    getTeacherCourseRewardMilestoneDashboard({
       courseOfferingId: id,
       ctx: { actorUserId: session.user.id },
     }),
@@ -41,7 +41,7 @@ export default async function TeacherCourseRewardsPage({
       backHref="/teacher/courses"
       tabs={teacherCourseTabs(id)}
     >
-      <TeacherCourseRewards dashboard={dashboard} />
+      <TeacherCourseMilestones dashboard={dashboard} />
     </CourseShell>
   );
 }

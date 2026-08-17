@@ -5,13 +5,13 @@ import { afterEach, describe, expect, it } from "vitest";
 import { studentCourseTabs } from "@/app/student/courses/[id]/_tabs";
 import { teacherCourseTabs } from "@/app/teacher/courses/[id]/_tabs";
 
-const originalRewardEnabled = process.env.REWARD_ENABLED;
+const originalRewardEnabled = process.env.COURSE_REWARD_MILESTONES_ENABLED;
 
 afterEach(() => {
   if (originalRewardEnabled === undefined) {
-    delete process.env.REWARD_ENABLED;
+    delete process.env.COURSE_REWARD_MILESTONES_ENABLED;
   } else {
-    process.env.REWARD_ENABLED = originalRewardEnabled;
+    process.env.COURSE_REWARD_MILESTONES_ENABLED = originalRewardEnabled;
   }
 });
 
@@ -30,7 +30,7 @@ describe("teacher course navigation", () => {
   });
 
   it("keeps reward navigation fail-closed for both roles", () => {
-    delete process.env.REWARD_ENABLED;
+    delete process.env.COURSE_REWARD_MILESTONES_ENABLED;
 
     expect(
       teacherCourseTabs("course-1").some((tab) => tab.icon === "rewards")
@@ -41,7 +41,7 @@ describe("teacher course navigation", () => {
   });
 
   it("shows role-specific reward navigation only when the read flag is enabled", () => {
-    process.env.REWARD_ENABLED = "1";
+    process.env.COURSE_REWARD_MILESTONES_ENABLED = "1";
 
     expect(
       teacherCourseTabs("course-1").find((tab) => tab.icon === "rewards")
@@ -53,7 +53,7 @@ describe("teacher course navigation", () => {
     expect(
       studentCourseTabs("course-1").find((tab) => tab.icon === "rewards")
     ).toEqual({
-      label: "แต้มของฉัน",
+      label: "รางวัล",
       href: "/student/courses/course-1/rewards",
       icon: "rewards",
     });
