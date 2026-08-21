@@ -29,6 +29,8 @@ export interface ChosenPeriod {
   timetableSlotId: string | null;
   startTime: string;
   endTime: string;
+  /** Ad-hoc periods opened near midnight may finish on the following day. */
+  endDayOffset: 0 | 1;
 }
 
 export function choosePeriodForNow(
@@ -67,15 +69,18 @@ export function choosePeriodForNow(
         timetableSlotId: chosen.slot.id,
         startTime: chosen.slot.startTime,
         endTime: chosen.slot.endTime,
+        endDayOffset: 0,
       };
     }
   }
 
   const start = nowMin ?? 0;
+  const end = start + AD_HOC_MINUTES;
   return {
     timetableSlotId: null,
     startTime: fromMinutes(start),
-    endTime: fromMinutes(Math.min(start + AD_HOC_MINUTES, 23 * 60 + 59)),
+    endTime: fromMinutes(end % (24 * 60)),
+    endDayOffset: end >= 24 * 60 ? 1 : 0,
   };
 }
 

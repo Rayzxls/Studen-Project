@@ -607,6 +607,30 @@ describe("telling the class the room is open", () => {
 });
 
 describe("starting a class in one press", () => {
+  it("keeps an ad-hoc room valid when it opens at 23:59 Bangkok time", async () => {
+    await setCourseMeetingUrl({
+      courseOfferingId: ctx.courseOfferingId,
+      meetingUrl: ROOM,
+      actorUserId: ctx.teacherUserId,
+    });
+
+    const opened = await openRoomNow({
+      courseOfferingId: ctx.courseOfferingId,
+      actorUserId: ctx.teacherUserId,
+      stageAvailable: false,
+      now: new Date("2026-08-17T16:59:00.000Z"),
+    });
+    const session = await db.session.findUniqueOrThrow({
+      where: { id: opened.sessionId },
+      select: { scheduledStart: true, scheduledEnd: true },
+    });
+
+    expect(session.scheduledStart.toISOString()).toBe(
+      "2026-08-17T16:59:00.000Z"
+    );
+    expect(session.scheduledEnd.toISOString()).toBe("2026-08-17T17:59:00.000Z");
+  });
+
   it("creates the period, opens the room, and hands back the link", async () => {
     await setCourseMeetingUrl({
       courseOfferingId: ctx.courseOfferingId,

@@ -36,6 +36,7 @@ describe("which period the teacher means", () => {
       timetableSlotId: "lecture",
       startTime: "09:00",
       endTime: "10:00",
+      endDayOffset: 0,
     });
   });
 
@@ -46,6 +47,7 @@ describe("which period the teacher means", () => {
       timetableSlotId: "lecture",
       startTime: "09:00",
       endTime: "10:00",
+      endDayOffset: 0,
     });
   });
 
@@ -92,15 +94,25 @@ describe("which period the teacher means", () => {
   it("falls back to an hour from now when nothing on the timetable fits", () => {
     expect(
       choosePeriodForNow([], { dayOfWeek: MONDAY, timeStr: "20:15" })
-    ).toEqual({ timetableSlotId: null, startTime: "20:15", endTime: "21:15" });
+    ).toEqual({
+      timetableSlotId: null,
+      startTime: "20:15",
+      endTime: "21:15",
+      endDayOffset: 0,
+    });
   });
 
-  it("does not run an ad-hoc period past midnight", () => {
+  it("keeps a full ad-hoc hour when the period crosses midnight", () => {
     const chosen = choosePeriodForNow([], {
       dayOfWeek: MONDAY,
-      timeStr: "23:30",
+      timeStr: "23:59",
     });
-    expect(chosen.endTime).toBe("23:59");
+    expect(chosen).toEqual({
+      timetableSlotId: null,
+      startTime: "23:59",
+      endTime: "00:59",
+      endDayOffset: 1,
+    });
   });
 
   it("ignores a malformed timetable row rather than refusing to open", () => {
