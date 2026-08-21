@@ -132,8 +132,7 @@ export function dayOfWeekForDateString(dateStr: string): number {
 }
 
 /** Today's date as `YYYY-MM-DD` in Asia/Bangkok. Server-safe. */
-export function todayInBangkok(): string {
-  const now = new Date();
+export function todayInBangkok(now = new Date()): string {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: TZ,
     year: "numeric",

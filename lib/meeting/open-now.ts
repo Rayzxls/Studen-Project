@@ -25,10 +25,13 @@ export async function openRoomNow(params: {
   actorUserId: string;
   /** See openRoom — injectable so tests do not depend on the machine's .env. */
   stageAvailable?: boolean;
+  /** Injectable clock for deterministic boundary tests. */
+  now?: Date;
 }): Promise<{ sessionId: string; meetingUrl: string | null }> {
   const sessionId = await resolveSessionForNow(
     params.courseOfferingId,
-    params.actorUserId
+    params.actorUserId,
+    params.now
   );
 
   await openRoom({
@@ -57,9 +60,10 @@ export async function openRoomNow(params: {
  */
 export async function resolveSessionForNow(
   courseOfferingId: string,
-  actorUserId: string
+  actorUserId: string,
+  now = new Date()
 ): Promise<string> {
-  const dateStr = todayInBangkok();
+  const dateStr = todayInBangkok(now);
   const slots = await db.timetableSlot.findMany({
     where: { courseOfferingId },
     select: { id: true, dayOfWeek: true, startTime: true, endTime: true },
@@ -67,13 +71,18 @@ export async function resolveSessionForNow(
 
   const chosen = choosePeriodForNow(slots, {
     dayOfWeek: dayOfWeekForDateString(dateStr),
-    timeStr: nowTimeInBangkok(),
+    timeStr: nowTimeInBangkok(now),
   });
+
+  const scheduledEnd = bangkokDateTimeToUtc(dateStr, chosen.endTime);
+  if (chosen.endDayOffset === 1) {
+    scheduledEnd.setUTCDate(scheduledEnd.getUTCDate() + 1);
+  }
 
   const created = await findOrCreateSession({
     courseOfferingId,
     scheduledStart: bangkokDateTimeToUtc(dateStr, chosen.startTime),
-    scheduledEnd: bangkokDateTimeToUtc(dateStr, chosen.endTime),
+    scheduledEnd,
     timetableSlotId: chosen.timetableSlotId,
     actorUserId,
   });
@@ -81,11 +90,11 @@ export async function resolveSessionForNow(
 }
 
 /** Current Bangkok wall clock as "HH:mm", the shape the timetable stores. */
-function nowTimeInBangkok(): string {
+function nowTimeInBangkok(now: Date): string {
   return new Intl.DateTimeFormat("en-GB", {
     timeZone: "Asia/Bangkok",
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-  }).format(new Date());
+  }).format(now);
 }
